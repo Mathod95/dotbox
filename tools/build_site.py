@@ -128,6 +128,7 @@ def doc(slug, urls, target, title):
             .replace("__TITLE__", title.replace("&", "&amp;"))
             .replace("__H1__", page_def["name"].replace("&", "&amp;"))
             .replace("__DOTS__", page_def["dots"])
+            .replace("__DOTS_ALL__", "|".join(d["dots"] for d in DOCS))
             .replace("__NAV__", "\n".join(nav))
             .replace("__LEDE__", part.get("LEDE", ""))
             .replace("__CONTENT__", part.get("CONTENT", ""))
