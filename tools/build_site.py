@@ -34,8 +34,18 @@ DOCS_LAYOUT = DOCS_SRC / "layout.html"
 
 # la documentation : une section (Getting Started), ses pages dans l'ordre de la barre de gauche
 DOCS_SECTION = "Getting Started"
+# "group" : sous-groupe de la barre de gauche (comme Backup/Restore chez Saltbox)
 DOCS = [
     {"slug": "basics", "name": "Basics", "dots": "BASICS"},
+    {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES"},
+    {"slug": "installation", "name": "Installation", "dots": "INSTALL"},
+    {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL"},
+    {"slug": "update", "name": "Update", "dots": "UPDATE"},
+    {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS"},
+    {"slug": "paths", "name": "Paths", "dots": "PATHS"},
+    {"slug": "backup", "name": "Backup", "dots": "BACKUP", "group": "Backup / Restore"},
+    {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "group": "Backup / Restore"},
+    {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
 ]
 
@@ -44,6 +54,15 @@ ARTIFACT_PAGE = "https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE"
 ARTIFACT_RELEASE = "https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd"
 ARTIFACT_DOCS = {
     "basics": "https://claude.ai/artifact/WPfzXWk2jWXWKbg2EFEMH9",
+    "prerequisites": "https://claude.ai/artifact/VzSMUX2mPzRYozJpHxJBPo",
+    "installation": "https://claude.ai/artifact/PYWicYHgqAF58DrKgsT79w",
+    "post-installation": "https://claude.ai/artifact/7RCQm3P8QtJgXiezubksQ5",
+    "update": "https://claude.ai/artifact/5YGzukkp3vmpCXCa3TWBQC",
+    "accessing-apps": "https://claude.ai/artifact/XCLMhKPuuw8dN53WgeDbSY",
+    "paths": "https://claude.ai/artifact/1hsUD8q5XEpjBEoqdxbtfh",
+    "backup": "https://claude.ai/artifact/GMGiMWy3pVvZuLnz6g6mkM",
+    "restore": "https://claude.ai/artifact/PZj8om1qDxRW4zcacLkQcS",
+    "sandbox": "https://claude.ai/artifact/KxbLBXFF5kiVWdmpx3rb34",
     "cli": "https://claude.ai/artifact/GZz8HJqNBqMgY65VygEe9x",
 }
 BLANK = ' target="_blank" rel="noopener"'
@@ -67,6 +86,11 @@ def releases(urls, target, title):
     return links(page, urls, target)
 
 
+def ukey(slug):
+    """Clé de lien d'une page : post-installation -> POST_INSTALLATION."""
+    return slug.upper().replace("-", "_")
+
+
 def sections(text):
     """Découpe un fichier de page en {LEDE, CONTENT, CSS, JS}."""
     parts = re.split(r"<!-- (LEDE|CONTENT|CSS|JS) -->\n", text)
@@ -79,23 +103,30 @@ def doc(slug, urls, target, title):
     page_def = DOCS[i]
     part = sections((DOCS_SRC / (slug + ".html")).read_text(encoding="utf-8"))
     nav = ['      <h2>' + DOCS_SECTION + '</h2>', '      <ul class="nav">']
+    group = None
     for d in DOCS:
-        key = "__DOC_" + d["slug"].upper() + "__"
+        key = "__DOC_" + ukey(d["slug"]) + "__"
+        if d.get("group") != group:
+            group = d.get("group")
+            if group:
+                nav.append('        <li class="grp">' + group.replace("&", "&amp;") + "</li>")
+        li = '<li class="sub">' if group else "<li>"
+        name = d["name"].replace("&", "&amp;")
         if d["slug"] == slug:
-            nav.append('        <li><a href="' + key + '" aria-current="page">' + d["name"] + '</a><ul class="toc" id="pageToc"></ul></li>')
+            nav.append("        " + li + '<a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
         else:
-            nav.append('        <li><a href="' + key + '"' + "__DOC_" + d["slug"].upper() + "_TARGET__" + ">" + d["name"] + "</a></li>")
+            nav.append("        " + li + '<a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
     nav.append("      </ul>")
     pn = []
     if i > 0:
         p = DOCS[i - 1]
-        pn.append('<a class="prev" href="__DOC_' + p["slug"].upper() + '__"__DOC_' + p["slug"].upper() + '_TARGET__><small><span data-l="fr">← Précédent</span><span data-l="en">← Previous</span></small><b>' + p["name"] + "</b></a>")
+        pn.append('<a class="prev" href="__DOC_' + ukey(p["slug"]) + '__"__DOC_' + ukey(p["slug"]) + '_TARGET__><small><span data-l="fr">← Précédent</span><span data-l="en">← Previous</span></small><b>' + p["name"] .replace("&", "&amp;") + "</b></a>")
     if i < len(DOCS) - 1:
         n = DOCS[i + 1]
-        pn.append('<a class="next" href="__DOC_' + n["slug"].upper() + '__"__DOC_' + n["slug"].upper() + '_TARGET__><small><span data-l="fr">Suivant →</span><span data-l="en">Next →</span></small><b>' + n["name"] + "</b></a>")
+        pn.append('<a class="next" href="__DOC_' + ukey(n["slug"]) + '__"__DOC_' + ukey(n["slug"]) + '_TARGET__><small><span data-l="fr">Suivant →</span><span data-l="en">Next →</span></small><b>' + n["name"] .replace("&", "&amp;") + "</b></a>")
     page = (DOCS_LAYOUT.read_text(encoding="utf-8")
-            .replace("__TITLE__", title)
-            .replace("__H1__", page_def["name"])
+            .replace("__TITLE__", title.replace("&", "&amp;"))
+            .replace("__H1__", page_def["name"].replace("&", "&amp;"))
             .replace("__DOTS__", page_def["dots"])
             .replace("__NAV__", "\n".join(nav))
             .replace("__LEDE__", part.get("LEDE", ""))
@@ -121,14 +152,14 @@ def site_urls(depth):
     up = "../" * depth
     urls = {"HOME": up or "./", "RELEASES": up + "releases/", "GS": up + "getting-started/" + DOCS[0]["slug"] + "/"}
     for d in DOCS:
-        urls["DOC_" + d["slug"].upper()] = up + "getting-started/" + d["slug"] + "/"
+        urls["DOC_" + ukey(d["slug"])] = up + "getting-started/" + d["slug"] + "/"
     return urls
 
 
 def artifact_urls():
     urls = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "GS": ARTIFACT_DOCS[DOCS[0]["slug"]]}
     for d in DOCS:
-        urls["DOC_" + d["slug"].upper()] = ARTIFACT_DOCS[d["slug"]]
+        urls["DOC_" + ukey(d["slug"])] = ARTIFACT_DOCS[d["slug"]]
     return urls
 
 

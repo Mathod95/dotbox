@@ -25,7 +25,7 @@
         { "fr": "Accueil: présentation de Dot Box, le serveur et la CLI, l'installation en trois étapes", "en": "Home: Dot Box overview, the server and the CLI, install in three steps" },
         { "fr": "Accueil: catalogue de 19 apps, dont Traefik et Authelia installés par `dotbox init`", "en": "Home: catalog of 19 apps, including Traefik and Authelia installed by `dotbox init`" },
         { "fr": "Accueil: bascule FR / EN, français si le navigateur est en français, anglais sinon", "en": "Home: FR / EN toggle, French for a French browser, English otherwise" },
-        { "fr": "Getting Started: documentation avec une barre de navigation à gauche, pages Basics et CLI (avec `dotbox --help` interactif et les 24 commandes prévues)", "en": "Getting Started: documentation with a left navigation bar, Basics and CLI pages (with an interactive `dotbox --help` and the 24 planned commands)" },
+        { "fr": "Getting Started: documentation avec une barre de navigation à gauche, onze pages de Basics à CLI qui décrivent le fonctionnement prévu (installation, accès, chemins, mises à jour, sauvegarde, restauration, Sandbox)", "en": "Getting Started: documentation with a left navigation bar, eleven pages from Basics to CLI describing the planned behavior (install, access, paths, updates, backup, restore, Sandbox)" },
         { "fr": "Releases: cette page, les versions au centre et la liste des versions à droite", "en": "Releases: this page, versions in the middle and the version list on the right" }
       ]
     }
