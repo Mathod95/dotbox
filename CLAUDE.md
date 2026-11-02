@@ -14,7 +14,8 @@ Gestionnaire d'apps auto-hébergées: un binaire Rust qui transforme des manifes
 docs/design/        gabarits homePage et releasePage, anatomy.css et anatomy.js, copiés de xeneon (référence de la charte) ; la subPage se lit dans xeneon
 pages/v1/           v1 de la homepage (accueil + releases dans une seule page, vue #releases), figée
 tools/site/         v2 : index.html (homePage), releases.html (releasePage), releases.json (données des versions), cli.html (subPage de la CLI)
-tools/build_site.py construit les aperçus en artefacts (--fragment, --releases-fragment, --cli-fragment) ; le site GitHub Pages viendra ensuite
+tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --fragment, --releases-fragment, --cli-fragment : les aperçus en artefacts
+.github/workflows/pages.yml  construit le site et le publie sur GitHub Pages à chaque push sur main
 ```
 
 ## Pages
@@ -23,6 +24,7 @@ tools/build_site.py construit les aperçus en artefacts (--fragment, --releases-
 - **homePage v2** (`tools/site/index.html`): les six zones du gabarit dans l'ordre (Top, Hero, Showcase, About, List, Footer). Showcase = maquette interactive de l'interface. List = « Les apps », une carte par app générée depuis le tableau `CATALOG` (pictogramme 7 × 7, nom, rôle en accent, description, sous-domaine et logo GitHub ou « Docs ↗ » en pied). Tous les pictogrammes ont la classe `.pic`, taille unique `--pic: 70px`.
 - **releasePage v2** (`tools/site/releases.html`): gabarit releasePage, données dans `tools/site/releases.json`.
 - **Page CLI** (`tools/site/cli.html`): subPage (gabarit `xeneon/docs/design/subPage.html`, valeurs de Dot Companion). Hero (CLI en points tous les 14 px, accroche, faits), Showcase (`dotbox --help` dans un terminal, chaque commande cliquable montre un exemple de sortie), tableau de toutes les commandes, premiers pas en étapes avec une note, options globales en liste. Commandes et options dans `GROUPS` et `FLAGS` : la même source pour l'aide, le tableau et les exemples. C'est aussi la spécification de la CLI à coder.
+- **Site**: https://mathod95.github.io/dotbox/ (accueil), `/releases/`, `/cli/`. Construit par `python3 tools/build_site.py` (pages complètes, liens relatifs) et publié par `pages.yml`. Côté GitHub, Settings → Pages → Source doit être « GitHub Actions ».
 - **En-tête** des trois pages: marque, FR / EN, CLI, Releases, GitHub ↗ ; le bouton de la page en cours est allumé.
 - **Langue**: français si le navigateur est en français, anglais sinon ; bouton FR / EN, choix gardé dans le navigateur (`dotbox-lang`), `?lang=fr` ou `?lang=en`.
 - **Artefacts** (v2): accueil https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE, releases https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd, CLI https://claude.ai/artifact/A3JeW8jtr2kBZ328FCxnvC. Leurs adresses sont dans `build_site.py` pour que leurs boutons se répondent. Une page qui change: `python3 tools/build_site.py --fragment <f> --releases-fragment <f> --cli-fragment <f>` puis republier.

@@ -5,18 +5,22 @@
 - tools/site/releases.html : la releasePage, données dans tools/site/releases.json ;
 - tools/site/cli.html : la subPage de la CLI.
 
-Pour l'instant, seulement les aperçus en artefacts claude.ai :
-  --fragment FICHIER           l'accueil, sans en-tête HTML, boutons vers l'artefact Releases
-  --releases-fragment FICHIER  les releases, sans en-tête HTML, marque vers l'artefact Accueil
-  --cli-fragment FICHIER       la page de la CLI, sans en-tête HTML
+Sans option : le site GitHub Pages dans site/ (pages complètes, liens relatifs) :
+  site/index.html, site/releases/index.html, site/cli/index.html
+Publié par .github/workflows/pages.yml à chaque push sur main.
 
-Le site GitHub Pages (liens relatifs, pages complètes) viendra avec sa mise en place.
+Aperçus en artefacts claude.ai (pages sans en-tête HTML, liens vers les autres artefacts) :
+  --fragment FICHIER           l'accueil
+  --releases-fragment FICHIER  les releases
+  --cli-fragment FICHIER       la page de la CLI
 """
 import argparse
 import json
 import pathlib
+import shutil
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+SITE = ROOT / "site"
 SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
@@ -52,6 +56,31 @@ def cli(urls, target, title):
     return links(page, urls, target)
 
 
+def document(full):
+    """Page complète à partir d'un fragment (le titre, les polices et le style vont dans <head>)."""
+    cut = full.index('<div class="wrap">')
+    return (
+        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
+        + full[:cut] + "</head>\n<body>\n" + full[cut:] + "\n</body>\n</html>\n"
+    )
+
+
+def site():
+    if SITE.exists():
+        shutil.rmtree(SITE)
+    pages = {
+        "index.html": home({"RELEASES": "releases/", "CLI": "cli/"}, "", "Dot Box"),
+        "releases/index.html": releases({"HOME": "../", "CLI": "../cli/"}, "", "Releases · Dot Box"),
+        "cli/index.html": cli({"HOME": "../", "RELEASES": "../releases/"}, "", "CLI · Dot Box"),
+    }
+    for path, html in pages.items():
+        out = SITE / path
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(document(html), encoding="utf-8")
+    print(f"{len(pages)} pages -> {SITE}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fragment")
@@ -59,7 +88,8 @@ def main():
     ap.add_argument("--cli-fragment")
     args = ap.parse_args()
     if not (args.fragment or args.releases_fragment or args.cli_fragment):
-        ap.error("le site GitHub Pages n'est pas encore en place : utiliser --fragment, --releases-fragment ou --cli-fragment")
+        site()
+        return
     art = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "CLI": ARTIFACT_CLI}
     if args.fragment:
         pathlib.Path(args.fragment).write_text(home(art, BLANK, "Dot Box"), encoding="utf-8")
