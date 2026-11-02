@@ -2,11 +2,13 @@
 """Construit les pages de Dot Box à partir des gabarits de tools/site/.
 
 - tools/site/index.html : la homePage (accueil) ;
-- tools/site/releases.html : la releasePage, données dans tools/site/releases.json.
+- tools/site/releases.html : la releasePage, données dans tools/site/releases.json ;
+- tools/site/cli.html : la subPage de la CLI.
 
 Pour l'instant, seulement les aperçus en artefacts claude.ai :
   --fragment FICHIER           l'accueil, sans en-tête HTML, boutons vers l'artefact Releases
   --releases-fragment FICHIER  les releases, sans en-tête HTML, marque vers l'artefact Accueil
+  --cli-fragment FICHIER       la page de la CLI, sans en-tête HTML
 
 Le site GitHub Pages (liens relatifs, pages complètes) viendra avec sa mise en place.
 """
@@ -19,9 +21,11 @@ SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
 RELEASES_DATA = SITE_SRC / "releases.json"
+CLI_TEMPLATE = SITE_SRC / "cli.html"
 # artefacts claude.ai (v2) : l'accueil et les releases se répondent par leurs boutons
 ARTIFACT_PAGE = "https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE"
 ARTIFACT_RELEASE = "https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd"
+ARTIFACT_CLI = "https://claude.ai/artifact/A3JeW8jtr2kBZ328FCxnvC"
 BLANK = ' target="_blank" rel="noopener"'
 
 
@@ -43,18 +47,26 @@ def releases(urls, target, title):
     return links(page, urls, target)
 
 
+def cli(urls, target, title):
+    page = CLI_TEMPLATE.read_text(encoding="utf-8").replace("__TITLE__", title)
+    return links(page, urls, target)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fragment")
     ap.add_argument("--releases-fragment")
+    ap.add_argument("--cli-fragment")
     args = ap.parse_args()
-    if not (args.fragment or args.releases_fragment):
-        ap.error("le site GitHub Pages n'est pas encore en place : utiliser --fragment ou --releases-fragment")
-    art = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE}
+    if not (args.fragment or args.releases_fragment or args.cli_fragment):
+        ap.error("le site GitHub Pages n'est pas encore en place : utiliser --fragment, --releases-fragment ou --cli-fragment")
+    art = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "CLI": ARTIFACT_CLI}
     if args.fragment:
         pathlib.Path(args.fragment).write_text(home(art, BLANK, "Dot Box"), encoding="utf-8")
     if args.releases_fragment:
         pathlib.Path(args.releases_fragment).write_text(releases(art, BLANK, "Dot Box Releases"), encoding="utf-8")
+    if args.cli_fragment:
+        pathlib.Path(args.cli_fragment).write_text(cli(art, BLANK, "Dot Box CLI"), encoding="utf-8")
 
 
 if __name__ == "__main__":

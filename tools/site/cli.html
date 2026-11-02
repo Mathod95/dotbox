@@ -1,0 +1,471 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
+<style>
+/* subPage de Dot Box : la CLI. Gabarit xeneon docs/design/subPage.html, mêmes valeurs que Dot Companion.
+   Top, Hero (CLI en points, accroche, faits), Showcase (dotbox --help dans un terminal), tableau des commandes,
+   premiers pas en étapes, options globales en liste, Footer. Un seul thème sombre. */
+:root {
+  --bg: #080808;
+  --panel: #0e0e0e;
+  --line: #1f1f1f;
+  --lit: #f2f0e9;
+  --label: #b8b6b0;
+  --muted: #7d7b76;
+  --accent: #10b981;
+  --wip: #f5b942;
+  --spec: #a78bfa;
+  --mono: "Fira Code", "Cascadia Mono", Consolas, monospace;
+  --brand: "Segoe UI", Selawik, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); scrollbar-gutter: stable; }
+body {
+  margin: 0; background: var(--bg); color: var(--lit);
+  font-family: var(--brand); font-size: 16px; line-height: 1.55;
+  background-image: radial-gradient(circle, #161616 1.2px, transparent 1.6px);
+  background-size: 22px 22px;
+  padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 48px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+
+/* 1 · Top */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; height: 42px; font-weight: 700; letter-spacing: .22em; font-size: 15px; color: var(--lit); text-decoration: none; }
+.brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.topr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.ext:hover { color: var(--lit); border-color: #333; }
+.ext[aria-current="page"] { color: var(--bg); background: var(--lit); border-color: var(--lit); }
+.lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--bg); color: var(--label); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
+
+/* 2 · Hero */
+.hero { display: grid; gap: 20px; }
+.hero canvas { display: block; max-width: min(100%, 760px); height: auto; justify-self: start; }
+.lede { margin: 0; font-family: var(--mono); font-size: clamp(15px, 1.8vw, 19px); color: var(--lit); text-wrap: pretty; }
+.lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
+.facts b { color: var(--accent); font-weight: 500; margin-right: .5em; text-transform: none; }
+
+/* sections */
+.sec { display: grid; gap: 18px; }
+.sec > h2, .bar h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.hint { margin: 0; color: var(--label); font-size: 14px; }
+
+/* 3 · Showcase : dotbox --help dans un terminal */
+.showcase { display: grid; gap: 16px; }
+.edge { padding: clamp(8px, 1.2vw, 18px); border-radius: clamp(12px, 1.6vw, 24px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
+.term { display: grid; grid-template-rows: auto 1fr; border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; overflow: hidden; }
+.term-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px clamp(14px, 2vw, 24px); border-bottom: 1px solid var(--line); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.term-h .dot { display: inline-flex; align-items: center; gap: 8px; }
+.term-h .dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.term-h .ex { color: var(--muted); }
+.screen { min-height: 560px; padding: clamp(16px, 2.4vw, 30px); overflow-x: auto; font-size: 13.5px; line-height: 1.7; color: var(--label); }
+.prompt { margin: 0 0 18px; color: var(--lit); white-space: pre; }
+.prompt b { color: var(--accent); font-weight: 400; }
+.help { display: grid; gap: 18px; min-width: 560px; }
+.help h3 { margin: 0 0 4px; font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.help .usage { margin: 0; padding-left: 2ch; color: var(--lit); white-space: pre; }
+.cmds { display: grid; grid-template-columns: 38ch minmax(0, 1fr); gap: 0 2ch; margin: 0; padding-left: 2ch; }
+.cmds dt { margin: 0; }
+.cmds dd { margin: 0; }
+.cmds button { padding: 0; border: 0; background: none; font: inherit; color: var(--lit); cursor: pointer; text-align: left; }
+.cmds button span { color: var(--muted); }
+.cmds button:hover, .cmds button:focus-visible { color: var(--accent); outline: none; }
+.cmds button:hover span { color: var(--accent); }
+.flags dt { color: var(--lit); }
+.out { margin: 0; padding: 0; list-style: none; white-space: pre; min-width: 560px; }
+.out .ok { color: var(--accent); }
+.out .dim { color: var(--muted); }
+.out .warn { color: var(--wip); }
+.out .lit { color: var(--lit); }
+.back { margin-top: 22px; padding: 9px 14px; border-radius: 999px; border: 1px solid #262626; background: var(--bg); font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); cursor: pointer; }
+.back:hover { color: var(--lit); border-color: #3a3a3a; }
+
+/* 4 · tableau des commandes */
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th, td { text-align: left; padding: 14px 18px; vertical-align: top; border-bottom: 1px solid var(--line); font-size: 15px; }
+tbody tr:last-child td { border-bottom: 0; }
+thead th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+tbody th { padding-top: 22px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+td { color: var(--label); }
+td:first-child { white-space: nowrap; }
+td:first-child code { color: var(--lit); }
+td:last-child code { color: var(--label); }
+
+/* 5 · étapes + note */
+.steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; counter-reset: st; }
+.steps li { counter-increment: st; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; color: var(--label); font-size: 15px; }
+.steps li::before { content: counter(st); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--bg); font-family: var(--mono); font-weight: 500; font-size: 14px; }
+.steps li > span { display: block; min-width: 0; }
+.steps b { color: var(--lit); font-weight: 600; }
+.note { margin: 0; padding: 16px 20px; border: 1px solid #2a2414; border-radius: 14px; background: #0f0d08; color: var(--label); font-size: 15px; }
+.note b { color: var(--wip); font-weight: 600; }
+
+/* 6 · liste */
+.bullets { margin: 0; padding: 0 0 0 18px; display: grid; gap: 8px; color: var(--label); }
+.bullets li::marker { color: #3a3a3a; }
+.bullets b { color: var(--lit); font-weight: 600; }
+
+/* 7 · Footer */
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
+.footer .red { color: var(--accent); }
+.footer a { color: var(--label); text-decoration: none; }
+.footer a:hover { color: var(--lit); }
+
+@media (max-width: 640px) { .screen { min-height: 0; font-size: 12.5px; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="__HOME__"__HOME_TARGET__>DOT BOX</a>
+    <div class="topr">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" class="chip" data-lang="fr" aria-pressed="false">FR</button>
+        <button type="button" class="chip" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="ext" href="#" aria-current="page">CLI</a>
+      <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
+      <a class="ext" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box CLI</h1>
+    <canvas id="titleDots" width="700" height="252" aria-hidden="true"></canvas>
+    <p class="lede" data-i18n-html="lede"></p>
+    <ul class="facts" id="facts"></ul>
+  </section>
+
+  <section class="showcase" data-i18n-label="showLabel">
+    <div class="bar">
+      <h2>dotbox --help</h2>
+      <p class="hint" data-i18n="showHint"></p>
+    </div>
+    <div class="edge">
+      <div class="term">
+        <div class="term-h"><span class="dot">ssh mathod@mathod.fr</span><span class="ex" data-i18n="sample"></span></div>
+        <div class="screen" id="screen" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hCmds">
+    <h2 id="hCmds" data-i18n="allCmds"></h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col" data-i18n="colCmd"></th><th scope="col" data-i18n="colWhat"></th><th scope="col" data-i18n="colEx"></th></tr></thead>
+        <tbody id="cmdTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hFirst">
+    <h2 id="hFirst" data-i18n="firstK"></h2>
+    <ol class="steps">
+      <li><span data-i18n-html="step1"></span></li>
+      <li><span data-i18n-html="step2"></span></li>
+      <li><span data-i18n-html="step3"></span></li>
+    </ol>
+    <p class="note" data-i18n-html="note"></p>
+  </section>
+
+  <section class="sec" aria-labelledby="hFlags">
+    <h2 id="hFlags" data-i18n="flagsK"></h2>
+    <ul class="bullets" id="flagList"></ul>
+  </section>
+
+  <footer class="footer">
+    <span class="red">Self-hosted · Rust · Docker Compose</span>
+    <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">Mathod95/dotbox</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- français / anglais (français pour un navigateur en français, anglais sinon)
+  var STR = {
+    fr: {
+      lede: "La commande dotbox<i>●</i>tout ce que fait l'interface web, depuis le terminal.",
+      fCmds: "commandes", fApi: "API avec l'interface web", fSsh: "secours sans Authelia", fJson: "pour les scripts",
+      showLabel: "Aide de la CLI", showHint: "Clique une commande pour voir un exemple.", sample: "Exemple",
+      usage: "Utilisation", flags: "Options", back: "← dotbox --help",
+      allCmds: "Toutes les commandes", colCmd: "Commande", colWhat: "Ce qu'elle fait", colEx: "Exemple",
+      firstK: "Premiers pas",
+      step1: "<b>Copie le binaire</b> <code>dotbox</code> sur un serveur Debian ou Ubuntu.",
+      step2: "<b>Lance <code>dotbox init</code></b> avec ton domaine et ton fournisseur DNS.",
+      step3: "<b>Installe une app</b>: <code>dotbox install jellyfin</code>.",
+      note: "<b>Si l'interface ne répond plus</b>: en SSH, <code>dotbox --local</code> parle directement au moteur, sans passer par l'API ni par Authelia.",
+      flagsK: "Options globales"
+    },
+    en: {
+      lede: "The dotbox command<i>●</i>everything the web interface does, from the terminal.",
+      fCmds: "commands", fApi: "API shared with the web interface", fSsh: "fallback without Authelia", fJson: "for scripts",
+      showLabel: "CLI help", showHint: "Click a command to see an example.", sample: "Sample",
+      usage: "Usage", flags: "Flags", back: "← dotbox --help",
+      allCmds: "All commands", colCmd: "Command", colWhat: "What it does", colEx: "Example",
+      firstK: "First steps",
+      step1: "<b>Copy the</b> <code>dotbox</code> <b>binary</b> to a Debian or Ubuntu server.",
+      step2: "<b>Run <code>dotbox init</code></b> with your domain and DNS provider.",
+      step3: "<b>Install an app</b>: <code>dotbox install jellyfin</code>.",
+      note: "<b>If the interface stops responding</b>: over SSH, <code>dotbox --local</code> talks to the engine directly, without going through the API or Authelia.",
+      flagsK: "Global flags"
+    }
+  };
+  var lang = "en";
+  try {
+    var q = new URLSearchParams(location.search).get("lang");
+    lang = q === "en" || q === "fr" ? q : localStorage.getItem("dotbox-lang") || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en");
+  } catch (e) { lang = (navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"; }
+  if (!STR[lang]) lang = "en";
+  function t(k) { return STR[lang][k]; }
+  function tr(o) { return o[lang] || o.fr; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+  // ---------- les commandes : une entrée par commande, la même source pour l'aide, le tableau et les exemples
+  // out : lignes de sortie, [classe, texte] (ok = accent, warn = jaune, dim = discret, lit = clair)
+  var GROUPS = [
+    { id: "server", name: { fr: "Serveur", en: "Server" }, cmds: [
+      { name: "init", args: "--domain <domain> --dns-provider <provider>", hargs: "--domain <d> --dns-provider <p>",
+        d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik et Authelia", en: "Prepare the server: Docker, dotbox network, Traefik and Authelia" },
+        ex: "dotbox init --domain mathod.fr --dns-provider cloudflare",
+        out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  cert     *.mathod.fr (Let's Encrypt, DNS-01)"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["dim", "  admin    mathod (password shown once below)"]] },
+      { name: "status", args: "",
+        d: { fr: "Les apps installées, leur état et leur adresse", en: "Installed apps, their state and their address" },
+        ex: "dotbox status",
+        out: [["dim", "  APP           STATE      URL"], ["", "  traefik       Running    -"], ["", "  authelia      Running    auth.mathod.fr"], ["", "  jellyfin      Running    jellyfin.mathod.fr"], ["", "  qbittorrent   Running    qbittorrent.mathod.fr"], ["", "  radarr        Running    radarr.mathod.fr"], ["warn", "  sonarr        Exited     sonarr.mathod.fr"]] },
+      { name: "doctor", args: "",
+        d: { fr: "Vérifie Docker, DNS, certificats, ports et espace disque", en: "Check Docker, DNS, certificates, ports and disk space" },
+        ex: "dotbox doctor",
+        out: [["ok", "  ok    docker 28.2, daemon running"], ["ok", "  ok    *.mathod.fr resolves to 51.15.x.x"], ["ok", "  ok    certificate valid for 84 days"], ["ok", "  ok    ports 80 and 443 open"], ["warn", "  warn  /data 86% used (612 GB free)"]] },
+      { name: "upgrade", args: "",
+        d: { fr: "Met à jour Dot Box lui-même", en: "Update Dot Box itself" },
+        ex: "dotbox upgrade",
+        out: [["", "  dotbox   0.1.0 → 0.2.0"], ["", "  restart  dotbox"], ["ok", "  done     apps untouched"]] },
+      { name: "version", args: "",
+        d: { fr: "Version de la CLI et du serveur", en: "CLI and server version" },
+        ex: "dotbox version",
+        out: [["", "  cli      0.0.1"], ["", "  server   0.0.1 (mathod.fr)"]] }
+    ] },
+    { id: "apps", name: { fr: "Apps", en: "Apps" }, cmds: [
+      { name: "list", args: "[search]",
+        d: { fr: "Le catalogue, avec l'état de chaque app", en: "The catalog, with the state of each app" },
+        ex: "dotbox list arr",
+        out: [["dim", "  APP        ROLE         STATE"], ["", "  prowlarr   indexers     -"], ["ok", "  radarr     movies       installed"], ["", "  sonarr     tv shows     -"]] },
+      { name: "info", args: "<app>",
+        d: { fr: "Manifest, image, sous-domaine et câblage d'une app", en: "Manifest, image, subdomain and wiring of an app" },
+        ex: "dotbox info radarr",
+        out: [["", "  image      lscr.io/linuxserver/radarr"], ["", "  url        https://radarr.mathod.fr"], ["", "  sso        authelia"], ["", "  volumes    /opt/radarr:/config  /data:/data"], ["", "  wiring     qbittorrent (category radarr)"], ["", "             root folder /data/media/movies"]] },
+      { name: "install", args: "<app>...",
+        d: { fr: "Installe une ou plusieurs apps et les câble aux autres", en: "Install one or more apps and wire them to the others" },
+        ex: "dotbox install sonarr",
+        out: [["", "  pull     lscr.io/linuxserver/sonarr"], ["", "  write    /opt/sonarr/compose.yml"], ["", "  label    traefik sonarr.mathod.fr"], ["", "  up       sonarr      Running"], ["", "  wire     qbittorrent (category sonarr)"], ["", "  wire     root folder /data/media/tv"], ["ok", "  ready    https://sonarr.mathod.fr"]] },
+      { name: "remove", args: "<app> [--keep-data]",
+        d: { fr: "Supprime une app; --keep-data garde /opt/<app>", en: "Remove an app; --keep-data keeps /opt/<app>" },
+        ex: "dotbox remove seerr --keep-data",
+        out: [["", "  down     seerr"], ["", "  unwire   radarr, sonarr"], ["ok", "  removed  seerr (data kept in /opt/seerr)"]] },
+      { name: "update", args: "[<app>...] [--all]",
+        d: { fr: "Met à jour l'image d'une app, ou de toutes", en: "Update the image of one app, or all of them" },
+        ex: "dotbox update --all",
+        out: [["", "  jellyfin   10.11.2 → 10.11.3"], ["dim", "  radarr     up to date"], ["", "  sonarr     4.0.15 → 4.0.16"], ["ok", "  2 apps updated"]] },
+      { name: "start", args: "<app>",
+        d: { fr: "Démarre une app", en: "Start an app" },
+        ex: "dotbox start sonarr", out: [["ok", "  sonarr     Running"]] },
+      { name: "stop", args: "<app>",
+        d: { fr: "Arrête une app", en: "Stop an app" },
+        ex: "dotbox stop sonarr", out: [["dim", "  sonarr     Exited"]] },
+      { name: "restart", args: "<app>",
+        d: { fr: "Redémarre une app", en: "Restart an app" },
+        ex: "dotbox restart jellyfin", out: [["ok", "  jellyfin   Running"]] },
+      { name: "logs", args: "<app> [-f] [--tail <n>]",
+        d: { fr: "Les logs d'une app; -f les suit en direct", en: "An app's logs; -f follows them live" },
+        ex: "dotbox logs qbittorrent -f --tail 3",
+        out: [["dim", "  14:02:11  WebUI listening on 0.0.0.0:8080"], ["", "  14:05:47  Added torrent (category radarr)"], ["", "  14:31:02  Download finished, moved to /data/torrents/movies"], ["dim", "  … following, Ctrl+C to stop"]] },
+      { name: "exec", args: "<app> -- <command>",
+        d: { fr: "Lance une commande dans le container d'une app", en: "Run a command inside an app's container" },
+        ex: "dotbox exec jellyfin -- ls /data/media",
+        out: [["", "  movies  tv"]] },
+      { name: "edit", args: "<app>",
+        d: { fr: "Ouvre compose.override.yml dans ton éditeur, puis applique", en: "Open compose.override.yml in your editor, then apply it" },
+        ex: "dotbox edit jellyfin",
+        out: [["dim", "  open     /opt/jellyfin/compose.override.yml ($EDITOR)"], ["", "  changed  devices: /dev/dri"], ["ok", "  applied  jellyfin    Running"]] },
+      { name: "add", args: "<compose.yml> --name <app>",
+        d: { fr: "Transforme un compose en manifest Dot Box", en: "Turn a compose file into a Dot Box manifest" },
+        ex: "dotbox add ./docker-compose.yml --name immich",
+        out: [["", "  read     4 services: server, ml, redis, postgres"], ["", "  write    manifest immich (subdomain immich, sso on)"], ["", "  paths    /opt/immich, /data/photos"], ["ok", "  ready    dotbox install immich"]] }
+    ] },
+    { id: "state", name: { fr: "État", en: "State" }, cmds: [
+      { name: "diff", args: "",
+        d: { fr: "L'écart entre l'état voulu et ce qui tourne", en: "The gap between the desired state and what is running" },
+        ex: "dotbox diff",
+        out: [["warn", "  ~ sonarr      Exited, wanted Running"], ["warn", "  ~ jellyfin    image 10.11.2, wanted 10.11.3"], ["dim", "  2 differences, run dotbox sync"]] },
+      { name: "sync", args: "[--dry-run]",
+        d: { fr: "Corrige l'écart: crée, met à jour ou arrête ce qu'il faut", en: "Fix the gap: create, update or stop what is needed" },
+        ex: "dotbox sync",
+        out: [["", "  start    sonarr"], ["", "  update   jellyfin 10.11.3"], ["ok", "  in sync"]] }
+    ] },
+    { id: "backup", name: { fr: "Sauvegarde", en: "Backup" }, cmds: [
+      { name: "backup", args: "[--to <path>]",
+        d: { fr: "Sauvegarde /opt et les manifests dans une archive", en: "Back up /opt and the manifests into an archive" },
+        ex: "dotbox backup --to /backups",
+        out: [["", "  pause    8 apps"], ["", "  archive  /backups/dotbox-2026-11-02.tar.zst (1.4 GB)"], ["ok", "  resume   8 apps Running"]] },
+      { name: "restore", args: "<archive>",
+        d: { fr: "Restaure une sauvegarde, sur ce serveur ou un serveur neuf", en: "Restore a backup, on this server or a new one" },
+        ex: "dotbox restore dotbox-2026-11-02.tar.zst",
+        out: [["", "  extract  /opt, 8 manifests"], ["", "  up       8 apps"], ["ok", "  restored mathod.fr"]] }
+    ] },
+    { id: "users", name: { fr: "Utilisateurs", en: "Users" }, cmds: [
+      { name: "user", args: "add|list|remove|passwd <name>",
+        d: { fr: "Gère les comptes Authelia", en: "Manage Authelia accounts" },
+        ex: "dotbox user add lea --group family",
+        out: [["", "  user     lea (group family)"], ["dim", "  access   jellyfin, seerr"], ["ok", "  invite   link valid 48 h"]] }
+    ] },
+    { id: "config", name: { fr: "Configuration", en: "Configuration" }, cmds: [
+      { name: "config", args: "get|set <key> [value]",
+        d: { fr: "Lit ou change la config: domaine, DNS, chemins", en: "Read or change the config: domain, DNS, paths" },
+        ex: "dotbox config get domain",
+        out: [["", "  mathod.fr"]] },
+      { name: "completion", args: "bash|zsh|fish",
+        d: { fr: "Génère l'autocomplétion du shell", en: "Generate shell completion" },
+        ex: "dotbox completion zsh > ~/.zfunc/_dotbox",
+        out: [["ok", "  written  ~/.zfunc/_dotbox"]] }
+    ] }
+  ];
+  var FLAGS = [
+    { f: "--server <url>", d: { fr: "le serveur à piloter, celui de la config par défaut", en: "the server to control, the one from the config by default" } },
+    { f: "--local", d: { fr: "parle directement au moteur, sans l'API ni Authelia (en SSH)", en: "talks to the engine directly, without the API or Authelia (over SSH)" } },
+    { f: "--json", d: { fr: "sortie en JSON, pour les scripts", en: "JSON output, for scripts" } },
+    { f: "-y, --yes", d: { fr: "répond oui aux confirmations", en: "answers yes to confirmations" } },
+    { f: "-q, --quiet", d: { fr: "n'affiche que les erreurs", en: "only prints errors" } },
+    { f: "--no-color", d: { fr: "sortie sans couleurs", en: "output without colors" } },
+    { f: "-h, --help", d: { fr: "l'aide de la commande", en: "help for the command" } }
+  ];
+  var ALL = []; GROUPS.forEach(function (g) { g.cmds.forEach(function (c) { ALL.push(c); }); });
+
+  // ---------- titre en points (police 5 × 7), points tous les 14 px, calé à gauche
+  var F = {
+    C: [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
+    L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+    I: ["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"]
+  };
+  function drawTitle(text) {
+    var cv = document.getElementById("titleDots"), ctx = cv.getContext("2d"), cols = [];
+    text.split("").forEach(function (ch, i) {
+      var g = F[ch];
+      for (var c = 0; c < g[0].length; c++) cols.push(g.map(function (r) { return r[c] === "#"; }));
+      if (i < text.length - 1) cols.push([false, false, false, false, false, false, false]);
+    });
+    var pad = 1, total = cols.length + pad * 2, rows = 7 + pad * 2;
+    cv.width = total * 14 * 2; cv.style.width = total * 14 + "px";
+    var pitch = cv.width / total, r = pitch * 0.36;
+    cv.height = Math.round(rows * pitch);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var x = 0; x < total; x++) for (var y = 0; y < rows; y++) {
+      var col = cols[x - pad], on = col && y >= pad && y < 7 + pad && col[y - pad];
+      ctx.beginPath(); ctx.fillStyle = on ? "#f2f0e9" : "#171717";
+      ctx.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, on ? r : r * 0.8, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // ---------- 2 · faits
+  function facts() {
+    var ul = document.getElementById("facts"); ul.innerHTML = "";
+    [[String(ALL.length), t("fCmds")], ["1", t("fApi")], ["SSH", t("fSsh")], ["--json", t("fJson")]].forEach(function (f) {
+      var li = el("li"); li.appendChild(el("b", "", f[0])); li.appendChild(document.createTextNode(f[1])); ul.appendChild(li);
+    });
+  }
+
+  // ---------- 3 · le terminal : l'aide, ou l'exemple d'une commande
+  var screen = document.getElementById("screen"), shown = null;
+  function prompt(cmd) { var p = el("p", "prompt"); p.appendChild(el("b", "", "$ ")); p.appendChild(document.createTextNode(cmd)); return p; }
+  function showHelp() {
+    shown = null; screen.innerHTML = "";
+    screen.appendChild(prompt("dotbox --help"));
+    var h = el("div", "help");
+    var u = el("div"); u.appendChild(el("h3", "", t("usage"))); u.appendChild(el("p", "usage", "dotbox <command> [args] [--flags]")); h.appendChild(u);
+    GROUPS.forEach(function (g) {
+      var s = el("div"); s.appendChild(el("h3", "", tr(g.name)));
+      var dl = el("dl", "cmds");
+      g.cmds.forEach(function (c) {
+        var dt = el("dt"), b = el("button"); b.type = "button";
+        b.appendChild(document.createTextNode(c.name));
+        var a = c.hargs || c.args;
+        if (a) { b.appendChild(document.createTextNode(" ")); b.appendChild(el("span", "", a)); }
+        b.addEventListener("click", function () { showCmd(c); });
+        dt.appendChild(b); dl.appendChild(dt); dl.appendChild(el("dd", "", tr(c.d)));
+      });
+      s.appendChild(dl); h.appendChild(s);
+    });
+    var fl = el("div"); fl.appendChild(el("h3", "", t("flags")));
+    var fd = el("dl", "cmds flags");
+    FLAGS.forEach(function (f) { fd.appendChild(el("dt", "", f.f)); fd.appendChild(el("dd", "", f.d[lang] || f.d.fr)); });
+    fl.appendChild(fd); h.appendChild(fl);
+    screen.appendChild(h);
+  }
+  function showCmd(c) {
+    shown = c; screen.innerHTML = "";
+    screen.appendChild(prompt(c.ex));
+    var ul = el("ul", "out");
+    c.out.forEach(function (l) { ul.appendChild(el("li", l[0], l[1])); });
+    screen.appendChild(ul);
+    var b = el("button", "back", t("back")); b.type = "button"; b.addEventListener("click", function () { showHelp(); b.blur(); });
+    screen.appendChild(b);
+    b.focus({ preventScroll: true });
+  }
+
+  // ---------- 4 · tableau : un groupe par bloc, une ligne par commande
+  function table() {
+    var tb = document.getElementById("cmdTable"); tb.innerHTML = "";
+    GROUPS.forEach(function (g) {
+      var hr = el("tr"), th = el("th", "", tr(g.name)); th.colSpan = 3; th.scope = "colgroup"; hr.appendChild(th); tb.appendChild(hr);
+      g.cmds.forEach(function (c) {
+        var tr_ = el("tr");
+        var c1 = el("td"); c1.appendChild(el("code", "", "dotbox " + c.name + (c.args ? " " + c.args : ""))); tr_.appendChild(c1);
+        tr_.appendChild(el("td", "", tr(c.d)));
+        var c3 = el("td"); c3.appendChild(el("code", "", c.ex)); tr_.appendChild(c3);
+        tb.appendChild(tr_);
+      });
+    });
+  }
+
+  // ---------- 6 · options globales
+  function flags() {
+    var ul = document.getElementById("flagList"); ul.innerHTML = "";
+    FLAGS.forEach(function (f) { var li = el("li"); li.appendChild(el("b", "", f.f)); li.appendChild(document.createTextNode(": " + tr(f.d))); ul.appendChild(li); });
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function (e) { e.textContent = t(e.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
+    document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
+    document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true" : "false"); });
+    facts(); table(); flags();
+    if (shown) showCmd(shown); else showHelp();
+  }
+  document.querySelectorAll(".lang .chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      lang = b.getAttribute("data-lang");
+      try { localStorage.setItem("dotbox-lang", lang); } catch (e) {}
+      applyLang();
+    });
+  });
+
+  drawTitle("CLI");
+  applyLang();
+})();
+</script>

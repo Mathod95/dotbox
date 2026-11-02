@@ -11,10 +11,10 @@ Gestionnaire d'apps auto-hébergées: un binaire Rust qui transforme des manifes
 ## Arborescence
 
 ```
-docs/design/        gabarits homePage et releasePage, anatomy.css et anatomy.js, copiés de xeneon (référence de la charte)
+docs/design/        gabarits homePage et releasePage, anatomy.css et anatomy.js, copiés de xeneon (référence de la charte) ; la subPage se lit dans xeneon
 pages/v1/           v1 de la homepage (accueil + releases dans une seule page, vue #releases), figée
-tools/site/         v2 : index.html (homePage), releases.html (releasePage), releases.json (données des versions)
-tools/build_site.py construit les aperçus en artefacts (--fragment, --releases-fragment) ; le site GitHub Pages viendra ensuite
+tools/site/         v2 : index.html (homePage), releases.html (releasePage), releases.json (données des versions), cli.html (subPage de la CLI)
+tools/build_site.py construit les aperçus en artefacts (--fragment, --releases-fragment, --cli-fragment) ; le site GitHub Pages viendra ensuite
 ```
 
 ## Pages
@@ -22,8 +22,10 @@ tools/build_site.py construit les aperçus en artefacts (--fragment, --releases-
 - **Charte**: celle de Dot Hub, gabarits dans `docs/design/` (copie de `xeneon/docs/design/` au commit `84edb70`). La règle complète reste `xeneon/docs/design/README.md`. Écarts propres à Dot Box: marque « ● DOT BOX », pas de bouton Companion, slogan « Self-hosted · Rust · Docker Compose », lien de pied de page `Mathod95/dotbox`.
 - **homePage v2** (`tools/site/index.html`): les six zones du gabarit dans l'ordre (Top, Hero, Showcase, About, List, Footer). Showcase = maquette interactive de l'interface. List = « Les apps », une carte par app générée depuis le tableau `CATALOG` (pictogramme 7 × 7, nom, rôle en accent, description, sous-domaine et logo GitHub ou « Docs ↗ » en pied). Tous les pictogrammes ont la classe `.pic`, taille unique `--pic: 70px`.
 - **releasePage v2** (`tools/site/releases.html`): gabarit releasePage, données dans `tools/site/releases.json`.
+- **Page CLI** (`tools/site/cli.html`): subPage (gabarit `xeneon/docs/design/subPage.html`, valeurs de Dot Companion). Hero (CLI en points tous les 14 px, accroche, faits), Showcase (`dotbox --help` dans un terminal, chaque commande cliquable montre un exemple de sortie), tableau de toutes les commandes, premiers pas en étapes avec une note, options globales en liste. Commandes et options dans `GROUPS` et `FLAGS` : la même source pour l'aide, le tableau et les exemples. C'est aussi la spécification de la CLI à coder.
+- **En-tête** des trois pages: marque, FR / EN, CLI, Releases, GitHub ↗ ; le bouton de la page en cours est allumé.
 - **Langue**: français si le navigateur est en français, anglais sinon ; bouton FR / EN, choix gardé dans le navigateur (`dotbox-lang`), `?lang=fr` ou `?lang=en`.
-- **Artefacts** (v2): accueil https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE, releases https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd. Leurs adresses sont dans `build_site.py` pour que leurs boutons se répondent. Une page qui change: `python3 tools/build_site.py --fragment <f> --releases-fragment <f>` puis republier.
+- **Artefacts** (v2): accueil https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE, releases https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd, CLI https://claude.ai/artifact/A3JeW8jtr2kBZ328FCxnvC. Leurs adresses sont dans `build_site.py` pour que leurs boutons se répondent. Une page qui change: `python3 tools/build_site.py --fragment <f> --releases-fragment <f> --cli-fragment <f>` puis republier.
 
 ## Releases
 
