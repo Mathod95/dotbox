@@ -1,0 +1,175 @@
+<title>Gabarit releasePage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="anatomy.css">
+<style>
+/* releasePage générique, mêmes valeurs que Dot Release (tools/site/releases.html). Partie commune dans anatomy.css et anatomy.js. */
+.mini { --new: #10b981; --changed: #5aa9e6; --fixed: #f5b942; }
+.mini .pw { max-width: 1240px; margin: 0 auto; display: grid; gap: 48px; }
+
+.mini .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mini .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .22em; font-size: 15px; color: inherit; text-decoration: none; }
+.mini .brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.mini .topr { display: flex; align-items: center; gap: 12px; }
+.mini .exts { display: flex; gap: 12px; }
+.mini .ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); text-decoration: none; }
+.mini .ext.cur { color: var(--bg); background: var(--lit); border-color: var(--lit); }
+.mini .lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.mini .chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; background: var(--bg); color: var(--label); line-height: normal; }
+.mini .chip.on { background: var(--lit); color: var(--bg); }
+
+.mini .hero { display: grid; gap: 20px; }
+.mini .title-box { width: 100%; }
+.mini .title-box canvas { display: block; width: 100%; max-width: 760px; height: auto; }
+.mini .lede { margin: 0; font-family: var(--mono); font-size: 19px; color: var(--lit); }
+.mini .lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
+
+.mini .layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 40px; align-items: start; }
+.mini .feed { display: grid; gap: 18px; min-width: 0; }
+.mini .rel { display: grid; gap: 16px; padding: 30px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+.mini .rel.latest { border-color: #262626; }
+.mini .rel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); }
+.mini .ver { padding: 5px 12px; border-radius: 999px; border: 1px solid #2a2a2a; color: var(--lit); font-size: 13px; letter-spacing: .1em; text-transform: none; }
+.mini .rel.latest .ver { border-color: var(--accent); color: var(--accent); }
+.mini .rb { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
+.mini .rb::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.mini .rb.next { color: var(--fixed); }
+.mini .rel h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: .01em; }
+.mini .comps { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0; padding: 0; list-style: none; }
+.mini .comps li { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--label); padding: 4px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.mini .sec { display: grid; gap: 8px; }
+.mini .sec h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--c); }
+.mini .sec h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.mini .sec ul { margin: 0; padding: 0 0 0 18px; display: grid; gap: 6px; color: var(--label); font-size: 15px; }
+.mini .sec li { padding-left: 4px; }
+.mini .sec li::marker { color: #3a3a3a; }
+.mini .rel-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 18px; padding-top: 14px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+
+.mini .side { display: grid; gap: 12px; }
+.mini .side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.mini .toc { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.mini .toc span.a { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; color: var(--label); }
+.mini .toc span.a::before { content: ""; grid-row: span 2; width: 8px; height: 8px; border-radius: 50%; background: #2a2a2a; }
+.mini .toc .v { font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); }
+.mini .toc .d { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini .toc span.a.cur { border-left-color: var(--accent); }
+.mini .toc span.a.cur::before { background: var(--accent); }
+.mini .toc span.a.cur .v { color: var(--accent); }
+
+.mini .footer { display: flex; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; color: var(--label); }
+.mini .footer .red { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <div class="a-top">
+    <span class="a-brand">DOT HUB</span>
+    <span class="a-crumb">Charte · types de pages</span>
+  </div>
+
+  <div class="a-head">
+    <h1>Anatomie d'une releasePage</h1>
+    <p class="a-lead">La releasePage raconte les versions, de la plus récente à la plus ancienne (aujourd'hui Dot Release). Les versions sont au centre, la liste des versions à droite. Chaque version a le même squelette: repères, titre, composants, puis Nouveau, Changé et Corrigé. Survole une étiquette pour repérer sa zone, ou passe en vue squelette pour voir ce qui remplit chaque bloc.</p>
+  </div>
+
+  <div class="a-bar">
+    <p class="a-name">releasePage <span class="a-tag">Une seule par site</span></p>
+    <div class="a-switch" role="group" aria-label="Vue">
+      <button type="button" data-view="real" aria-pressed="true">Vraie vue</button>
+      <button type="button" data-view="skeleton" aria-pressed="false">Squelette</button>
+    </div>
+  </div>
+
+  <div class="a-diag" id="diag">
+    <svg class="a-leaders" id="leaders" aria-hidden="true"></svg>
+    <div class="a-pins is-left" id="pinsL"></div>
+    <div class="a-stage" id="stage">
+      <div class="mini" id="mini" aria-hidden="true">
+        <div class="pw">
+
+          <div class="top" data-zone="header" data-name="Top"><span class="badge">1</span>
+            <a class="brand" data-part="1" href="https://mathod95.github.io/xeneon/" tabindex="-1" data-sk="marque">DOT HUB</a>
+            <div class="topr">
+              <div class="lang" data-part="2" data-sk="FR / EN"><span class="chip on">FR</span><span class="chip">EN</span></div>
+              <div class="exts"><a class="ext" data-part="3" data-sk="Companion" href="https://mathod95.github.io/xeneon/companion/" tabindex="-1">Companion</a><a class="ext cur" data-part="4" data-sk="Releases" href="https://mathod95.github.io/xeneon/releases/" tabindex="-1">Releases</a><a class="ext" data-part="5" data-sk="GitHub ↗" href="https://github.com/Mathod95/xeneon" tabindex="-1" target="_blank" rel="noopener">GitHub ↗</a></div>
+            </div>
+          </div>
+
+          <section class="hero" data-zone="hero" data-name="Hero"><span class="badge">2</span>
+            <div class="title-box" data-part="1" data-part-at="r" data-sk="RELEASES en points 5 × 7, points tous les 14 px, calé à gauche"><canvas width="1372" height="252" data-title="RELEASES" data-pitch="14"></canvas></div>
+            <p class="lede" data-part="2" data-part-at="r" data-sk="une ligne, séparateur ● en accent">Ce qui a changé dans le projet et ses parties<i>●</i>de la plus récente à la plus ancienne.</p>
+          </section>
+
+          <div class="layout">
+            <main class="feed">
+              <article class="rel" data-zone="next" data-name="Prochaine version"><span class="badge">3</span>
+                <div class="rel-head" data-sk="repères · Sur main, pas encore publiée, badge"><span class="ver">Sur main</span><span>pas encore publiée</span><span class="rb next">Prochaine version</span></div>
+                <h2 data-sk="titre de la version">Titre de la version</h2>
+                <ul class="comps" data-sk="composants et leur version"><li>Composant A 1.3.0</li><li>Composant B 0.2.0</li></ul>
+                <section class="sec" style="--c: var(--new)" data-sk="Nouveau · vert"><h3>Nouveau</h3><ul><li>Ce qui est nouveau, en une phrase.</li><li>Ce qui est nouveau, en une phrase.</li></ul></section>
+                <section class="sec" style="--c: var(--changed)" data-sk="Changé · bleu"><h3>Changé</h3><ul><li>Ce qui a changé, en une phrase.</li></ul></section>
+                <section class="sec" style="--c: var(--fixed)" data-sk="Corrigé · jaune"><h3>Corrigé</h3><ul><li>Ce qui a été corrigé, en une phrase.</li></ul></section>
+                <div class="rel-foot" data-sk="liens · exe des Actions, changements"><span>Exe dans GitHub Actions ↗</span><span>Changements ↗</span></div>
+              </article>
+
+              <article class="rel latest" data-zone="latest" data-name="Dernière version"><span class="badge">4</span>
+                <div class="rel-head" data-sk="repères · version, date, badge"><span class="ver">v1.2.0</span><span>jj mois aaaa</span><span class="rb">Dernière version</span></div>
+                <h2 data-sk="titre de la version">Titre de la version</h2>
+                <ul class="comps" data-sk="composants et leur version"><li>Composant A 1.2.0</li><li>Composant B 0.1.0</li></ul>
+                <section class="sec" style="--c: var(--new)" data-sk="Nouveau"><h3>Nouveau</h3><ul><li>Ce qui est nouveau, en une phrase.</li><li>Ce qui est nouveau, en une phrase.</li></ul></section>
+                <section class="sec" style="--c: var(--changed)" data-sk="Changé"><h3>Changé</h3><ul><li>Ce qui a changé, en une phrase.</li></ul></section>
+                <div class="rel-foot" data-sk="liens · changements, télécharger"><span>Changements ↗</span><span>Télécharger ↗</span></div>
+              </article>
+
+              <article class="rel" data-zone="older" data-name="Versions précédentes"><span class="badge">5</span>
+                <div class="rel-head" data-sk="repères · version, date"><span class="ver">v1.1.0</span><span>jj mois aaaa</span></div>
+                <h2 data-sk="titre de la version">Titre de la version</h2>
+                <section class="sec" style="--c: var(--new)" data-sk="Nouveau"><h3>Nouveau</h3><ul><li>Ce qui est nouveau, en une phrase.</li></ul></section>
+                <div class="rel-foot" data-sk="liens"><span>Changements ↗</span><span>Télécharger ↗</span></div>
+              </article>
+            </main>
+
+            <aside class="side" data-zone="toc" data-name="Versions"><span class="badge">6</span>
+              <h2 data-sk="sur-titre">Versions</h2>
+              <ul class="toc" data-sk="une entrée par version, celle à l'écran en accent">
+                <li><span class="a cur"><span class="v">Sur main</span><span class="d">pas encore publiée</span></span></li>
+                <li><span class="a"><span class="v">v1.2.0</span><span class="d">jj mois aaaa · Titre</span></span></li>
+                <li><span class="a"><span class="v">v1.1.0</span><span class="d">jj mois aaaa · Titre</span></span></li>
+                <li><span class="a"><span class="v">v1.0.0</span><span class="d">jj mois aaaa · Titre</span></span></li>
+              </ul>
+            </aside>
+          </div>
+
+          <footer class="footer" data-zone="footer" data-name="Footer"><span class="badge">7</span>
+            <span class="red" data-part="1" data-sk="slogan">Slogan · Touch · Dot-matrix</span>
+            <span data-part="2" data-sk="Mathod95/dépôt">Mathod95/projet</span>
+          </footer>
+
+        </div>
+      </div>
+    </div>
+    <div class="a-pins" id="pinsR"></div>
+  </div>
+
+  <div class="a-sub">
+    <h2>Les zones</h2>
+    <p>Ce que chaque zone contient, et les valeurs à reprendre telles quelles (celles de Dot Release, <code>tools/site/releases.html</code>, données dans <code>releases.json</code>). Une entrée par tag, plus <code>next</code> pour ce qui est sur main sans tag.</p>
+  </div>
+  <ol class="a-list" id="list"></ol>
+
+  <p class="a-base"><b>Socle commun</b>: fond #080808 avec la trame de points de 22 px, place de la barre de défilement toujours réservée (la page ne se décale pas d'une page à l'autre), contenu centré de 1240 px au plus, 48 px entre les zones, une seule couleur d'accent (émeraude #10B981), un seul thème sombre. Fira Code pour les libellés et les valeurs, Segoe UI pour le texte. Top et Footer identiques à ceux de la homePage.</p>
+</div>
+
+<script>
+window.ANATOMY = { native: 1320, zones: [
+  { id: "header", side: "L", name: "Top", field: ".top", desc: "Le même sur toutes les pages, toujours dans cet ordre: la marque à gauche, le reste à droite. Releases est allumé: c'est la page en cours.", parts: ["La marque « ● DOT HUB » à gauche, lien vers la homePage.", "Le choix de langue FR / EN.", "Companion, lien vers la page Dot Companion.", "Releases, lien vers la page Dot Release.", "GitHub ↗, lien vers le dépôt du projet (nouvel onglet)."], rule: "<b>Valeurs:</b><br><b>Ensemble</b> en ligne, écart 16 px; répartis aux deux bouts. Rangée de 42 px, la marque à gauche, le reste à droite, tout centré verticalement<br><b>1.1</b> <code>a.brand</code>: Segoe UI 15 px, interligne 23,3 px, gras, espacement .22em, #F2F0E9, précédé d'un point de 12 px #10B981, en ligne, écart 10 px. Lien vers la homePage<br><b>1.2</b> <code>div.lang</code>: marge 4 px, bord 1 px #1F1F1F, arrondi 999 px, fond #080808, en ligne, écart 4 px, 98 × 38 px · <code>span.chip</code>: Fira Code 12 px, interligne normal, espacement .16em, capitales, #B8B6B0, marge 6 × 12 px, arrondi 999 px, fond #080808. Langue choisie en pastille pleine #F2F0E9, texte #080808<br><b>1.3</b> <code>a.ext</code>: Fira Code 13 px, interligne 20,2 px, espacement .16em, capitales, #B8B6B0, marge 10 × 16 px, bord 1 px #1F1F1F, arrondi 999 px, fond #080808, 125 × 42 px. Survol: texte #F2F0E9, bord #333<br><b>1.4</b> <code>a.ext</code>: Fira Code 13 px, interligne 20,2 px, espacement .16em, capitales, #080808, marge 10 × 16 px, bord 1 px #F2F0E9, arrondi 999 px, fond #F2F0E9, 115 × 42 px. Allumé: c'est la page en cours (aria-current)<br><b>1.5</b> <code>a.ext</code>: Fira Code 13 px, interligne 20,2 px, espacement .16em, capitales, #B8B6B0, marge 10 × 16 px, bord 1 px #1F1F1F, arrondi 999 px, fond #080808, 114 × 42 px. Ouvre le dépôt dans un nouvel onglet" },
+  { id: "hero", side: "R", name: "Hero", field: ".hero", desc: "L'ouverture de la page, calée à gauche: le nom de la page en points, puis ce qu'elle raconte.", parts: ["Le titre en points (<code>#titleDots</code>): RELEASES dessiné en canvas avec la police 5 × 7.", "L'accroche (<code>.lede</code>): ce que raconte la page, en une ligne."], rule: "<b>Valeurs:</b><br><b>Ensemble</b> 20 px entre les éléments. 48 px sous l'en-tête<br><b>2.1</b> <code>div.title-box</code>: dessin en points de 686 × 126 px. Points tous les 14 px (la largeur suit le texte), 760 px au plus, calé à gauche, tous les points du texte allumés #F2F0E9, points de fond #171717<br><b>2.2</b> <code>p.lede</code>: Fira Code 19 px, interligne 29,5 px, #F2F0E9 · <code>i</code>: Fira Code 19 px, interligne 29,5 px, #10B981, marge 0 × 9,5 px. Séparateur ● en accent #10B981, .5em de chaque côté" },
+  { id: "next", side: "L", name: "Prochaine version", field: ".rel (next)", desc: "Ce qui est déjà sur main mais pas encore tagué. Toujours en premier, avec un lien vers l'exe compilé par les Actions.", rule: "<b>Valeurs:</b><br><b>Ensemble</b> marge 30 px; bord 1 px #1F1F1F; arrondi 20 px; fond #0E0E0E; 16 px entre les éléments. Pastille « Sur main », badge jaune #F5B942. À chaque commit qui change le produit, une ligne de plus ici<br><b>repères · Sur main, pas encore publiée, badge</b> <code>div.rel-head</code>: en ligne, écart 14 px · <code>span.ver</code>: Fira Code 13 px, interligne 20,2 px, espacement .1em, #F2F0E9, marge 5 × 12 px, bord 1 px #2A2A2A, arrondi 999 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .16em, capitales, #B8B6B0 · <code>span.rb.next</code>: Fira Code 12 px, interligne 18,6 px, espacement .16em, capitales, #F5B942, précédé d'un point de 8 px #F5B942, en ligne, écart 8 px<br><b>titre de la version</b> <code>h2</code>: Segoe UI 28 px, interligne 43,4 px, gras, espacement .01em, #F2F0E9<br><b>composants et leur version</b> <code>ul.comps</code>: en ligne, écart 8 px · <code>li</code>: Fira Code 12 px, interligne 18,6 px, espacement .08em, #B8B6B0, marge 4 × 10 px, bord 1 px #1F1F1F, arrondi 8 px, fond #080808<br><b>Nouveau · vert</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #10B981, précédé d'un point de 8 px #10B981, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>Changé · bleu</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #5AA9E6, précédé d'un point de 8 px #5AA9E6, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>Corrigé · jaune</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #F5B942, précédé d'un point de 8 px #F5B942, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>liens · exe des Actions, changements</b> <code>div.rel-foot</code>: marge 14 / 0 / 0 / 0 px, bord 1 px #1F1F1F en haut, en ligne, écart 18 px, calés à droite, 898 × 34 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .14em, capitales, #10B981" },
+  { id: "latest", side: "L", name: "Dernière version", field: ".rel.latest", desc: "La dernière version taguée: repères, titre, composants, puis Nouveau, Changé et Corrigé, et les liens.", rule: "<b>Valeurs:</b><br><b>Ensemble</b> marge 30 px; bord 1 px #262626; arrondi 20 px; fond #0E0E0E; 16 px entre les éléments. Nouveau #10B981, Changé #5AA9E6, Corrigé #F5B942<br><b>repères · version, date, badge</b> <code>div.rel-head</code>: en ligne, écart 14 px · <code>span.ver</code>: Fira Code 13 px, interligne 20,2 px, espacement .1em, #10B981, marge 5 × 12 px, bord 1 px #10B981, arrondi 999 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .16em, capitales, #B8B6B0 · <code>span.rb</code>: Fira Code 12 px, interligne 18,6 px, espacement .16em, capitales, #10B981, précédé d'un point de 8 px #10B981, en ligne, écart 8 px<br><b>titre de la version</b> <code>h2</code>: Segoe UI 28 px, interligne 43,4 px, gras, espacement .01em, #F2F0E9<br><b>composants et leur version</b> <code>ul.comps</code>: en ligne, écart 8 px · <code>li</code>: Fira Code 12 px, interligne 18,6 px, espacement .08em, #B8B6B0, marge 4 × 10 px, bord 1 px #1F1F1F, arrondi 8 px, fond #080808<br><b>Nouveau</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #10B981, précédé d'un point de 8 px #10B981, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>Changé</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #5AA9E6, précédé d'un point de 8 px #5AA9E6, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>liens · changements, télécharger</b> <code>div.rel-foot</code>: marge 14 / 0 / 0 / 0 px, bord 1 px #1F1F1F en haut, en ligne, écart 18 px, calés à droite, 898 × 34 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .14em, capitales, #10B981" },
+  { id: "older", side: "L", name: "Versions précédentes", field: ".rel", desc: "Les versions plus anciennes, même squelette. Une section vide n'est pas affichée.", rule: "<b>Valeurs:</b><br><b>Ensemble</b> marge 30 px; bord 1 px #1F1F1F; arrondi 20 px; fond #0E0E0E; 16 px entre les éléments. Liens Changements (comparaison avec la version d'avant) et Télécharger<br><b>repères · version, date</b> <code>div.rel-head</code>: en ligne, écart 14 px · <code>span.ver</code>: Fira Code 13 px, interligne 20,2 px, espacement .1em, #F2F0E9, marge 5 × 12 px, bord 1 px #2A2A2A, arrondi 999 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .16em, capitales, #B8B6B0<br><b>titre de la version</b> <code>h2</code>: Segoe UI 28 px, interligne 43,4 px, gras, espacement .01em, #F2F0E9<br><b>Nouveau</b> <code>section.sec</code>: 8 px entre les éléments · <code>h3</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #10B981, précédé d'un point de 8 px #10B981, en ligne, écart 10 px · <code>li</code>: Segoe UI 15 px, interligne 23,3 px, #B8B6B0, marge 0 / 0 / 0 / 4 px<br><b>liens</b> <code>div.rel-foot</code>: marge 14 / 0 / 0 / 0 px, bord 1 px #1F1F1F en haut, en ligne, écart 18 px, calés à droite, 898 × 34 px · <code>span</code>: Fira Code 12 px, interligne 18,6 px, espacement .14em, capitales, #10B981" },
+  { id: "toc", side: "R", name: "Liste des versions", field: ".side .toc", desc: "Une entrée par version, à droite, qui reste visible au défilement. La version à l'écran est en accent.", rule: "<b>Valeurs:</b><br><b>Ensemble</b> 12 px entre les éléments. Colonne de 240 px, 40 px d'écart avec les versions, fixe à 24 px du haut<br><b>sur-titre</b> <code>h2</code>: Fira Code 12 px, interligne 18,6 px, graisse 500, espacement .2em, capitales, #B8B6B0<br><b>une entrée par version, celle à l'écran en accent</b> <code>ul.toc</code>: trait 1 px #1F1F1F à gauche, 2 px entre les éléments · <code>span.v</code>: Fira Code 14 px, interligne 21,7 px, espacement .06em, #10B981 · <code>span.d</code>: Segoe UI 12 px, interligne 18,6 px, #7D7B76, une ligne, coupée par « … » · <code>span.a</code>: précédé d'un point de 8 px #2A2A2A, marge 8 × 12 px, trait 2 px null à gauche, 2 colonnes, écart 2 px entre les lignes, 12 px entre les colonnes" },
+  { id: "footer", side: "R", name: "Footer", field: ".footer", desc: "Le slogan du projet à gauche, le lien vers son dépôt à droite. Le même sur toutes les pages.", parts: ["Le slogan (<code>.red</code>): ce qu'est le projet, en quelques mots séparés par ·, propre à chaque projet.", "Le lien du dépôt: toujours sur le compte Mathod95 (<code>Mathod95/&lt;dépôt&gt;</code>), vers la page GitHub du projet."], rule: "<b>Valeurs:</b><br><b>Ensemble</b> en ligne, écart 24 px; répartis aux deux bouts. Slogan à gauche, lien à droite, dernière zone de la page<br><b>7.1</b> <code>span.red</code>: Fira Code 13 px, interligne 20,2 px, espacement .24em, capitales, #10B981. Propre à chaque projet<br><b>7.2</b> <code>span</code>: Fira Code 13 px, interligne 20,2 px, espacement .24em, capitales, #B8B6B0. Toujours Mathod95/&lt;dépôt&gt;" }
+] };
+</script>
+<script src="anatomy.js"></script>

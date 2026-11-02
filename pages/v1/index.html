@@ -1,0 +1,914 @@
+<title>Dot Box</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
+<style>
+/* Layout: même grammaire que la Dot Page (Dot Hub). Colonne de 1240px sur grille de points,
+   héros en police 5x7, une "machine" interactive, puis des panneaux. Thème sombre unique, assumé. */
+:root {
+  --bg: #080808;
+  --panel: #0e0e0e;
+  --line: #1f1f1f;
+  --line2: #262626;
+  --lit: #f2f0e9;
+  --label: #b8b6b0;
+  --muted: #7d7b76;
+  --unlit: #1c1c1c;
+  --grid: #161616;
+  --accent: #10b981;
+  --wip: #f5b942;
+  --spec: #a78bfa;
+  --design: #5aa9e6;
+  --idea: #6b6b6b;
+  --bad: #ef6461;
+  --pic: 70px; /* taille de tous les pictogrammes 7 x 7 */
+  --mono: "Fira Code", "Cascadia Mono", Consolas, monospace;
+  --brand: "Segoe UI", Selawik, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--lit);
+  font-family: var(--brand); font-size: 16px; line-height: 1.55;
+  background-image: radial-gradient(circle, var(--grid) 1.2px, transparent 1.6px);
+  background-size: 22px 22px;
+  padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 56px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.pic { display: block; flex: none; width: var(--pic); height: var(--pic); }
+code, pre, kbd { font-family: var(--mono); font-variant-ligatures: none; }
+
+/* en-tête */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .22em; font-size: 15px; text-decoration: none; }
+.brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.topr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.ext:hover { color: var(--lit); border-color: #333; }
+.lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: transparent; color: var(--label); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
+
+/* héros */
+.hero { display: grid; gap: 22px; justify-items: start; }
+.hero canvas { display: block; width: min(100%, 720px); height: auto; justify-self: center; }
+.tagline { font-family: var(--mono); font-size: clamp(17px, 2.2vw, 24px); margin: 0; color: var(--lit); justify-self: stretch; text-wrap: pretty; }
+.tagline i { font-style: normal; color: var(--accent); padding: 0 .4em; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.stats b { color: var(--accent); font-weight: 500; font-size: 18px; margin-right: .5em; font-variant-numeric: tabular-nums; }
+
+/* barres de section */
+.sec { display: grid; gap: 16px; }
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.bar h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.hint { margin: 0; color: var(--label); font-size: 14px; }
+
+/* la machine: maquette du dashboard */
+.edge { padding: clamp(8px, 1.2vw, 16px); border-radius: clamp(12px, 1.6vw, 22px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
+.screen { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; padding: clamp(12px, 1.8vw, 22px); border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; }
+.scr-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.scr-head .dot { display: inline-flex; align-items: center; gap: 8px; }
+.scr-head .dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.scr-head .ex { color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-content: start; }
+.tile { position: relative; display: grid; gap: 10px; justify-items: start; padding: 14px; min-width: 0; border: 1.5px solid #1d1d1d; border-radius: 14px; background: transparent; color: var(--lit); text-align: left; font: inherit; cursor: pointer; }
+.tile:hover, .tile:focus-visible { border-color: var(--accent); background: #0d0d0d; outline: none; }
+.tile .name { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
+.st::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--idea)); }
+.st.run { --c: var(--accent); }
+.st.busy { --c: var(--wip); }
+.st.off { --c: var(--idea); color: var(--muted); }
+.tile.off canvas { opacity: .55; }
+.tile[aria-pressed="true"] { border-color: var(--accent); }
+.log { display: grid; grid-template-rows: auto 1fr auto; gap: 10px; min-width: 0; padding: 14px; border: 1.5px solid #1d1d1d; border-radius: 14px; }
+.log-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
+.log-h b { color: var(--lit); font-weight: 500; }
+.log ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; align-content: start; font-size: 12px; line-height: 1.5; min-height: 230px; color: var(--label); overflow-wrap: anywhere; }
+.log li { display: grid; grid-template-columns: 1.4em minmax(0, 1fr); }
+.log li .k { color: var(--muted); }
+.log li.ok .k, .log li.ok { color: var(--accent); }
+.log li.wire .k { color: var(--spec); }
+.log li em { font-style: normal; color: var(--lit); }
+.log-f { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line2); background: var(--bg); color: var(--label); cursor: pointer; }
+.btn:hover { color: var(--lit); border-color: #3a3a3a; }
+.btn.go { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.btn.go:hover { color: var(--bg); filter: brightness(1.08); }
+.btn:disabled { opacity: .4; cursor: default; filter: none; }
+
+/* panneau principal (comme la carte Dot Hub) */
+.hubsec { display: grid; gap: 24px; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line2); border-radius: 20px; background: var(--panel); }
+.hub-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.hub-head .t { display: flex; align-items: center; gap: 18px; }
+.hub-head h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: clamp(22px, 2.6vw, 28px); letter-spacing: .14em; text-transform: uppercase; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
+.status::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--idea)); }
+.hub-lead { margin: 0; font-size: clamp(16px, 1.6vw, 19px); color: var(--lit); text-wrap: pretty; }
+.hub-k { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.part { display: grid; grid-template-rows: auto auto 1fr; gap: 10px; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); position: relative; }
+.part h3 { margin: 0; font-size: 18px; font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.tag2 { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); font-weight: 400; }
+.part p { margin: 0; color: var(--label); font-size: 15px; }
+.part pre { margin: 0; padding: 14px; border-radius: 10px; background: #050505; border: 1px solid var(--line); font-size: 12.5px; line-height: 1.6; color: var(--label); overflow-x: auto; align-self: end; }
+pre .c { color: var(--muted); }
+pre .k { color: var(--lit); }
+pre .a { color: var(--accent); }
+pre .s { color: var(--spec); }
+.part + .part::before { content: "›"; position: absolute; left: -12px; top: 22px; width: 10px; text-align: center; font-family: var(--mono); color: var(--accent); }
+
+/* fonctionnalités */
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.card { display: grid; grid-template-rows: auto auto 1fr; gap: 12px; padding: 22px; min-width: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+.card:hover { border-color: var(--line2); }
+.card h3 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: .02em; text-wrap: balance; }
+.card p { margin: 0; color: var(--label); font-size: 15px; min-width: 0; }
+.card code { color: var(--lit); font-size: .9em; }
+
+/* apps : même carte que les modules de Dot Page */
+.mod { grid-template-rows: auto 1fr auto; gap: 14px; border-color: var(--line2); }
+.mod:hover { border-color: var(--accent); }
+.mod .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; }
+.mod h3 { font-size: 21px; letter-spacing: .02em; }
+.mod .status { color: var(--label); }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; padding-top: 14px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.foot a { color: var(--label); text-decoration: none; }
+.foot a:hover { color: var(--lit); }
+.foot > * { line-height: 28px; }
+.foot a.gh { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; }
+.foot a.gh svg { width: 18px; height: 18px; fill: currentColor; }
+.foot .go { color: var(--accent); margin-right: auto; }
+
+/* en-tête des cartes Apps : pictogramme, nom, rôle */
+.app-h { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.app-h div { display: grid; gap: 2px; min-width: 0; }
+.app-h h3 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: .02em; }
+.mod code { color: var(--lit); font-size: .9em; }
+
+/* CLI */
+.cli { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 14px; align-items: stretch; }
+.cli-t { display: grid; gap: 16px; align-content: start; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+.cli-t h3 { margin: 0; font-size: 21px; font-weight: 700; text-wrap: balance; }
+.cli-t p { margin: 0; color: var(--label); font-size: 15px; }
+.cli-t ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.cli-t li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; color: var(--label); font-size: 15px; }
+.cli-t li::before { content: ""; width: 7px; height: 7px; margin-top: .6em; border-radius: 50%; background: var(--accent); }
+.term { min-width: 0; border: 1px solid #2a2a2a; border-radius: 18px; background: #050505; overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+.term-h { display: flex; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.term pre { margin: 0; padding: 18px; font-size: 13px; line-height: 1.7; color: var(--label); overflow-x: auto; }
+.term .p { color: var(--accent); }
+.term .o { color: var(--muted); }
+.term .r { color: var(--accent); }
+.term .x { color: var(--idea); }
+
+/* feuille de route */
+.road { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: st; }
+.road li { counter-increment: st; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.road li::before { content: counter(st); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line2); color: var(--label); font-family: var(--mono); font-size: 13px; }
+.road li.now::before { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.road b { display: block; color: var(--lit); font-weight: 600; }
+.road span.d { color: var(--label); font-size: 15px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; padding-top: 8px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; color: var(--label); }
+footer .red { color: var(--accent); }
+footer a { color: var(--label); text-decoration: none; }
+footer a:hover { color: var(--lit); }
+
+/* vues : accueil et releases (routage sur #releases) */
+.view { display: contents; }
+.ext[aria-current="page"] { color: var(--bg); background: var(--lit); border-color: var(--lit); }
+
+/* releases (même gabarit que la page Releases de Dot Hub) */
+.r-hero { display: grid; gap: 18px; }
+.r-hero canvas { display: block; width: 100%; max-width: 620px; height: auto; }
+.lede { margin: 0; font-family: var(--mono); font-size: clamp(15px, 1.8vw, 19px); color: var(--lit); text-wrap: pretty; }
+.lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 40px; align-items: start; }
+.feed { display: grid; gap: 18px; min-width: 0; }
+.rel { display: grid; gap: 16px; padding: clamp(20px, 3vw, 30px); border: 1px solid var(--line); border-radius: 20px; background: var(--panel); scroll-margin-top: 24px; min-width: 0; }
+.rel.latest { border-color: var(--line2); }
+.rel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); }
+.ver { padding: 5px 12px; border-radius: 999px; border: 1px solid #2a2a2a; color: var(--lit); font-size: 13px; letter-spacing: .1em; text-transform: none; }
+.rel.latest .ver { border-color: var(--accent); color: var(--accent); }
+.badge { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.badge.next { color: var(--wip); }
+.rel h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 700; letter-spacing: .01em; text-wrap: balance; }
+.cat { display: grid; gap: 8px; }
+.cat h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--c); }
+.cat h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.cat ul { margin: 0; padding: 0 0 0 18px; display: grid; gap: 6px; color: var(--label); font-size: 15px; }
+.cat li { padding-left: 4px; }
+.cat li::marker { color: #3a3a3a; }
+.rel code { font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+.side { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); display: grid; gap: 12px; }
+.side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.toc { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.toc a { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: center; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; text-decoration: none; color: var(--label); }
+.toc a::before { content: ""; grid-row: span 2; width: 8px; height: 8px; border-radius: 50%; background: #2a2a2a; }
+.toc .v { font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); }
+.toc .d { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toc a:hover .v { color: var(--accent); }
+.toc a[aria-current="true"] { border-left-color: var(--accent); }
+.toc a[aria-current="true"]::before { background: var(--accent); }
+.toc a[aria-current="true"] .v { color: var(--accent); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; order: -1; }
+  .toc { display: flex; gap: 8px; overflow-x: auto; border-left: 0; padding-bottom: 4px; }
+  .toc a { flex: none; margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+  .toc a[aria-current="true"] { border-color: var(--accent); }
+  .toc a::before { grid-row: auto; }
+  .toc .v { white-space: nowrap; }
+  .toc .d { display: none; }
+}
+
+@media (max-width: 1080px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .screen { grid-template-columns: minmax(0, 1fr); }
+  .log ol { min-height: 0; }
+}
+@media (max-width: 860px) {
+  .flow, .cli { grid-template-columns: minmax(0, 1fr); }
+  .part + .part::before { content: none; }
+}
+@media (max-width: 560px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .road li { grid-template-columns: auto minmax(0, 1fr); }
+  .road li .status { grid-column: 2; }
+  .wrap { gap: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <a class="brand" href="https://github.com/Mathod95">MATHOD</a>
+    <div class="topr">
+      <div class="lang" role="group" aria-label="Langue">
+        <button class="chip" id="lang-fr" type="button" aria-pressed="true">FR</button>
+        <button class="chip" id="lang-en" type="button" aria-pressed="false">EN</button>
+      </div>
+      <a class="ext" id="nav-home" href="#" hidden>← Dot Box</a>
+      <a class="ext" id="nav-rel" href="#releases">Releases</a>
+      <a class="ext" href="https://github.com/Mathod95">GitHub ↗</a>
+    </div>
+  </header>
+
+  <div class="view" id="v-releases" hidden>
+    <section class="r-hero" aria-labelledby="r-title">
+      <h1 id="r-title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Releases</h1>
+      <canvas id="relDots" width="1800" height="260" aria-hidden="true"></canvas>
+      <p class="lede" data-en="What changed in Dot Box<i>●</i>newest first.">Ce qui a changé dans Dot Box<i>●</i>de la plus récente à la plus ancienne.</p>
+    </section>
+    <div class="layout">
+      <main class="feed" id="feed"></main>
+      <aside class="side" aria-label="Versions">
+        <h2>Versions</h2>
+        <ul class="toc" id="toc"></ul>
+      </aside>
+    </div>
+  </div>
+
+  <div class="view" id="v-home">
+
+  <section class="hero" aria-labelledby="h-title">
+    <h1 id="h-title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h1>
+    <canvas id="titleDots" width="1440" height="200" aria-hidden="true"></canvas>
+    <p class="tagline" data-en="Self-hosted app manager<i>●</i>Rust, Docker Compose, your own catalog.">Gestionnaire d'apps auto-hébergées<i>●</i>Rust, Docker Compose, ton propre catalogue.</p>
+    <ul class="stats">
+      <li><b>1</b><span data-en="Rust binary">binaire Rust</span></li>
+      <li><b>100%</b><span>compose</span></li>
+    </ul>
+  </section>
+
+  <section class="sec" aria-labelledby="h-machine">
+    <div class="bar">
+      <h2 id="h-machine" data-en="On your server">Sur ton serveur</h2>
+      <p class="hint" data-en="Pick an app that isn't installed, then install it.">Choisis une app non installée, puis installe-la.</p>
+    </div>
+    <div class="edge">
+      <div class="screen">
+        <div class="scr-head">
+          <span class="dot">DOT BOX</span>
+          <span class="ex" data-en="Mockup · sample data">Maquette · données d'exemple</span>
+        </div>
+        <div class="tiles" id="tiles" role="group" aria-label="Apps"></div>
+        <div class="log" aria-live="polite">
+          <div class="log-h"><span data-en="Install job">Job d'installation</span><b id="logApp">sonarr</b></div>
+          <ol id="logList"></ol>
+          <div class="log-f">
+            <button class="btn go" id="btnInstall" type="button" data-en="Install Sonarr">Installer Sonarr</button>
+            <button class="btn" id="btnReset" type="button" data-en="Reset">Réinitialiser</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hubsec" aria-labelledby="h-how">
+    <div class="hub-head">
+      <div class="t"><canvas class="pic" id="boxPic" width="140" height="140" aria-hidden="true"></canvas><h2 id="h-how">Dot Box</h2></div>
+      <span class="status" style="--c: var(--design)" data-en="Design (v0.0.1)">Conception (v0.0.1)</span>
+    </div>
+    <p class="hub-lead" data-en="Dot Box installs and wires self-hosted apps on a Debian or Ubuntu server. Each app is a small YAML manifest; a Rust engine turns it into a readable Docker Compose file, with the same paths, network, certificates and SSO every time. No catalog to wait for: if a project ships a compose file, it can become an app.">Dot Box installe et câble des apps auto-hébergées sur un serveur Debian ou Ubuntu. Chaque app est un petit manifest YAML; un moteur Rust le transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.</p>
+    <p class="hub-k" data-en="How it works">Comment ça marche</p>
+    <div class="flow">
+      <article class="part">
+        <h3><span data-en="The manifest">Le manifest</span><span class="tag2">YAML</span></h3>
+        <p data-en="What you want: image, volumes, subdomain, SSO, and how the app connects to the others.">Ce que tu veux: image, volumes, sous-domaine, SSO, et comment l'app se branche aux autres.</p>
+<pre><span class="k">name</span>: radarr
+<span class="k">image</span>: lscr.io/linuxserver/radarr
+<span class="k">subdomain</span>: radarr
+<span class="k">sso</span>: <span class="a">true</span>
+<span class="k">volumes</span>:
+  - /opt/radarr:/config
+  - /data:/data
+<span class="k">wiring</span>:
+  <span class="k">root_folder</span>: /data/media/movies
+  <span class="k">download_clients</span>:
+    - <span class="k">app</span>: qbittorrent
+      <span class="k">category</span>: radarr</pre>
+      </article>
+      <article class="part">
+        <h3><span data-en="The engine">Le moteur</span><span class="tag2">Rust</span></h3>
+        <p data-en="Applies the conventions, writes configs before first start, then wires apps together through their APIs.">Applique les conventions, écrit les configs avant le premier démarrage, puis câble les apps entre elles par leurs API.</p>
+<pre><span class="c"># conventions</span>
+réseau      <span class="a">dotbox</span>
+config      /opt/&lt;app&gt;
+médias      /data  <span class="c"># hardlinks</span>
+proxy       traefik + DNS-01
+sso         authelia
+
+<span class="c"># après le démarrage</span>
+POST /api/v3/rootfolder
+POST /api/v3/downloadclient</pre>
+      </article>
+      <article class="part">
+        <h3><span data-en="The output">Le résultat</span><span class="tag2">Compose</span></h3>
+        <p data-en="A plain compose file you can read. Your own tweaks live in the override, which Dot Box never touches.">Un fichier compose normal, que tu peux lire. Tes ajustements vivent dans l'override, que Dot Box ne touche jamais.</p>
+<pre><span class="c">/opt/radarr/</span>
+├── compose.yml           <span class="c"># généré</span>
+├── compose.override.yml  <span class="s"># à toi</span>
+└── config/
+
+<span class="c"># sans Dot Box, ça tourne quand même</span>
+<span class="a">$</span> docker compose up -d</pre>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-feat">
+    <div class="bar"><h2 id="h-feat" data-en="Features">Fonctionnalités</h2></div>
+    <div class="grid">
+      <article class="card"><canvas class="pic" data-pic="plus" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Open catalog">Catalogue ouvert</h3>
+        <p data-en="Paste a project's docker-compose.yml: Dot Box turns it into a manifest with the standard paths, labels and SSO.">Colle le <code>docker-compose.yml</code> d'un projet: Dot Box en fait un manifest avec les chemins, les labels et le SSO standards.</p></article>
+      <article class="card"><canvas class="pic" data-pic="folders" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="One layout">Une seule arborescence</h3>
+        <p data-en="Config in /opt/<app>, media in a single /data mount. Downloads and libraries share one filesystem, so imports are hardlinks, not copies.">Config dans <code>/opt/&lt;app&gt;</code>, médias dans un seul montage <code>/data</code>. Téléchargements et bibliothèques partagent un filesystem: les imports sont des hardlinks, pas des copies.</p></article>
+      <article class="card"><canvas class="pic" data-pic="traefik" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Subdomains and certificates">Sous-domaines et certificats</h3>
+        <p data-en="Traefik routes every app to its own subdomain. Let's Encrypt through DNS-01 gives one wildcard certificate for all of them.">Traefik route chaque app vers son sous-domaine. Let's Encrypt en DNS-01 fournit un seul certificat wildcard pour toutes.</p></article>
+      <article class="card"><canvas class="pic" data-pic="authelia" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="SSO by default">SSO par défaut</h3>
+        <p data-en="Authelia sits in front of every app unless the manifest says otherwise. The Dot Box UI itself is never reachable without it.">Authelia protège chaque app sauf indication contraire du manifest. L'interface de Dot Box n'est jamais joignable sans lui.</p></article>
+      <article class="card"><canvas class="pic" data-pic="wire" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Automatic wiring">Câblage automatique</h3>
+        <p data-en="Install Radarr after qBittorrent and it is already connected: download client, category, root folder. Prowlarr and Jellyfin follow the same rule.">Installe Radarr après qBittorrent et il est déjà branché: client de téléchargement, catégorie, dossier racine. Prowlarr et Jellyfin suivent la même règle.</p></article>
+      <article class="card"><canvas class="pic" data-pic="compose" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Readable compose">Compose lisible</h3>
+        <p data-en="Every app is a compose file on disk. If Dot Box disappears tomorrow, your apps keep running and stay manageable by hand.">Chaque app est un fichier compose sur le disque. Si Dot Box disparaît demain, tes apps tournent toujours et restent gérables à la main.</p></article>
+      <article class="card"><canvas class="pic" data-pic="sync" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Reconciliation">Réconciliation</h3>
+        <p data-en="Desired state on one side, running containers on the other. Dot Box shows the drift and fixes it, the way ArgoCD does for a cluster.">L'état voulu d'un côté, les containers qui tournent de l'autre. Dot Box montre l'écart et le corrige, comme ArgoCD pour un cluster.</p></article>
+      <article class="card"><canvas class="pic" data-pic="backup" width="140" height="140" aria-hidden="true"></canvas>
+        <h3 data-en="Backup and move">Sauvegarde et migration</h3>
+        <p data-en="Everything that matters lives in /opt and the manifests. Restore both on a fresh server and run one command.">Tout ce qui compte vit dans <code>/opt</code> et les manifests. Restaure les deux sur un serveur neuf et lance une commande.</p></article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-apps">
+    <div class="bar">
+      <h2 id="h-apps">Apps</h2>
+      <p class="hint" data-en="The starting catalog. Traefik and Authelia are installed by dotbox init.">Le catalogue de départ. Traefik et Authelia sont installés par <code>dotbox init</code>.</p>
+    </div>
+    <div class="grid" id="appGrid"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-cli">
+    <div class="bar"><h2 id="h-cli" data-en="CLI and web, one API">CLI et web, une seule API</h2></div>
+    <div class="cli">
+      <div class="cli-t">
+        <h3 data-en="Same engine from the terminal or the browser">Le même moteur, du terminal ou du navigateur</h3>
+        <p data-en="The web UI and the dotbox command both call the server's API. Jobs, logs and history are shared, and only one place ever talks to Docker.">L'interface web et la commande <code>dotbox</code> appellent toutes les deux l'API du serveur. Jobs, logs et historique sont partagés, et un seul endroit parle à Docker.</p>
+        <ul>
+          <li data-en="Install logs stream live, in the terminal and in the browser.">Les logs d'installation défilent en direct, dans le terminal comme dans le navigateur.</li>
+          <li data-en="Docker is reached through a socket proxy, never the raw socket.">Docker est joint via un socket proxy, jamais le socket brut.</li>
+          <li data-en="A --local mode works even when the web server is down.">Un mode <code>--local</code> marche même si le serveur web est tombé.</li>
+        </ul>
+      </div>
+      <div class="term">
+        <div class="term-h"><span>dotbox</span><span data-en="Sample session">Session d'exemple</span></div>
+<pre><span class="p">$</span> dotbox init --domain mathod.fr --dns-provider cloudflare
+<span class="o">  docker, network dotbox, traefik, authelia</span>      <span class="r">ok</span>
+
+<span class="p">$</span> dotbox install radarr
+<span class="o">  pull    lscr.io/linuxserver/radarr</span>
+<span class="o">  write   /opt/radarr/compose.yml</span>
+<span class="o">  up      radarr</span>                                   <span class="r">Running</span>
+<span class="o">  wire    qbittorrent (category radarr)</span>          <span class="r">ok</span>
+<span class="o">  wire    root folder /data/media/movies</span>          <span class="r">ok</span>
+<span class="o">  ready   https://radarr.mathod.fr</span>
+
+<span class="p">$</span> dotbox status
+<span class="o">  APP           STATE      URL</span>
+  traefik       <span class="r">Running</span>    -
+  authelia      <span class="r">Running</span>    auth.mathod.fr
+  jellyfin      <span class="r">Running</span>    jellyfin.mathod.fr
+  radarr        <span class="r">Running</span>    radarr.mathod.fr
+  sonarr        <span class="x">Absent</span>     -
+
+<span class="p">$</span> dotbox add ./docker-compose.yml --name immich</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="road" aria-labelledby="h-road">
+    <div class="bar">
+      <h2 id="h-road" data-en="Roadmap">Feuille de route</h2>
+      <div class="legend">
+        <span class="status" style="--c: var(--accent)" data-en="Next">Prochaine</span>
+        <span class="status" style="--c: var(--design)" data-en="Design">Conception</span>
+        <span class="status" style="--c: var(--idea)" data-en="Idea">Idée</span>
+      </div>
+    </div>
+    <ol class="road">
+      <li class="now"><div><b data-en="Test server">Serveur de test</b><span class="d" data-en="Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia on a small dedicated box, to validate every piece by hand.">Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia sur un petit dédié, pour valider chaque brique à la main.</span></div><span class="status" style="--c: var(--accent)" data-en="Next">Prochaine</span></li>
+      <li><div><b data-en="Manifest format">Format du manifest</b><span class="d" data-en="The schema everything else depends on: image, volumes, subdomain, SSO, wiring.">Le schéma dont tout le reste dépend: image, volumes, sous-domaine, SSO, câblage.</span></div><span class="status" style="--c: var(--design)" data-en="Design">Conception</span></li>
+      <li><div><b>dotbox init</b><span class="d" data-en="Prepare a fresh Debian or Ubuntu: Docker, the shared network, Traefik and Authelia.">Préparer une Debian ou une Ubuntu vierge: Docker, le réseau commun, Traefik et Authelia.</span></div><span class="status" style="--c: var(--design)" data-en="Design">Conception</span></li>
+      <li><div><b data-en="Install, remove, logs">Installer, supprimer, logs</b><span class="d" data-en="The Rust engine and the CLI, generating compose files from manifests.">Le moteur Rust et la CLI, qui génèrent les compose à partir des manifests.</span></div><span class="status" style="--c: var(--idea)" data-en="Idea">Idée</span></li>
+      <li><div><b data-en="Wiring">Câblage</b><span class="d" data-en="qBittorrent, Radarr, Sonarr, Prowlarr and Jellyfin connected through their APIs.">qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin connectés par leurs API.</span></div><span class="status" style="--c: var(--idea)" data-en="Idea">Idée</span></li>
+      <li><div><b data-en="Web interface">Interface web</b><span class="d" data-en="Catalog, status, live install logs, compose import.">Catalogue, états, logs d'installation en direct, import de compose.</span></div><span class="status" style="--c: var(--idea)" data-en="Idea">Idée</span></li>
+      <li><div><b data-en="Move the real server">Migrer le vrai serveur</b><span class="d" data-en="Rebuild the main server cleanly with Dot Box, app by app.">Refaire le serveur principal au propre avec Dot Box, app par app.</span></div><span class="status" style="--c: var(--idea)" data-en="Idea">Idée</span></li>
+    </ol>
+  </section>
+  </div>
+
+  <footer>
+    <span><span class="red">●</span> Dot Box · Mathod</span>
+    <a href="https://mathod95.github.io/xeneon/" data-en="Also: Dot Hub ↗">Voir aussi: Dot Hub ↗</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var LIT = "#f2f0e9", ACC = "#10b981", UNLIT = "#1c1c1c", DIM = "#5f5d58";
+
+  /* police 5 x 7 */
+  var F = {
+    D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+    O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
+    B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+    X: ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
+    " ": ["..", "..", "..", "..", "..", "..", ".."]
+  };
+  function drawTitle(text) {
+    var cv = document.getElementById("titleDots"), ctx = cv.getContext("2d");
+    var cols = [], lastWordCol = 0;
+    text.split("").forEach(function (ch, i) {
+      if (ch === " ") lastWordCol = cols.length + F[" "][0].length;
+      var g = F[ch];
+      for (var c = 0; c < g[0].length; c++) cols.push(g.map(function (r) { return r[c] === "#"; }));
+      if (i < text.length - 1) cols.push([false, false, false, false, false, false, false]);
+    });
+    var pad = 1, total = cols.length + pad * 2, rows = 7 + pad * 2, accentFrom = lastWordCol + pad;
+    var pitch = cv.width / total, r = pitch * 0.36;
+    cv.height = Math.round(rows * pitch);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var x = 0; x < total; x++) for (var y = 0; y < rows; y++) {
+      var col = cols[x - pad], on = col && y >= pad && y < 7 + pad && col[y - pad];
+      var inWord = x >= accentFrom, accent = inWord && !on, lit = on && !inWord;
+      ctx.beginPath();
+      ctx.fillStyle = lit ? LIT : accent ? ACC : "#171717";
+      ctx.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, lit || accent ? r : r * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* pictogrammes 7 x 7 (radarr, sonarr, qbittorrent, seerr repris de Dot Hub) */
+  var PICS = {
+    traefik: ["#.....#", "##...##", ".##.##.", "..###..", "...#...", "...#...", "..###.."],
+    authelia: ["..###..", ".#...#.", ".#...#.", "#######", "###.###", "###.###", "#######"],
+    jellyfin: ["...#...", "..###..", "..#.#..", ".##.##.", ".#...#.", "##...##", "#######"],
+    radarr: [".#####.", "##.#.##", "#.....#", "###.###", "#.....#", "##.#.##", ".#####."],
+    sonarr: [".#...#.", "..#.#..", "#######", "#.....#", "#.....#", "#######", ".#...#."],
+    qbittorrent: ["...#...", "...#...", "...#...", "#..#..#", ".#.#.#.", "..###..", "#######"],
+    prowlarr: [".###...", "#...#..", "#...#..", "#...#..", ".###...", "....##.", ".....##"],
+    seerr: ["#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######", "#.#.#.#"],
+    plex: [".##....", "..##...", "...##..", "....##.", "...##..", "..##...", ".##...."],
+    tautulli: ["......#", "......#", "....#.#", "....#.#", "..#.#.#", "..#.#.#", "#######"],
+    qui: ["..###..", ".#...#.", ".#...#.", ".#...#.", "..####.", ".....#.", ".....##"],
+    portainer: ["#######", "#.#.#.#", "#.#.#.#", "#.#.#.#", "#.#.#.#", "#######", "......."],
+    codeserver: ["#......", ".#.....", "..#....", ".#.....", "#......", ".......", "..#####"],
+    jellystat: [".......", "......#", ".....#.", "#...#..", ".#.#...", "..#....", "#######"],
+    wizarr: ["...#...", "...#...", "#######", ".#####.", "..###..", ".##.##.", "##...##"],
+    tracearr: ["..###..", ".#...#.", ".#.#.#.", ".#...#.", "..#.#..", "..#.#..", "...#..."],
+    uptimekuma: [".##.##.", "#######", "#######", ".#####.", "..###..", "...#...", "......."],
+    vaultwarden: ["..###..", ".#...#.", "..###..", "...#...", "...##..", "...#...", "...###."],
+    wireguard: ["#######", "#.....#", "#.....#", "#.....#", ".#...#.", "..#.#..", "...#..."],
+    box: ["#######", "#.....#", "#.###.#", "#.#.#.#", "#.###.#", "#.....#", "#######"],
+    plus: ["...#...", "...#...", "...#...", "#######", "...#...", "...#...", "...#..."],
+    folders: ["###....", "#######", "#.....#", "#######", "#.....#", "#.....#", "#######"],
+    wire: ["##.....", "##.....", "..#....", "...###.", "....#..", ".....##", ".....##"],
+    compose: ["#######", ".......", "#####..", ".......", "######.", ".......", "####..."],
+    sync: [".####..", "#....#.", "#...###", "#....#.", ".#....#", "###...#", ".#....#"],
+    backup: ["..###..", ".#...#.", "#.....#", "...#...", "...#...", ".#####.", "#######"]
+  };
+  function paint(cv, slug, color) {
+    var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
+    ctx.clearRect(0, 0, px, px);
+    for (var y = 0; y < 7; y++) for (var x = 0; x < 7; x++) {
+      ctx.beginPath(); ctx.fillStyle = g[y][x] === "#" ? color : UNLIT;
+      ctx.arc(x * p + p / 2, y * p + p / 2, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  /* catalogue des apps : une entrée par carte, tout le reste est commun */
+  var GH_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  var CATALOG = [
+    { pic: "traefik", name: "Traefik", sub: "traefik", gh: "traefik/traefik",
+      role: { fr: "Reverse proxy", en: "Reverse proxy" },
+      text: { fr: "Envoie chaque requête vers la bonne app, avec un certificat Let's Encrypt wildcard pour tous les sous-domaines.",
+              en: "Sends every request to the right app, with one Let's Encrypt wildcard certificate for all subdomains." } },
+    { pic: "authelia", name: "Authelia", sub: "auth", gh: "authelia/authelia",
+      role: { fr: "Authentification (SSO)", en: "Authentication (SSO)" },
+      text: { fr: "Une seule connexion pour toutes les apps, avec double authentification et passkeys.",
+              en: "One login for every app, with two-factor authentication and passkeys." } },
+    { pic: "plex", name: "Plex", sub: "plex", docs: "https://support.plex.tv/",
+      role: { fr: "Serveur multimédia", en: "Media server" },
+      text: { fr: "Diffuse tes films et séries sur TV, mobile et navigateur. Bibliothèques pointées sur `/data/media`, alimentées par Radarr et Sonarr.",
+              en: "Streams your movies and shows to TV, phone and browser. Libraries point at `/data/media`, filled by Radarr and Sonarr." } },
+    { pic: "tautulli", name: "Tautulli", sub: "tautulli", gh: "Tautulli/Tautulli",
+      role: { fr: "Statistiques Plex", en: "Plex statistics" },
+      text: { fr: "Suit l'activité de Plex: qui regarde quoi, historique, graphiques et notifications.",
+              en: "Tracks Plex activity: who watches what, history, graphs and notifications." } },
+    { pic: "qbittorrent", name: "qBittorrent", sub: "qbittorrent", gh: "qbittorrent/qBittorrent",
+      role: { fr: "Client torrent", en: "Torrent client" },
+      text: { fr: "Télécharge dans `/data/torrents`, une catégorie par app. Radarr et Sonarr importent ensuite en hardlink, sans copie.",
+              en: "Downloads into `/data/torrents`, one category per app. Radarr and Sonarr then import as hardlinks, with no copy." } },
+    { pic: "qui", name: "qui", sub: "qui", gh: "autobrr/qui",
+      role: { fr: "Interface qBittorrent", en: "qBittorrent web UI" },
+      text: { fr: "Interface web moderne pour qBittorrent, qui gère plusieurs instances depuis un seul écran.",
+              en: "Modern web interface for qBittorrent, managing several instances from one screen." } },
+    { pic: "sonarr", name: "Sonarr", sub: "sonarr", gh: "Sonarr/Sonarr",
+      role: { fr: "Séries", en: "TV shows" },
+      text: { fr: "Surveille tes séries, envoie les épisodes à qBittorrent puis les range dans `/data/media/tv`.",
+              en: "Watches your shows, sends episodes to qBittorrent, then files them in `/data/media/tv`." } },
+    { pic: "radarr", name: "Radarr", sub: "radarr", gh: "Radarr/Radarr",
+      role: { fr: "Films", en: "Movies" },
+      text: { fr: "Surveille tes films, envoie les téléchargements à qBittorrent puis les range dans `/data/media/movies`.",
+              en: "Watches your movies, sends downloads to qBittorrent, then files them in `/data/media/movies`." } },
+    { pic: "prowlarr", name: "Prowlarr", sub: "prowlarr", gh: "Prowlarr/Prowlarr",
+      role: { fr: "Indexeurs", en: "Indexers" },
+      text: { fr: "Gère tous les indexeurs au même endroit et les pousse automatiquement vers Radarr et Sonarr.",
+              en: "Manages every indexer in one place and pushes them to Radarr and Sonarr automatically." } },
+    { pic: "seerr", name: "Seerr", sub: "seerr", gh: "seerr-team/seerr",
+      role: { fr: "Demandes", en: "Requests" },
+      text: { fr: "Tes proches demandent un film ou une série, la demande validée part dans Radarr ou Sonarr. Successeur d'Overseerr et de Jellyseerr.",
+              en: "Friends and family request a movie or show; once approved it goes to Radarr or Sonarr. Successor to Overseerr and Jellyseerr." } },
+    { pic: "jellyfin", name: "Jellyfin", sub: "jellyfin", gh: "jellyfin/jellyfin",
+      role: { fr: "Serveur multimédia", en: "Media server" },
+      text: { fr: "Serveur multimédia libre, sans compte externe. Bibliothèques pointées sur `/data/media`, transcodage matériel via `/dev/dri`.",
+              en: "Free media server with no outside account. Libraries point at `/data/media`, hardware transcoding through `/dev/dri`." } },
+    { pic: "portainer", name: "Portainer", sub: "portainer", gh: "portainer/portainer",
+      role: { fr: "Gestion Docker", en: "Docker management" },
+      text: { fr: "Interface web pour voir et gérer containers, images, volumes et réseaux du serveur.",
+              en: "Web interface to see and manage the server's containers, images, volumes and networks." } },
+    { pic: "codeserver", name: "code-server", sub: "code", gh: "coder/code-server",
+      role: { fr: "Éditeur de code", en: "Code editor" },
+      text: { fr: "VS Code dans le navigateur, pour éditer configs et fichiers compose directement sur le serveur.",
+              en: "VS Code in the browser, to edit configs and compose files right on the server." } },
+    { pic: "jellystat", name: "Jellystat", sub: "jellystat", gh: "CyferShepard/Jellystat",
+      role: { fr: "Statistiques Jellyfin", en: "Jellyfin statistics" },
+      text: { fr: "L'équivalent de Tautulli pour Jellyfin: historique de lecture, utilisateurs et statistiques par bibliothèque.",
+              en: "Tautulli's counterpart for Jellyfin: playback history, users and per-library statistics." } },
+    { pic: "wizarr", name: "Wizarr", sub: "wizarr", gh: "wizarrrr/wizarr",
+      role: { fr: "Invitations", en: "Invitations" },
+      text: { fr: "Liens d'invitation pour donner accès à Plex ou Jellyfin, avec un guide d'accueil pour les nouveaux utilisateurs.",
+              en: "Invite links that give access to Plex or Jellyfin, with an onboarding guide for new users." } },
+    { pic: "tracearr", name: "Tracearr", sub: "tracearr", gh: "connorgallopo/Tracearr",
+      role: { fr: "Suivi des lectures", en: "Stream monitoring" },
+      text: { fr: "Suit en temps réel les lectures sur Plex, Jellyfin et Emby, avec détection du partage de compte et alertes.",
+              en: "Follows streams on Plex, Jellyfin and Emby in real time, with account-sharing detection and alerts." } },
+    { pic: "uptimekuma", name: "Uptime Kuma", sub: "status", gh: "louislam/uptime-kuma",
+      role: { fr: "Supervision", en: "Uptime monitoring" },
+      text: { fr: "Vérifie que chaque app répond et prévient (Discord, e-mail...) dès qu'une tombe.",
+              en: "Checks that every app responds and alerts you (Discord, email...) as soon as one goes down." } },
+    { pic: "vaultwarden", name: "Vaultwarden", sub: "vault", gh: "dani-garcia/vaultwarden",
+      role: { fr: "Mots de passe", en: "Passwords" },
+      text: { fr: "Serveur compatible Bitwarden, léger et écrit en Rust. Fonctionne avec les apps et extensions Bitwarden officielles.",
+              en: "Lightweight Bitwarden-compatible server written in Rust. Works with the official Bitwarden apps and extensions." } },
+    { pic: "wireguard", name: "WireGuard", sub: "vpn", docs: "https://www.wireguard.com/",
+      role: { fr: "VPN", en: "VPN" },
+      text: { fr: "Accès privé au serveur depuis l'extérieur, pour les apps que tu ne veux pas exposer publiquement.",
+              en: "Private access to the server from outside, for apps you don't want to expose publicly." } }
+  ];
+  function renderApps() {
+    var grid = document.getElementById("appGrid"); grid.innerHTML = "";
+    CATALOG.forEach(function (a) {
+      var art = mk("article", "card mod");
+      var head = mk("div", "app-h");
+      var cv = document.createElement("canvas"); cv.className = "pic"; cv.width = 140; cv.height = 140; cv.setAttribute("aria-hidden", "true");
+      paint(cv, a.pic, LIT); head.appendChild(cv);
+      var t = mk("div"); t.appendChild(mk("h3", "", a.name)); t.appendChild(mk("span", "tag2", a.role[lang] || a.role.fr)); head.appendChild(t);
+      art.appendChild(head);
+      var pp = mk("p"); pp.innerHTML = inline(a.text[lang] || a.text.fr); art.appendChild(pp);
+      var foot = mk("div", "foot");
+      foot.appendChild(mk("span", "go", a.sub + ".mathod.fr"));
+      var link = document.createElement("a");
+      if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " sur GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
+      else { link.href = a.docs; link.textContent = "Docs ↗"; }
+      foot.appendChild(link);
+      art.appendChild(foot);
+      grid.appendChild(art);
+    });
+  }
+
+  drawTitle("DOT BOX");
+  paint(document.getElementById("boxPic"), "box", ACC);
+  Array.prototype.forEach.call(document.querySelectorAll("canvas[data-pic]"), function (cv) { paint(cv, cv.dataset.pic, LIT); });
+
+  /* langue */
+  var lang = "fr";
+  var TXT = {
+    fr: { run: "Running", off: "Absent", busy: "Installation", inst: "Installer ", done: "Installé", already: "Déjà installé", pick: "Choisis une app" },
+    en: { run: "Running", off: "Absent", busy: "Installing", inst: "Install ", done: "Installed", already: "Already installed", pick: "Pick an app" }
+  };
+  function setLang(l) {
+    lang = l;
+    document.documentElement.lang = l;
+    document.getElementById("lang-fr").setAttribute("aria-pressed", l === "fr");
+    document.getElementById("lang-en").setAttribute("aria-pressed", l === "en");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-en]"), function (el) {
+      if (el.dataset.fr === undefined) el.dataset.fr = el.innerHTML;
+      el.innerHTML = l === "en" ? escapeKeep(el.dataset.en) : el.dataset.fr;
+    });
+    renderTiles(); syncButton(); renderApps(); renderReleases();
+  }
+  /* data-en contient du texte brut, sauf <i> et <code> qu'on autorise */
+  function escapeKeep(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/&lt;(\/?)(i|code)&gt;/g, "<$1$2>");
+  }
+  document.getElementById("lang-fr").addEventListener("click", function () { setLang("fr"); });
+  document.getElementById("lang-en").addEventListener("click", function () { setLang("en"); });
+
+  /* maquette : apps et installation simulée */
+  var APPS = [
+    { slug: "traefik", name: "Traefik", on: true },
+    { slug: "authelia", name: "Authelia", on: true },
+    { slug: "jellyfin", name: "Jellyfin", on: true },
+    { slug: "qbittorrent", name: "qBittorrent", on: true },
+    { slug: "radarr", name: "Radarr", on: true },
+    { slug: "sonarr", name: "Sonarr", on: false },
+    { slug: "prowlarr", name: "Prowlarr", on: false },
+    { slug: "seerr", name: "Seerr", on: false }
+  ];
+  var START = APPS.map(function (a) { return a.on; });
+  var IMG = { sonarr: "lscr.io/linuxserver/sonarr", prowlarr: "lscr.io/linuxserver/prowlarr", seerr: "ghcr.io/seerr-team/seerr" };
+  var WIRE = {
+    sonarr: [["wire", "qbittorrent", "category sonarr"], ["wire", "root folder", "/data/media/tv"], ["wire", "jellyfin", "library /data/media/tv"]],
+    prowlarr: [["wire", "radarr", "push indexers"], ["wire", "sonarr", "push indexers"]],
+    seerr: [["wire", "jellyfin", "sign-in"], ["wire", "radarr", "4K off, quality HD-1080p"]]
+  };
+  var selected = "sonarr", busy = null, timers = [];
+  var tilesEl = document.getElementById("tiles"), logEl = document.getElementById("logList"), btn = document.getElementById("btnInstall");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function app(slug) { for (var i = 0; i < APPS.length; i++) if (APPS[i].slug === slug) return APPS[i]; }
+  function renderTiles() {
+    tilesEl.innerHTML = "";
+    APPS.forEach(function (a) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "tile" + (a.on ? "" : " off");
+      b.setAttribute("aria-pressed", a.slug === selected);
+      var cv = document.createElement("canvas"); cv.className = "pic"; cv.width = 140; cv.height = 140; cv.setAttribute("aria-hidden", "true");
+      paint(cv, a.slug, a.on ? LIT : DIM);
+      var n = document.createElement("span"); n.className = "name"; n.textContent = a.name;
+      var s = document.createElement("span");
+      var state = busy === a.slug ? "busy" : a.on ? "run" : "off";
+      s.className = "st " + state; s.textContent = TXT[lang][state];
+      b.appendChild(cv); b.appendChild(n); b.appendChild(s);
+      b.addEventListener("click", function () { if (busy) return; selected = a.slug; renderTiles(); syncButton(); idleLog(); });
+      tilesEl.appendChild(b);
+    });
+  }
+  function syncButton() {
+    var a = app(selected);
+    document.getElementById("logApp").textContent = a.slug;
+    if (busy) { btn.disabled = true; btn.textContent = TXT[lang].busy + "…"; return; }
+    btn.disabled = a.on;
+    btn.textContent = a.on ? TXT[lang].already : TXT[lang].inst + a.name;
+  }
+  function line(kind, k, html) {
+    var li = document.createElement("li"); if (kind) li.className = kind;
+    var s = document.createElement("span"); s.className = "k"; s.textContent = k;
+    var t = document.createElement("span"); t.innerHTML = html;
+    li.appendChild(s); li.appendChild(t); logEl.appendChild(li);
+  }
+  function idleLog() {
+    logEl.innerHTML = "";
+    var a = app(selected);
+    if (a.on) {
+      line("ok", "●", "<em>" + a.slug + ".mathod.fr</em>");
+      line("", "·", "/opt/" + a.slug + "/compose.yml");
+      line("", "·", "/opt/" + a.slug + "/compose.override.yml");
+    } else {
+      line("", "·", "image <em>" + (IMG[a.slug] || "") + "</em>");
+      line("", "·", "subdomain <em>" + a.slug + ".mathod.fr</em>");
+      line("", "·", "sso <em>authelia</em>");
+    }
+  }
+  function install() {
+    var a = app(selected); if (a.on || busy) return;
+    busy = a.slug; renderTiles(); syncButton(); logEl.innerHTML = "";
+    var steps = [
+      ["", "›", "pull <em>" + IMG[a.slug] + "</em>"],
+      ["", "›", "mkdir /opt/" + a.slug + " (uid 1000)"],
+      ["", "›", "write /opt/" + a.slug + "/compose.yml"],
+      ["", "›", "label traefik <em>" + a.slug + ".mathod.fr</em>"],
+      ["", "›", "middleware <em>authelia@docker</em>"],
+      ["", "›", "compose up -d"],
+      ["", "›", "wait healthy"]
+    ];
+    (WIRE[a.slug] || []).forEach(function (w) { steps.push(["wire", "⇄", w[0] + " <em>" + w[1] + "</em> " + w[2]]); });
+    steps.push(["ok", "●", "<em>https://" + a.slug + ".mathod.fr</em>"]);
+    var delay = reduce ? 0 : 420;
+    steps.forEach(function (st, i) {
+      timers.push(setTimeout(function () {
+        line(st[0], st[1], st[2]);
+        if (i === steps.length - 1) { a.on = true; busy = null; renderTiles(); syncButton(); }
+      }, delay * (i + 1)));
+    });
+  }
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; busy = null;
+    APPS.forEach(function (a, i) { a.on = START[i]; });
+    selected = "sonarr"; renderTiles(); syncButton(); idleLog();
+  }
+  btn.addEventListener("click", install);
+  document.getElementById("btnReset").addEventListener("click", reset);
+
+  renderTiles(); syncButton(); idleLog(); renderApps();
+
+  /* ---------- releases ---------- */
+  var RF = {
+    R: ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
+    E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
+    L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+    A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+    S: [".####", "#....", "#....", ".###.", "....#", "....#", "####."]
+  };
+  function drawPlain(cv, text) {
+    var ctx = cv.getContext("2d"), cols = [];
+    text.split("").forEach(function (ch, i) {
+      var g = RF[ch];
+      for (var c = 0; c < g[0].length; c++) cols.push(g.map(function (r) { return r[c] === "#"; }));
+      if (i < text.length - 1) cols.push([false, false, false, false, false, false, false]);
+    });
+    var pad = 1, total = cols.length + pad * 2, rows = 7 + pad * 2, pitch = cv.width / total, r = pitch * 0.36;
+    cv.height = Math.round(rows * pitch);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var x = 0; x < total; x++) for (var y = 0; y < rows; y++) {
+      var col = cols[x - pad], on = col && y >= pad && y < 7 + pad && col[y - pad];
+      ctx.beginPath(); ctx.fillStyle = on ? LIT : "#171717";
+      ctx.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, on ? r : r * 0.8, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  drawPlain(document.getElementById("relDots"), "RELEASES");
+
+  var REL = [
+    {
+      version: "next",
+      title: { fr: "Serveur de test", en: "Test server" },
+      planned: [
+        { fr: "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main", en: "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand" },
+        { fr: "Format du manifest: image, volumes, sous-domaine, SSO, câblage", en: "Manifest format: image, volumes, subdomain, SSO, wiring" },
+        { fr: "`dotbox init` sur une Debian ou une Ubuntu vierge", en: "`dotbox init` on a fresh Debian or Ubuntu" }
+      ]
+    },
+    {
+      version: "v0.0.1", date: "2026-10-28",
+      title: { fr: "Première version", en: "First release" },
+      new: [
+        { fr: "Accueil: titre DOT BOX en points, dans le style de Dot Hub", en: "Home: DOT BOX dot-matrix title, in the Dot Hub style" },
+        { fr: "Accueil: maquette interactive du dashboard, avec l'installation simulée de Sonarr, Prowlarr ou Seerr", en: "Home: interactive dashboard mockup, with a simulated install of Sonarr, Prowlarr or Seerr" },
+        { fr: "Accueil: fonctionnement en trois temps, manifest, moteur Rust et fichier compose", en: "Home: how it works in three steps, manifest, Rust engine and compose file" },
+        { fr: "Accueil: fonctionnalités, session CLI d'exemple, feuille de route", en: "Home: features, sample CLI session, roadmap" },
+        { fr: "Accueil: section Apps avec 19 apps, dont Traefik et Authelia installés par `dotbox init`", en: "Home: Apps section with 19 apps, including Traefik and Authelia installed by `dotbox init`" },
+        { fr: "Accueil: bascule FR / EN", en: "Home: FR / EN toggle" },
+        { fr: "Releases: cette page, avec un bouton Releases dans l'en-tête", en: "Releases: this page, with a Releases button in the header" }
+      ]
+    }
+  ];
+  var RS = {
+    fr: { latest: "Dernière version", next: "Prochaine version", nextV: "Sur main", nextD: "pas encore publiée", planned: "Prévu", new: "Nouveau", changed: "Changé", removed: "Retiré",
+      months: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"] },
+    en: { latest: "Latest release", next: "Next release", nextV: "On main", nextD: "not released yet", planned: "Planned", new: "New", changed: "Changed", removed: "Removed",
+      months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] }
+  };
+  function rt(k) { return RS[lang][k]; }
+  function tr(o) { return o[lang] || o.fr; }
+  function fmtDate(s) {
+    var p = s.split("-"), d = parseInt(p[2], 10), m = rt("months")[parseInt(p[1], 10) - 1];
+    return lang === "fr" ? d + " " + m + " " + p[0] : m + " " + d + ", " + p[0];
+  }
+  function inline(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+  function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function rid(r) { return r.version === "next" ? "rel-next" : "rel-" + r.version.replace(/\./g, "-"); }
+
+  function renderReleases() {
+    var feed = document.getElementById("feed"), toc = document.getElementById("toc");
+    feed.innerHTML = ""; toc.innerHTML = "";
+    var firstTag = REL.filter(function (r) { return r.version !== "next"; })[0];
+    REL.forEach(function (r) {
+      var next = r.version === "next", latest = r === firstTag;
+      var art = mk("article", "rel" + (latest ? " latest" : "")); art.id = rid(r);
+      var head = mk("div", "rel-head");
+      head.appendChild(mk("span", "ver", next ? rt("nextV") : r.version));
+      var tm = mk("time", "", next ? rt("nextD") : fmtDate(r.date)); if (r.date) tm.setAttribute("datetime", r.date);
+      head.appendChild(tm);
+      if (latest) head.appendChild(mk("span", "badge", rt("latest")));
+      if (next) head.appendChild(mk("span", "badge next", rt("next")));
+      art.appendChild(head);
+      art.appendChild(mk("h2", "", tr(r.title)));
+      [["planned", "var(--design)"], ["new", "var(--accent)"], ["changed", "var(--design)"], ["removed", "var(--muted)"]].forEach(function (k) {
+        var items = r[k[0]] || []; if (!items.length) return;
+        var sec = mk("section", "cat"); sec.style.setProperty("--c", k[1]);
+        sec.appendChild(mk("h3", "", rt(k[0])));
+        var ul = mk("ul");
+        items.forEach(function (it) { var li = mk("li"); li.innerHTML = inline(tr(it)); ul.appendChild(li); });
+        sec.appendChild(ul); art.appendChild(sec);
+      });
+      feed.appendChild(art);
+      var li = mk("li"), a = mk("a"); a.href = "#releases"; a.setAttribute("data-id", rid(r));
+      a.appendChild(mk("span", "v", next ? rt("nextV") : r.version));
+      a.appendChild(mk("span", "d", next ? rt("nextD") : fmtDate(r.date) + " · " + tr(r.title)));
+      li.appendChild(a); toc.appendChild(li);
+    });
+    spy();
+  }
+  var observer = null;
+  function mark(v) { Array.prototype.forEach.call(document.querySelectorAll(".toc a"), function (a) { a.setAttribute("aria-current", a.getAttribute("data-id") === v ? "true" : "false"); }); }
+  function spy() {
+    if (observer) observer.disconnect();
+    var arts = Array.prototype.slice.call(document.querySelectorAll(".rel"));
+    if (arts.length) mark(arts[0].id);
+    if (!window.IntersectionObserver) return;
+    var seen = {};
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+      var top = arts.filter(function (a) { return seen[a.id]; })[0];
+      if (top) mark(top.id);
+    }, { rootMargin: "-10% 0px -60% 0px" });
+    arts.forEach(function (a) { observer.observe(a); });
+  }
+  document.getElementById("toc").addEventListener("click", function (e) {
+    var a = e.target.closest("a"); if (!a) return;
+    e.preventDefault();
+    var target = document.getElementById(a.getAttribute("data-id"));
+    if (target) target.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+    mark(a.getAttribute("data-id"));
+  });
+
+  /* routage : #releases affiche les releases, tout le reste l'accueil */
+  function route() {
+    var h = location.hash.slice(1), rel = h === "releases";
+    document.getElementById("v-releases").hidden = !rel;
+    document.getElementById("v-home").hidden = rel;
+    document.getElementById("nav-home").hidden = !rel;
+    var nr = document.getElementById("nav-rel");
+    if (rel) nr.setAttribute("aria-current", "page"); else nr.removeAttribute("aria-current");
+    if (rel) { window.scrollTo(0, 0); spy(); }
+    else if (h && document.getElementById(h)) document.getElementById(h).scrollIntoView({ block: "start" });
+    else window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+  renderReleases();
+  route();
+})();
+</script>

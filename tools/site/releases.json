@@ -1,0 +1,32 @@
+{
+  "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est sur main sans tag. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
+  "releases": [
+    {
+      "version": "next",
+      "title": { "fr": "Serveur de test", "en": "Test server" },
+      "planned": [
+        { "fr": "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main", "en": "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand" },
+        { "fr": "Manifest: format d'une app (image, volumes, sous-domaine, SSO, câblage)", "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)" },
+        { "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)", "en": "CLI: `dotbox init` on a fresh Debian or Ubuntu (Docker, shared network, Traefik, Authelia)" },
+        { "fr": "Moteur: installer, supprimer, logs, avec un `compose.yml` généré par app", "en": "Engine: install, remove, logs, with one generated `compose.yml` per app" },
+        { "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin par leurs API", "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and Jellyfin through their APIs" },
+        { "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose", "en": "Web interface: catalog, status, live install logs, compose import" },
+        { "fr": "Serveur principal: refait au propre avec Dot Box, app par app", "en": "Main server: rebuilt cleanly with Dot Box, app by app" }
+      ]
+    },
+    {
+      "version": "v0.0.1",
+      "date": "2026-10-28",
+      "tagged": false,
+      "title": { "fr": "Première version", "en": "First release" },
+      "new": [
+        { "fr": "Accueil: titre DOT BOX en points, accroche et chiffres clés, dans le style de Dot Hub", "en": "Home: DOT BOX dot-matrix title, tagline and key figures, in the Dot Hub style" },
+        { "fr": "Accueil: maquette interactive de l'interface, avec l'installation simulée de Sonarr, Prowlarr ou Seerr", "en": "Home: interactive interface mockup, with a simulated install of Sonarr, Prowlarr or Seerr" },
+        { "fr": "Accueil: présentation de Dot Box, le serveur et la CLI, l'installation en trois étapes", "en": "Home: Dot Box overview, the server and the CLI, install in three steps" },
+        { "fr": "Accueil: catalogue de 19 apps, dont Traefik et Authelia installés par `dotbox init`", "en": "Home: catalog of 19 apps, including Traefik and Authelia installed by `dotbox init`" },
+        { "fr": "Accueil: bascule FR / EN, français si le navigateur est en français, anglais sinon", "en": "Home: FR / EN toggle, French for a French browser, English otherwise" },
+        { "fr": "Releases: cette page, les versions au centre et la liste des versions à droite", "en": "Releases: this page, versions in the middle and the version list on the right" }
+      ]
+    }
+  ]
+}
