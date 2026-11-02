@@ -1,0 +1,284 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
+<style>
+/* Pages de documentation de Dot Box (Getting Started), architecture de docs.saltbox.dev avec la charte de Dot Hub :
+   en-tête du site, barre de navigation à gauche (sections, pages, sommaire de la page en cours), article à droite,
+   lien vers la page suivante, pied de page. Valeurs de la subPage (xeneon). Un seul thème sombre. */
+:root {
+  --bg: #080808;
+  --panel: #0e0e0e;
+  --line: #1f1f1f;
+  --line2: #262626;
+  --lit: #f2f0e9;
+  --label: #b8b6b0;
+  --muted: #7d7b76;
+  --unlit: #1c1c1c;
+  --accent: #10b981;
+  --wip: #f5b942;
+  --spec: #a78bfa;
+  --design: #5aa9e6;
+  --mono: "Fira Code", "Cascadia Mono", Consolas, monospace;
+  --brand: "Segoe UI", Selawik, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); scrollbar-gutter: stable; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html[lang="fr"] [data-l="en"], html[lang="en"] [data-l="fr"] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--lit);
+  font-family: var(--brand); font-size: 16px; line-height: 1.55;
+  background-image: radial-gradient(circle, #161616 1.2px, transparent 1.6px);
+  background-size: 22px 22px;
+  padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 48px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+
+/* Top (identique aux autres pages) */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; height: 42px; font-weight: 700; letter-spacing: .22em; font-size: 15px; color: var(--lit); text-decoration: none; }
+.brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.topr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.ext:hover { color: var(--lit); border-color: #333; }
+.ext[aria-current="page"] { color: var(--bg); background: var(--lit); border-color: var(--lit); }
+.lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--bg); color: var(--label); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
+
+/* barre de navigation à gauche, article à droite */
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+.side { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); display: grid; gap: 12px; max-height: calc(100vh - 48px); overflow-y: auto; }
+.side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.nav { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.nav > li > a { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); text-decoration: none; }
+.nav > li > a::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: #2a2a2a; }
+.nav > li > a:hover { color: var(--accent); }
+.nav > li > a[aria-current="page"] { border-left-color: var(--accent); color: var(--accent); }
+.nav > li > a[aria-current="page"]::before { background: var(--accent); }
+.nav .grp { padding: 16px 12px 4px; font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.nav .sub > a { padding-left: 26px; }
+.toc { margin: 2px 0 8px; padding: 0 0 0 32px; list-style: none; display: grid; gap: 2px; }
+.toc a { display: block; padding: 3px 0; font-size: 13px; color: var(--muted); text-decoration: none; }
+.toc a:hover { color: var(--lit); }
+.toc a[aria-current="true"] { color: var(--lit); }
+.toc .h3 { padding-left: 14px; font-size: 12.5px; }
+
+/* article */
+.doc { display: grid; gap: 40px; min-width: 0; }
+.hero { display: grid; gap: 20px; }
+.crumb { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.crumb a { color: var(--label); text-decoration: none; }
+.crumb a:hover { color: var(--lit); }
+.hero canvas { display: block; height: auto; justify-self: start; }
+.lede { margin: 0; font-family: var(--mono); font-size: clamp(15px, 1.8vw, 19px); color: var(--lit); text-wrap: pretty; }
+.lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
+.state { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); }
+.state::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--design); }
+.prose { display: grid; gap: 18px; min-width: 0; }
+.prose pre { margin: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: #050505; font-family: var(--mono); font-variant-ligatures: none; font-size: 13px; line-height: 1.65; color: var(--lit); overflow-x: auto; }
+.prose pre .c { color: var(--muted); }
+.prose pre .p { color: var(--accent); }
+.prose pre .ok { color: var(--accent); }
+.prose pre .w { color: var(--wip); }
+.prose .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.prose table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.prose th, .prose td { text-align: left; padding: 12px 16px; vertical-align: top; border-bottom: 1px solid var(--line); font-size: 15px; }
+.prose tbody tr:last-child td { border-bottom: 0; }
+.prose thead th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.prose td { color: var(--label); }
+.prose td:first-child { color: var(--lit); font-weight: 600; white-space: nowrap; }
+.prose h2 { margin: 18px 0 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); scroll-margin-top: 24px; }
+.prose h3 { margin: 6px 0 -8px; font-size: 18px; font-weight: 700; color: var(--lit); scroll-margin-top: 24px; }
+.prose p { margin: 0; color: var(--label); font-size: 16px; max-width: 75ch; }
+.prose p b, .prose li b { color: var(--lit); font-weight: 600; }
+.prose ol, .prose ul { margin: 0; padding: 0 0 0 22px; display: grid; gap: 8px; color: var(--label); max-width: 75ch; }
+.prose li::marker { color: var(--muted); }
+.note { margin: 0; padding: 16px 20px; border: 1px solid #2a2414; border-radius: 14px; background: #0f0d08; color: var(--label); font-size: 15px; max-width: none !important; }
+.note b { color: var(--wip); font-weight: 600; }
+/* schéma en étapes : une case par étape, reliées par › */
+.prose .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 0; padding: 0; list-style: none; max-width: none; }
+.flow li { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); min-width: 0; flex: 1 1 150px; position: relative; }
+.flow li + li::before { content: "›"; position: absolute; left: -9px; top: 50%; transform: translateY(-50%); font-family: var(--mono); color: var(--accent); }
+.flow b { font-size: 15px; color: var(--lit); }
+.flow span { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--muted); overflow-wrap: anywhere; }
+.pn { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+.pn a { display: grid; gap: 4px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); text-decoration: none; min-width: 200px; }
+.pn a:hover { border-color: var(--accent); }
+.pn a.next { margin-left: auto; text-align: right; }
+.pn small { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.pn b { font-family: var(--mono); font-weight: 500; font-size: 15px; color: var(--accent); }
+
+/* Footer */
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
+.footer .red { color: var(--accent); }
+.footer a { color: var(--label); text-decoration: none; }
+.footer a:hover { color: var(--lit); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .side { position: static; max-height: none; }
+  .toc { display: none; }
+  .nav { display: flex; flex-wrap: wrap; gap: 8px; border-left: 0; }
+  .nav > li > a { margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+  .nav > li > a[aria-current="page"] { border-color: var(--accent); }
+  .flow li + li::before { display: none; }
+}
+__PAGE_CSS__
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="__HOME__"__HOME_TARGET__>DOT BOX</a>
+    <div class="topr">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" class="chip" data-lang="fr" aria-pressed="false">FR</button>
+        <button type="button" class="chip" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="ext" href="__GS__"__GS_TARGET__ aria-current="page">Getting Started</a>
+      <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
+      <a class="ext" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="side" aria-label="Documentation">
+__NAV__
+    </nav>
+
+    <main class="doc">
+      <section class="hero" aria-labelledby="title">
+        <p class="crumb">Getting Started</p>
+        <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">__H1__</h1>
+        <canvas id="titleDots" width="700" height="252" data-title="__DOTS__" data-all="__DOTS_ALL__" aria-hidden="true"></canvas>
+__LEDE__
+        <p class="state"><span data-l="fr">En conception · cette page décrit ce qui est prévu, rien n'est encore codé</span><span data-l="en">In design · this page describes what is planned, nothing is coded yet</span></p>
+      </section>
+
+__CONTENT__
+
+__PN__
+    </main>
+  </div>
+
+  <footer class="footer">
+    <span class="red">Self-hosted · Rust · Docker Compose</span>
+    <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">Mathod95/dotbox</a>
+  </footer>
+</div>
+
+<script>
+/* commun à toutes les pages de documentation : langue, titre en points, sommaire de la page dans la barre de gauche */
+(function () {
+  "use strict";
+  var listeners = [];
+  var lang = "en";
+  try {
+    var q = new URLSearchParams(location.search).get("lang");
+    lang = q === "en" || q === "fr" ? q : localStorage.getItem("dotbox-lang") || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en");
+  } catch (e) { lang = (navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"; }
+  if (lang !== "fr" && lang !== "en") lang = "en";
+  window.DotBox = {
+    get lang() { return lang; },
+    onLang: function (fn) { listeners.push(fn); }
+  };
+
+  // titre en points (police 5 × 7), calé à gauche. Même taille de points sur toutes les pages :
+  // 14 px au plus, réduite pour que le titre le plus long de la documentation (data-all) tienne sur une ligne
+  var F = {
+    A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+    B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+    C: [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
+    D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+    E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
+    H: ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+    I: ["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"],
+    K: ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
+    L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+    N: ["#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#", "#...#"],
+    O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    P: ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
+    Q: [".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#"],
+    R: ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
+    S: [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
+    T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
+    U: ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    X: ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
+    "-": ["...", "...", "...", "###", "...", "...", "..."]
+  };
+  function drawTitle() {
+    var cv = document.getElementById("titleDots"), text = cv.getAttribute("data-title"), ctx = cv.getContext("2d"), cols = [];
+    text.split("").forEach(function (ch, i) {
+      var g = F[ch];
+      for (var c = 0; c < g[0].length; c++) cols.push(g.map(function (r) { return r[c] === "#"; }));
+      if (i < text.length - 1) cols.push([false, false, false, false, false, false, false]);
+    });
+    var pad = 1, total = cols.length + pad * 2, rows = 7 + pad * 2;
+    var longest = Math.max.apply(null, cv.getAttribute("data-all").split("|").map(function (t) {
+      return t.split("").reduce(function (n, ch) { return n + F[ch][0].length; }, 0) + t.length - 1 + pad * 2;
+    }));
+    cv.width = total * 14 * 2;
+    cv.style.width = "calc(100% * " + total + " / " + longest + ")"; cv.style.maxWidth = total * 14 + "px";
+    var pitch = cv.width / total, r = pitch * 0.36;
+    cv.height = Math.round(rows * pitch);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var x = 0; x < total; x++) for (var y = 0; y < rows; y++) {
+      var col = cols[x - pad], on = col && y >= pad && y < 7 + pad && col[y - pad];
+      ctx.beginPath(); ctx.fillStyle = on ? "#f2f0e9" : "#171717";
+      ctx.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, on ? r : r * 0.8, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // sommaire de la page en cours, sous son entrée dans la barre de gauche : les titres h2 / h3 visibles de l'article
+  var observer = null;
+  function buildToc() {
+    var toc = document.getElementById("pageToc"); if (!toc) return;
+    toc.innerHTML = "";
+    var heads = Array.prototype.filter.call(document.querySelectorAll(".doc h2[id], .doc h3[id]"), function (h) { return h.offsetParent !== null || h.getClientRects().length; });
+    heads.forEach(function (h) {
+      var li = document.createElement("li"), a = document.createElement("a");
+      a.href = "#" + h.id; a.textContent = h.textContent; a.setAttribute("data-id", h.id);
+      if (h.tagName === "H3") li.className = "h3";
+      li.appendChild(a); toc.appendChild(li);
+    });
+    if (observer) observer.disconnect();
+    if (!window.IntersectionObserver || !heads.length) return;
+    var seen = {};
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+      var top = heads.filter(function (h) { return seen[h.id]; })[0];
+      if (top) toc.querySelectorAll("a").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-id") === top.id ? "true" : "false"); });
+    }, { rootMargin: "-10% 0px -70% 0px" });
+    heads.forEach(function (h) { observer.observe(h); });
+  }
+
+  function apply() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true" : "false"); });
+    listeners.forEach(function (fn) { fn(lang); });
+    buildToc();
+  }
+  document.querySelectorAll(".lang .chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      lang = b.getAttribute("data-lang");
+      try { localStorage.setItem("dotbox-lang", lang); } catch (e) {}
+      apply();
+    });
+  });
+  drawTitle();
+  document.documentElement.lang = lang;
+  window.DotBox.apply = apply;
+})();
+</script>
+<script>
+__PAGE_JS__
+</script>
+<script>window.DotBox.apply();</script>

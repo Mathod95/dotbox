@@ -1,0 +1,100 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Les bases<i>●</i>ce qu'est Dot Box, pourquoi l'utiliser et comment il fonctionne.</p>
+<p class="lede" data-l="en">The basics<i>●</i>what Dot Box is, why use it and how it works.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-what">Qu'est-ce que Dot Box ?</h2>
+  <p>Dot Box est un gestionnaire d'apps auto-hébergées pour un serveur Debian ou Ubuntu. Il installe, branche et met à jour des apps (Jellyfin, Radarr, Sonarr, qBittorrent, Vaultwarden...) dans des containers Docker, chacune sur son sous-domaine en HTTPS et derrière une connexion unique.</p>
+  <p>Tout passe par un seul binaire Rust: l'interface web, l'API et la CLI <code>dotbox</code>. Chaque app est décrite par un petit manifest YAML, que Dot Box transforme en fichier Docker Compose lisible.</p>
+
+  <h2 id="fr-why">Pourquoi utiliser Dot Box ?</h2>
+  <h3 id="fr-https">Sous-domaines et HTTPS</h3>
+  <p>Traefik envoie chaque app sur son sous-domaine (<code>radarr.mathod.fr</code>), avec un seul certificat Let's Encrypt wildcard obtenu en DNS-01.</p>
+  <h3 id="fr-sso">Une connexion pour tout</h3>
+  <p>Authelia protège chaque app qui n'a pas de vraie connexion, avec double authentification et passkeys.</p>
+  <h3 id="fr-compose">Une app, un fichier compose</h3>
+  <p>Chaque app vit dans <code>/opt/&lt;app&gt;</code> avec son <code>compose.yml</code>. Tes ajustements vont dans <code>compose.override.yml</code>, que Dot Box ne touche jamais. Sans Dot Box, <code>docker compose up -d</code> suffit à la relancer.</p>
+  <h3 id="fr-catalog">Catalogue ouvert</h3>
+  <p>19 apps au départ, et n'importe quel projet qui fournit un fichier compose devient une app avec <code>dotbox add</code>.</p>
+  <h3 id="fr-wiring">Câblage automatique</h3>
+  <p>Installe Radarr après qBittorrent et il est déjà branché: client de téléchargement, catégorie, dossier racine. Prowlarr, Sonarr, Seerr et Jellyfin suivent la même règle.</p>
+  <h3 id="fr-data">Une seule arborescence</h3>
+  <p>Les téléchargements et les bibliothèques partagent <code>/data</code>, sur le même disque: les imports sont des hardlinks, pas des copies.</p>
+  <h3 id="fr-sync">État voulu, état réel</h3>
+  <p><code>dotbox diff</code> montre l'écart entre ce que tu veux et ce qui tourne, <code>dotbox sync</code> le corrige.</p>
+  <h3 id="fr-backup">Sauvegarde et migration</h3>
+  <p>Tout ce qui compte vit dans <code>/opt</code> et les manifests. <code>dotbox backup</code>, puis <code>dotbox restore</code> sur un serveur neuf.</p>
+
+  <h2 id="fr-how">Comment fonctionne Dot Box ?</h2>
+  <p>Installer une app suit toujours le même chemin:</p>
+  <ol class="flow">
+    <li><b>Manifest</b><span>radarr.yml</span></li>
+    <li><b>Moteur</b><span>Rust</span></li>
+    <li><b>compose.yml</b><span>/opt/radarr</span></li>
+    <li><b>Traefik + Authelia</b><span>radarr.mathod.fr</span></li>
+    <li><b>Câblage</b><span>API des autres apps</span></li>
+  </ol>
+  <ol>
+    <li><b>Le manifest</b> décrit l'app: image, volumes, sous-domaine, SSO et liens avec les autres apps.</li>
+    <li><b>Le moteur</b> écrit le <code>compose.yml</code>, crée les dossiers et les configs avant le premier démarrage.</li>
+    <li><b>Docker Compose</b> démarre le container; Traefik le route vers son sous-domaine, Authelia le protège.</li>
+    <li><b>Une fois l'app <i><b>Running</b></i></b>, le moteur la branche aux autres par leurs API.</li>
+  </ol>
+  <p>Le parcours d'un film, une fois tout installé:</p>
+  <ol class="flow">
+    <li><b>Seerr</b><span>la demande</span></li>
+    <li><b>Radarr</b><span>la recherche</span></li>
+    <li><b>qBittorrent</b><span>/data/torrents</span></li>
+    <li><b>Radarr</b><span>hardlink dans /data/media</span></li>
+    <li><b>Jellyfin</b><span>la lecture</span></li>
+  </ol>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-what">What is Dot Box?</h2>
+  <p>Dot Box is a self-hosted app manager for a Debian or Ubuntu server. It installs, wires and updates apps (Jellyfin, Radarr, Sonarr, qBittorrent, Vaultwarden...) in Docker containers, each on its own HTTPS subdomain and behind a single login.</p>
+  <p>Everything goes through one Rust binary: the web interface, the API and the <code>dotbox</code> CLI. Each app is described by a small YAML manifest that Dot Box turns into a readable Docker Compose file.</p>
+
+  <h2 id="en-why">Why use Dot Box?</h2>
+  <h3 id="en-https">Subdomains and HTTPS</h3>
+  <p>Traefik sends each app to its own subdomain (<code>radarr.mathod.fr</code>), with a single Let's Encrypt wildcard certificate obtained through DNS-01.</p>
+  <h3 id="en-sso">One login for everything</h3>
+  <p>Authelia protects every app that lacks a proper login, with two-factor authentication and passkeys.</p>
+  <h3 id="en-compose">One app, one compose file</h3>
+  <p>Each app lives in <code>/opt/&lt;app&gt;</code> with its <code>compose.yml</code>. Your tweaks go in <code>compose.override.yml</code>, which Dot Box never touches. Without Dot Box, <code>docker compose up -d</code> is enough to restart it.</p>
+  <h3 id="en-catalog">Open catalog</h3>
+  <p>19 apps to start with, and any project that ships a compose file becomes an app with <code>dotbox add</code>.</p>
+  <h3 id="en-wiring">Automatic wiring</h3>
+  <p>Install Radarr after qBittorrent and it is already connected: download client, category, root folder. Prowlarr, Sonarr, Seerr and Jellyfin follow the same rule.</p>
+  <h3 id="en-data">One layout</h3>
+  <p>Downloads and libraries share <code>/data</code>, on the same disk: imports are hardlinks, not copies.</p>
+  <h3 id="en-sync">Desired state, actual state</h3>
+  <p><code>dotbox diff</code> shows the gap between what you want and what is running; <code>dotbox sync</code> fixes it.</p>
+  <h3 id="en-backup">Backup and migration</h3>
+  <p>Everything that matters lives in <code>/opt</code> and the manifests. <code>dotbox backup</code>, then <code>dotbox restore</code> on a new server.</p>
+
+  <h2 id="en-how">How does Dot Box work?</h2>
+  <p>Installing an app always follows the same path:</p>
+  <ol class="flow">
+    <li><b>Manifest</b><span>radarr.yml</span></li>
+    <li><b>Engine</b><span>Rust</span></li>
+    <li><b>compose.yml</b><span>/opt/radarr</span></li>
+    <li><b>Traefik + Authelia</b><span>radarr.mathod.fr</span></li>
+    <li><b>Wiring</b><span>other apps' APIs</span></li>
+  </ol>
+  <ol>
+    <li><b>The manifest</b> describes the app: image, volumes, subdomain, SSO and links with other apps.</li>
+    <li><b>The engine</b> writes the <code>compose.yml</code>, creates folders and configs before the first start.</li>
+    <li><b>Docker Compose</b> starts the container; Traefik routes it to its subdomain, Authelia protects it.</li>
+    <li><b>Once the app is <i><b>Running</b></i></b>, the engine connects it to the others through their APIs.</li>
+  </ol>
+  <p>A movie's journey, once everything is installed:</p>
+  <ol class="flow">
+    <li><b>Seerr</b><span>the request</span></li>
+    <li><b>Radarr</b><span>the search</span></li>
+    <li><b>qBittorrent</b><span>/data/torrents</span></li>
+    <li><b>Radarr</b><span>hardlink into /data/media</span></li>
+    <li><b>Jellyfin</b><span>playback</span></li>
+  </ol>
+</article>

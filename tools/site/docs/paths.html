@@ -1,0 +1,114 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Les chemins<i>●</i>où vit chaque fichier, sur le serveur et dans les containers.</p>
+<p class="lede" data-l="en">Paths<i>●</i>where every file lives, on the server and inside containers.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-rules">Les règles</h2>
+  <ul>
+    <li><b>Deux racines</b>: <code>/opt</code> pour les configs, <code>/data</code> pour les médias et les téléchargements.</li>
+    <li><b>Les mêmes chemins partout</b>: <code>/data</code> reste <code>/data</code> dans chaque container. Un fichier vu par qBittorrent a le même chemin pour Radarr et pour Jellyfin.</li>
+    <li><b>Minuscules</b>: les chemins sont sensibles à la casse (<code>movies</code> n'est pas <code>Movies</code>), Dot Box les crée tous en minuscules.</li>
+    <li><b>Un seul propriétaire</b>: tous les containers tournent avec l'utilisateur <code>dotbox</code> (UID et GID 1000), qui possède <code>/opt</code> et <code>/data</code>.</li>
+  </ul>
+
+  <h2 id="fr-opt">/opt</h2>
+  <pre>/opt
+├── dotbox/
+│   ├── dotbox.yml            <span class="c"># la config de Dot Box</span>
+│   ├── secrets/              <span class="c"># jetons et clés, root seulement</span>
+│   ├── apps/                 <span class="c"># tes manifests (dotbox add)</span>
+│   └── state.json            <span class="c"># l'état voulu, lu par diff et sync</span>
+├── traefik/
+├── authelia/
+└── radarr/
+    ├── compose.yml           <span class="c"># généré par Dot Box, ne pas modifier</span>
+    ├── compose.override.yml  <span class="c"># à toi</span>
+    └── config/               <span class="c"># monté sur /config dans le container</span></pre>
+  <p>Garde au moins 20 Go libres sur <code>/opt</code>: les bases de données et les métadonnées de Jellyfin grossissent vite.</p>
+
+  <h2 id="fr-data">/data</h2>
+  <pre>/data
+├── torrents/
+│   ├── movies/               <span class="c"># catégorie radarr</span>
+│   ├── tv/                   <span class="c"># catégorie sonarr</span>
+│   └── other/
+└── media/
+    ├── movies/               <span class="c"># Nom du film (2024)/</span>
+    ├── tv/                   <span class="c"># Nom de la série/Season 01/</span>
+    └── music/</pre>
+  <p><code>torrents</code> et <code>media</code> sont sur le même système de fichiers: Radarr et Sonarr importent par hardlink, le fichier continue d'être partagé sans prendre deux fois la place.</p>
+  <p class="note"><b>Un disque à part pour /data</b>: monte tout le disque sur <code>/data</code>, jamais <code>torrents</code> et <code>media</code> sur deux disques différents, sinon chaque import devient une copie.</p>
+
+  <h2 id="fr-containers">Dans les containers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Chemins</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>téléchargements, un dossier par catégorie</td></tr>
+      <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>import des films</td></tr>
+      <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>import des séries</td></tr>
+      <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>bibliothèques</td></tr>
+      <tr><td>Chaque app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>sa configuration</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-move">Changer l'emplacement des données</h2>
+  <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1
+<span class="p">$</span> dotbox sync</pre>
+  <p>Seul le chemin sur le serveur change: dans les containers, les données restent sur <code>/data</code>, rien à modifier dans les apps.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-rules">The rules</h2>
+  <ul>
+    <li><b>Two roots</b>: <code>/opt</code> for configs, <code>/data</code> for media and downloads.</li>
+    <li><b>Same paths everywhere</b>: <code>/data</code> stays <code>/data</code> in every container. A file seen by qBittorrent has the same path for Radarr and Jellyfin.</li>
+    <li><b>Lowercase</b>: paths are case sensitive (<code>movies</code> is not <code>Movies</code>), and Dot Box creates them all in lowercase.</li>
+    <li><b>One owner</b>: every container runs as the <code>dotbox</code> user (UID and GID 1000), which owns <code>/opt</code> and <code>/data</code>.</li>
+  </ul>
+
+  <h2 id="en-opt">/opt</h2>
+  <pre>/opt
+├── dotbox/
+│   ├── dotbox.yml            <span class="c"># Dot Box config</span>
+│   ├── secrets/              <span class="c"># tokens and keys, root only</span>
+│   ├── apps/                 <span class="c"># your manifests (dotbox add)</span>
+│   └── state.json            <span class="c"># desired state, read by diff and sync</span>
+├── traefik/
+├── authelia/
+└── radarr/
+    ├── compose.yml           <span class="c"># generated by Dot Box, do not edit</span>
+    ├── compose.override.yml  <span class="c"># yours</span>
+    └── config/               <span class="c"># mounted on /config in the container</span></pre>
+  <p>Keep at least 20 GB free on <code>/opt</code>: databases and Jellyfin metadata grow fast.</p>
+
+  <h2 id="en-data">/data</h2>
+  <pre>/data
+├── torrents/
+│   ├── movies/               <span class="c"># radarr category</span>
+│   ├── tv/                   <span class="c"># sonarr category</span>
+│   └── other/
+└── media/
+    ├── movies/               <span class="c"># Movie Name (2024)/</span>
+    ├── tv/                   <span class="c"># Show Name/Season 01/</span>
+    └── music/</pre>
+  <p><code>torrents</code> and <code>media</code> are on the same filesystem: Radarr and Sonarr import with hardlinks, so the file keeps seeding without taking twice the space.</p>
+  <p class="note"><b>A separate disk for /data</b>: mount the whole disk on <code>/data</code>, never <code>torrents</code> and <code>media</code> on two different disks, or every import becomes a copy.</p>
+
+  <h2 id="en-containers">Inside containers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Paths</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>downloads, one folder per category</td></tr>
+      <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>movie imports</td></tr>
+      <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>TV imports</td></tr>
+      <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>libraries</td></tr>
+      <tr><td>Every app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>its configuration</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-move">Move the data</h2>
+  <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1
+<span class="p">$</span> dotbox sync</pre>
+  <p>Only the path on the server changes: inside containers the data stays on <code>/data</code>, nothing to change in the apps.</p>
+</article>

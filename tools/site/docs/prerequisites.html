@@ -1,0 +1,96 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Les prérequis<i>●</i>le serveur, le domaine et le DNS dont Dot Box a besoin.</p>
+<p class="lede" data-l="en">Prerequisites<i>●</i>the server, domain and DNS Dot Box needs.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-server">Le serveur</h2>
+  <p>Dot Box n'a besoin que de Docker et d'un binaire. Il tourne sur un serveur dédié, un VPS ou une VM, chez un hébergeur ou à la maison.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Élément</th><th>Minimum</th><th>Conseillé</th></tr></thead>
+    <tbody>
+      <tr><td>Système</td><td>Debian 12 ou Ubuntu 24.04 LTS, installation neuve</td><td>Debian 13</td></tr>
+      <tr><td>Processeur</td><td>amd64 ou arm64, 2 cœurs</td><td>4 cœurs, avec puce graphique pour le transcodage de Jellyfin</td></tr>
+      <tr><td>Mémoire</td><td>2 Go pour le socle (Traefik, Authelia, Dot Box)</td><td>8 Go avec une pile média complète</td></tr>
+      <tr><td>Disque</td><td>20 Go pour le système et <code>/opt</code></td><td><code>/data</code> sur un disque à part, assez grand pour tes médias</td></tr>
+      <tr><td>Accès</td><td>root ou sudo en SSH</td><td>une clé SSH, sans mot de passe</td></tr>
+    </tbody>
+  </table></div>
+  <p>Rien d'autre ne doit être installé. <code>dotbox init</code> installe Docker s'il est absent, et s'arrête si un autre reverse proxy occupe déjà les ports 80 et 443.</p>
+  <h3 id="fr-network">Réseau</h3>
+  <ul>
+    <li><b>Ports 80 et 443</b> ouverts depuis internet, pour Traefik.</li>
+    <li><b>Le port SSH</b> (22 ou le tien), pour l'administration et l'accès de secours.</li>
+    <li><b>À la maison</b>: redirige les ports 80 et 443 de la box vers le serveur.</li>
+  </ul>
+
+  <h2 id="fr-domain">Le domaine</h2>
+  <p>Chaque app est servie sur son sous-domaine (<code>radarr.mathod.fr</code>), jamais par IP et port: les ports des containers restent sur le réseau interne <code>dotbox</code>. Il te faut donc un nom de domaine à toi.</p>
+
+  <h2 id="fr-dns">Le DNS</h2>
+  <p>Dot Box demande un certificat wildcard <code>*.mathod.fr</code> à Let's Encrypt par le challenge DNS-01. Il a besoin d'un jeton API de ton fournisseur DNS, limité à la zone du domaine.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Fournisseur</th><th>Ce qu'il faut</th></tr></thead>
+    <tbody>
+      <tr><td>Cloudflare</td><td>un jeton API avec la permission « Zone DNS: Edit » sur la zone</td></tr>
+      <tr><td>OVH</td><td>application key, application secret et consumer key</td></tr>
+      <tr><td>Scaleway</td><td>une clé API</td></tr>
+      <tr><td>Gandi</td><td>un jeton d'accès personnel</td></tr>
+      <tr><td>Autre</td><td>tout fournisseur pris en charge par Traefik, ou les enregistrements créés à la main</td></tr>
+    </tbody>
+  </table></div>
+  <p>Avec un fournisseur pris en charge, Dot Box crée aussi les enregistrements A et AAAA du wildcard vers l'IP du serveur. Sinon, crée <code>*.mathod.fr</code> à la main avant de lancer <code>dotbox init</code>.</p>
+
+  <h2 id="fr-optional">Optionnel</h2>
+  <ul>
+    <li><b>Un stockage hors du serveur</b> pour les sauvegardes: un remote rclone, un NAS en SFTP ou un bucket S3.</li>
+    <li><b>Des sources</b> pour Prowlarr: pas nécessaires pour installer, seulement pour télécharger.</li>
+    <li><b>Un compte Plex</b>, seulement si tu installes Plex. Jellyfin n'a besoin d'aucun compte externe.</li>
+  </ul>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-server">The server</h2>
+  <p>Dot Box only needs Docker and one binary. It runs on a dedicated server, a VPS or a VM, at a host or at home.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr></thead>
+    <tbody>
+      <tr><td>System</td><td>Debian 12 or Ubuntu 24.04 LTS, fresh install</td><td>Debian 13</td></tr>
+      <tr><td>CPU</td><td>amd64 or arm64, 2 cores</td><td>4 cores, with a GPU for Jellyfin transcoding</td></tr>
+      <tr><td>Memory</td><td>2 GB for the base (Traefik, Authelia, Dot Box)</td><td>8 GB with a full media stack</td></tr>
+      <tr><td>Disk</td><td>20 GB for the system and <code>/opt</code></td><td><code>/data</code> on a separate disk, large enough for your media</td></tr>
+      <tr><td>Access</td><td>root or sudo over SSH</td><td>an SSH key, no password</td></tr>
+    </tbody>
+  </table></div>
+  <p>Nothing else should be installed. <code>dotbox init</code> installs Docker if it is missing, and stops if another reverse proxy already uses ports 80 and 443.</p>
+  <h3 id="en-network">Network</h3>
+  <ul>
+    <li><b>Ports 80 and 443</b> open to the internet, for Traefik.</li>
+    <li><b>The SSH port</b> (22 or yours), for administration and emergency access.</li>
+    <li><b>At home</b>: forward ports 80 and 443 from your router to the server.</li>
+  </ul>
+
+  <h2 id="en-domain">The domain</h2>
+  <p>Each app is served on its own subdomain (<code>radarr.mathod.fr</code>), never by IP and port: container ports stay on the internal <code>dotbox</code> network. So you need a domain name of your own.</p>
+
+  <h2 id="en-dns">DNS</h2>
+  <p>Dot Box requests a wildcard certificate <code>*.mathod.fr</code> from Let's Encrypt through the DNS-01 challenge. It needs an API token from your DNS provider, limited to the domain's zone.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Provider</th><th>What you need</th></tr></thead>
+    <tbody>
+      <tr><td>Cloudflare</td><td>an API token with the "Zone DNS: Edit" permission on the zone</td></tr>
+      <tr><td>OVH</td><td>application key, application secret and consumer key</td></tr>
+      <tr><td>Scaleway</td><td>an API key</td></tr>
+      <tr><td>Gandi</td><td>a personal access token</td></tr>
+      <tr><td>Other</td><td>any provider Traefik supports, or records created by hand</td></tr>
+    </tbody>
+  </table></div>
+  <p>With a supported provider, Dot Box also creates the wildcard's A and AAAA records pointing to the server. Otherwise, create <code>*.mathod.fr</code> by hand before running <code>dotbox init</code>.</p>
+
+  <h2 id="en-optional">Optional</h2>
+  <ul>
+    <li><b>Off-server storage</b> for backups: an rclone remote, a NAS over SFTP or an S3 bucket.</li>
+    <li><b>Sources</b> for Prowlarr: not needed to install, only to download.</li>
+    <li><b>A Plex account</b>, only if you install Plex. Jellyfin needs no outside account.</li>
+  </ul>
+</article>

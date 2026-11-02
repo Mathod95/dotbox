@@ -1,0 +1,104 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Accéder aux apps<i>●</i>une adresse par app, protégée par Authelia ou par sa propre connexion.</p>
+<p class="lede" data-l="en">Accessing apps<i>●</i>one address per app, protected by Authelia or by its own login.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-urls">Les adresses</h2>
+  <p>Chaque app répond sur <code>https://&lt;sous-domaine&gt;.mathod.fr</code>. La colonne Connexion dit qui contrôle l'accès.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Adresse</th><th>Connexion</th></tr></thead>
+    <tbody>
+      <tr><td>Dot Box</td><td><code>dotbox.mathod.fr</code></td><td>Authelia, double authentification</td></tr>
+      <tr><td>Traefik</td><td><code>traefik.mathod.fr</code></td><td>Authelia, double authentification</td></tr>
+      <tr><td>Authelia</td><td><code>auth.mathod.fr</code></td><td>le portail de connexion</td></tr>
+      <tr><td>Jellyfin</td><td><code>jellyfin.mathod.fr</code></td><td>compte Jellyfin</td></tr>
+      <tr><td>Plex</td><td><code>plex.mathod.fr</code></td><td>compte Plex</td></tr>
+      <tr><td>Seerr</td><td><code>seerr.mathod.fr</code></td><td>compte Jellyfin ou Plex</td></tr>
+      <tr><td>Wizarr</td><td><code>wizarr.mathod.fr</code></td><td>public, par lien d'invitation</td></tr>
+      <tr><td>Vaultwarden</td><td><code>vault.mathod.fr</code></td><td>compte Vaultwarden</td></tr>
+      <tr><td>Radarr, Sonarr, Prowlarr</td><td><code>radarr.mathod.fr</code>...</td><td>Authelia</td></tr>
+      <tr><td>qBittorrent, qui</td><td><code>qbittorrent.mathod.fr</code>, <code>qui.mathod.fr</code></td><td>Authelia</td></tr>
+      <tr><td>Tautulli, Jellystat, Tracearr</td><td><code>tautulli.mathod.fr</code>...</td><td>Authelia</td></tr>
+      <tr><td>Uptime Kuma</td><td><code>status.mathod.fr</code></td><td>Authelia, la page de statut reste publique</td></tr>
+      <tr><td>Portainer</td><td><code>portainer.mathod.fr</code></td><td>Authelia, double authentification</td></tr>
+      <tr><td>code-server</td><td><code>code.mathod.fr</code></td><td>Authelia, double authentification</td></tr>
+      <tr><td>WireGuard</td><td><code>vpn.mathod.fr</code>, port UDP 51820</td><td>clé WireGuard</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-why">Les quatre niveaux d'accès</h2>
+  <ul>
+    <li><b>two_factor</b>: Authelia avec double authentification, pour tout ce qui donne la main sur le serveur (Dot Box, Traefik, Portainer, code-server).</li>
+    <li><b>one_factor</b>: Authelia avec mot de passe, pour les apps sans vraie connexion (Radarr, Sonarr, qBittorrent...).</li>
+    <li><b>app</b>: l'app garde sa propre connexion. C'est le cas de Jellyfin, Plex et Vaultwarden, car leurs apps TV et mobiles ne savent pas passer par le portail d'Authelia.</li>
+    <li><b>public</b>: aucune connexion, réservé aux pages faites pour être vues de tous (page de statut, invitations).</li>
+  </ul>
+  <p>Chaque manifest déclare son niveau par défaut. Tu peux le changer app par app.</p>
+
+  <h2 id="fr-change">Changer un sous-domaine ou un accès</h2>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+apps:
+  radarr:
+    subdomain: films
+    access: two_factor</pre>
+  <pre><span class="p">$</span> dotbox sync</pre>
+  <p><code>sync</code> régénère les labels Traefik et les règles d'Authelia. L'ancienne adresse cesse de répondre.</p>
+
+  <h2 id="fr-trouble">Si une adresse ne répond pas</h2>
+  <ul>
+    <li><b><code>dotbox doctor</code></b>: le DNS pointe-t-il vers le serveur, le certificat est-il valide ?</li>
+    <li><b><code>dotbox status</code></b>: l'app est-elle <i><b>Running</b></i> ?</li>
+    <li><b><code>dotbox logs traefik</code></b>: Traefik voit-il la route de l'app ?</li>
+  </ul>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-urls">Addresses</h2>
+  <p>Each app answers on <code>https://&lt;subdomain&gt;.mathod.fr</code>. The Login column says who controls access.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Address</th><th>Login</th></tr></thead>
+    <tbody>
+      <tr><td>Dot Box</td><td><code>dotbox.mathod.fr</code></td><td>Authelia, two-factor</td></tr>
+      <tr><td>Traefik</td><td><code>traefik.mathod.fr</code></td><td>Authelia, two-factor</td></tr>
+      <tr><td>Authelia</td><td><code>auth.mathod.fr</code></td><td>the login portal</td></tr>
+      <tr><td>Jellyfin</td><td><code>jellyfin.mathod.fr</code></td><td>Jellyfin account</td></tr>
+      <tr><td>Plex</td><td><code>plex.mathod.fr</code></td><td>Plex account</td></tr>
+      <tr><td>Seerr</td><td><code>seerr.mathod.fr</code></td><td>Jellyfin or Plex account</td></tr>
+      <tr><td>Wizarr</td><td><code>wizarr.mathod.fr</code></td><td>public, through an invite link</td></tr>
+      <tr><td>Vaultwarden</td><td><code>vault.mathod.fr</code></td><td>Vaultwarden account</td></tr>
+      <tr><td>Radarr, Sonarr, Prowlarr</td><td><code>radarr.mathod.fr</code>...</td><td>Authelia</td></tr>
+      <tr><td>qBittorrent, qui</td><td><code>qbittorrent.mathod.fr</code>, <code>qui.mathod.fr</code></td><td>Authelia</td></tr>
+      <tr><td>Tautulli, Jellystat, Tracearr</td><td><code>tautulli.mathod.fr</code>...</td><td>Authelia</td></tr>
+      <tr><td>Uptime Kuma</td><td><code>status.mathod.fr</code></td><td>Authelia, the status page stays public</td></tr>
+      <tr><td>Portainer</td><td><code>portainer.mathod.fr</code></td><td>Authelia, two-factor</td></tr>
+      <tr><td>code-server</td><td><code>code.mathod.fr</code></td><td>Authelia, two-factor</td></tr>
+      <tr><td>WireGuard</td><td><code>vpn.mathod.fr</code>, UDP port 51820</td><td>WireGuard key</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-why">The four access levels</h2>
+  <ul>
+    <li><b>two_factor</b>: Authelia with two-factor, for anything that controls the server (Dot Box, Traefik, Portainer, code-server).</li>
+    <li><b>one_factor</b>: Authelia with a password, for apps without a proper login (Radarr, Sonarr, qBittorrent...).</li>
+    <li><b>app</b>: the app keeps its own login. That is the case for Jellyfin, Plex and Vaultwarden, because their TV and mobile apps cannot go through the Authelia portal.</li>
+    <li><b>public</b>: no login, only for pages meant to be seen by anyone (status page, invites).</li>
+  </ul>
+  <p>Each manifest declares its default level. You can change it per app.</p>
+
+  <h2 id="en-change">Change a subdomain or an access level</h2>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+apps:
+  radarr:
+    subdomain: films
+    access: two_factor</pre>
+  <pre><span class="p">$</span> dotbox sync</pre>
+  <p><code>sync</code> regenerates the Traefik labels and the Authelia rules. The old address stops answering.</p>
+
+  <h2 id="en-trouble">If an address does not respond</h2>
+  <ul>
+    <li><b><code>dotbox doctor</code></b>: does DNS point to the server, is the certificate valid?</li>
+    <li><b><code>dotbox status</code></b>: is the app <i><b>Running</b></i>?</li>
+    <li><b><code>dotbox logs traefik</code></b>: does Traefik see the app's route?</li>
+  </ul>
+</article>

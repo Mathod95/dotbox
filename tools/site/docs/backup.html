@@ -1,0 +1,84 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">La sauvegarde<i>●</i>tout Dot Box tient dans /opt, sauvegardé app par app.</p>
+<p class="lede" data-l="en">Backup<i>●</i>all of Dot Box lives in /opt, backed up app by app.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-what">Ce qui est sauvegardé</h2>
+  <ul>
+    <li><b><code>/opt/dotbox</code></b>: la config, les manifests et les secrets.</li>
+    <li><b><code>/opt/&lt;app&gt;</code></b>, pour chaque app installée.</li>
+    <li><b>Pas <code>/data</code></b>: les médias se re-téléchargent et pèsent trop lourd pour une archive quotidienne. Pour eux, un rsync ou un NAS fait mieux l'affaire.</li>
+  </ul>
+  <p>Les caches et les transcodes de Jellyfin et Plex, ainsi que les logs, sont exclus d'office.</p>
+
+  <h2 id="fr-how">Comment ça se passe</h2>
+  <ol>
+    <li><b>App par app</b>: Dot Box arrête une app, archive son dossier, la redémarre, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive, quelques secondes pour la plupart.</li>
+    <li><b>Instantané</b>: sur btrfs ou ZFS, un instantané remplace l'arrêt.</li>
+    <li><b>Compressée et chiffrée</b>: chaque archive est compressée (zstd) puis chiffrée (age). Une destination distante ne voit jamais tes secrets en clair.</li>
+    <li><b>Envoyée</b> à chaque destination, puis les plus anciennes sont supprimées selon <code>keep</code>.</li>
+  </ol>
+  <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles.</p>
+
+  <h2 id="fr-settings">Réglages</h2>
+  <pre>backup:
+  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
+  keep: 7                          <span class="c"># archives gardées par destination</span>
+  exclude: ["*/logs/*"]
+  destinations:
+    - local: /backups
+    - rclone: b2:dotbox-backups
+    - sftp: backup@nas.local:/volume1/dotbox</pre>
+  <p>La planification est un timer systemd créé par <code>init</code>. <code>dotbox status</code> montre la dernière sauvegarde, son résultat et la prochaine.</p>
+
+  <h2 id="fr-manual">Lancer une sauvegarde</h2>
+  <pre><span class="p">$</span> dotbox backup
+<span class="p">$</span> dotbox backup --app radarr
+<span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
+  <p>La sauvegarde tourne sur le serveur, pas dans ton terminal: tu peux fermer la session SSH, <code>dotbox status</code> suit l'avancement.</p>
+
+  <h2 id="fr-stream">Sauvegarde en flux</h2>
+  <pre><span class="p">$</span> dotbox backup --stream</pre>
+  <p>Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-what">What is backed up</h2>
+  <ul>
+    <li><b><code>/opt/dotbox</code></b>: the config, manifests and secrets.</li>
+    <li><b><code>/opt/&lt;app&gt;</code></b>, for every installed app.</li>
+    <li><b>Not <code>/data</code></b>: media can be downloaded again and is too heavy for a daily archive. For media, rsync or a NAS does a better job.</li>
+  </ul>
+  <p>Jellyfin and Plex caches and transcodes, and logs, are always excluded.</p>
+
+  <h2 id="en-how">How it works</h2>
+  <ol>
+    <li><b>App by app</b>: Dot Box stops an app, archives its folder, restarts it, then moves to the next one. Each app is down only for its own archive, a few seconds for most.</li>
+    <li><b>Snapshot</b>: on btrfs or ZFS, a snapshot replaces the stop.</li>
+    <li><b>Compressed and encrypted</b>: each archive is compressed (zstd), then encrypted (age). A remote destination never sees your secrets in clear.</li>
+    <li><b>Sent</b> to each destination, then the oldest are deleted according to <code>keep</code>.</li>
+  </ol>
+  <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>. Keep a copy off the server, in a password manager: without it, archives cannot be read.</p>
+
+  <h2 id="en-settings">Settings</h2>
+  <pre>backup:
+  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
+  keep: 7                          <span class="c"># archives kept per destination</span>
+  exclude: ["*/logs/*"]
+  destinations:
+    - local: /backups
+    - rclone: b2:dotbox-backups
+    - sftp: backup@nas.local:/volume1/dotbox</pre>
+  <p>Scheduling is a systemd timer created by <code>init</code>. <code>dotbox status</code> shows the last backup, its result and the next one.</p>
+
+  <h2 id="en-manual">Run a backup</h2>
+  <pre><span class="p">$</span> dotbox backup
+<span class="p">$</span> dotbox backup --app radarr
+<span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
+  <p>The backup runs on the server, not in your terminal: you can close the SSH session, <code>dotbox status</code> follows its progress.</p>
+
+  <h2 id="en-stream">Streamed backup</h2>
+  <pre><span class="p">$</span> dotbox backup --stream</pre>
+  <p>If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
+</article>

@@ -1,0 +1,70 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Après l'installation<i>●</i>ce que Dot Box vérifie pour toi, et ce qui reste à faire.</p>
+<p class="lede" data-l="en">Post-installation<i>●</i>what Dot Box checks for you, and what is left to do.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-doctor">Lancer dotbox doctor</h2>
+  <p>Avant tout, <code>doctor</code> vérifie le serveur et liste ce qui reste à faire. Chaque point ci-dessous correspond à une de ses lignes.</p>
+  <pre><span class="p">$</span> dotbox doctor
+<span class="ok">  ok    docker 28.2, network dotbox</span>
+<span class="ok">  ok    certificate *.mathod.fr valid for 89 days</span>
+<span class="w">  warn  ssh accepts passwords</span>
+<span class="w">  warn  ssh allows root login</span>
+<span class="w">  warn  backup only local (/backups)</span>
+<span class="ok">  ok    /data 12% used</span></pre>
+
+  <h2 id="fr-ssh">Sécuriser SSH</h2>
+  <p>Dot Box ne modifie jamais la configuration SSH: une erreur pourrait te fermer la porte du serveur. <code>doctor</code> signale ce qui manque, à toi de l'appliquer dans <code>/etc/ssh/sshd_config</code>:</p>
+  <ul>
+    <li><b>Clés seulement</b>: <code>PasswordAuthentication no</code>.</li>
+    <li><b>Pas de root</b>: <code>PermitRootLogin no</code>.</li>
+    <li><b>Garde une session ouverte</b> pendant que tu testes la nouvelle configuration dans une deuxième.</li>
+  </ul>
+
+  <h2 id="fr-backup">Sortir les sauvegardes du serveur</h2>
+  <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <b>Backup</b>.</p>
+
+  <h2 id="fr-users">Créer les comptes</h2>
+  <pre><span class="p">$</span> dotbox user add lea --group family</pre>
+  <p>Les groupes décident des apps accessibles: <code>family</code> voit Jellyfin et Seerr, <code>admins</code> voit tout. Le compte reçoit un lien d'invitation valable 48 heures pour choisir son mot de passe et sa double authentification.</p>
+
+  <h2 id="fr-disk">Surveiller l'espace disque</h2>
+  <p>Les téléchargements terminés mais pas encore importés restent dans <code>/data/torrents</code>, tout comme ceux que Radarr ou Sonarr n'ont pas reconnus. <code>doctor</code> prévient à 85 % d'occupation, et Uptime Kuma peut envoyer l'alerte sur Discord ou par e-mail.</p>
+
+  <h2 id="fr-rescue">Garder un accès de secours</h2>
+  <p class="note"><b>Si Authelia ou l'interface ne répondent plus</b>: en SSH, <code>dotbox --local</code> parle directement au moteur. Note la commande quelque part avant d'en avoir besoin.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-doctor">Run dotbox doctor</h2>
+  <p>First, <code>doctor</code> checks the server and lists what is left to do. Each point below matches one of its lines.</p>
+  <pre><span class="p">$</span> dotbox doctor
+<span class="ok">  ok    docker 28.2, network dotbox</span>
+<span class="ok">  ok    certificate *.mathod.fr valid for 89 days</span>
+<span class="w">  warn  ssh accepts passwords</span>
+<span class="w">  warn  ssh allows root login</span>
+<span class="w">  warn  backup only local (/backups)</span>
+<span class="ok">  ok    /data 12% used</span></pre>
+
+  <h2 id="en-ssh">Secure SSH</h2>
+  <p>Dot Box never changes the SSH configuration: a mistake could lock you out of the server. <code>doctor</code> reports what is missing, and you apply it in <code>/etc/ssh/sshd_config</code>:</p>
+  <ul>
+    <li><b>Keys only</b>: <code>PasswordAuthentication no</code>.</li>
+    <li><b>No root</b>: <code>PermitRootLogin no</code>.</li>
+    <li><b>Keep a session open</b> while you test the new configuration in a second one.</li>
+  </ul>
+
+  <h2 id="en-backup">Move backups off the server</h2>
+  <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <b>Backup</b>.</p>
+
+  <h2 id="en-users">Create accounts</h2>
+  <pre><span class="p">$</span> dotbox user add lea --group family</pre>
+  <p>Groups decide which apps are reachable: <code>family</code> sees Jellyfin and Seerr, <code>admins</code> sees everything. The account gets an invite link, valid for 48 hours, to choose its password and two-factor method.</p>
+
+  <h2 id="en-disk">Watch disk space</h2>
+  <p>Finished downloads that are not imported yet stay in <code>/data/torrents</code>, as do the ones Radarr or Sonarr could not recognize. <code>doctor</code> warns at 85% usage, and Uptime Kuma can send the alert to Discord or by email.</p>
+
+  <h2 id="en-rescue">Keep emergency access</h2>
+  <p class="note"><b>If Authelia or the interface stop responding</b>: over SSH, <code>dotbox --local</code> talks to the engine directly. Write the command down before you need it.</p>
+</article>

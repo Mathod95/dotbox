@@ -1,0 +1,54 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Restaurer et migrer<i>●</i>une sauvegarde suffit pour remonter un serveur, ici ou ailleurs.</p>
+<p class="lede" data-l="en">Restore and migrate<i>●</i>one backup is enough to rebuild a server, here or elsewhere.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-app">Restaurer une app</h2>
+  <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
+  <p>Remplace <code>/opt/radarr</code> par sa dernière sauvegarde et relance l'app. Les autres apps ne bougent pas. À la place de <code>latest</code>, une date ou un chemin d'archive précis.</p>
+
+  <h2 id="fr-all">Restaurer tout le serveur</h2>
+  <pre><span class="p">$</span> dotbox restore latest</pre>
+  <p>Restaure <code>/opt/dotbox</code>, puis chaque app, puis lance <code>sync</code> pour que tout ce qui tourne corresponde à la config restaurée.</p>
+
+  <h2 id="fr-migrate">Migrer vers un nouveau serveur</h2>
+  <ol>
+    <li><b>Sur l'ancien serveur</b>, une sauvegarde vers une destination que le nouveau peut joindre: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
+    <li><b>Sur le nouveau</b>, télécharge Dot Box (Installation, étape 1). Pas besoin de lancer <code>init</code>.</li>
+    <li><b>Restaure</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box relit la config de la sauvegarde, refait l'installation du socle avec elle (Docker, Traefik, Authelia, certificat), puis restaure toutes les apps.</li>
+    <li><b>Le DNS</b>: avec un fournisseur pris en charge, Dot Box repointe <code>*.mathod.fr</code> vers la nouvelle IP. Sinon, change l'enregistrement à la main.</li>
+    <li><b>Les médias</b>: copie <code>/data</code> avec rsync s'ils doivent suivre.</li>
+  </ol>
+  <p>Les apps ajoutées avec <code>dotbox add</code> et celles du Sandbox sont dans la sauvegarde: elles reviennent avec le reste, rien à réinstaller à la main.</p>
+
+  <h2 id="fr-domain">Changer de domaine</h2>
+  <pre><span class="p">$</span> dotbox config set domain nouveau.fr
+<span class="p">$</span> dotbox sync</pre>
+  <p>Tout est généré à partir de <code>dotbox.yml</code>: <code>sync</code> refait le certificat, les labels Traefik et la config d'Authelia. Il ne reste à corriger que les adresses que tu as saisies toi-même dans les réglages des apps (notifications, webhooks).</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-app">Restore an app</h2>
+  <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
+  <p>Replaces <code>/opt/radarr</code> with its latest backup and restarts the app. Other apps are not touched. Instead of <code>latest</code>, a date or a specific archive path.</p>
+
+  <h2 id="en-all">Restore the whole server</h2>
+  <pre><span class="p">$</span> dotbox restore latest</pre>
+  <p>Restores <code>/opt/dotbox</code>, then every app, then runs <code>sync</code> so everything running matches the restored config.</p>
+
+  <h2 id="en-migrate">Migrate to a new server</h2>
+  <ol>
+    <li><b>On the old server</b>, back up to a destination the new one can reach: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
+    <li><b>On the new one</b>, download Dot Box (Installation, step 1). No need to run <code>init</code>.</li>
+    <li><b>Restore</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box reads the config from the backup, reinstalls the base with it (Docker, Traefik, Authelia, certificate), then restores every app.</li>
+    <li><b>DNS</b>: with a supported provider, Dot Box points <code>*.mathod.fr</code> to the new IP. Otherwise, change the record by hand.</li>
+    <li><b>Media</b>: copy <code>/data</code> with rsync if it should come along.</li>
+  </ol>
+  <p>Apps added with <code>dotbox add</code> and those from the Sandbox are in the backup: they come back with everything else, nothing to reinstall by hand.</p>
+
+  <h2 id="en-domain">Change the domain</h2>
+  <pre><span class="p">$</span> dotbox config set domain new.fr
+<span class="p">$</span> dotbox sync</pre>
+  <p>Everything is generated from <code>dotbox.yml</code>: <code>sync</code> redoes the certificate, the Traefik labels and the Authelia config. Only the addresses you typed yourself in app settings (notifications, webhooks) are left to fix.</p>
+</article>

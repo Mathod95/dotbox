@@ -1,0 +1,64 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Le Sandbox<i>●</i>les apps de la communauté et les tiennes, au même niveau que le catalogue.</p>
+<p class="lede" data-l="en">The Sandbox<i>●</i>community apps and your own, on par with the catalog.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-sources">Trois sources d'apps</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Source</th><th>Où</th><th>Installer</th></tr></thead>
+    <tbody>
+      <tr><td>Catalogue</td><td>dans Dot Box, testé et mis à jour avec lui</td><td><code>dotbox install radarr</code></td></tr>
+      <tr><td>Sandbox</td><td>dépôt communautaire <code>Mathod95/dotbox-sandbox</code>, mis à jour avec <code>dotbox upgrade</code></td><td><code>dotbox install sandbox/kometa</code></td></tr>
+      <tr><td>Tes apps</td><td><code>/opt/dotbox/apps/</code>, créées avec <code>dotbox add</code></td><td><code>dotbox install immich</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Les trois utilisent le même format de manifest: une app du Sandbox ou une des tiennes suit les mêmes chemins, le même réseau et les mêmes règles d'accès que le reste, et elle est sauvegardée de la même façon.</p>
+
+  <h2 id="fr-add">Ajouter ta propre app</h2>
+  <pre><span class="p">$</span> dotbox add ./docker-compose.yml --name immich
+<span class="p">$</span> dotbox install immich</pre>
+  <p><code>add</code> lit le fichier compose du projet et en fait un manifest: sous-domaine, niveau d'accès, volumes rangés dans <code>/opt/immich</code> et <code>/data</code>, réseau <code>dotbox</code>, version d'image fixée. Relis <code>/opt/dotbox/apps/immich.yml</code> avant d'installer.</p>
+
+  <h2 id="fr-contribute">Proposer une app au Sandbox</h2>
+  <p>Une app qui marche chez toi peut rejoindre le Sandbox par une pull request sur <code>Mathod95/dotbox-sandbox</code>. Son manifest doit:</p>
+  <ul>
+    <li>utiliser une image publique avec une <b>version fixe</b>, jamais <code>latest</code>;</li>
+    <li>ranger sa config dans <b><code>/opt/&lt;app&gt;</code></b> et ses données sous <b><code>/data</code></b>;</li>
+    <li>déclarer son <b>niveau d'accès</b> (two_factor, one_factor, app ou public);</li>
+    <li>avoir un <b>pictogramme 7 × 7</b> pour le catalogue.</li>
+  </ul>
+
+  <h2 id="fr-retired">Apps retirées</h2>
+  <p>Une app peut quitter le Sandbox, par exemple quand le projet est abandonné. Elle continue de tourner chez toi: son <code>compose.yml</code> reste dans <code>/opt/&lt;app&gt;</code>. <code>dotbox status</code> la marque « hors catalogue », et <code>dotbox remove</code> la retire quand tu veux.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-sources">Three sources of apps</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Source</th><th>Where</th><th>Install</th></tr></thead>
+    <tbody>
+      <tr><td>Catalog</td><td>inside Dot Box, tested and updated with it</td><td><code>dotbox install radarr</code></td></tr>
+      <tr><td>Sandbox</td><td>community repository <code>Mathod95/dotbox-sandbox</code>, updated with <code>dotbox upgrade</code></td><td><code>dotbox install sandbox/kometa</code></td></tr>
+      <tr><td>Your apps</td><td><code>/opt/dotbox/apps/</code>, created with <code>dotbox add</code></td><td><code>dotbox install immich</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>All three use the same manifest format: a Sandbox app or one of yours follows the same paths, network and access rules as the rest, and is backed up the same way.</p>
+
+  <h2 id="en-add">Add your own app</h2>
+  <pre><span class="p">$</span> dotbox add ./docker-compose.yml --name immich
+<span class="p">$</span> dotbox install immich</pre>
+  <p><code>add</code> reads the project's compose file and turns it into a manifest: subdomain, access level, volumes placed in <code>/opt/immich</code> and <code>/data</code>, <code>dotbox</code> network, pinned image version. Review <code>/opt/dotbox/apps/immich.yml</code> before installing.</p>
+
+  <h2 id="en-contribute">Submit an app to the Sandbox</h2>
+  <p>An app that works for you can join the Sandbox through a pull request on <code>Mathod95/dotbox-sandbox</code>. Its manifest must:</p>
+  <ul>
+    <li>use a public image with a <b>pinned version</b>, never <code>latest</code>;</li>
+    <li>keep its config in <b><code>/opt/&lt;app&gt;</code></b> and its data under <b><code>/data</code></b>;</li>
+    <li>declare its <b>access level</b> (two_factor, one_factor, app or public);</li>
+    <li>have a <b>7 × 7 pictogram</b> for the catalog.</li>
+  </ul>
+
+  <h2 id="en-retired">Retired apps</h2>
+  <p>An app can leave the Sandbox, for example when its project is abandoned. It keeps running on your server: its <code>compose.yml</code> stays in <code>/opt/&lt;app&gt;</code>. <code>dotbox status</code> marks it "off catalog", and <code>dotbox remove</code> removes it whenever you want.</p>
+</article>
