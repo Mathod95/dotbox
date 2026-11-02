@@ -12,9 +12,10 @@ Gestionnaire d'apps auto-hébergées: un binaire Rust qui transforme des manifes
 
 ```
 docs/design/        gabarits homePage et releasePage, anatomy.css et anatomy.js, copiés de xeneon (référence de la charte) ; la subPage se lit dans xeneon
-pages/v1/           v1 de la homepage (accueil + releases dans une seule page, vue #releases), figée
-tools/site/         v2 : index.html (homePage), releases.html (releasePage), releases.json (données des versions), cli.html (subPage de la CLI)
-tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --fragment, --releases-fragment, --cli-fragment : les aperçus en artefacts
+pages/v1/           pages figées : index.html (v1 de la homepage, accueil + releases, vue #releases), cli.html (v1 de la page CLI en subPage)
+tools/site/         v2 : index.html (homePage), releases.html (releasePage), releases.json (données des versions)
+tools/site/docs/    documentation Getting Started : layout.html (mise en page commune) et une page par fichier (basics.html, cli.html)
+tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --fragment, --releases-fragment, --docs-fragments : les aperçus en artefacts
 .github/workflows/pages.yml  construit le site et le publie sur GitHub Pages à chaque push sur main
 ```
 
@@ -23,11 +24,14 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 - **Charte**: celle de Dot Hub, gabarits dans `docs/design/` (copie de `xeneon/docs/design/` au commit `84edb70`). La règle complète reste `xeneon/docs/design/README.md`. Écarts propres à Dot Box: marque « ● DOT BOX », pas de bouton Companion, slogan « Self-hosted · Rust · Docker Compose », lien de pied de page `Mathod95/dotbox`.
 - **homePage v2** (`tools/site/index.html`): les six zones du gabarit dans l'ordre (Top, Hero, Showcase, About, List, Footer). Showcase = maquette interactive de l'interface. List = « Les apps », une carte par app générée depuis le tableau `CATALOG` (pictogramme 7 × 7, nom, rôle en accent, description, sous-domaine et logo GitHub ou « Docs ↗ » en pied). Tous les pictogrammes ont la classe `.pic`, taille unique `--pic: 70px`.
 - **releasePage v2** (`tools/site/releases.html`): gabarit releasePage, données dans `tools/site/releases.json`.
-- **Page CLI** (`tools/site/cli.html`): subPage (gabarit `xeneon/docs/design/subPage.html`, valeurs de Dot Companion). Hero (CLI en points tous les 14 px, accroche, faits), Showcase (`dotbox --help` dans un terminal, chaque commande cliquable montre un exemple de sortie), tableau de toutes les commandes, premiers pas en étapes avec une note, options globales en liste. Commandes et options dans `GROUPS` et `FLAGS` : la même source pour l'aide, le tableau et les exemples. C'est aussi la spécification de la CLI à coder.
-- **Site**: https://mathod95.github.io/dotbox/ (accueil), `/releases/`, `/cli/`. Construit par `python3 tools/build_site.py` (pages complètes, liens relatifs) et publié par `pages.yml`. Côté GitHub, Settings → Pages → Source doit être « GitHub Actions ».
-- **En-tête** des trois pages: marque, FR / EN, CLI, Releases, GitHub ↗ ; le bouton de la page en cours est allumé.
+- **Documentation Getting Started** (`tools/site/docs/`): même architecture que docs.saltbox.dev (décision du 2 novembre 2026). Le bouton « Getting Started » de l'en-tête ouvre la page Basics. Barre de navigation à gauche: la section « Getting Started » et ses pages (Basics, CLI), la page en cours en accent avec son sommaire (titres h2 / h3) dessous. Article à droite: fil « Getting Started », titre de la page en points tous les 14 px, accroche, contenu, puis lien « Suivant / Précédent ». Valeurs de la subPage. La liste des pages et leur ordre sont dans `DOCS` de `build_site.py` ; la barre de gauche est générée à partir de cette liste.
+  - Un fichier par page, découpé en `<!-- LEDE -->`, `<!-- CONTENT -->`, `<!-- CSS -->`, `<!-- JS -->`. Texte bilingue: un bloc `data-l="fr"` et un bloc `data-l="en"`, la langue non choisie est masquée ; ou des clés `data-i18n` remplies par le JS de la page, qui s'abonne avec `window.DotBox.onLang()`.
+  - **Basics** (`basics.html`): ce qu'est Dot Box, pourquoi l'utiliser (une section par point fort), comment il fonctionne (schémas en étapes `.flow`).
+  - **CLI** (`cli.html`): `dotbox --help` dans un terminal (chaque commande cliquable montre un exemple de sortie), tableau de toutes les commandes, premiers pas, options globales. Commandes et options dans `GROUPS` et `FLAGS` : la même source pour l'aide, le tableau et les exemples. C'est aussi la spécification de la CLI à coder.
+- **Site**: https://mathod95.github.io/dotbox/ (accueil), `/releases/`, `/getting-started/basics/`, `/getting-started/cli/`. Construit par `python3 tools/build_site.py` (pages complètes, liens relatifs) et publié par `pages.yml`. Côté GitHub, Settings → Pages → Source doit être « GitHub Actions ».
+- **En-tête** de toutes les pages: marque, FR / EN, Getting Started, Releases, GitHub ↗ ; le bouton de la page en cours est allumé (Getting Started sur toutes les pages de documentation).
 - **Langue**: français si le navigateur est en français, anglais sinon ; bouton FR / EN, choix gardé dans le navigateur (`dotbox-lang`), `?lang=fr` ou `?lang=en`.
-- **Artefacts** (v2): accueil https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE, releases https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd, CLI https://claude.ai/artifact/A3JeW8jtr2kBZ328FCxnvC. Leurs adresses sont dans `build_site.py` pour que leurs boutons se répondent. Une page qui change: `python3 tools/build_site.py --fragment <f> --releases-fragment <f> --cli-fragment <f>` puis republier.
+- **Artefacts** (v2): accueil https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE, releases https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd, Basics https://claude.ai/artifact/WPfzXWk2jWXWKbg2EFEMH9, CLI https://claude.ai/artifact/GZz8HJqNBqMgY65VygEe9x (la v1 de la page CLI reste sur https://claude.ai/artifact/A3JeW8jtr2kBZ328FCxnvC). Leurs adresses sont dans `build_site.py` pour que leurs liens se répondent. Une page qui change: `python3 tools/build_site.py --fragment <f> --releases-fragment <f> --docs-fragments <dossier>` puis republier.
 
 ## Releases
 
