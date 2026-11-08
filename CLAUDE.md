@@ -24,7 +24,7 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 - **Charte**: celle de Dot Hub, gabarits dans `docs/design/` (copie de `xeneon/docs/design/` au commit `84edb70`). La règle complète reste `xeneon/docs/design/README.md`. Écarts propres à Dot Box: marque « ● DOT BOX », pas de bouton Companion, slogan « Self-hosted · Rust · Docker Compose », lien de pied de page `Mathod95/dotbox`.
 - **homePage v2** (`tools/site/index.html`): les six zones du gabarit dans l'ordre (Top, Hero, Showcase, About, List, Footer). Showcase = maquette interactive de l'interface. List = « Les apps », une carte par app générée depuis le tableau `CATALOG` (pictogramme 7 × 7, nom, rôle en accent, description, sous-domaine et logo GitHub ou « Docs ↗ » en pied). Tous les pictogrammes ont la classe `.pic`, taille unique `--pic: 70px`.
 - **releasePage v2** (`tools/site/releases.html`): gabarit releasePage, données dans `tools/site/releases.json`.
-- **Roadmap** (`tools/site/roadmap.html`): la todo list des features (décision du 8 novembre 2026), gabarit de la releasePage, données dans `tools/site/roadmap.json`. Bascule « Par version / Par domaine » (choix gardé dans `dotbox-roadmap-view`, `?view=version|domain`), légende Fait / En cours / Prévu, un point par feature pour l'avancement, lien « Spec ↗ » vers la page Getting Started qui la décrit. Voir « Roadmap » plus bas.
+- **Roadmap** (`tools/site/roadmap.html`): la todo list des features (décision du 8 novembre 2026), gabarit de la releasePage, données dans `tools/site/roadmap.json`. **Une liste simple à cocher, sans version** (les versions vivent dans Releases): compteur « n faites sur N », légende Fait / En cours / À faire, un point par feature, une case par ligne (vide, à moitié, cochée), le domaine en étiquette et un lien « Spec ↗ » vers la page Getting Started qui la décrit. Voir « Roadmap » plus bas.
 - **Documentation Getting Started** (`tools/site/docs/`): même architecture que docs.saltbox.dev (décision du 2 novembre 2026). Le bouton « Getting Started » de l'en-tête ouvre la page Basics. Barre de navigation à gauche: la section « Getting Started » et ses pages, avec des sous-groupes (champ `group`, ex. « Backup / Restore »), la page en cours en accent avec son sommaire (titres h2 / h3) dessous. Article à droite: fil « Getting Started », titre de la page en points tous les 14 px (police 5 × 7 complète A à Z et « - » dans `layout.html`), accroche, ligne d'état « En conception », contenu, puis lien « Suivant / Précédent ». Valeurs de la subPage. La liste des pages et leur ordre sont dans `DOCS` de `build_site.py` ; la barre de gauche est générée à partir de cette liste.
   - Un fichier par page, découpé en `<!-- LEDE -->`, `<!-- CONTENT -->`, `<!-- CSS -->`, `<!-- JS -->`. Texte bilingue: un bloc `data-l="fr"` et un bloc `data-l="en"`, la langue non choisie est masquée ; ou des clés `data-i18n` remplies par le JS de la page, qui s'abonne avec `window.DotBox.onLang()`.
   - Pages, dans l'ordre: Basics, Prerequisites, Installation (regroupe Install Types et Installation de Saltbox), Post-installation, Update, Accessing Apps, Paths, groupe Backup / Restore (Backup regroupe Settings, Standard Backup et Streamed Backup ; Restore & Migration regroupe Restore et Migration), Sandbox, CLI.
@@ -100,27 +100,27 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 }
 ```
 
-- `version`: le tag, ou `"next"` pour ce qui est sur `main` sans être tagué (affiché « Sur main · pas encore publiée », badge « Prochaine version »).
+- `version`: le tag, ou `"next"` pour ce qui est réellement livré sur `main` sans être tagué (affiché « Sur main · pas encore publiée », badge « Prochaine version »). **Pas de `next` vide ni de `next` qui ne contient que du prévu** (décision du 8 novembre 2026).
 - `date`: `AAAA-MM-JJ`, date du tag. Absente pour `next`.
 - `tagged`: `true` seulement quand le tag est poussé sur GitHub. Il affiche les liens « Changements » et « Télécharger » ; absent pour `next`.
-- Catégories, dans cet ordre: `planned` (Prévu, **uniquement dans `next`**, pour ce qui n'est pas encore codé), `new` (Nouveau), `changed` (Changé), `fixed` (Corrigé), `removed` (Retiré). Une catégorie vide n'est pas affichée.
+- Catégories, dans cet ordre: `new` (Nouveau), `changed` (Changé), `fixed` (Corrigé), `removed` (Retiré). Une catégorie vide n'est pas affichée.
 - Chaque ligne existe **en français et en anglais**. Format: `Composant: description`, sans espace avant les deux-points, noms de fichiers et commandes entre backticks (rendus en `<code>`).
 - Composants: `Moteur`, `CLI`, `Interface web`, `Manifest`, `Accueil`, `Getting Started`, `Releases`, `Roadmap`, ou le nom d'une app du catalogue (`Radarr`, `Jellyfin`...).
 - La version taguée la plus récente reçoit automatiquement le badge « Dernière version ».
 
 ### À chaque commit et à chaque tag
 
-- **Commit qui change le produit** (moteur, CLI, interface web, catalogue, homepage): ajouter la ligne dans `next`, dans la bonne catégorie. Une ligne `planned` qui vient d'être codée passe dans `new`.
-- **Tag**: `next` devient la version taguée (on lui donne `version` et `date`, les lignes `planned` restantes repartent dans un nouveau `next`), puis on crée le nouveau `next`.
+- **On n'invente rien**: Releases ne contient que ce qui est réellement livré. Ce qui est prévu est dans la Roadmap, jamais dans Releases (plus de catégorie `planned`).
+- **Commit qui change le produit** (moteur, CLI, interface web, catalogue, homepage): ajouter la ligne dans `next` (créé à ce moment-là s'il n'existe pas), dans la bonne catégorie, et cocher la feature dans la Roadmap.
+- **Tag**: `next` devient la version taguée (on lui donne `version` et `date`). Le `next` suivant n'est créé qu'avec la prochaine ligne réellement livrée.
 - Les liens « Changements » (comparaison entre deux tags) et « Télécharger » (release GitHub) en bas de chaque version n'apparaissent que pour les versions `"tagged": true` ; passer le champ à `true` une fois le tag poussé.
 
 ### Roadmap
 
-- `tools/site/roadmap.json`: `milestones` (versions cibles, dans l'ordre), `domains` (Site, Socle, Moteur, Interface web, Accès, Sauvegarde, Mises à jour, Catalogue, CLI) et `features`.
-- Une feature: `milestone`, `domain`, `status` (`planned`, `progress` ou `done`), `fr` et `en` au même format que releases.json (`Composant: description`), `doc` (slug de la page Getting Started qui la spécifie, facultatif).
-- Une feature commencée passe en `progress` ; une feature livrée passe en `done` et sa ligne va dans `new` de `next` (ou de `v0.0.1` tant que rien n'est tagué).
+- `tools/site/roadmap.json`: `domains` (Site, Socle, Moteur, Interface web, Accès, Sauvegarde, Mises à jour, Catalogue, CLI) et `features`, dans l'ordre de la liste. **Pas de version cible** (décision du 8 novembre 2026): on coche au fur et à mesure, les versions se lisent dans Releases.
+- Une feature: `domain`, `status` (`planned` à faire, `progress` en cours, `done` fait), `fr` et `en` au même format que releases.json (`Composant: description`), `doc` (slug de la page Getting Started qui la spécifie, facultatif).
+- Une feature commencée passe en `progress` ; une feature livrée passe en `done` et sa ligne va dans `new` de `next` (ou de `v0.0.1` tant que rien n'est tagué). Seulement ce qui est réellement fait.
 - Une décision produit qui ajoute une feature: une ligne dans roadmap.json, en plus de la page Getting Started et de « Décisions produit ».
-- Les versions cibles au-delà de v0.1.0 sont une proposition à valider par Mathod95.
 
 ### Outil (à confirmer)
 

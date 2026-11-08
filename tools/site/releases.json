@@ -1,19 +1,6 @@
 {
-  "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est sur main sans tag. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
+  "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
-    {
-      "version": "next",
-      "title": { "fr": "Serveur de test", "en": "Test server" },
-      "planned": [
-        { "fr": "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main", "en": "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand" },
-        { "fr": "Manifest: format d'une app (image, volumes, sous-domaine, SSO, câblage)", "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)" },
-        { "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)", "en": "CLI: `dotbox init` on a fresh Debian or Ubuntu (Docker, shared network, Traefik, Authelia)" },
-        { "fr": "Moteur: installer, supprimer, logs, avec un `compose.yml` généré par app", "en": "Engine: install, remove, logs, with one generated `compose.yml` per app" },
-        { "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin par leurs API", "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and Jellyfin through their APIs" },
-        { "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose", "en": "Web interface: catalog, status, live install logs, compose import" },
-        { "fr": "Serveur principal: refait au propre avec Dot Box, app par app", "en": "Main server: rebuilt cleanly with Dot Box, app by app" }
-      ]
-    },
     {
       "version": "v0.0.1",
       "date": "2026-10-28",
@@ -28,7 +15,7 @@
         { "fr": "Accueil: favicon, le point vert de la marque, sur toutes les pages du site", "en": "Home: favicon, the brand's green dot, on every page of the site" },
         { "fr": "Getting Started: documentation avec une barre de navigation à gauche, onze pages de Basics à CLI qui décrivent le fonctionnement prévu (installation, accès, chemins, mises à jour, sauvegarde, restauration, Sandbox)", "en": "Getting Started: documentation with a left navigation bar, eleven pages from Basics to CLI describing the planned behavior (install, access, paths, updates, backup, restore, Sandbox)" },
         { "fr": "Releases: cette page, les versions au centre et la liste des versions à droite", "en": "Releases: this page, versions in the middle and the version list on the right" },
-        { "fr": "Roadmap: la todo list des features de Dot Box, par version cible ou par domaine, avec leur état", "en": "Roadmap: the Dot Box feature to-do list, by target version or by area, with their status" }
+        { "fr": "Roadmap: la liste des features de Dot Box, cochées au fur et à mesure qu'elles sont livrées", "en": "Roadmap: the list of Dot Box features, checked off as they ship" }
       ]
     }
   ]

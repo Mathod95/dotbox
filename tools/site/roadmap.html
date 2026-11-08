@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
 <style>
 /* Roadmap de Dot Box : gabarit de la releasePage (docs/design/releasePage.html), mêmes valeurs.
-   Titre ROADMAP en points, bascule « par version / par domaine », groupes au centre, liste des groupes à droite (fixe au défilement).
+   Titre ROADMAP en points, puis une seule liste de features à cocher, sans version : les versions vivent dans Releases.
    Données : tools/site/roadmap.json. Un seul thème sombre. */
 :root {
   --bg: #080808;
@@ -61,83 +61,37 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .lede { margin: 0; font-family: var(--mono); font-size: clamp(15px, 1.8vw, 19px); color: var(--lit); text-wrap: balance; }
 .lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
 
-/* versions au centre, liste à droite */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 40px; align-items: start; }
-.feed { display: grid; gap: 18px; min-width: 0; }
-.rel { display: grid; gap: 16px; padding: clamp(20px, 3vw, 30px); border: 1px solid var(--line); border-radius: 20px; background: var(--panel); scroll-margin-top: 24px; min-width: 0; }
-.rel.latest { border-color: #262626; }
-.rel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); }
-.ver { padding: 5px 12px; border-radius: 999px; border: 1px solid #2a2a2a; color: var(--lit); font-size: 13px; letter-spacing: .1em; text-transform: none; }
-.rel.latest .ver { border-color: var(--accent); color: var(--accent); }
-.badge { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
-.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.badge.next { color: var(--fixed); }
-.rel h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 700; letter-spacing: .01em; text-wrap: balance; }
-.comps { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0; padding: 0; list-style: none; }
-.comps li { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--label); padding: 4px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
-.sec { display: grid; gap: 8px; }
-.sec h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--c); }
-.sec h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
-.sec ul { margin: 0; padding: 0 0 0 18px; display: grid; gap: 6px; color: var(--label); font-size: 15px; }
-.sec li { padding-left: 4px; }
-.sec li::marker { color: #3a3a3a; }
-code { font-family: var(--mono); font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
-.rel-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 18px; padding-top: 14px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
-.rel-foot a { color: var(--accent); text-decoration: none; }
-.rel-foot a:hover { color: var(--lit); }
-
-.side { position: sticky; top: 24px; display: grid; gap: 12px; }
-.side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
-.toc { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
-.toc a { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; text-decoration: none; color: var(--label); }
-.toc a::before { content: ""; grid-row: span 2; width: 8px; height: 8px; border-radius: 50%; background: #2a2a2a; }
-.toc .v { font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); }
-.toc .d { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toc a:hover .v { color: var(--accent); }
-.toc a[aria-current="true"] { border-left-color: var(--accent); }
-.toc a[aria-current="true"]::before { background: var(--accent); }
-.toc a[aria-current="true"] .v { color: var(--accent); }
-
-@media (max-width: 900px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .side { position: static; order: -1; }
-  .toc { display: flex; gap: 8px; overflow-x: auto; border-left: 0; padding-bottom: 4px; }
-  .toc a { flex: none; margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
-  .toc a[aria-current="true"] { border-color: var(--accent); }
-  .toc a::before { grid-row: auto; }
-  .toc .v { white-space: nowrap; }
-  .toc .d { display: none; }
-}
-
-.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
-.footer .red { color: var(--accent); }
-.footer a { color: var(--label); text-decoration: none; }
-
-/* roadmap : bascule, légende, avancement en points, lignes avec état */
-.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
-.views { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+/* la liste */
+.list { display: grid; gap: 18px; padding: clamp(20px, 3vw, 30px); border: 1px solid var(--line); border-radius: 20px; background: var(--panel); min-width: 0; }
+.list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); }
 .legend li { display: inline-flex; align-items: center; gap: 8px; }
 .legend li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 .legend b { color: var(--lit); font-weight: 500; }
-.count { color: var(--label); }
+.count { font-family: var(--mono); font-size: 13px; letter-spacing: .1em; color: var(--lit); }
 .dots { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .dots li { width: 10px; height: 10px; border-radius: 50%; background: #262626; }
 .dots li.done { background: var(--done); }
 .dots li.progress { background: var(--progress); }
-.items { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
-.items li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); color: var(--label); font-size: 15px; }
+.items { margin: 0; padding: 0; list-style: none; display: grid; }
+.items li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); color: var(--label); font-size: 15px; }
 .items li:first-child { border-top: 0; }
-.items li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); transform: translateY(-1px); }
+/* case à cocher : vide (à faire), à moitié (en cours), pleine avec ✓ (fait) */
+.box { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #3a3a3a; font-family: var(--mono); font-size: 12px; line-height: 1; color: var(--bg); }
+.done .box { background: var(--done); border-color: var(--done); }
+.progress .box { border-color: var(--progress); background: linear-gradient(90deg, var(--progress) 50%, transparent 50%); }
 .items li.done .txt { color: var(--muted); }
 .items .meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; }
 .items .tag { color: var(--label); padding: 2px 8px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
 .items .spec { color: var(--accent); text-decoration: none; white-space: nowrap; }
 .items .spec:hover { color: var(--lit); }
-.badge.done { color: var(--done); }
+code { font-family: var(--mono); font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .items li { grid-template-columns: auto minmax(0, 1fr); } .items .meta { grid-column: 2; justify-content: flex-start; } }
-</style>
 
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
+.footer .red { color: var(--accent); }
+.footer a { color: var(--label); text-decoration: none; }
+</style>
 <div class="wrap">
   <div class="top">
     <a class="brand" href="__HOME__"__HOME_TARGET__>DOT BOX</a>
@@ -157,22 +111,16 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
     <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Roadmap</h1>
     <canvas id="titleDots" width="1800" height="260" aria-hidden="true"></canvas>
     <p class="lede" data-i18n-html="lede"></p>
-    <div class="bar">
-      <div class="views" role="group" data-i18n-label="viewLabel">
-        <button type="button" class="chip" data-view="version" aria-pressed="false" data-i18n="byVersion"></button>
-        <button type="button" class="chip" data-view="domain" aria-pressed="false" data-i18n="byDomain"></button>
-      </div>
-      <ul class="legend" id="legend"></ul>
-    </div>
   </section>
 
-  <div class="layout">
-    <main class="feed" id="feed"></main>
-    <aside class="side" data-i18n-label="groups">
-      <h2 data-i18n="groups"></h2>
-      <ul class="toc" id="toc"></ul>
-    </aside>
-  </div>
+  <main class="list">
+    <div class="list-head">
+      <span class="count" id="count"></span>
+      <ul class="legend" id="legend"></ul>
+    </div>
+    <ul class="dots" id="dots" aria-hidden="true"></ul>
+    <ul class="items" id="items"></ul>
+  </main>
 
   <footer class="footer">
     <span class="red">Self-hosted · Rust · Docker Compose</span>
@@ -191,29 +139,21 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
 
   var STR = {
     fr: {
-      lede: "Ce qui est prévu pour Dot Box<i>●</i>par version ou par domaine.",
-      viewLabel: "Regroupement", byVersion: "Par version", byDomain: "Par domaine",
-      versions: "Versions", domains: "Domaines",
-      done: "Fait", progress: "En cours", planned: "Prévu",
-      doneAll: "Terminée", nextUp: "Prochaine version", spec: "Spec ↗"
+      lede: "Ce qui est prévu pour Dot Box<i>●</i>coché au fur et à mesure, les versions sont dans Releases.",
+      done: "Fait", progress: "En cours", planned: "À faire", of: "faites sur", spec: "Spec ↗"
     },
     en: {
-      lede: "What is planned for Dot Box<i>●</i>by version or by area.",
-      viewLabel: "Grouping", byVersion: "By version", byDomain: "By area",
-      versions: "Versions", domains: "Areas",
-      done: "Done", progress: "In progress", planned: "Planned",
-      doneAll: "Done", nextUp: "Next version", spec: "Spec ↗"
+      lede: "What is planned for Dot Box<i>●</i>checked off as it ships, versions are in Releases.",
+      done: "Done", progress: "In progress", planned: "To do", of: "done out of", spec: "Spec ↗"
     }
   };
   var STATES = ["done", "progress", "planned"];
-  var lang = "en", view = "version";
+  var lang = "en";
   try {
-    var qs = new URLSearchParams(location.search), q = qs.get("lang"), v = qs.get("view");
+    var q = new URLSearchParams(location.search).get("lang");
     lang = q === "en" || q === "fr" ? q : localStorage.getItem("dotbox-lang") || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"); // français pour un navigateur en français, anglais sinon
-    view = v === "domain" || v === "version" ? v : localStorage.getItem("dotbox-roadmap-view") || "version";
   } catch (e) { lang = (navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"; }
   if (!STR[lang]) lang = "en";
-  if (view !== "domain") view = "version";
   function t(k) { return STR[lang][k]; }
   function tr(o) { return o && (o[lang] || o.fr) || ""; }
   function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -250,108 +190,41 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
     }
   }
 
-  // les groupes : une version cible (ordre de milestones) ou un domaine (ordre de domains)
-  function groups() {
-    if (view === "version") return D.milestones.map(function (m) {
-      return { id: m.version, label: m.version, title: tr(m.title), items: D.features.filter(function (f) { return f.milestone === m.version; }) };
-    });
-    return D.domains.map(function (d) {
-      var items = D.features.filter(function (f) { return f.domain === d.id; });
-      var order = D.milestones.map(function (m) { return m.version; });
-      items.sort(function (a, b) { return order.indexOf(a.milestone) - order.indexOf(b.milestone); });
-      return { id: "d-" + d.id, label: tr(d.name), title: tr(d.name), items: items };
-    }).filter(function (g) { return g.items.length; });
-  }
-
   function render() {
     document.documentElement.lang = lang;
-    document.querySelectorAll("[data-i18n]").forEach(function (e) { e.textContent = t(e.getAttribute("data-i18n")); });
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
-    document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true" : "false"); });
-    document.querySelectorAll(".views .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-view") === view ? "true" : "false"); });
-    document.querySelector(".side h2").textContent = t(view === "version" ? "versions" : "domains");
-    document.querySelector(".side").setAttribute("aria-label", t(view === "version" ? "versions" : "domains"));
+    var F_ = D.features, n = function (s) { return F_.filter(function (f) { return f.status === s; }).length; };
 
-    // légende : nombre de features par état
+    document.getElementById("count").textContent = n("done") + " " + t("of") + " " + F_.length;
     var legend = document.getElementById("legend"); legend.innerHTML = "";
     STATES.forEach(function (s) {
       var li = el("li"); li.style.setProperty("--c", "var(--" + s + ")");
-      li.appendChild(el("b", "", String(D.features.filter(function (f) { return f.status === s; }).length)));
-      li.appendChild(document.createTextNode(t(s))); legend.appendChild(li);
+      li.appendChild(el("b", "", String(n(s)))); li.appendChild(document.createTextNode(t(s))); legend.appendChild(li);
     });
+    // avancement : un point par feature, allumé quand elle est faite
+    var dots = document.getElementById("dots"); dots.innerHTML = "";
+    STATES.forEach(function (s) { F_.forEach(function (f) { if (f.status === s) dots.appendChild(el("li", s)); }); });
 
-    var feed = document.getElementById("feed"), toc = document.getElementById("toc");
-    feed.innerHTML = ""; toc.innerHTML = "";
-    var gs = groups();
-    var nextUp = view === "version" ? gs.filter(function (g) { return g.items.some(function (f) { return f.status !== "done"; }); })[0] : null;
-    gs.forEach(function (g) {
-      var done = g.items.filter(function (f) { return f.status === "done"; }).length, all = done === g.items.length;
-      var art = el("article", "rel" + (g === nextUp ? " latest" : "")); art.id = g.id;
-      var head = el("div", "rel-head");
-      if (view === "version") head.appendChild(el("span", "ver", g.label));
-      head.appendChild(el("span", "count", done + " / " + g.items.length));
-      if (all) head.appendChild(el("span", "badge done", t("doneAll")));
-      else if (g === nextUp) head.appendChild(el("span", "badge next", t("nextUp")));
-      art.appendChild(head);
-      art.appendChild(el("h2", "", g.title));
-      // avancement : un point par feature, allumé quand elle est faite
-      var dots = el("ul", "dots"); dots.setAttribute("aria-hidden", "true");
-      STATES.forEach(function (s) { g.items.forEach(function (f) { if (f.status === s) dots.appendChild(el("li", s)); }); });
-      art.appendChild(dots);
-      var ul = el("ul", "items");
-      g.items.forEach(function (f) {
-        var li = el("li", f.status); li.style.setProperty("--c", "var(--" + f.status + ")");
-        li.setAttribute("title", t(f.status));
-        var txt = el("span", "txt"); txt.innerHTML = inline(tr(f)); li.appendChild(txt);
-        var meta = el("span", "meta");
-        meta.appendChild(el("span", "tag", view === "version" ? tr(DOM[f.domain].name) : f.milestone));
-        if (f.doc && DOCS[f.doc]) {
-          var a = el("a", "spec", t("spec")); a.href = DOCS[f.doc];
-          if (BLANK) { a.target = "_blank"; a.rel = "noopener"; }
-          meta.appendChild(a);
-        }
-        li.appendChild(meta); ul.appendChild(li);
-      });
-      art.appendChild(ul);
-      feed.appendChild(art);
-
-      var tli = el("li"), ta = el("a"); ta.href = "#" + g.id; ta.setAttribute("data-id", g.id);
-      ta.appendChild(el("span", "v", g.label));
-      ta.appendChild(el("span", "d", done + " / " + g.items.length + (view === "version" ? " · " + g.title : "")));
-      tli.appendChild(ta); toc.appendChild(tli);
+    // la liste, dans l'ordre de roadmap.json
+    var ul = document.getElementById("items"); ul.innerHTML = "";
+    F_.forEach(function (f) {
+      var li = el("li", f.status); li.setAttribute("title", t(f.status));
+      li.appendChild(el("span", "box", f.status === "done" ? "✓" : ""));
+      var txt = el("span", "txt"); txt.innerHTML = inline(tr(f)); li.appendChild(txt);
+      var meta = el("span", "meta");
+      meta.appendChild(el("span", "tag", tr(DOM[f.domain].name)));
+      if (f.doc && DOCS[f.doc]) {
+        var a = el("a", "spec", t("spec")); a.href = DOCS[f.doc];
+        if (BLANK) { a.target = "_blank"; a.rel = "noopener"; }
+        meta.appendChild(a);
+      }
+      li.appendChild(meta); ul.appendChild(li);
     });
-    spy();
   }
 
-  // groupe visible : surligné dans la liste de droite
-  var observer = null;
-  function mark(v) { document.querySelectorAll(".toc a").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-id") === v ? "true" : "false"); }); }
-  function spy() {
-    if (observer) observer.disconnect();
-    var arts = Array.prototype.slice.call(document.querySelectorAll(".rel"));
-    if (arts.length) mark(arts[0].id);
-    if (!window.IntersectionObserver) return;
-    var seen = {};
-    observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
-      var top = arts.filter(function (a) { return seen[a.id]; })[0];
-      if (top) mark(top.id);
-    }, { rootMargin: "-10% 0px -60% 0px" });
-    arts.forEach(function (a) { observer.observe(a); });
-  }
-  document.getElementById("toc").addEventListener("click", function (e) {
-    var a = e.target.closest("a"); if (!a) return;
-    e.preventDefault();
-    var target = document.getElementById(a.getAttribute("data-id"));
-    if (target) target.scrollIntoView({ block: "start" });
-    mark(a.getAttribute("data-id"));
-  });
   document.querySelectorAll(".lang .chip").forEach(function (b) {
     b.addEventListener("click", function () { lang = b.getAttribute("data-lang"); try { localStorage.setItem("dotbox-lang", lang); } catch (e) {} render(); });
-  });
-  document.querySelectorAll(".views .chip").forEach(function (b) {
-    b.addEventListener("click", function () { view = b.getAttribute("data-view"); try { localStorage.setItem("dotbox-roadmap-view", view); } catch (e) {} render(); });
   });
 
   drawTitle("ROADMAP");

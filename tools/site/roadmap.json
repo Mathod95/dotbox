@@ -1,49 +1,5 @@
 {
-  "_note": "Source de la page Roadmap de Dot Box : la todo list des features. Une feature par entrée, en français (fr) et en anglais (en), au format « Composant: description » comme releases.json. milestone = version cible (milestones), domain = domaine (domains), status = planned (prévu), progress (en cours) ou done (fait), doc = page Getting Started qui la spécifie. Une feature livrée passe en done et sa ligne va dans releases.json. Règles complètes dans CLAUDE.md.",
-  "milestones": [
-    {
-      "version": "v0.0.1",
-      "title": {
-        "fr": "Première version",
-        "en": "First release"
-      }
-    },
-    {
-      "version": "v0.1.0",
-      "title": {
-        "fr": "Serveur de test",
-        "en": "Test server"
-      }
-    },
-    {
-      "version": "v0.2.0",
-      "title": {
-        "fr": "Accès et état",
-        "en": "Access and state"
-      }
-    },
-    {
-      "version": "v0.3.0",
-      "title": {
-        "fr": "Sauvegarde et restauration",
-        "en": "Backup and restore"
-      }
-    },
-    {
-      "version": "v0.4.0",
-      "title": {
-        "fr": "Mises à jour",
-        "en": "Updates"
-      }
-    },
-    {
-      "version": "v0.5.0",
-      "title": {
-        "fr": "Catalogue complet",
-        "en": "Full catalog"
-      }
-    }
-  ],
+  "_note": "Source de la page Roadmap de Dot Box : la todo list des features, une liste simple qu'on coche au fur et à mesure. Une feature par entrée, en français (fr) et en anglais (en), au format « Composant: description » comme releases.json. domain = domaine (domains), status = planned (à faire), progress (en cours) ou done (fait), doc = page Getting Started qui la spécifie. Une feature livrée passe en done et sa ligne va dans releases.json. Règles complètes dans CLAUDE.md.",
   "domains": [
     {
       "id": "site",
@@ -111,14 +67,12 @@
   ],
   "features": [
     {
-      "milestone": "v0.0.1",
       "domain": "site",
       "status": "done",
       "fr": "Accueil: page d'accueil au style de Dot Hub, maquette interactive de l'interface et catalogue de 19 apps",
       "en": "Home: home page in the Dot Hub style, interactive mockup of the interface and a catalog of 19 apps"
     },
     {
-      "milestone": "v0.0.1",
       "domain": "site",
       "status": "done",
       "fr": "Getting Started: onze pages de documentation qui servent de spécification",
@@ -126,35 +80,30 @@
       "doc": "basics"
     },
     {
-      "milestone": "v0.0.1",
       "domain": "site",
       "status": "done",
       "fr": "Releases: les versions au centre, la liste des versions à droite",
       "en": "Releases: versions in the middle, version list on the right"
     },
     {
-      "milestone": "v0.0.1",
       "domain": "site",
       "status": "done",
-      "fr": "Roadmap: cette page, les features par version ou par domaine",
-      "en": "Roadmap: this page, features by version or by area"
+      "fr": "Roadmap: cette page, la liste des features à cocher",
+      "en": "Roadmap: this page, the feature checklist"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "base",
       "status": "planned",
       "fr": "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main",
       "en": "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "engine",
       "status": "planned",
       "fr": "Manifest: format d'une app (image, volumes, sous-domaine, SSO, câblage)",
       "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "base",
       "status": "planned",
       "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)",
@@ -162,7 +111,6 @@
       "doc": "installation"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "engine",
       "status": "planned",
       "fr": "Moteur: installer, supprimer, logs, avec un `compose.yml` généré par app",
@@ -170,7 +118,6 @@
       "doc": "basics"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "engine",
       "status": "planned",
       "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin par leurs API",
@@ -178,14 +125,12 @@
       "doc": "basics"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "web",
       "status": "planned",
       "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose",
       "en": "Web interface: catalog, status, live install logs, compose import"
     },
     {
-      "milestone": "v0.1.0",
       "domain": "base",
       "status": "planned",
       "fr": "Serveur principal: refait au propre avec Dot Box, app par app",
@@ -193,7 +138,6 @@
       "doc": "restore"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "engine",
       "status": "planned",
       "fr": "Moteur: l'état voulu dans `dotbox.yml`, `dotbox diff` et `dotbox sync`",
@@ -201,7 +145,6 @@
       "doc": "basics"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "access",
       "status": "planned",
       "fr": "Moteur: quatre niveaux d'accès par app, `two_factor`, `one_factor`, `app` et `public`",
@@ -209,7 +152,6 @@
       "doc": "accessing-apps"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "access",
       "status": "planned",
       "fr": "Moteur: sous-domaine et niveau d'accès modifiables dans `dotbox.yml`, appliqués par `dotbox sync`",
@@ -217,7 +159,6 @@
       "doc": "accessing-apps"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "access",
       "status": "planned",
       "fr": "CLI: `dotbox user`, comptes et groupes Authelia, invitation valable 48 h",
@@ -225,7 +166,6 @@
       "doc": "post-installation"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "base",
       "status": "planned",
       "fr": "Moteur: certificat wildcard Let's Encrypt ou ZeroSSL, enregistrements DNS créés chez le fournisseur",
@@ -233,7 +173,6 @@
       "doc": "prerequisites"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "base",
       "status": "planned",
       "fr": "CLI: `dotbox status` et `dotbox doctor`",
@@ -241,7 +180,6 @@
       "doc": "post-installation"
     },
     {
-      "milestone": "v0.2.0",
       "domain": "cli",
       "status": "planned",
       "fr": "CLI: options globales `--json`, `--local`, `--yes` et autocomplétion du shell",
@@ -249,7 +187,6 @@
       "doc": "cli"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "Moteur: sauvegarde de `/opt` app par app, arrêt court ou instantané btrfs/ZFS",
@@ -257,7 +194,6 @@
       "doc": "backup"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "Moteur: archives compressées (zstd) puis chiffrées (age), clé dans `secrets/backup.key`",
@@ -265,7 +201,6 @@
       "doc": "backup"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "Moteur: destinations local, rclone et SFTP, rétention `keep`, timer systemd quotidien",
@@ -273,7 +208,6 @@
       "doc": "backup"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "CLI: `dotbox backup` avec `--app`, `--to` et `--stream`",
@@ -281,7 +215,6 @@
       "doc": "backup"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "CLI: `dotbox restore latest`, une app ou tout le serveur",
@@ -289,7 +222,6 @@
       "doc": "restore"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "Moteur: migration vers un serveur neuf en une commande, DNS repointé",
@@ -297,7 +229,6 @@
       "doc": "restore"
     },
     {
-      "milestone": "v0.3.0",
       "domain": "backup",
       "status": "planned",
       "fr": "CLI: changement de domaine avec `dotbox config set domain` puis `dotbox sync`",
@@ -305,7 +236,6 @@
       "doc": "restore"
     },
     {
-      "milestone": "v0.4.0",
       "domain": "updates",
       "status": "planned",
       "fr": "Manifest: versions d'image fixées, jamais `latest`",
@@ -313,7 +243,6 @@
       "doc": "update"
     },
     {
-      "milestone": "v0.4.0",
       "domain": "updates",
       "status": "planned",
       "fr": "CLI: `dotbox update`, une app à la fois, la suivante seulement quand la précédente tourne",
@@ -321,7 +250,6 @@
       "doc": "update"
     },
     {
-      "milestone": "v0.4.0",
       "domain": "updates",
       "status": "planned",
       "fr": "CLI: `dotbox update --rollback` vers l'image précédente",
@@ -329,7 +257,6 @@
       "doc": "update"
     },
     {
-      "milestone": "v0.4.0",
       "domain": "updates",
       "status": "planned",
       "fr": "CLI: `dotbox upgrade` pour Dot Box seul, conversion des fichiers si leur format change",
@@ -337,7 +264,6 @@
       "doc": "update"
     },
     {
-      "milestone": "v0.4.0",
       "domain": "updates",
       "status": "planned",
       "fr": "Moteur: mises à jour programmées avec `update.schedule`, sauvegarde juste avant",
@@ -345,14 +271,12 @@
       "doc": "update"
     },
     {
-      "milestone": "v0.5.0",
       "domain": "catalog",
       "status": "planned",
       "fr": "Manifest: les 19 apps de l'accueil, chacune avec son pictogramme",
       "en": "Manifest: the 19 apps of the home page, each with its pictogram"
     },
     {
-      "milestone": "v0.5.0",
       "domain": "catalog",
       "status": "planned",
       "fr": "CLI: packs `media` et `downloads`, `dotbox list --packs`",
@@ -360,7 +284,6 @@
       "doc": "installation"
     },
     {
-      "milestone": "v0.5.0",
       "domain": "engine",
       "status": "planned",
       "fr": "Moteur: plusieurs instances d'une même app, `dotbox install radarr --as radarr-4k`",
@@ -368,7 +291,6 @@
       "doc": "basics"
     },
     {
-      "milestone": "v0.5.0",
       "domain": "catalog",
       "status": "planned",
       "fr": "CLI: `dotbox add`, un fichier compose devient un manifest dans `/opt/dotbox/apps/`",
@@ -376,7 +298,6 @@
       "doc": "sandbox"
     },
     {
-      "milestone": "v0.5.0",
       "domain": "catalog",
       "status": "planned",
       "fr": "Manifest: Sandbox communautaire `Mathod95/dotbox-sandbox`, `dotbox install sandbox/<app>`",
