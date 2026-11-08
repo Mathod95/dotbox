@@ -40,10 +40,12 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 
 - **Fonctions principales**: récupérer automatiquement films et séries, et les regarder de n'importe où, sur n'importe quel appareil. Dot Box a sa propre interface web (`dotbox.<domaine>`) ; la CLI passe par la même API.
 - **Pas de stockage distant** (décision du 8 novembre 2026): les médias restent sur les disques du serveur. Pas d'équivalent du unionFS de Saltbox (rclone, mergerfs, Cloudplow).
-- **Socle unique**: pas de type d'installation. `dotbox init` installe Docker, le réseau `dotbox`, Traefik, Authelia et Dot Box (interface web et API sur `dotbox.<domaine>`), crée l'utilisateur `dotbox` (UID et GID 1000) et programme une sauvegarde quotidienne locale. Relançable sans risque. Pas de redémarrage du serveur.
+- **Core unique**: pas de type d'installation. `dotbox init` installe Docker, le réseau `dotbox`, Traefik, Authelia et Dot Box (interface web et API sur `dotbox.<domaine>`), crée l'utilisateur `dotbox` (UID et GID 1000) et programme une sauvegarde quotidienne locale. Relançable sans risque. Pas de redémarrage du serveur.
 - **Plusieurs instances d'une même app**: `dotbox install radarr --as radarr-4k`, avec son dossier `/opt/radarr-4k`, son sous-domaine et son câblage.
 - **Certificat**: wildcard en DNS-01, Let's Encrypt par défaut ou ZeroSSL (`ca:` dans `dotbox.yml`).
-- **Packs**: listes d'apps installables d'un coup (`media`: Jellyfin, Jellystat, Seerr, Wizarr ; `downloads`: qBittorrent, Prowlarr, Radarr, Sonarr). `dotbox install <app|pack>`, `dotbox list --packs`.
+- **Pas de packs** (décision du 8 novembre 2026): `dotbox init` n'installe que le core ; ensuite, l'utilisateur installe les apps qu'il veut, une par une ou plusieurs d'un coup (`dotbox install <app>...`).
+- **Serveur média au choix** (décision du 8 novembre 2026): Dot Box est un outil de gestion de serveur de contenus, pas un installeur de Jellyfin. Jellyfin et Plex sont au même niveau, aucun n'est mis en avant dans le site ni dans les exemples ; pas d'Emby dans le catalogue.
+- **Vocabulaire**: « core » pour ce qu'installe `dotbox init` (Docker, Traefik, Authelia, Dot Box), jamais « socle ».
 - **Configuration**: un seul fichier `/opt/dotbox/dotbox.yml` (domaine, e-mail, DNS, admin, chemins, sauvegarde, mises à jour, réglages par app) ; secrets dans `/opt/dotbox/secrets/` (root seulement), référencés par `secret:<nom>`.
 - **Prérequis**: Debian 12/13 ou Ubuntu 24.04, amd64 ou arm64, dédié, VPS ou VM. Domaine obligatoire ; certificat wildcard en DNS-01 (Cloudflare, OVH, Scaleway, Gandi...) ; ports 80 et 443.
 - **Accès**: quatre niveaux par app, `two_factor`, `one_factor`, `app` (connexion propre, pour Jellyfin, Plex, Vaultwarden à cause de leurs apps TV et mobiles), `public`. Sous-domaine et niveau modifiables dans `apps:` de `dotbox.yml`, appliqués par `dotbox sync`.
@@ -117,7 +119,7 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 
 ### Roadmap
 
-- `tools/site/roadmap.json`: `domains` (Site, Socle, Moteur, Interface web, Accès, Sauvegarde, Mises à jour, Catalogue, CLI) et `features`, dans l'ordre de la liste. **Pas de version cible** (décision du 8 novembre 2026): on coche au fur et à mesure, les versions se lisent dans Releases.
+- `tools/site/roadmap.json`: `domains` (Site, Core, Moteur, Interface web, Accès, Sauvegarde, Mises à jour, Catalogue, CLI) et `features`, dans l'ordre de la liste. **Pas de version cible** (décision du 8 novembre 2026): on coche au fur et à mesure, les versions se lisent dans Releases.
 - Une feature: `domain`, `status` (`planned` à faire, `progress` en cours, `done` fait), `fr` et `en` au même format que releases.json (`Composant: description`), `doc` (slug de la page Getting Started qui la spécifie, facultatif).
 - Une feature commencée passe en `progress` ; une feature livrée passe en `done` et sa ligne va dans `new` de `next` (ou de `v0.0.1` tant que rien n'est tagué). Seulement ce qui est réellement fait.
 - Une décision produit qui ajoute une feature: une ligne dans roadmap.json, en plus de la page Getting Started et de « Décisions produit ».

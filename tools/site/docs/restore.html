@@ -16,7 +16,7 @@
   <ol>
     <li><b>Sur l'ancien serveur</b>, une sauvegarde vers une destination que le nouveau peut joindre: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>Sur le nouveau</b>, télécharge Dot Box (Installation, étape 1). Pas besoin de lancer <code>init</code>.</li>
-    <li><b>Restaure</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box relit la config de la sauvegarde, refait l'installation du socle avec elle (Docker, Traefik, Authelia, certificat), puis restaure toutes les apps.</li>
+    <li><b>Restaure</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box relit la config de la sauvegarde, refait l'installation du core avec elle (Docker, Traefik, Authelia, certificat), puis restaure toutes les apps.</li>
     <li><b>Le DNS</b>: avec un fournisseur pris en charge, Dot Box repointe <code>*.mathod.fr</code> vers la nouvelle IP. Sinon, change l'enregistrement à la main.</li>
     <li><b>Les médias</b>: copie <code>/data</code> avec rsync s'ils doivent suivre.</li>
   </ol>
@@ -41,7 +41,7 @@
   <ol>
     <li><b>On the old server</b>, back up to a destination the new one can reach: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>On the new one</b>, download Dot Box (Installation, step 1). No need to run <code>init</code>.</li>
-    <li><b>Restore</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box reads the config from the backup, reinstalls the base with it (Docker, Traefik, Authelia, certificate), then restores every app.</li>
+    <li><b>Restore</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box reads the config from the backup, reinstalls the core with it (Docker, Traefik, Authelia, certificate), then restores every app.</li>
     <li><b>DNS</b>: with a supported provider, Dot Box points <code>*.mathod.fr</code> to the new IP. Otherwise, change the record by hand.</li>
     <li><b>Media</b>: copy <code>/data</code> with rsync if it should come along.</li>
   </ol>

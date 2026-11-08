@@ -9,17 +9,17 @@
   <p>Remplace le binaire et relance l'interface et l'API. Les apps ne sont pas touchées. Si la nouvelle version change le format des manifests ou de <code>dotbox.yml</code>, <code>upgrade</code> convertit les fichiers et l'indique dans son résumé.</p>
 
   <h2 id="fr-apps">Mettre à jour une app</h2>
-  <pre><span class="p">$</span> dotbox update jellyfin
+  <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
-  <p>Chaque manifest fixe une version d'image (<code>lscr.io/linuxserver/jellyfin:10.11.2</code>), jamais <code>latest</code>: ce qui tourne est toujours connu. <code>update</code> passe à la version la plus récente, recrée le container et attend qu'il soit <i><b>Running</b></i> avant de passer à l'app suivante. Une app qui ne redémarre pas arrête la série.</p>
+  <p>Chaque manifest fixe une version d'image (<code>lscr.io/linuxserver/radarr:5.26.2</code>), jamais <code>latest</code>: ce qui tourne est toujours connu. <code>update</code> passe à la version la plus récente, recrée le container et attend qu'il soit <i><b>Running</b></i> avant de passer à l'app suivante. Une app qui ne redémarre pas arrête la série.</p>
 
   <h2 id="fr-rollback">Revenir en arrière</h2>
-  <pre><span class="p">$</span> dotbox update jellyfin --rollback</pre>
+  <pre><span class="p">$</span> dotbox update radarr --rollback</pre>
   <p>L'image précédente est gardée sur le serveur: <code>--rollback</code> la remet en place si la nouvelle version pose problème.</p>
 
   <h2 id="fr-diff">Voir ce qui est disponible</h2>
   <pre><span class="p">$</span> dotbox diff
-<span class="w">  ~ jellyfin   10.11.2, 10.11.3 available</span>
+<span class="w">  ~ radarr     5.26.2, 5.27.0 available</span>
 <span class="w">  ~ sonarr     4.0.15, 4.0.16 available</span></pre>
 
   <h2 id="fr-auto">Mises à jour automatiques</h2>
@@ -36,17 +36,17 @@
   <p>Replaces the binary and restarts the interface and the API. Apps are not touched. If the new version changes the manifest or <code>dotbox.yml</code> format, <code>upgrade</code> converts the files and says so in its summary.</p>
 
   <h2 id="en-apps">Update an app</h2>
-  <pre><span class="p">$</span> dotbox update jellyfin
+  <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
-  <p>Each manifest pins an image version (<code>lscr.io/linuxserver/jellyfin:10.11.2</code>), never <code>latest</code>, so what runs is always known. <code>update</code> moves to the newest version, recreates the container and waits for it to be <i><b>Running</b></i> before moving to the next app. An app that fails to restart stops the run.</p>
+  <p>Each manifest pins an image version (<code>lscr.io/linuxserver/radarr:5.26.2</code>), never <code>latest</code>, so what runs is always known. <code>update</code> moves to the newest version, recreates the container and waits for it to be <i><b>Running</b></i> before moving to the next app. An app that fails to restart stops the run.</p>
 
   <h2 id="en-rollback">Roll back</h2>
-  <pre><span class="p">$</span> dotbox update jellyfin --rollback</pre>
+  <pre><span class="p">$</span> dotbox update radarr --rollback</pre>
   <p>The previous image stays on the server: <code>--rollback</code> puts it back if the new version causes trouble.</p>
 
   <h2 id="en-diff">See what is available</h2>
   <pre><span class="p">$</span> dotbox diff
-<span class="w">  ~ jellyfin   10.11.2, 10.11.3 available</span>
+<span class="w">  ~ radarr     5.26.2, 5.27.0 available</span>
 <span class="w">  ~ sonarr     4.0.15, 4.0.16 available</span></pre>
 
   <h2 id="en-auto">Automatic updates</h2>

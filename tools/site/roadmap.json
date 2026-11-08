@@ -9,10 +9,10 @@
       }
     },
     {
-      "id": "base",
+      "id": "core",
       "name": {
-        "fr": "Socle",
-        "en": "Base"
+        "fr": "Core",
+        "en": "Core"
       }
     },
     {
@@ -92,10 +92,10 @@
       "en": "Roadmap: this page, the feature checklist"
     },
     {
-      "domain": "base",
+      "domain": "core",
       "status": "planned",
-      "fr": "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main",
-      "en": "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand"
+      "fr": "Serveur de test: Radarr, Sonarr, qBittorrent et un serveur média derrière Traefik et Authelia, validés à la main",
+      "en": "Test server: Radarr, Sonarr, qBittorrent and a media server behind Traefik and Authelia, checked by hand"
     },
     {
       "domain": "engine",
@@ -104,7 +104,7 @@
       "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)"
     },
     {
-      "domain": "base",
+      "domain": "core",
       "status": "planned",
       "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)",
       "en": "CLI: `dotbox init` on a fresh Debian or Ubuntu (Docker, shared network, Traefik, Authelia)",
@@ -120,8 +120,8 @@
     {
       "domain": "engine",
       "status": "planned",
-      "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin par leurs API",
-      "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and Jellyfin through their APIs",
+      "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et du serveur média (Jellyfin ou Plex) par leurs API",
+      "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and the media server (Jellyfin or Plex) through their APIs",
       "doc": "basics"
     },
     {
@@ -131,7 +131,7 @@
       "en": "Web interface: catalog, status, live install logs, compose import"
     },
     {
-      "domain": "base",
+      "domain": "core",
       "status": "planned",
       "fr": "Serveur principal: refait au propre avec Dot Box, app par app",
       "en": "Main server: rebuilt cleanly with Dot Box, app by app",
@@ -166,14 +166,14 @@
       "doc": "post-installation"
     },
     {
-      "domain": "base",
+      "domain": "core",
       "status": "planned",
       "fr": "Moteur: certificat wildcard Let's Encrypt ou ZeroSSL, enregistrements DNS créés chez le fournisseur",
       "en": "Engine: Let's Encrypt or ZeroSSL wildcard certificate, DNS records created at the provider",
       "doc": "prerequisites"
     },
     {
-      "domain": "base",
+      "domain": "core",
       "status": "planned",
       "fr": "CLI: `dotbox status` et `dotbox doctor`",
       "en": "CLI: `dotbox status` and `dotbox doctor`",
@@ -275,13 +275,6 @@
       "status": "planned",
       "fr": "Manifest: les 19 apps de l'accueil, chacune avec son pictogramme",
       "en": "Manifest: the 19 apps of the home page, each with its pictogram"
-    },
-    {
-      "domain": "catalog",
-      "status": "planned",
-      "fr": "CLI: packs `media` et `downloads`, `dotbox list --packs`",
-      "en": "CLI: `media` and `downloads` packs, `dotbox list --packs`",
-      "doc": "installation"
     },
     {
       "domain": "engine",

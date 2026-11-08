@@ -4,8 +4,8 @@
 
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
-  <h2 id="fr-types">Un socle, puis tes apps</h2>
-  <p>Il n'y a pas de type d'installation à choisir. Dot Box installe toujours le même socle, puis les apps que tu demandes, une par une ou par pack.</p>
+  <h2 id="fr-types">Un core, puis tes apps</h2>
+  <p>Il n'y a pas de type d'installation à choisir. Dot Box installe toujours le même core. Ensuite, c'est toi qui choisis les apps que tu veux, une par une ou plusieurs d'un coup.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Composant</th><th>Rôle</th><th>Installé par</th></tr></thead>
     <tbody>
@@ -13,12 +13,10 @@
       <tr><td>Traefik</td><td>sous-domaines et certificats</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>connexion unique</td><td><code>dotbox init</code></td></tr>
       <tr><td>Dot Box</td><td>interface web et API, sur <code>dotbox.mathod.fr</code></td><td><code>dotbox init</code></td></tr>
-      <tr><td>Pack media</td><td>Jellyfin, Jellystat, Seerr, Wizarr</td><td><code>dotbox install media</code></td></tr>
-      <tr><td>Pack downloads</td><td>qBittorrent, Prowlarr, Radarr, Sonarr</td><td><code>dotbox install downloads</code></td></tr>
-      <tr><td>Autres apps</td><td>tout le catalogue</td><td><code>dotbox install &lt;app&gt;</code></td></tr>
+      <tr><td>Tes apps</td><td>celles que tu choisis dans le catalogue</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
-  <p>Un pack n'est qu'une liste d'apps: tu peux installer le pack downloads puis retirer Sonarr, ou ne prendre que Radarr. <code>dotbox list --packs</code> affiche les packs et leur contenu.</p>
+  <p>Le core n'installe aucune app de contenu: pas de serveur média ni de client de téléchargement imposés. <code>dotbox list</code> affiche le catalogue.</p>
 
   <h2 id="fr-step1">Étape 1: télécharger Dot Box</h2>
   <pre><span class="p">$</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/dotbox-linux-amd64 \
@@ -59,14 +57,13 @@ update:
   <p><code>init</code> peut être relancé sans risque: il vérifie, complète ce qui manque et ne recrée rien qui existe déjà.</p>
 
   <h2 id="fr-step3">Étape 3: installer tes apps</h2>
-  <pre><span class="p">$</span> dotbox install downloads
-<span class="p">$</span> dotbox install jellyfin seerr</pre>
+  <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
   <p>Chaque app arrive sur son sous-domaine, déjà branchée aux autres. Pas de redémarrage du serveur: Dot Box ne touche ni au noyau ni au démarrage du système.</p>
 </article>
 
 <article class="prose" data-l="en">
-  <h2 id="en-types">One base, then your apps</h2>
-  <p>There is no install type to choose. Dot Box always installs the same base, then the apps you ask for, one by one or as a pack.</p>
+  <h2 id="en-types">One core, then your apps</h2>
+  <p>There is no install type to choose. Dot Box always installs the same core. Then you pick the apps you want, one by one or several at once.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Role</th><th>Installed by</th></tr></thead>
     <tbody>
@@ -74,12 +71,10 @@ update:
       <tr><td>Traefik</td><td>subdomains and certificates</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>single login</td><td><code>dotbox init</code></td></tr>
       <tr><td>Dot Box</td><td>web interface and API, on <code>dotbox.mathod.fr</code></td><td><code>dotbox init</code></td></tr>
-      <tr><td>Media pack</td><td>Jellyfin, Jellystat, Seerr, Wizarr</td><td><code>dotbox install media</code></td></tr>
-      <tr><td>Downloads pack</td><td>qBittorrent, Prowlarr, Radarr, Sonarr</td><td><code>dotbox install downloads</code></td></tr>
-      <tr><td>Other apps</td><td>the whole catalog</td><td><code>dotbox install &lt;app&gt;</code></td></tr>
+      <tr><td>Your apps</td><td>the ones you pick from the catalog</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
-  <p>A pack is just a list of apps: you can install the downloads pack and then remove Sonarr, or only take Radarr. <code>dotbox list --packs</code> shows the packs and what they contain.</p>
+  <p>The core installs no content app: no media server or download client is forced on you. <code>dotbox list</code> shows the catalog.</p>
 
   <h2 id="en-step1">Step 1: download Dot Box</h2>
   <pre><span class="p">$</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/dotbox-linux-amd64 \
@@ -120,7 +115,6 @@ update:
   <p><code>init</code> can be run again safely: it checks, fills in what is missing and recreates nothing that already exists.</p>
 
   <h2 id="en-step3">Step 3: install your apps</h2>
-  <pre><span class="p">$</span> dotbox install downloads
-<span class="p">$</span> dotbox install jellyfin seerr</pre>
+  <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
   <p>Each app lands on its own subdomain, already connected to the others. No server reboot: Dot Box touches neither the kernel nor the system boot.</p>
 </article>
