@@ -82,8 +82,6 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .hero canvas { display: block; height: auto; justify-self: start; }
 .lede { margin: 0; font-family: var(--mono); font-size: clamp(15px, 1.8vw, 19px); color: var(--lit); text-wrap: pretty; }
 .lede i { font-style: normal; color: var(--accent); padding: 0 .5em; }
-.state { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); }
-.state::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--design); }
 .prose { display: grid; gap: 18px; min-width: 0; }
 .prose pre { margin: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: #050505; font-family: var(--mono); font-variant-ligatures: none; font-size: 13px; line-height: 1.65; color: var(--lit); overflow-x: auto; }
 .prose pre .c { color: var(--muted); }
@@ -162,7 +160,6 @@ __NAV__
         <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">__H1__</h1>
         <canvas id="titleDots" width="700" height="252" data-title="__DOTS__" data-all="__DOTS_ALL__" aria-hidden="true"></canvas>
 __LEDE__
-        <p class="state"><span data-l="fr">En conception · cette page décrit ce qui est prévu, rien n'est encore codé</span><span data-l="en">In design · this page describes what is planned, nothing is coded yet</span></p>
       </section>
 
 __CONTENT__
