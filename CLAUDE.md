@@ -55,6 +55,7 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 - **Mises à jour**: `dotbox upgrade` (Dot Box seul) et `dotbox update` (apps) séparés ; versions d'image fixées, jamais `latest` ; une app à la fois, attend ***Running*** ; `--rollback` ; automatique seulement si `update.schedule`, avec sauvegarde avant ; pas de Watchtower.
 - **Sauvegarde**: `/opt` seulement (pas `/data`), app par app (arrêt court ou instantané btrfs/ZFS), zstd puis chiffrement age (clé dans `secrets/backup.key`), destinations local, rclone, SFTP, rétention `keep`, timer systemd, `--app`, `--to`, `--stream`.
 - **Restauration**: `dotbox restore <archive|latest> [--app] [--key]` ; sur un serveur neuf, restore refait l'init à partir de la config sauvegardée ; changement de domaine par `dotbox config set domain` puis `dotbox sync`.
+- **Catalogue à part** (décision du 8 novembre 2026): repo `Mathod95/dotbox-catalog`, un manifest par app, publié en versions datées ; Renovate (app GitHub hébergée par Mend) propose chaque nouvelle version d'image en pull request, la CI teste, les versions correctives fusionnent seules ; Dot Box rafraîchit le catalogue à chaque `dotbox diff` / `dotbox update` sans changer de binaire ; chaque manifest déclare la version minimale de Dot Box. Pas de git ni de repo sur le serveur ; `dotbox upgrade` met à jour le binaire depuis les releases GitHub.
 - **Sources d'apps**: catalogue officiel, Sandbox communautaire (`Mathod95/dotbox-sandbox`, `dotbox install sandbox/<app>`), apps locales (`dotbox add` → `/opt/dotbox/apps/`), même format de manifest pour les trois.
 
 ## Releases
@@ -108,7 +109,7 @@ tools/build_site.py sans option : le site dans site/ (ignoré par Git) ; avec --
 - `tagged`: `true` seulement quand le tag est poussé sur GitHub. Il affiche les liens « Changements » et « Télécharger » ; absent pour `next`.
 - Catégories, dans cet ordre: `new` (Nouveau), `changed` (Changé), `fixed` (Corrigé), `removed` (Retiré). Une catégorie vide n'est pas affichée.
 - Chaque ligne existe **en français et en anglais**. Format: `Composant: description`, sans espace avant les deux-points, noms de fichiers et commandes entre backticks (rendus en `<code>`).
-- Composants: `Moteur`, `CLI`, `Interface web`, `Manifest`, `Accueil`, `Getting Started`, `Releases`, `Roadmap`, ou le nom d'une app du catalogue (`Radarr`, `Jellyfin`...).
+- Composants: `Moteur`, `CLI`, `Interface web`, `Manifest`, `Accueil`, `Getting Started`, `Releases`, `Roadmap`, `Catalogue`, ou le nom d'une app du catalogue (`Radarr`, `Jellyfin`...).
 - La version taguée la plus récente reçoit automatiquement le badge « Dernière version ».
 
 ### À chaque commit et à chaque tag

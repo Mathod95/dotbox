@@ -259,8 +259,8 @@
     {
       "domain": "updates",
       "status": "planned",
-      "fr": "CLI: `dotbox upgrade` pour Dot Box seul, conversion des fichiers si leur format change",
-      "en": "CLI: `dotbox upgrade` for Dot Box only, converting files if their format changes",
+      "fr": "CLI: `dotbox upgrade` pour Dot Box seul : release GitHub, checksum vérifié, ancien binaire gardé, fichiers convertis si leur format change",
+      "en": "CLI: `dotbox upgrade` for Dot Box only: GitHub release, checksum verified, previous binary kept, files converted if their format changes",
       "doc": "update"
     },
     {
@@ -275,6 +275,61 @@
       "status": "planned",
       "fr": "Manifest: les 19 apps de l'accueil, chacune avec son pictogramme",
       "en": "Manifest: the 19 apps of the home page, each with its pictogram"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: repo `Mathod95/dotbox-catalog`, un manifest par app dans `apps/`, publié en versions datées",
+      "en": "Catalog: `Mathod95/dotbox-catalog` repository, one manifest per app in `apps/`, published as dated versions",
+      "doc": "update"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: app GitHub Renovate installée sur le repo, avec son `renovate.json`",
+      "en": "Catalog: Renovate GitHub app installed on the repository, with its `renovate.json`",
+      "doc": "update"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: Renovate ouvre une pull request par nouvelle version d'image, regroupées une fois par semaine, et lit les versions linuxserver (`5.27.0.10274-ls283`)",
+      "en": "Catalog: Renovate opens a pull request per new image version, grouped once a week, and reads linuxserver versions (`5.27.0.10274-ls283`)",
+      "doc": "update"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: CI des pull requests, qui valide le manifest, démarre le container et attend qu'il tourne",
+      "en": "Catalog: pull request CI that validates the manifest, starts the container and waits for it to run",
+      "doc": "update"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: fusion automatique des versions correctives, relecture pour les autres",
+      "en": "Catalog: automatic merge of patch versions, review for the others",
+      "doc": "update"
+    },
+    {
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Manifest: version minimale de Dot Box par manifest ; sinon Dot Box demande un `dotbox upgrade`",
+      "en": "Manifest: minimum Dot Box version per manifest; otherwise Dot Box asks for a `dotbox upgrade`",
+      "doc": "update"
+    },
+    {
+      "domain": "updates",
+      "status": "planned",
+      "fr": "Moteur: rafraîchit le catalogue à chaque `dotbox diff` et `dotbox update`, sans changer de binaire",
+      "en": "Engine: refreshes the catalog on every `dotbox diff` and `dotbox update`, without changing the binary",
+      "doc": "update"
+    },
+    {
+      "domain": "cli",
+      "status": "planned",
+      "fr": "CLI: Renovate tient aussi à jour les dépendances Rust du repo `dotbox`",
+      "en": "CLI: Renovate also keeps the Rust dependencies of the `dotbox` repository up to date"
     },
     {
       "domain": "engine",
