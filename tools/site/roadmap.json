@@ -180,6 +180,12 @@
       "doc": "post-installation"
     },
     {
+      "domain": "core",
+      "status": "planned",
+      "fr": "Core: message d'accueil SSH (MOTD) Dot Box, au contenu encore à définir",
+      "en": "Core: Dot Box SSH welcome message (MOTD), contents still to be defined"
+    },
+    {
       "domain": "cli",
       "status": "planned",
       "fr": "CLI: options globales `--json`, `--local`, `--yes` et autocomplétion du shell",
