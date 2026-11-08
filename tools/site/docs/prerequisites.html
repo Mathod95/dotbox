@@ -28,7 +28,7 @@
   <p>Chaque app est servie sur son sous-domaine (<code>radarr.mathod.fr</code>), jamais par IP et port: les ports des containers restent sur le réseau interne <code>dotbox</code>. Il te faut donc un nom de domaine à toi.</p>
 
   <h2 id="fr-dns">Le DNS</h2>
-  <p>Dot Box demande un certificat wildcard <code>*.mathod.fr</code> à Let's Encrypt par le challenge DNS-01. Il a besoin d'un jeton API de ton fournisseur DNS, limité à la zone du domaine.</p>
+  <p>Dot Box demande un certificat wildcard <code>*.mathod.fr</code> à Let's Encrypt (ou ZeroSSL, au choix dans <code>dotbox.yml</code>) par le challenge DNS-01. Il a besoin d'un jeton API de ton fournisseur DNS, limité à la zone du domaine.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Fournisseur</th><th>Ce qu'il faut</th></tr></thead>
     <tbody>
@@ -74,7 +74,7 @@
   <p>Each app is served on its own subdomain (<code>radarr.mathod.fr</code>), never by IP and port: container ports stay on the internal <code>dotbox</code> network. So you need a domain name of your own.</p>
 
   <h2 id="en-dns">DNS</h2>
-  <p>Dot Box requests a wildcard certificate <code>*.mathod.fr</code> from Let's Encrypt through the DNS-01 challenge. It needs an API token from your DNS provider, limited to the domain's zone.</p>
+  <p>Dot Box requests a wildcard certificate <code>*.mathod.fr</code> from Let's Encrypt (or ZeroSSL, set in <code>dotbox.yml</code>) through the DNS-01 challenge. It needs an API token from your DNS provider, limited to the domain's zone.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Provider</th><th>What you need</th></tr></thead>
     <tbody>

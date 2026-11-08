@@ -3,18 +3,20 @@
 
 - tools/site/index.html : la homePage (accueil) ;
 - tools/site/releases.html : la releasePage, données dans tools/site/releases.json ;
+- tools/site/roadmap.html : la roadmap (gabarit de la releasePage), données dans tools/site/roadmap.json ;
 - tools/site/docs/ : la documentation (architecture de docs.saltbox.dev) :
   layout.html (en-tête, barre de navigation à gauche, article, pied de page)
   et une page par fichier (basics.html, cli.html), découpée en sections
   <!-- LEDE -->, <!-- CONTENT -->, <!-- CSS --> et <!-- JS -->.
 
 Sans option : le site GitHub Pages dans site/ (pages complètes, liens relatifs) :
-  site/index.html, site/releases/, site/getting-started/basics/, site/getting-started/cli/
+  site/index.html, site/releases/, site/roadmap/, site/getting-started/<page>/
 Publié par .github/workflows/pages.yml à chaque push sur main.
 
 Aperçus en artefacts claude.ai (pages sans en-tête HTML, liens vers les autres artefacts) :
   --fragment FICHIER           l'accueil
   --releases-fragment FICHIER  les releases
+  --roadmap-fragment FICHIER   la roadmap
   --docs-fragments DOSSIER     une page par page de documentation (basics.html, cli.html)
 """
 import argparse
@@ -29,6 +31,8 @@ SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
 RELEASES_DATA = SITE_SRC / "releases.json"
+ROADMAP_TEMPLATE = SITE_SRC / "roadmap.html"
+ROADMAP_DATA = SITE_SRC / "roadmap.json"
 DOCS_SRC = SITE_SRC / "docs"
 DOCS_LAYOUT = DOCS_SRC / "layout.html"
 
@@ -52,6 +56,7 @@ DOCS = [
 # artefacts claude.ai : les pages se répondent par leurs boutons
 ARTIFACT_PAGE = "https://claude.ai/artifact/E5ByDHCb49shftFLzDTPbE"
 ARTIFACT_RELEASE = "https://claude.ai/artifact/XpnuaqWpy7684cLAWuNEAd"
+ARTIFACT_ROADMAP = "https://claude.ai/artifact/UxWsooQhdW7DtxpN4KpRw7"
 ARTIFACT_DOCS = {
     "basics": "https://claude.ai/artifact/WPfzXWk2jWXWKbg2EFEMH9",
     "prerequisites": "https://claude.ai/artifact/VzSMUX2mPzRYozJpHxJBPo",
@@ -83,6 +88,14 @@ def home(urls, target, title):
 def releases(urls, target, title):
     data = json.dumps(json.loads(RELEASES_DATA.read_text(encoding="utf-8")), ensure_ascii=False).replace("</", "<\\/")
     page = RELEASES_TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data).replace("__TITLE__", title)
+    return links(page, urls, target)
+
+
+def roadmap(urls, target, title):
+    data = json.dumps(json.loads(ROADMAP_DATA.read_text(encoding="utf-8")), ensure_ascii=False).replace("</", "<\\/")
+    docs = json.dumps({d["slug"]: urls["DOC_" + ukey(d["slug"])] for d in DOCS})
+    page = (ROADMAP_TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data).replace("__DOCURLS__", docs)
+            .replace("__DOCBLANK__", "true" if target else "false").replace("__TITLE__", title))
     return links(page, urls, target)
 
 
@@ -151,14 +164,14 @@ def document(full):
 def site_urls(depth):
     """Liens relatifs depuis une page située à `depth` dossiers de la racine du site."""
     up = "../" * depth
-    urls = {"HOME": up or "./", "RELEASES": up + "releases/", "GS": up + "getting-started/" + DOCS[0]["slug"] + "/"}
+    urls = {"HOME": up or "./", "RELEASES": up + "releases/", "ROADMAP": up + "roadmap/", "GS": up + "getting-started/" + DOCS[0]["slug"] + "/"}
     for d in DOCS:
         urls["DOC_" + ukey(d["slug"])] = up + "getting-started/" + d["slug"] + "/"
     return urls
 
 
 def artifact_urls():
-    urls = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "GS": ARTIFACT_DOCS[DOCS[0]["slug"]]}
+    urls = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "ROADMAP": ARTIFACT_ROADMAP, "GS": ARTIFACT_DOCS[DOCS[0]["slug"]]}
     for d in DOCS:
         urls["DOC_" + ukey(d["slug"])] = ARTIFACT_DOCS[d["slug"]]
     return urls
@@ -170,6 +183,7 @@ def site():
     pages = {
         "index.html": home(site_urls(0), "", "Dot Box"),
         "releases/index.html": releases(site_urls(1), "", "Releases · Dot Box"),
+        "roadmap/index.html": roadmap(site_urls(1), "", "Roadmap · Dot Box"),
     }
     for d in DOCS:
         pages["getting-started/" + d["slug"] + "/index.html"] = doc(d["slug"], site_urls(2), "", d["name"] + " · Dot Box")
@@ -184,9 +198,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fragment")
     ap.add_argument("--releases-fragment")
+    ap.add_argument("--roadmap-fragment")
     ap.add_argument("--docs-fragments")
     args = ap.parse_args()
-    if not (args.fragment or args.releases_fragment or args.docs_fragments):
+    if not (args.fragment or args.releases_fragment or args.roadmap_fragment or args.docs_fragments):
         site()
         return
     art = artifact_urls()
@@ -194,6 +209,8 @@ def main():
         pathlib.Path(args.fragment).write_text(home(art, BLANK, "Dot Box"), encoding="utf-8")
     if args.releases_fragment:
         pathlib.Path(args.releases_fragment).write_text(releases(art, BLANK, "Dot Box Releases"), encoding="utf-8")
+    if args.roadmap_fragment:
+        pathlib.Path(args.roadmap_fragment).write_text(roadmap(art, BLANK, "Dot Box Roadmap"), encoding="utf-8")
     if args.docs_fragments:
         out = pathlib.Path(args.docs_fragments)
         out.mkdir(parents=True, exist_ok=True)

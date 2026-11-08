@@ -7,12 +7,23 @@
   <h2 id="fr-what">Qu'est-ce que Dot Box ?</h2>
   <p>Dot Box est un gestionnaire d'apps auto-hébergées pour un serveur Debian ou Ubuntu. Il installe, branche et met à jour des apps (Jellyfin, Radarr, Sonarr, qBittorrent, Vaultwarden...) dans des containers Docker, chacune sur son sous-domaine en HTTPS et derrière une connexion unique.</p>
   <p>Tout passe par un seul binaire Rust: l'interface web, l'API et la CLI <code>dotbox</code>. Chaque app est décrite par un petit manifest YAML, que Dot Box transforme en fichier Docker Compose lisible.</p>
+  <p>Ses deux fonctions principales: <b>récupérer automatiquement</b> tes films et séries, et te permettre de les <b>regarder de n'importe où</b>, sur n'importe quel appareil. Les médias restent sur les disques du serveur.</p>
+  <p>Dot Box a sa propre <b>interface web</b>, sur <code>dotbox.mathod.fr</code>: catalogue, état des apps, installations et logs en direct. La CLI fait la même chose depuis le terminal, par la même API.</p>
 
   <h2 id="fr-why">Pourquoi utiliser Dot Box ?</h2>
   <h3 id="fr-https">Sous-domaines et HTTPS</h3>
-  <p>Traefik envoie chaque app sur son sous-domaine (<code>radarr.mathod.fr</code>), avec un seul certificat Let's Encrypt wildcard obtenu en DNS-01.</p>
+  <p>Traefik envoie chaque app sur son sous-domaine (<code>radarr.mathod.fr</code>), avec un seul certificat wildcard Let's Encrypt ou ZeroSSL obtenu en DNS-01.</p>
+  <h3 id="fr-fast">Déploiement rapide</h3>
+  <p>Un serveur qui tourne en quelques minutes: <code>dotbox init</code> ne demande que le domaine, le jeton DNS et une adresse e-mail.</p>
+  <h3 id="fr-docker">Des apps isolées dans Docker</h3>
+  <ul>
+    <li><b>Pas de conflits</b>: chaque app tourne dans son container, avec ses propres dépendances.</li>
+    <li><b>Un système propre</b>: aucun exécutable ni aucune dépendance des apps n'est installé sur le serveur.</li>
+    <li><b>Installer et désinstaller en une commande</b>: <code>dotbox install</code>, <code>dotbox remove</code>.</li>
+    <li><b>Plusieurs instances d'une même app</b>: <code>dotbox install radarr --as radarr-4k</code> ajoute un second Radarr, avec son dossier <code>/opt/radarr-4k</code>, son sous-domaine et son propre câblage.</li>
+  </ul>
   <h3 id="fr-sso">Une connexion pour tout</h3>
-  <p>Authelia protège chaque app qui n'a pas de vraie connexion, avec double authentification et passkeys.</p>
+  <p>Authelia protège chaque app qui n'a pas de vraie connexion, avec double authentification et passkeys, plutôt que de compter sur la connexion de chaque app.</p>
   <h3 id="fr-compose">Une app, un fichier compose</h3>
   <p>Chaque app vit dans <code>/opt/&lt;app&gt;</code> avec son <code>compose.yml</code>. Tes ajustements vont dans <code>compose.override.yml</code>, que Dot Box ne touche jamais. Sans Dot Box, <code>docker compose up -d</code> suffit à la relancer.</p>
   <h3 id="fr-catalog">Catalogue ouvert</h3>
@@ -55,12 +66,23 @@
   <h2 id="en-what">What is Dot Box?</h2>
   <p>Dot Box is a self-hosted app manager for a Debian or Ubuntu server. It installs, wires and updates apps (Jellyfin, Radarr, Sonarr, qBittorrent, Vaultwarden...) in Docker containers, each on its own HTTPS subdomain and behind a single login.</p>
   <p>Everything goes through one Rust binary: the web interface, the API and the <code>dotbox</code> CLI. Each app is described by a small YAML manifest that Dot Box turns into a readable Docker Compose file.</p>
+  <p>Its two main jobs: <b>fetching your movies and shows automatically</b>, and letting you <b>watch them from anywhere</b>, on any device. Media stays on the server's disks.</p>
+  <p>Dot Box has its own <b>web interface</b>, on <code>dotbox.mathod.fr</code>: catalog, app states, installs and live logs. The CLI does the same from the terminal, through the same API.</p>
 
   <h2 id="en-why">Why use Dot Box?</h2>
   <h3 id="en-https">Subdomains and HTTPS</h3>
-  <p>Traefik sends each app to its own subdomain (<code>radarr.mathod.fr</code>), with a single Let's Encrypt wildcard certificate obtained through DNS-01.</p>
+  <p>Traefik sends each app to its own subdomain (<code>radarr.mathod.fr</code>), with a single Let's Encrypt or ZeroSSL wildcard certificate obtained through DNS-01.</p>
+  <h3 id="en-fast">Fast deployment</h3>
+  <p>A server running in minutes: <code>dotbox init</code> only asks for the domain, the DNS token and an email address.</p>
+  <h3 id="en-docker">Apps isolated in Docker</h3>
+  <ul>
+    <li><b>No conflicts</b>: each app runs in its own container, with its own dependencies.</li>
+    <li><b>A clean system</b>: no app executable or dependency is installed on the server.</li>
+    <li><b>Install and uninstall in one command</b>: <code>dotbox install</code>, <code>dotbox remove</code>.</li>
+    <li><b>Several instances of the same app</b>: <code>dotbox install radarr --as radarr-4k</code> adds a second Radarr, with its own <code>/opt/radarr-4k</code> folder, subdomain and wiring.</li>
+  </ul>
   <h3 id="en-sso">One login for everything</h3>
-  <p>Authelia protects every app that lacks a proper login, with two-factor authentication and passkeys.</p>
+  <p>Authelia protects every app that lacks a proper login, with two-factor authentication and passkeys, rather than relying on each app's own login.</p>
   <h3 id="en-compose">One app, one compose file</h3>
   <p>Each app lives in <code>/opt/&lt;app&gt;</code> with its <code>compose.yml</code>. Your tweaks go in <code>compose.override.yml</code>, which Dot Box never touches. Without Dot Box, <code>docker compose up -d</code> is enough to restart it.</p>
   <h3 id="en-catalog">Open catalog</h3>

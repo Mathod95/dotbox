@@ -29,7 +29,7 @@
 
   <h2 id="fr-step2">Étape 2: lancer dotbox init</h2>
   <pre><span class="p">$</span> sudo dotbox init --domain mathod.fr --dns-provider cloudflare</pre>
-  <p><code>init</code> demande ce qui manque (jeton DNS, e-mail pour Let's Encrypt, nom de l'administrateur), puis:</p>
+  <p><code>init</code> demande ce qui manque (jeton DNS, e-mail du certificat, nom de l'administrateur), puis:</p>
   <ol>
     <li><b>vérifie le serveur</b>: système, ports 80 et 443 libres, espace disque;</li>
     <li><b>installe Docker</b> s'il est absent et crée le réseau <code>dotbox</code>;</li>
@@ -42,6 +42,7 @@
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: mathod.fr
 email: admin@mathod.fr          <span class="c"># Let's Encrypt</span>
+ca: letsencrypt                 <span class="c"># ou zerossl</span>
 dns:
   provider: cloudflare
   token: secret:cloudflare      <span class="c"># /opt/dotbox/secrets/cloudflare</span>
@@ -89,7 +90,7 @@ update:
 
   <h2 id="en-step2">Step 2: run dotbox init</h2>
   <pre><span class="p">$</span> sudo dotbox init --domain mathod.fr --dns-provider cloudflare</pre>
-  <p><code>init</code> asks for what is missing (DNS token, Let's Encrypt email, admin name), then:</p>
+  <p><code>init</code> asks for what is missing (DNS token, certificate email, admin name), then:</p>
   <ol>
     <li><b>checks the server</b>: system, ports 80 and 443 free, disk space;</li>
     <li><b>installs Docker</b> if it is missing and creates the <code>dotbox</code> network;</li>
@@ -102,6 +103,7 @@ update:
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: mathod.fr
 email: admin@mathod.fr          <span class="c"># Let's Encrypt</span>
+ca: letsencrypt                 <span class="c"># or zerossl</span>
 dns:
   provider: cloudflare
   token: secret:cloudflare      <span class="c"># /opt/dotbox/secrets/cloudflare</span>

@@ -1,0 +1,387 @@
+{
+  "_note": "Source de la page Roadmap de Dot Box : la todo list des features. Une feature par entrée, en français (fr) et en anglais (en), au format « Composant: description » comme releases.json. milestone = version cible (milestones), domain = domaine (domains), status = planned (prévu), progress (en cours) ou done (fait), doc = page Getting Started qui la spécifie. Une feature livrée passe en done et sa ligne va dans releases.json. Règles complètes dans CLAUDE.md.",
+  "milestones": [
+    {
+      "version": "v0.0.1",
+      "title": {
+        "fr": "Première version",
+        "en": "First release"
+      }
+    },
+    {
+      "version": "v0.1.0",
+      "title": {
+        "fr": "Serveur de test",
+        "en": "Test server"
+      }
+    },
+    {
+      "version": "v0.2.0",
+      "title": {
+        "fr": "Accès et état",
+        "en": "Access and state"
+      }
+    },
+    {
+      "version": "v0.3.0",
+      "title": {
+        "fr": "Sauvegarde et restauration",
+        "en": "Backup and restore"
+      }
+    },
+    {
+      "version": "v0.4.0",
+      "title": {
+        "fr": "Mises à jour",
+        "en": "Updates"
+      }
+    },
+    {
+      "version": "v0.5.0",
+      "title": {
+        "fr": "Catalogue complet",
+        "en": "Full catalog"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "site",
+      "name": {
+        "fr": "Site",
+        "en": "Website"
+      }
+    },
+    {
+      "id": "base",
+      "name": {
+        "fr": "Socle",
+        "en": "Base"
+      }
+    },
+    {
+      "id": "engine",
+      "name": {
+        "fr": "Moteur",
+        "en": "Engine"
+      }
+    },
+    {
+      "id": "web",
+      "name": {
+        "fr": "Interface web",
+        "en": "Web interface"
+      }
+    },
+    {
+      "id": "access",
+      "name": {
+        "fr": "Accès",
+        "en": "Access"
+      }
+    },
+    {
+      "id": "backup",
+      "name": {
+        "fr": "Sauvegarde",
+        "en": "Backup"
+      }
+    },
+    {
+      "id": "updates",
+      "name": {
+        "fr": "Mises à jour",
+        "en": "Updates"
+      }
+    },
+    {
+      "id": "catalog",
+      "name": {
+        "fr": "Catalogue",
+        "en": "Catalog"
+      }
+    },
+    {
+      "id": "cli",
+      "name": {
+        "fr": "CLI",
+        "en": "CLI"
+      }
+    }
+  ],
+  "features": [
+    {
+      "milestone": "v0.0.1",
+      "domain": "site",
+      "status": "done",
+      "fr": "Accueil: page d'accueil au style de Dot Hub, maquette interactive de l'interface et catalogue de 19 apps",
+      "en": "Home: home page in the Dot Hub style, interactive mockup of the interface and a catalog of 19 apps"
+    },
+    {
+      "milestone": "v0.0.1",
+      "domain": "site",
+      "status": "done",
+      "fr": "Getting Started: onze pages de documentation qui servent de spécification",
+      "en": "Getting Started: eleven documentation pages that serve as the specification",
+      "doc": "basics"
+    },
+    {
+      "milestone": "v0.0.1",
+      "domain": "site",
+      "status": "done",
+      "fr": "Releases: les versions au centre, la liste des versions à droite",
+      "en": "Releases: versions in the middle, version list on the right"
+    },
+    {
+      "milestone": "v0.0.1",
+      "domain": "site",
+      "status": "done",
+      "fr": "Roadmap: cette page, les features par version ou par domaine",
+      "en": "Roadmap: this page, features by version or by area"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "base",
+      "status": "planned",
+      "fr": "Serveur de test: Jellyfin, Radarr, Sonarr et qBittorrent derrière Traefik et Authelia, validés à la main",
+      "en": "Test server: Jellyfin, Radarr, Sonarr and qBittorrent behind Traefik and Authelia, checked by hand"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Manifest: format d'une app (image, volumes, sous-domaine, SSO, câblage)",
+      "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "base",
+      "status": "planned",
+      "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)",
+      "en": "CLI: `dotbox init` on a fresh Debian or Ubuntu (Docker, shared network, Traefik, Authelia)",
+      "doc": "installation"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Moteur: installer, supprimer, logs, avec un `compose.yml` généré par app",
+      "en": "Engine: install, remove, logs, with one generated `compose.yml` per app",
+      "doc": "basics"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et Jellyfin par leurs API",
+      "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and Jellyfin through their APIs",
+      "doc": "basics"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "web",
+      "status": "planned",
+      "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose",
+      "en": "Web interface: catalog, status, live install logs, compose import"
+    },
+    {
+      "milestone": "v0.1.0",
+      "domain": "base",
+      "status": "planned",
+      "fr": "Serveur principal: refait au propre avec Dot Box, app par app",
+      "en": "Main server: rebuilt cleanly with Dot Box, app by app",
+      "doc": "restore"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Moteur: l'état voulu dans `dotbox.yml`, `dotbox diff` et `dotbox sync`",
+      "en": "Engine: the desired state in `dotbox.yml`, `dotbox diff` and `dotbox sync`",
+      "doc": "basics"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "access",
+      "status": "planned",
+      "fr": "Moteur: quatre niveaux d'accès par app, `two_factor`, `one_factor`, `app` et `public`",
+      "en": "Engine: four access levels per app, `two_factor`, `one_factor`, `app` and `public`",
+      "doc": "accessing-apps"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "access",
+      "status": "planned",
+      "fr": "Moteur: sous-domaine et niveau d'accès modifiables dans `dotbox.yml`, appliqués par `dotbox sync`",
+      "en": "Engine: subdomain and access level set in `dotbox.yml`, applied by `dotbox sync`",
+      "doc": "accessing-apps"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "access",
+      "status": "planned",
+      "fr": "CLI: `dotbox user`, comptes et groupes Authelia, invitation valable 48 h",
+      "en": "CLI: `dotbox user`, Authelia accounts and groups, invite valid for 48 h",
+      "doc": "post-installation"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "base",
+      "status": "planned",
+      "fr": "Moteur: certificat wildcard Let's Encrypt ou ZeroSSL, enregistrements DNS créés chez le fournisseur",
+      "en": "Engine: Let's Encrypt or ZeroSSL wildcard certificate, DNS records created at the provider",
+      "doc": "prerequisites"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "base",
+      "status": "planned",
+      "fr": "CLI: `dotbox status` et `dotbox doctor`",
+      "en": "CLI: `dotbox status` and `dotbox doctor`",
+      "doc": "post-installation"
+    },
+    {
+      "milestone": "v0.2.0",
+      "domain": "cli",
+      "status": "planned",
+      "fr": "CLI: options globales `--json`, `--local`, `--yes` et autocomplétion du shell",
+      "en": "CLI: global flags `--json`, `--local`, `--yes` and shell completion",
+      "doc": "cli"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "Moteur: sauvegarde de `/opt` app par app, arrêt court ou instantané btrfs/ZFS",
+      "en": "Engine: backup of `/opt` app by app, short stop or btrfs/ZFS snapshot",
+      "doc": "backup"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "Moteur: archives compressées (zstd) puis chiffrées (age), clé dans `secrets/backup.key`",
+      "en": "Engine: archives compressed (zstd) then encrypted (age), key in `secrets/backup.key`",
+      "doc": "backup"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "Moteur: destinations local, rclone et SFTP, rétention `keep`, timer systemd quotidien",
+      "en": "Engine: local, rclone and SFTP destinations, `keep` retention, daily systemd timer",
+      "doc": "backup"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "CLI: `dotbox backup` avec `--app`, `--to` et `--stream`",
+      "en": "CLI: `dotbox backup` with `--app`, `--to` and `--stream`",
+      "doc": "backup"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "CLI: `dotbox restore latest`, une app ou tout le serveur",
+      "en": "CLI: `dotbox restore latest`, one app or the whole server",
+      "doc": "restore"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "Moteur: migration vers un serveur neuf en une commande, DNS repointé",
+      "en": "Engine: migration to a new server in one command, DNS repointed",
+      "doc": "restore"
+    },
+    {
+      "milestone": "v0.3.0",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "CLI: changement de domaine avec `dotbox config set domain` puis `dotbox sync`",
+      "en": "CLI: domain change with `dotbox config set domain` then `dotbox sync`",
+      "doc": "restore"
+    },
+    {
+      "milestone": "v0.4.0",
+      "domain": "updates",
+      "status": "planned",
+      "fr": "Manifest: versions d'image fixées, jamais `latest`",
+      "en": "Manifest: pinned image versions, never `latest`",
+      "doc": "update"
+    },
+    {
+      "milestone": "v0.4.0",
+      "domain": "updates",
+      "status": "planned",
+      "fr": "CLI: `dotbox update`, une app à la fois, la suivante seulement quand la précédente tourne",
+      "en": "CLI: `dotbox update`, one app at a time, the next one only once the previous one is running",
+      "doc": "update"
+    },
+    {
+      "milestone": "v0.4.0",
+      "domain": "updates",
+      "status": "planned",
+      "fr": "CLI: `dotbox update --rollback` vers l'image précédente",
+      "en": "CLI: `dotbox update --rollback` to the previous image",
+      "doc": "update"
+    },
+    {
+      "milestone": "v0.4.0",
+      "domain": "updates",
+      "status": "planned",
+      "fr": "CLI: `dotbox upgrade` pour Dot Box seul, conversion des fichiers si leur format change",
+      "en": "CLI: `dotbox upgrade` for Dot Box only, converting files if their format changes",
+      "doc": "update"
+    },
+    {
+      "milestone": "v0.4.0",
+      "domain": "updates",
+      "status": "planned",
+      "fr": "Moteur: mises à jour programmées avec `update.schedule`, sauvegarde juste avant",
+      "en": "Engine: scheduled updates with `update.schedule`, backup just before",
+      "doc": "update"
+    },
+    {
+      "milestone": "v0.5.0",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Manifest: les 19 apps de l'accueil, chacune avec son pictogramme",
+      "en": "Manifest: the 19 apps of the home page, each with its pictogram"
+    },
+    {
+      "milestone": "v0.5.0",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "CLI: packs `media` et `downloads`, `dotbox list --packs`",
+      "en": "CLI: `media` and `downloads` packs, `dotbox list --packs`",
+      "doc": "installation"
+    },
+    {
+      "milestone": "v0.5.0",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Moteur: plusieurs instances d'une même app, `dotbox install radarr --as radarr-4k`",
+      "en": "Engine: several instances of the same app, `dotbox install radarr --as radarr-4k`",
+      "doc": "basics"
+    },
+    {
+      "milestone": "v0.5.0",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "CLI: `dotbox add`, un fichier compose devient un manifest dans `/opt/dotbox/apps/`",
+      "en": "CLI: `dotbox add`, a compose file becomes a manifest in `/opt/dotbox/apps/`",
+      "doc": "sandbox"
+    },
+    {
+      "milestone": "v0.5.0",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Manifest: Sandbox communautaire `Mathod95/dotbox-sandbox`, `dotbox install sandbox/<app>`",
+      "en": "Manifest: community Sandbox `Mathod95/dotbox-sandbox`, `dotbox install sandbox/<app>`",
+      "doc": "sandbox"
+    }
+  ]
+}
