@@ -12,7 +12,7 @@
       <tr><td>Docker</td><td>les containers et le réseau <code>dotbox</code></td><td><code>dotbox init</code></td></tr>
       <tr><td>Traefik</td><td>sous-domaines et certificats</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>connexion unique</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Dot Box</td><td>interface web et API, sur <code>dotbox.mathod.fr</code></td><td><code>dotbox init</code></td></tr>
+      <tr><td>Dot Box</td><td>interface web et API, sur <code>dotbox.example.com</code></td><td><code>dotbox init</code></td></tr>
       <tr><td>Tes apps</td><td>celles que tu choisis dans le catalogue</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
@@ -26,25 +26,25 @@
   <p>Remplace <code>amd64</code> par <code>arm64</code> sur un serveur ARM. C'est un seul fichier, sans dépendance: ni Python, ni Ansible.</p>
 
   <h2 id="fr-step2">Étape 2: lancer dotbox init</h2>
-  <pre><span class="p">$</span> sudo dotbox init --domain mathod.fr --dns-provider cloudflare</pre>
+  <pre><span class="p">$</span> sudo dotbox init --domain example.com --dns-provider cloudflare</pre>
   <p><code>init</code> demande ce qui manque (jeton DNS, e-mail du certificat, nom de l'administrateur), puis:</p>
   <ol>
     <li><b>vérifie le serveur</b>: système, ports 80 et 443 libres, espace disque;</li>
     <li><b>installe Docker</b> s'il est absent et crée le réseau <code>dotbox</code>;</li>
     <li><b>crée l'utilisateur</b> <code>dotbox</code> (UID et GID 1000) et les dossiers <code>/opt</code> et <code>/data</code>;</li>
-    <li><b>demande le certificat</b> <code>*.mathod.fr</code>;</li>
+    <li><b>demande le certificat</b> <code>*.example.com</code>;</li>
     <li><b>démarre</b> Traefik, Authelia et Dot Box;</li>
     <li><b>programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
   </ol>
   <p>Tout est écrit dans <code>/opt/dotbox/dotbox.yml</code>. Les secrets (jeton DNS, clés d'Authelia, clé de sauvegarde) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
-domain: mathod.fr
-email: admin@mathod.fr          <span class="c"># Let's Encrypt</span>
+domain: example.com
+email: admin@example.com          <span class="c"># Let's Encrypt</span>
 ca: letsencrypt                 <span class="c"># ou zerossl</span>
 dns:
   provider: cloudflare
   token: secret:cloudflare      <span class="c"># /opt/dotbox/secrets/cloudflare</span>
-admin: mathod
+admin: admin
 paths:
   data: /data
 backup:
@@ -70,7 +70,7 @@ update:
       <tr><td>Docker</td><td>containers and the <code>dotbox</code> network</td><td><code>dotbox init</code></td></tr>
       <tr><td>Traefik</td><td>subdomains and certificates</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>single login</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Dot Box</td><td>web interface and API, on <code>dotbox.mathod.fr</code></td><td><code>dotbox init</code></td></tr>
+      <tr><td>Dot Box</td><td>web interface and API, on <code>dotbox.example.com</code></td><td><code>dotbox init</code></td></tr>
       <tr><td>Your apps</td><td>the ones you pick from the catalog</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
@@ -84,25 +84,25 @@ update:
   <p>Replace <code>amd64</code> with <code>arm64</code> on an ARM server. It is a single file with no dependencies: no Python, no Ansible.</p>
 
   <h2 id="en-step2">Step 2: run dotbox init</h2>
-  <pre><span class="p">$</span> sudo dotbox init --domain mathod.fr --dns-provider cloudflare</pre>
+  <pre><span class="p">$</span> sudo dotbox init --domain example.com --dns-provider cloudflare</pre>
   <p><code>init</code> asks for what is missing (DNS token, certificate email, admin name), then:</p>
   <ol>
     <li><b>checks the server</b>: system, ports 80 and 443 free, disk space;</li>
     <li><b>installs Docker</b> if it is missing and creates the <code>dotbox</code> network;</li>
     <li><b>creates the</b> <code>dotbox</code> <b>user</b> (UID and GID 1000) and the <code>/opt</code> and <code>/data</code> folders;</li>
-    <li><b>requests the</b> <code>*.mathod.fr</code> <b>certificate</b>;</li>
+    <li><b>requests the</b> <code>*.example.com</code> <b>certificate</b>;</li>
     <li><b>starts</b> Traefik, Authelia and Dot Box;</li>
     <li><b>schedules the daily backup</b>, local to begin with.</li>
   </ol>
   <p>Everything is written to <code>/opt/dotbox/dotbox.yml</code>. Secrets (DNS token, Authelia keys, backup key) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
-domain: mathod.fr
-email: admin@mathod.fr          <span class="c"># Let's Encrypt</span>
+domain: example.com
+email: admin@example.com          <span class="c"># Let's Encrypt</span>
 ca: letsencrypt                 <span class="c"># or zerossl</span>
 dns:
   provider: cloudflare
   token: secret:cloudflare      <span class="c"># /opt/dotbox/secrets/cloudflare</span>
-admin: mathod
+admin: admin
 paths:
   data: /data
 backup:

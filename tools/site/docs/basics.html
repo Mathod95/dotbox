@@ -8,11 +8,11 @@
   <p>Dot Box est un outil de gestion de serveur, pensé pour héberger et gérer tes contenus sur un serveur Debian ou Ubuntu. Il installe, branche et met à jour les apps que tu choisis (Radarr, Sonarr, qBittorrent, Vaultwarden, ton serveur média...) dans des containers Docker, chacune sur son sous-domaine en HTTPS et derrière une connexion unique.</p>
   <p>Tout passe par un seul binaire Rust: l'interface web, l'API et la CLI <code>dotbox</code>. Chaque app est décrite par un petit manifest YAML, que Dot Box transforme en fichier Docker Compose lisible.</p>
   <p>Ses deux fonctions principales: <b>récupérer automatiquement</b> tes films et séries, et te permettre de les <b>regarder de n'importe où</b>, sur n'importe quel appareil. Les médias restent sur les disques du serveur.</p>
-  <p>Dot Box a sa propre <b>interface web</b>, sur <code>dotbox.mathod.fr</code>: catalogue, état des apps, installations et logs en direct. La CLI fait la même chose depuis le terminal, par la même API.</p>
+  <p>Dot Box a sa propre <b>interface web</b>, sur <code>dotbox.example.com</code>: catalogue, état des apps, installations et logs en direct. La CLI fait la même chose depuis le terminal, par la même API.</p>
 
   <h2 id="fr-why">Pourquoi utiliser Dot Box ?</h2>
   <h3 id="fr-https">Sous-domaines et HTTPS</h3>
-  <p>Traefik envoie chaque app sur son sous-domaine (<code>radarr.mathod.fr</code>), avec un seul certificat wildcard Let's Encrypt ou ZeroSSL obtenu en DNS-01.</p>
+  <p>Traefik envoie chaque app sur son sous-domaine (<code>radarr.example.com</code>), avec un seul certificat wildcard Let's Encrypt ou ZeroSSL obtenu en DNS-01.</p>
   <h3 id="fr-fast">Déploiement rapide</h3>
   <p>Un serveur qui tourne en quelques minutes: <code>dotbox init</code> ne demande que le domaine, le jeton DNS et une adresse e-mail.</p>
   <h3 id="fr-docker">Des apps isolées dans Docker</h3>
@@ -43,7 +43,7 @@
     <li><b>Manifest</b><span>radarr.yml</span></li>
     <li><b>Moteur</b><span>Rust</span></li>
     <li><b>compose.yml</b><span>/opt/radarr</span></li>
-    <li><b>Traefik + Authelia</b><span>radarr.mathod.fr</span></li>
+    <li><b>Traefik + Authelia</b><span>radarr.example.com</span></li>
     <li><b>Câblage</b><span>API des autres apps</span></li>
   </ol>
   <ol>
@@ -67,11 +67,11 @@
   <p>Dot Box is a server management tool, built to host and manage your content on a Debian or Ubuntu server. It installs, wires and updates the apps you choose (Radarr, Sonarr, qBittorrent, Vaultwarden, your media server...) in Docker containers, each on its own HTTPS subdomain and behind a single login.</p>
   <p>Everything goes through one Rust binary: the web interface, the API and the <code>dotbox</code> CLI. Each app is described by a small YAML manifest that Dot Box turns into a readable Docker Compose file.</p>
   <p>Its two main jobs: <b>fetching your movies and shows automatically</b>, and letting you <b>watch them from anywhere</b>, on any device. Media stays on the server's disks.</p>
-  <p>Dot Box has its own <b>web interface</b>, on <code>dotbox.mathod.fr</code>: catalog, app states, installs and live logs. The CLI does the same from the terminal, through the same API.</p>
+  <p>Dot Box has its own <b>web interface</b>, on <code>dotbox.example.com</code>: catalog, app states, installs and live logs. The CLI does the same from the terminal, through the same API.</p>
 
   <h2 id="en-why">Why use Dot Box?</h2>
   <h3 id="en-https">Subdomains and HTTPS</h3>
-  <p>Traefik sends each app to its own subdomain (<code>radarr.mathod.fr</code>), with a single Let's Encrypt or ZeroSSL wildcard certificate obtained through DNS-01.</p>
+  <p>Traefik sends each app to its own subdomain (<code>radarr.example.com</code>), with a single Let's Encrypt or ZeroSSL wildcard certificate obtained through DNS-01.</p>
   <h3 id="en-fast">Fast deployment</h3>
   <p>A server running in minutes: <code>dotbox init</code> only asks for the domain, the DNS token and an email address.</p>
   <h3 id="en-docker">Apps isolated in Docker</h3>
@@ -102,7 +102,7 @@
     <li><b>Manifest</b><span>radarr.yml</span></li>
     <li><b>Engine</b><span>Rust</span></li>
     <li><b>compose.yml</b><span>/opt/radarr</span></li>
-    <li><b>Traefik + Authelia</b><span>radarr.mathod.fr</span></li>
+    <li><b>Traefik + Authelia</b><span>radarr.example.com</span></li>
     <li><b>Wiring</b><span>other apps' APIs</span></li>
   </ol>
   <ol>

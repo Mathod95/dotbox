@@ -10,7 +10,7 @@
     </div>
     <div class="edge">
       <div class="term">
-        <div class="term-h"><span class="dot">ssh mathod@mathod.fr</span><span class="ex" data-i18n="sample"></span></div>
+        <div class="term-h"><span class="dot">ssh admin@example.com</span><span class="ex" data-i18n="sample"></span></div>
         <div class="screen" id="screen" aria-live="polite"></div>
       </div>
     </div>
@@ -153,16 +153,16 @@ td:last-child code { color: var(--label); }
     { id: "server", name: { fr: "Serveur", en: "Server" }, cmds: [
       { name: "init", args: "--domain <domain> --dns-provider <provider>", hargs: "--domain <d> --dns-provider <p>",
         d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik et Authelia", en: "Prepare the server: Docker, dotbox network, Traefik and Authelia" },
-        ex: "dotbox init --domain mathod.fr --dns-provider cloudflare",
-        out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  cert     *.mathod.fr (Let's Encrypt, DNS-01)"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["dim", "  admin    mathod (password shown once below)"]] },
+        ex: "dotbox init --domain example.com --dns-provider cloudflare",
+        out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  cert     *.example.com (Let's Encrypt, DNS-01)"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["dim", "  admin    admin (password shown once below)"]] },
       { name: "status", args: "",
         d: { fr: "Les apps installées, leur état et leur adresse", en: "Installed apps, their state and their address" },
         ex: "dotbox status",
-        out: [["dim", "  APP           STATE      URL"], ["", "  traefik       Running    -"], ["", "  authelia      Running    auth.mathod.fr"], ["", "  prowlarr      Running    prowlarr.mathod.fr"], ["", "  qbittorrent   Running    qbittorrent.mathod.fr"], ["", "  radarr        Running    radarr.mathod.fr"], ["warn", "  sonarr        Exited     sonarr.mathod.fr"]] },
+        out: [["dim", "  APP           STATE      URL"], ["", "  traefik       Running    -"], ["", "  authelia      Running    auth.example.com"], ["", "  prowlarr      Running    prowlarr.example.com"], ["", "  qbittorrent   Running    qbittorrent.example.com"], ["", "  radarr        Running    radarr.example.com"], ["warn", "  sonarr        Exited     sonarr.example.com"]] },
       { name: "doctor", args: "",
         d: { fr: "Vérifie Docker, DNS, certificats, ports et espace disque", en: "Check Docker, DNS, certificates, ports and disk space" },
         ex: "dotbox doctor",
-        out: [["ok", "  ok    docker 28.2, daemon running"], ["ok", "  ok    *.mathod.fr resolves to 51.15.x.x"], ["ok", "  ok    certificate valid for 84 days"], ["ok", "  ok    ports 80 and 443 open"], ["warn", "  warn  /data 86% used (612 GB free)"]] },
+        out: [["ok", "  ok    docker 28.2, daemon running"], ["ok", "  ok    *.example.com resolves to 203.0.113.10"], ["ok", "  ok    certificate valid for 84 days"], ["ok", "  ok    ports 80 and 443 open"], ["warn", "  warn  /data 86% used (612 GB free)"]] },
       { name: "upgrade", args: "",
         d: { fr: "Met à jour Dot Box lui-même", en: "Update Dot Box itself" },
         ex: "dotbox upgrade",
@@ -170,7 +170,7 @@ td:last-child code { color: var(--label); }
       { name: "version", args: "",
         d: { fr: "Version de la CLI et du serveur", en: "CLI and server version" },
         ex: "dotbox version",
-        out: [["", "  cli      0.0.1"], ["", "  server   0.0.1 (mathod.fr)"]] }
+        out: [["", "  cli      0.0.1"], ["", "  server   0.0.1 (example.com)"]] }
     ] },
     { id: "apps", name: { fr: "Apps", en: "Apps" }, cmds: [
       { name: "list", args: "[search]",
@@ -180,11 +180,11 @@ td:last-child code { color: var(--label); }
       { name: "info", args: "<app>",
         d: { fr: "Manifest, image, sous-domaine et câblage d'une app", en: "Manifest, image, subdomain and wiring of an app" },
         ex: "dotbox info radarr",
-        out: [["", "  image      lscr.io/linuxserver/radarr"], ["", "  url        https://radarr.mathod.fr"], ["", "  sso        authelia"], ["", "  volumes    /opt/radarr:/config  /data:/data"], ["", "  wiring     qbittorrent (category radarr)"], ["", "             root folder /data/media/movies"]] },
+        out: [["", "  image      lscr.io/linuxserver/radarr"], ["", "  url        https://radarr.example.com"], ["", "  sso        authelia"], ["", "  volumes    /opt/radarr:/config  /data:/data"], ["", "  wiring     qbittorrent (category radarr)"], ["", "             root folder /data/media/movies"]] },
       { name: "install", args: "<app>... [--as <name>]",
         d: { fr: "Installe des apps et les câble aux autres ; --as crée une instance de plus", en: "Install apps and wire them to the others; --as creates another instance" },
         ex: "dotbox install sonarr",
-        out: [["", "  pull     lscr.io/linuxserver/sonarr"], ["", "  write    /opt/sonarr/compose.yml"], ["", "  label    traefik sonarr.mathod.fr"], ["", "  up       sonarr      Running"], ["", "  wire     qbittorrent (category sonarr)"], ["", "  wire     root folder /data/media/tv"], ["ok", "  ready    https://sonarr.mathod.fr"]] },
+        out: [["", "  pull     lscr.io/linuxserver/sonarr"], ["", "  write    /opt/sonarr/compose.yml"], ["", "  label    traefik sonarr.example.com"], ["", "  up       sonarr      Running"], ["", "  wire     qbittorrent (category sonarr)"], ["", "  wire     root folder /data/media/tv"], ["ok", "  ready    https://sonarr.example.com"]] },
       { name: "remove", args: "<app> [--keep-data]",
         d: { fr: "Supprime une app; --keep-data garde /opt/<app>", en: "Remove an app; --keep-data keeps /opt/<app>" },
         ex: "dotbox remove seerr --keep-data",
@@ -249,7 +249,7 @@ td:last-child code { color: var(--label); }
       { name: "config", args: "get|set <key> [value]",
         d: { fr: "Lit ou change la config: domaine, DNS, chemins", en: "Read or change the config: domain, DNS, paths" },
         ex: "dotbox config get domain",
-        out: [["", "  mathod.fr"]] },
+        out: [["", "  example.com"]] },
       { name: "completion", args: "bash|zsh|fish",
         d: { fr: "Génère l'autocomplétion du shell", en: "Generate shell completion" },
         ex: "dotbox completion zsh > ~/.zfunc/_dotbox",

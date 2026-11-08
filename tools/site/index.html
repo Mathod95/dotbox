@@ -479,7 +479,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       art.appendChild(row);
       var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
       var foot = el("div", "foot");
-      foot.appendChild(el("span", "go", a.sub + ".mathod.fr"));
+      foot.appendChild(el("span", "go", a.sub + ".example.com"));
       var link = el("a");
       if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " · GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
       else { link.href = a.docs; link.textContent = "Docs ↗"; }
@@ -540,12 +540,12 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     logEl.innerHTML = "";
     var a = app(selected);
     if (a.on) {
-      line("ok", "●", "<em>" + a.slug + ".mathod.fr</em>");
+      line("ok", "●", "<em>" + a.slug + ".example.com</em>");
       line("", "·", "/opt/" + a.slug + "/compose.yml");
       line("", "·", "/opt/" + a.slug + "/compose.override.yml");
     } else {
       line("", "·", "image <em>" + IMG[a.slug] + "</em>");
-      line("", "·", "subdomain <em>" + a.slug + ".mathod.fr</em>");
+      line("", "·", "subdomain <em>" + a.slug + ".example.com</em>");
       line("", "·", "sso <em>authelia</em>");
     }
   }
@@ -556,13 +556,13 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       ["", "›", "pull <em>" + IMG[a.slug] + "</em>"],
       ["", "›", "mkdir /opt/" + a.slug + " (uid 1000)"],
       ["", "›", "write /opt/" + a.slug + "/compose.yml"],
-      ["", "›", "label traefik <em>" + a.slug + ".mathod.fr</em>"],
+      ["", "›", "label traefik <em>" + a.slug + ".example.com</em>"],
       ["", "›", "middleware <em>authelia@docker</em>"],
       ["", "›", "compose up -d"],
       ["", "›", "wait healthy"]
     ];
     (WIRE[a.slug] || []).forEach(function (w) { steps.push(["wire", "⇄", "wire <em>" + w[0] + "</em> " + w[1]]); });
-    steps.push(["ok", "●", "<em>https://" + a.slug + ".mathod.fr</em>"]);
+    steps.push(["ok", "●", "<em>https://" + a.slug + ".example.com</em>"]);
     var delay = reduce ? 0: 420;
     steps.forEach(function (st, i) {
       timers.push(setTimeout(function () {

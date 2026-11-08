@@ -17,13 +17,13 @@
     <li><b>Sur l'ancien serveur</b>, une sauvegarde vers une destination que le nouveau peut joindre: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>Sur le nouveau</b>, télécharge Dot Box (Installation, étape 1). Pas besoin de lancer <code>init</code>.</li>
     <li><b>Restaure</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box relit la config de la sauvegarde, refait l'installation du core avec elle (Docker, Traefik, Authelia, certificat), puis restaure toutes les apps.</li>
-    <li><b>Le DNS</b>: avec un fournisseur pris en charge, Dot Box repointe <code>*.mathod.fr</code> vers la nouvelle IP. Sinon, change l'enregistrement à la main.</li>
+    <li><b>Le DNS</b>: avec un fournisseur pris en charge, Dot Box repointe <code>*.example.com</code> vers la nouvelle IP. Sinon, change l'enregistrement à la main.</li>
     <li><b>Les médias</b>: copie <code>/data</code> avec rsync s'ils doivent suivre.</li>
   </ol>
   <p>Les apps ajoutées avec <code>dotbox add</code> et celles du Sandbox sont dans la sauvegarde: elles reviennent avec le reste, rien à réinstaller à la main.</p>
 
   <h2 id="fr-domain">Changer de domaine</h2>
-  <pre><span class="p">$</span> dotbox config set domain nouveau.fr
+  <pre><span class="p">$</span> dotbox config set domain example.org
 <span class="p">$</span> dotbox sync</pre>
   <p>Tout est généré à partir de <code>dotbox.yml</code>: <code>sync</code> refait le certificat, les labels Traefik et la config d'Authelia. Il ne reste à corriger que les adresses que tu as saisies toi-même dans les réglages des apps (notifications, webhooks).</p>
 </article>
@@ -42,13 +42,13 @@
     <li><b>On the old server</b>, back up to a destination the new one can reach: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>On the new one</b>, download Dot Box (Installation, step 1). No need to run <code>init</code>.</li>
     <li><b>Restore</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box reads the config from the backup, reinstalls the core with it (Docker, Traefik, Authelia, certificate), then restores every app.</li>
-    <li><b>DNS</b>: with a supported provider, Dot Box points <code>*.mathod.fr</code> to the new IP. Otherwise, change the record by hand.</li>
+    <li><b>DNS</b>: with a supported provider, Dot Box points <code>*.example.com</code> to the new IP. Otherwise, change the record by hand.</li>
     <li><b>Media</b>: copy <code>/data</code> with rsync if it should come along.</li>
   </ol>
   <p>Apps added with <code>dotbox add</code> and those from the Sandbox are in the backup: they come back with everything else, nothing to reinstall by hand.</p>
 
   <h2 id="en-domain">Change the domain</h2>
-  <pre><span class="p">$</span> dotbox config set domain new.fr
+  <pre><span class="p">$</span> dotbox config set domain example.org
 <span class="p">$</span> dotbox sync</pre>
   <p>Everything is generated from <code>dotbox.yml</code>: <code>sync</code> redoes the certificate, the Traefik labels and the Authelia config. Only the addresses you typed yourself in app settings (notifications, webhooks) are left to fix.</p>
 </article>
