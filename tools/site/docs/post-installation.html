@@ -8,11 +8,26 @@
   <p>Avant tout, <code>doctor</code> vérifie le serveur et liste ce qui reste à faire. Chaque point ci-dessous correspond à une de ses lignes.</p>
   <pre><span class="p">$</span> dotbox doctor
 <span class="ok">  ok    docker 28.2, network dotbox</span>
-<span class="ok">  ok    certificate *.example.com valid for 89 days</span>
+<span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
+<span class="ok">  ok    certificates valid (6 subdomains)</span>
+<span class="ok">  ok    crowdsec running, ssh and traefik watched</span>
+<span class="w">  warn  14 system updates pending (3 security)</span>
+<span class="w">  warn  reboot required</span>
 <span class="w">  warn  ssh accepts passwords</span>
 <span class="w">  warn  ssh allows root login</span>
 <span class="w">  warn  backup only local (/backups)</span>
 <span class="ok">  ok    /data 12% used</span></pre>
+
+  <h2 id="fr-updates">Mettre le système à jour</h2>
+  <p>Dot Box ne met pas à jour le système et ne redémarre jamais le serveur: c'est toi qui choisis le moment. <code>doctor</code> signale:</p>
+  <ul>
+    <li><b>les mises à jour en attente</b>, dont celles de sécurité;</li>
+    <li><b>les mises à jour de sécurité automatiques</b> (<code>unattended-upgrades</code>) si elles sont désactivées;</li>
+    <li><b>un redémarrage nécessaire</b>, par exemple après une mise à jour du noyau.</li>
+  </ul>
+  <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
+<span class="p">$</span> sudo reboot</pre>
+  <p>Après un redémarrage, Docker relance toutes les apps.</p>
 
   <h2 id="fr-ssh">Sécuriser SSH</h2>
   <p>Dot Box ne modifie jamais la configuration SSH: une erreur pourrait te fermer la porte du serveur. <code>doctor</code> signale ce qui manque, à toi de l'appliquer dans <code>/etc/ssh/sshd_config</code>:</p>
@@ -21,6 +36,7 @@
     <li><b>Pas de root</b>: <code>PermitRootLogin no</code>.</li>
     <li><b>Garde une session ouverte</b> pendant que tu testes la nouvelle configuration dans une deuxième.</li>
   </ul>
+  <p>CrowdSec, installé avec le core, bloque déjà les adresses qui enchaînent les tentatives de connexion SSH, sans toucher à cette configuration.</p>
 
   <h2 id="fr-backup">Sortir les sauvegardes du serveur</h2>
   <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <b>Backup</b>.</p>
@@ -41,11 +57,26 @@
   <p>First, <code>doctor</code> checks the server and lists what is left to do. Each point below matches one of its lines.</p>
   <pre><span class="p">$</span> dotbox doctor
 <span class="ok">  ok    docker 28.2, network dotbox</span>
-<span class="ok">  ok    certificate *.example.com valid for 89 days</span>
+<span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
+<span class="ok">  ok    certificates valid (6 subdomains)</span>
+<span class="ok">  ok    crowdsec running, ssh and traefik watched</span>
+<span class="w">  warn  14 system updates pending (3 security)</span>
+<span class="w">  warn  reboot required</span>
 <span class="w">  warn  ssh accepts passwords</span>
 <span class="w">  warn  ssh allows root login</span>
 <span class="w">  warn  backup only local (/backups)</span>
 <span class="ok">  ok    /data 12% used</span></pre>
+
+  <h2 id="en-updates">Update the system</h2>
+  <p>Dot Box does not update the system and never reboots the server: you choose when. <code>doctor</code> reports:</p>
+  <ul>
+    <li><b>pending updates</b>, including security ones;</li>
+    <li><b>automatic security updates</b> (<code>unattended-upgrades</code>) if they are turned off;</li>
+    <li><b>a required reboot</b>, for example after a kernel update.</li>
+  </ul>
+  <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
+<span class="p">$</span> sudo reboot</pre>
+  <p>After a reboot, Docker starts every app again.</p>
 
   <h2 id="en-ssh">Secure SSH</h2>
   <p>Dot Box never changes the SSH configuration: a mistake could lock you out of the server. <code>doctor</code> reports what is missing, and you apply it in <code>/etc/ssh/sshd_config</code>:</p>
@@ -54,6 +85,7 @@
     <li><b>No root</b>: <code>PermitRootLogin no</code>.</li>
     <li><b>Keep a session open</b> while you test the new configuration in a second one.</li>
   </ul>
+  <p>CrowdSec, installed with the core, already blocks addresses that keep trying to log in over SSH, without touching this configuration.</p>
 
   <h2 id="en-backup">Move backups off the server</h2>
   <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <b>Backup</b>.</p>

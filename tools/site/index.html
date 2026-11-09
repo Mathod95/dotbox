@@ -395,8 +395,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   var CATALOG = [
     { pic: "traefik", name: "Traefik", sub: "traefik", gh: "traefik/traefik",
       role: { fr: "Reverse proxy", en: "Reverse proxy" },
-      text: { fr: "Envoie chaque requête vers la bonne app, avec un certificat Let's Encrypt wildcard pour tous les sous-domaines.",
-              en: "Sends every request to the right app, with one Let's Encrypt wildcard certificate for all subdomains." } },
+      text: { fr: "Envoie chaque requête vers la bonne app, avec un certificat Let's Encrypt pour chaque sous-domaine, obtenu tout seul.",
+              en: "Sends every request to the right app, with a Let's Encrypt certificate for each subdomain, obtained on its own." } },
     { pic: "authelia", name: "Authelia", sub: "auth", gh: "authelia/authelia",
       role: { fr: "Authentification (SSO)", en: "Authentication (SSO)" },
       text: { fr: "Une seule connexion pour toutes les apps, avec double authentification et passkeys.",
