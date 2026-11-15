@@ -106,8 +106,8 @@
     {
       "domain": "core",
       "status": "planned",
-      "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu vierge (Docker, réseau commun, Traefik, Authelia)",
-      "en": "CLI: `dotbox init` on a fresh Debian or Ubuntu (Docker, shared network, Traefik, Authelia)",
+      "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu LTS vierge (Docker, réseau commun, Traefik, Authelia, CrowdSec), sans mise à jour du système ni redémarrage",
+      "en": "CLI: `dotbox init` on a blank Debian or Ubuntu LTS (Docker, shared network, Traefik, Authelia, CrowdSec), with no system update or reboot",
       "doc": "installation"
     },
     {
@@ -168,8 +168,8 @@
     {
       "domain": "core",
       "status": "planned",
-      "fr": "Moteur: certificat wildcard Let's Encrypt ou ZeroSSL, enregistrements DNS créés chez le fournisseur",
-      "en": "Engine: Let's Encrypt or ZeroSSL wildcard certificate, DNS records created at the provider",
+      "fr": "Moteur: un certificat Let's Encrypt ou ZeroSSL par sous-domaine, en HTTP-01, sans jeton DNS",
+      "en": "Engine: one Let's Encrypt or ZeroSSL certificate per subdomain, through HTTP-01, no DNS token",
       "doc": "prerequisites"
     },
     {
@@ -184,6 +184,40 @@
       "status": "planned",
       "fr": "Core: message d'accueil SSH (MOTD) Dot Box, au contenu encore à définir",
       "en": "Core: Dot Box SSH welcome message (MOTD), contents still to be defined"
+    },
+    {
+      "domain": "core",
+      "status": "planned",
+      "fr": "Core: `install.sh` télécharge la dernière version de `dotbox`, vérifie son checksum et lance `dotbox init` ; `--no-init` pour une migration",
+      "en": "Core: `install.sh` downloads the latest `dotbox`, checks its checksum and runs `dotbox init`; `--no-init` for a migration",
+      "doc": "installation"
+    },
+    {
+      "domain": "core",
+      "status": "planned",
+      "fr": "Core: `install.sh`, pouvoir choisir une version précédente au lieu de la dernière (à décider)",
+      "en": "Core: `install.sh`, being able to pick an earlier version instead of the latest (to be decided)"
+    },
+    {
+      "domain": "core",
+      "status": "planned",
+      "fr": "CLI: `dotbox init` vérifie que `*.example.com` pointe vers le serveur avant d'aller plus loin",
+      "en": "CLI: `dotbox init` checks that `*.example.com` points to the server before going further",
+      "doc": "prerequisites"
+    },
+    {
+      "domain": "core",
+      "status": "planned",
+      "fr": "Core: CrowdSec installé par `dotbox init`, surveille SSH et Traefik et bloque les attaques",
+      "en": "Core: CrowdSec installed by `dotbox init`, watches SSH and Traefik and blocks attacks",
+      "doc": "installation"
+    },
+    {
+      "domain": "core",
+      "status": "planned",
+      "fr": "CLI: `dotbox doctor` signale les mises à jour système en attente, `unattended-upgrades` désactivé et un redémarrage nécessaire",
+      "en": "CLI: `dotbox doctor` reports pending system updates, `unattended-upgrades` turned off and a required reboot",
+      "doc": "post-installation"
     },
     {
       "domain": "cli",
@@ -230,8 +264,8 @@
     {
       "domain": "backup",
       "status": "planned",
-      "fr": "Moteur: migration vers un serveur neuf en une commande, DNS repointé",
-      "en": "Engine: migration to a new server in one command, DNS repointed",
+      "fr": "Moteur: migration vers un serveur neuf en une commande, une fois `*.example.com` changé pour la nouvelle IP",
+      "en": "Engine: migration to a new server in one command, once `*.example.com` points to the new IP",
       "doc": "restore"
     },
     {
