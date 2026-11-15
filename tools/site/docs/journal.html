@@ -1,0 +1,1118 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Le serveur de test<i>●</i>tout ce que Claude y fait, commande par commande.</p>
+<p class="lede" data-l="en">The test server<i>●</i>everything Claude does on it, command by command (log kept in French).</p>
+
+<!-- CONTENT -->
+<article class="prose journal">
+  <p class="jr-eyebrow">Serveur de test · install.sh puis core · aucune app</p>
+  <p>Tout ce que Claude fait sur le serveur de test (et sur ton PC pour y accéder), commande par commande: ce qu'elle fait, ce qu'elle change sur la machine, comment l'annuler. Les étapes « proposées » attendent ton accord, rien n'est lancé avant.</p>
+  <div class="jr-summary" id="jrSummary"></div>
+  <p class="note"><b>Règles.</b> Aucune commande qui écrit sur le serveur sans ton accord explicite. Chaque commande lancée est ajoutée ici avec l'heure et son résultat, y compris les lectures. Rien de personnel sur cette page: l'IP, le domaine et les mots de passe sont masqués. Le serveur est désigné par son alias SSH <code>dotbox-test</code>.</p>
+
+  <h2 id="fait">Déjà fait</h2>
+  <p>Dans l'ordre chronologique, heures de Paris.</p>
+  <div class="jr-list" id="jrDone"></div>
+
+  <h2 id="propose">Proposé</h2>
+  <p>Valide ou refuse étape par étape (par exemple « OK pour 0.1 à 0.3 »). Les phases 3 à 5 sont des brouillons: leurs commandes exactes seront écrites ici avant exécution, quand les questions seront tranchées.</p>
+  <div class="jr-plan" id="jrPlan"></div>
+
+  <h2 id="decisions">Décisions</h2>
+  <p>Ce qui a été tranché, dans l'ordre, avec la réponse donnée.</p>
+  <div class="jr-q jr-d" id="jrDecisions"></div>
+
+  <h2 id="contexte">Contexte technique</h2>
+  <p>Ce qu'on a appris en chemin sur la sécurité, sur ce qui est installé et sur nos choix. Ces notes évoluent avec le projet: chacune renvoie aux entrées qui la justifient.</p>
+  <div class="jr-q jr-n" id="jrNotes"></div>
+
+  <h2 id="questions">Questions ouvertes</h2>
+  <div class="jr-q" id="jrQuestions"></div>
+
+  <h2 id="hors-perimetre">Ce qui ne sera pas fait</h2>
+  <ul>
+    <li>Aucune app: ni qBittorrent, Prowlarr, Radarr, Sonarr, ni serveur média. Seulement le core.</li>
+    <li>Ni <code>dotbox init</code> ni l'interface web Dot Box: aucun code n'existe encore (étape B).</li>
+    <li>Pas de sauvegarde programmée (elle dépend de <code>dotbox backup</code>).</li>
+    <li>Pas d'<code>apt upgrade</code> ni de <code>full-upgrade</code>, pas de redémarrage du serveur.</li>
+    <li>Aucune modification de la config SSH (<code>/etc/ssh/</code>).</li>
+    <li>Rien n'est commité ni poussé dans le repo sans ton accord.</li>
+  </ul>
+  <p class="jr-updated" id="jrUpdated"></p>
+</article>
+
+<!-- CSS -->
+/* Journal du serveur de test : statuts aux couleurs de la Roadmap (fait = accent, proposé = wip) */
+.journal { --fail: #f87171; }
+.jr-eyebrow { font-family: var(--mono); font-size: 12px !important; letter-spacing: .2em; text-transform: uppercase; color: var(--muted) !important; }
+.jr-summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.jr-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
+.jr-chip b { color: var(--lit); font-weight: 500; font-variant-numeric: tabular-nums; }
+.jr-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.s-fait { color: var(--accent) !important; } .s-propose { color: var(--wip) !important; } .s-valide { color: var(--design) !important; } .s-refuse, .s-echec { color: var(--fail) !important; }
+.jr-list, .jr-plan, .jr-phase, .jr-q { display: grid; gap: 12px; min-width: 0; }
+.jr-plan { gap: 28px; }
+.jr-phase > p { margin-top: -4px; }
+.jr-entry { display: grid; gap: 12px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); min-width: 0; }
+.jr-fold { display: block; padding: 0; }
+.jr-fold > summary { display: grid; gap: 10px; padding: 14px 18px 14px 44px; position: relative; cursor: pointer; list-style: none; opacity: .75; }
+.jr-fold > summary::-webkit-details-marker { display: none; }
+.jr-fold > summary::before { content: "›"; position: absolute; left: 20px; top: 13px; font-family: var(--mono); font-size: 18px; color: var(--muted); transition: transform .15s; }
+.jr-fold[open] > summary::before { transform: rotate(90deg); }
+.jr-fold > summary:hover, .jr-fold[open] > summary { opacity: 1; }
+.jr-fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 14px; }
+.jr-body { display: grid; gap: 12px; padding: 0 18px 16px; min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .jr-fold > summary::before { transition: none; } }
+.jr-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.jr-id { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.jr-title { flex: 1 1 240px; min-width: 0; font-weight: 600; color: var(--lit); }
+.jr-time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.jr-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.jr-tag { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 3px 9px; border: 1px solid var(--line2); border-radius: 999px; color: var(--muted); white-space: nowrap; }
+.jr-tag.st { border-color: currentColor; }
+.jr-tag.w { color: var(--lit); border-color: #3a3a3a; }
+.jr-cmd { display: grid; gap: 6px; min-width: 0; }
+.jr-cmd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.jr-copy { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--line2); border-radius: 999px; background: var(--panel); color: var(--label); cursor: pointer; }
+.jr-copy:hover { color: var(--accent); border-color: var(--accent); }
+.jr-entry dl { margin: 0; display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 8px 16px; }
+.jr-entry dt, .jr-lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.jr-entry dd { margin: 0; min-width: 0; color: var(--label); font-size: 15px; }
+.jr-blk { display: grid; gap: 6px; min-width: 0; }
+.prose .jr-result { color: var(--label); }
+.jr-q { counter-reset: q; }
+.jr-qi { display: grid; gap: 8px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.jr-qi h3 { margin: 0 !important; display: flex; gap: 10px; font-size: 16px !important; }
+.jr-qn { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--wip); padding-top: 2px; }
+.jr-qi p.reco { color: var(--lit); }
+.jr-d { counter-reset: d; }
+.jr-d .jr-qn { color: var(--accent); }
+.jr-n .jr-qn { color: var(--design); }
+.jr-qi .jr-refs { font-family: var(--mono); font-size: 12px !important; letter-spacing: .08em; color: var(--muted) !important; }
+.jr-entry, .jr-qi { scroll-margin-top: 24px; }
+.jr-entry:target, .jr-qi:target { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.jr-qfold > summary { display: grid; gap: 8px; cursor: pointer; list-style: none; opacity: .75; }
+.jr-qfold > summary::-webkit-details-marker { display: none; }
+.jr-qfold > summary:hover, .jr-qfold[open] > summary { opacity: 1; }
+.jr-qfold[open] > summary { margin-bottom: 4px; }
+.jr-updated { font-family: var(--mono); font-size: 12px !important; letter-spacing: .12em; text-transform: uppercase; color: var(--muted) !important; }
+@media (max-width: 560px) { .jr-entry dl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .jr-entry dd + dt { margin-top: 10px; } }
+
+<!-- JS -->
+/* Journal du serveur de test. Statuts : fait, echec, propose, valide, refuse. Nature : lecture, ecriture.
+   À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
+(function () {
+  "use strict";
+  var UPDATED = "15 novembre 2026, 21:57";
+
+  var DONE = [
+    { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
+      title: "Créer une clé SSH dédiée au serveur de test",
+      cmd: `ssh-keygen -t ed25519 -N "" -C "dotbox-test (WSL)" -f ~/.ssh/dotbox-test -q`,
+      does: "Génère une paire de clés ed25519 sans phrase de passe, réservée à ce serveur.",
+      effect: "PC: crée ~/.ssh/dotbox-test (clé privée) et ~/.ssh/dotbox-test.pub (clé publique).",
+      undo: `rm ~/.ssh/dotbox-test ~/.ssh/dotbox-test.pub` },
+    { id: "J2", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
+      title: "Écrire l'alias dotbox-test",
+      cmd: `cat > ~/.ssh/config <<'EOF'
+Host dotbox-test
+    HostName <IP du serveur>
+    User <user>
+    IdentityFile ~/.ssh/dotbox-test
+    IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config ~/.ssh/dotbox-test`,
+      does: "Fait de ssh dotbox-test un raccourci vers le serveur, avec la clé ci-dessus et seulement elle.",
+      effect: "PC: crée ~/.ssh/config (il n'existait pas) et restreint ses droits.",
+      undo: `rm ~/.ssh/config` },
+    { id: "J3", time: "04:41", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Déposer la clé publique sur le serveur",
+      cmd: `SSHPASS='••••' sshpass -e ssh-copy-id -o StrictHostKeyChecking=accept-new \\
+  -o PubkeyAuthentication=no -i ~/.ssh/dotbox-test.pub dotbox-test`,
+      does: "Se connecte une fois avec le mot de passe de <user> (passé par variable d'environnement, jamais écrit sur disque) et ajoute la clé publique aux clés autorisées.",
+      effect: "Serveur: ajoute une ligne « dotbox-test (WSL) » dans /home/<user>/.ssh/authorized_keys. PC: ajoute l'empreinte du serveur dans ~/.ssh/known_hosts. La config SSH du serveur (/etc/ssh/) n'est pas touchée.",
+      undo: `# sur le serveur
+sed -i '/dotbox-test (WSL)$/d' ~/.ssh/authorized_keys` },
+    { id: "J4", time: "04:41", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Vérifier la connexion par clé et sudo",
+      cmd: `ssh -o BatchMode=yes dotbox-test 'echo OK; whoami; sudo -n true 2>&1 && echo SUDO_NOPASSWD || echo SUDO_NEEDS_PASSWORD; id -nG'`,
+      does: "Se connecte avec la clé, affiche l'utilisateur, teste sudo sans mot de passe et liste les groupes.",
+      effect: "Aucun.",
+      result: `OK
+<user>
+bash: line 1: sudo: command not found
+<user> cdrom floppy audio dip video plugdev users netdev` },
+    { id: "J5", time: "04:41", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Point 1 de l'étape A: état du serveur",
+      cmd: `ssh -o BatchMode=yes dotbox-test '
+cat /etc/os-release | grep -E "^(PRETTY_NAME|VERSION_ID|ID)="
+uname -m; dpkg --print-architecture; uname -r; systemd-detect-virt
+nproc; free -h; df -hT /
+ss -tln
+command -v docker; command -v ufw nft iptables
+ip -br addr
+systemctl is-enabled unattended-upgrades; ls /var/run/reboot-required'`,
+      does: "Lit le système, l'architecture, la machine, les ports en écoute, Docker, le pare-feu, les adresses IP, unattended-upgrades et un éventuel redémarrage en attente.",
+      effect: "Aucun.",
+      result: `Debian GNU/Linux 13 (trixie), amd64, noyau 6.12.115, serveur physique
+2 cœurs, 3,8 Go de RAM, / en ext4 de 117 Go (1,5 Go utilisés)
+Ports en écoute: 22 (SSH), 53 (DNS BIND, sur l'IP publique), 953 (BIND, local)
+80 et 443: libres
+Docker: absent. ufw, nft, iptables: introuvables dans le PATH de <user>
+IPv6: pas d'adresse publique (A suffit, pas de AAAA)
+unattended-upgrades: absent. Redémarrage en attente: non
+DNS de *.<domaine>: pas encore vérifié, domaine à fournir` },
+    { id: "J6", time: "19:56", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étape 0.1: écrire install.sh à la racine du repo",
+      does: "Un court script bash (modèle de rustup, D8). 1. Vérifie qu'il tourne en root. 2. Vérifie que la machine est en Linux amd64. 3. Télécharge dotbox-linux-amd64 et dotbox-linux-amd64.sha256 depuis la dernière release, compare le SHA-256 et installe le binaire dans /usr/local/bin. Un checksum faux arrête tout, sans rien installer. 4. Lance dotbox init en lui transmettant ses options (par exemple --user), relié au terminal pour qu'il puisse poser ses questions. Avec --no-init, il s'arrête après l'installation du binaire. -h affiche l'aide.",
+      note: "Tout le code est dans main(), appelée à la dernière ligne. Les messages suivent le style de la CLI (« check », « download », « verify », « install »). Le dossier temporaire du téléchargement est toujours supprimé.",
+      effect: "PC: crée install.sh (exécutable) dans le repo. Rien sur le serveur. Pas commité.",
+      undo: `rm install.sh` },
+    { id: "J7", time: "19:57", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étape 0.2: installer shellcheck sur le PC, sans root",
+      cmd: `mkdir -p ~/.local/bin
+curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz \\
+  | tar -xJ --strip-components=1 -C ~/.local/bin shellcheck-v0.11.0/shellcheck
+shellcheck --version`,
+      does: "Télécharge shellcheck v0.11.0 (dernière version) et le place dans ~/.local/bin.",
+      effect: "PC: un fichier ~/.local/bin/shellcheck. Aucun paquet système.",
+      result: `ShellCheck - shell script analysis tool
+version: 0.11.0`,
+      undo: `rm ~/.local/bin/shellcheck` },
+    { id: "J8", time: "19:58", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape 0.3: vérifier install.sh avec shellcheck",
+      cmd: `shellcheck install.sh
+bash -n install.sh`,
+      does: "Analyse le script sans l'exécuter (shellcheck), puis vérifie sa syntaxe avec bash.",
+      effect: "Aucun.",
+      note: "Zéro avertissement dès le premier passage, rien à corriger. Les vérifications optionnelles (shellcheck -o all, hors règles par défaut) ne signalent que des préférences de style: [[ ]] plutôt que [ ], et ${var} plutôt que $var.",
+      result: `shellcheck: aucun avertissement (code de sortie 0)
+bash -n: syntaxe correcte` },
+    { id: "J9", time: "19:59", status: "fait", where: "PC", kind: "lecture",
+      title: "Essais sur le PC: l'aide et le refus sans root",
+      cmd: `./install.sh --help
+./install.sh`,
+      does: "Affiche l'aide, puis lance le script sans root: il doit s'arrêter dès la première vérification.",
+      effect: "Aucun: le script s'arrête avant de télécharger quoi que ce soit.",
+      result: `--help: l'aide s'affiche (code de sortie 0)
+sans root:
+  error    run this script as root: su -, then run the same command again
+(code de sortie 1)` },
+    { id: "J10", time: "20:01", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape 0.4: install.sh sans root, sur le serveur",
+      cmd: `ssh dotbox-test 'bash -s' < install.sh`,
+      does: "Envoie le script à bash sur le serveur par l'entrée standard, comme curl … | bash, en tant que <user>.",
+      effect: "Aucun.",
+      result: `  error    run this script as root: su -, then run the same command again
+(code de sortie 1)` },
+    { id: "J11", time: "20:04", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape 0.5: install.sh en root, sur le serveur",
+      cmd: `scp install.sh dotbox-test:/tmp/install.sh
+python3 su_run.py 'bash -s < /tmp/install.sh'
+ssh dotbox-test 'rm -f /tmp/install.sh; ls /usr/local/bin/dotbox; ls -d /tmp/tmp.*'`,
+      does: "Copie le script sur le serveur et le lance en root. su_run.py est un petit script du PC (hors repo): il ouvre ssh -tt dotbox-test \"su -c '…'\", attend le prompt « Password: » de su, envoie le mot de passe root, puis masque le mot de passe et l'IP dans la sortie. Enfin, supprime la copie et vérifie qu'il ne reste rien.",
+      effect: "Aucun: le script s'est arrêté avant de télécharger quoi que ce soit.",
+      note: "Premier essai à 20:01 avec sshpass: le mot de passe n'a pas été transmis à su, qui est resté en attente jusqu'au délai de 2 minutes. Rien n'a été modifié. D'où su_run.py, relancé à 20:04. Résultat: un vrai problème trouvé, curl n'est pas installé sur le serveur (voir J12 et D9).",
+      result: `Password:
+  check    root
+  check    Linux amd64
+  error    missing command: curl
+exit=1
+ls: cannot access '/usr/local/bin/dotbox': No such file or directory
+ls: cannot access '/tmp/tmp.*': No such file or directory` },
+    { id: "J12", time: "20:04", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Quels outils de téléchargement sont présents?",
+      cmd: `ssh dotbox-test 'for c in curl wget sha256sum install mktemp uname python3; do command -v $c || echo "$c absent"; done'`,
+      does: "Liste les commandes dont le script a besoin, et les autres moyens de télécharger.",
+      effect: "Aucun.",
+      result: `curl       absent
+wget       /usr/bin/wget
+sha256sum, install, mktemp, uname, python3: présents
+ca-certificates: installé (les téléchargements HTTPS marchent)` },
+    { id: "J13", time: "20:12", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Vérifier que la clé SSH marche toujours",
+      cmd: `ssh -o BatchMode=yes dotbox-test 'echo KEY_OK; whoami'`,
+      does: "Tu avais un refus de mot de passe avec ssh <user>@<IP>. Cette commande se connecte avec la clé, sans jamais demander de mot de passe.",
+      effect: "Aucun.",
+      note: "La clé marche. ssh <user>@<IP> ne l'utilise pas, car elle ne porte pas un nom par défaut (~/.ssh/dotbox-test): SSH passe alors au mot de passe. Pour se connecter: ssh dotbox-test, ou ssh -i ~/.ssh/dotbox-test <user>@<IP>, depuis WSL (la clé n'existe pas côté Windows).",
+      result: `KEY_OK
+<user>` },
+    { id: "J14", time: "20:12", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étape 0.6: install.sh télécharge avec wget (D9)",
+      cmd: `shellcheck install.sh
+bash -n install.sh`,
+      does: "Remplace curl par wget dans le script (téléchargement du binaire et de son checksum, avec --https-only) et dans l'aide: wget -qO- … | bash. Puis vérifie à nouveau le script.",
+      effect: "PC: modifie install.sh. Pas commité.",
+      result: `shellcheck: aucun avertissement (code de sortie 0)
+bash -n: syntaxe correcte` },
+    { id: "J15", time: "20:12", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape 0.6: install.sh en root, sur le serveur, avec wget",
+      cmd: `scp install.sh dotbox-test:/tmp/install.sh
+python3 su_run.py 'bash -s < /tmp/install.sh'
+ssh dotbox-test 'rm -f /tmp/install.sh; ls /usr/local/bin/dotbox; ls -d /tmp/tmp.*'`,
+      does: "Même test qu'en J11, avec le script qui utilise wget.",
+      effect: "Aucun: le script s'arrête au téléchargement, comme prévu tant qu'aucune release n'existe. Rien d'installé, dossier temporaire supprimé.",
+      result: `  check    root
+  check    Linux amd64
+  download dotbox-linux-amd64 (latest release)
+  error    could not download dotbox-linux-amd64 from https://github.com/Mathod95/dotbox/releases/latest/download
+exit=1
+ls: cannot access '/usr/local/bin/dotbox': No such file or directory
+ls: cannot access '/tmp/tmp.*': No such file or directory` },
+    { id: "J16", time: "20:21", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étapes B.1 à B.3: projet Rust et début de dotbox init",
+      does: "Crée le projet: Cargo.toml (dotbox 0.0.1, édition 2024, une seule dépendance: clap), src/main.rs (la CLI), src/out.rs (sortie au style de la page CLI), src/system.rs (lecture du système et commandes), src/init.rs (dotbox init). Ajoute /target/ au .gitignore. dotbox init: 1. root. 2. Debian 12/13 ou Ubuntu 24.04/26.04 en amd64 (/etc/os-release et dpkg), sinon arrêt sans rien modifier. 3. sudo installé s'il manque (apt-get update puis install, sans mise à jour du système). 4. Utilisateur: --user, sinon question avec le compte connecté avant su proposé (SUDO_USER, sinon /proc/self/loginuid). Créé s'il manque (useradd puis passwd dans le terminal), ajouté au groupe sudo. Un utilisateur existant n'est pas touché. 5. Message: la suite n'est pas encore disponible.",
+      effect: "PC: crée Cargo.toml, Cargo.lock et src/, modifie .gitignore. Pas commité.",
+      undo: `rm -r Cargo.toml Cargo.lock src target` },
+    { id: "J17", time: "20:22", status: "fait", where: "PC", kind: "ecriture",
+      title: "Ajouter rustfmt, clippy et la cible musl à Rust",
+      cmd: `rustup component add rustfmt clippy
+rustup target add x86_64-unknown-linux-musl`,
+      does: "Le premier cargo fmt a échoué: rustfmt n'était pas installé, clippy non plus. Ajoute les deux, et la cible musl prévue en B.4.",
+      effect: "PC: trois composants de plus dans ~/.rustup.",
+      undo: `rustup component remove rustfmt clippy
+rustup target remove x86_64-unknown-linux-musl` },
+    { id: "J18", time: "20:22", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape B.4: vérifier et compiler sur le PC",
+      cmd: `cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --release --target x86_64-unknown-linux-musl
+./target/debug/dotbox --help; ./target/debug/dotbox init`,
+      does: "Format, clippy (avertissements traités comme des erreurs), tests, puis le binaire statique. Essai de l'aide et du refus sans root sur le PC.",
+      effect: "PC: target/ (ignoré par Git).",
+      result: `cargo fmt --check: ok
+clippy: aucun avertissement
+tests: 5 sur 5 (os-release, versions prises en charge, UID effectif, /etc/passwd, noms d'utilisateur)
+binaire: 797 Ko, statically linked
+init sans root:
+  error    run dotbox init as root: su -, then run it again` },
+    { id: "J19", time: "20:23", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape B.5: copier le binaire, le lancer sans root",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+ssh dotbox-test '/tmp/dotbox --help; /tmp/dotbox --version; /tmp/dotbox init'`,
+      does: "Copie le binaire dans /tmp du serveur, affiche l'aide et la version, lance init en tant que <user>.",
+      effect: "Serveur: le fichier /tmp/dotbox.",
+      result: `Usage: dotbox <COMMAND>
+Commands:
+  init  Set up the server: system check, sudo and the user that runs the apps
+dotbox 0.0.1
+  error    run dotbox init as root: su -, then run it again
+exit=1` },
+    { id: "J20", time: "20:23", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape B.6, premier essai: un bug trouvé",
+      cmd: `python3 su_run.py '/tmp/dotbox init --user <user>'`,
+      does: "Lance init en root avec su, pour <user>.",
+      effect: "Serveur: installe le paquet sudo. S'arrête avant le groupe.",
+      note: "Bug: avec su -c (au lieu de su -), le PATH reste celui de <user>, sans /usr/sbin, donc usermod est introuvable. Le vrai chemin (su -, puis install.sh) n'aurait pas eu le problème, mais dotbox ne doit pas dépendre de la façon dont il est lancé. Corrigé en J21.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  install  sudo
+  check    user <user>
+  error    cannot run usermod: No such file or directory (os error 2)
+exit=1`,
+      undo: `# sur le serveur, en root
+apt-get purge -y sudo` },
+    { id: "J21", time: "20:23", status: "fait", where: "PC", kind: "ecriture",
+      title: "Corriger: dotbox lance ses commandes système avec un PATH complet",
+      cmd: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo build --release --target x86_64-unknown-linux-musl
+scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox`,
+      does: "src/system.rs: chaque commande externe (apt-get, useradd, usermod, passwd...) est lancée avec le PATH de root (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin), quel que soit le PATH reçu. Puis les mêmes vérifications qu'en J18, et la nouvelle copie sur le serveur.",
+      effect: "PC: modifie src/system.rs et src/init.rs. Serveur: remplace /tmp/dotbox.",
+      result: `fmt, clippy: ok. tests: 5 sur 5` },
+    { id: "J22", time: "20:24", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape B.6: init en root, avec --user",
+      cmd: `python3 su_run.py '/tmp/dotbox init --user <user>'`,
+      does: "Relance B.6 avec le binaire corrigé.",
+      effect: "Serveur: ajoute <user> au groupe sudo (sudo était déjà installé en J20).",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  check    user <user>
+  group    <user> added to sudo
+  next     Docker, Traefik, Authelia and CrowdSec: not available yet in this version
+exit=0`,
+      undo: `# sur le serveur, en root
+gpasswd -d <user> sudo` },
+    { id: "J23", time: "20:24", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape B.7: init en root, sans --user",
+      cmd: `python3 su_run.py --enter '/tmp/dotbox init'`,
+      does: "Lance init sans --user: il demande le nom en proposant le compte connecté avant su. su_run.py répond Entrée pour accepter. Tout est déjà en place, rien ne doit changer.",
+      effect: "Aucun: tout était déjà fait.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  user     user that runs the apps [<user>]:
+  check    user <user>
+  check    <user> in group sudo
+  next     Docker, Traefik, Authelia and CrowdSec: not available yet in this version
+exit=0` },
+    { id: "J24", time: "20:24", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Vérifier sudo pour <user>",
+      cmd: `ssh dotbox-test 'id -nG; dpkg-query -W sudo'
+python3 su_run.py 'sudo -l -U <user> | tail -2'`,
+      does: "Une nouvelle session SSH voit le groupe sudo, le paquet est installé, et sudo donne bien les droits à <user>.",
+      effect: "Aucun.",
+      note: "/tmp/dotbox est resté sur le serveur pour ton test à la main (J25), puis a été supprimé (J27).",
+      result: `<user> cdrom floppy sudo audio dip video plugdev users netdev
+sudo 1.9.16p2-3+deb13u2 install ok installed
+User <user> may run the following commands on <hôte>:
+    (ALL : ALL) ALL` },
+    { id: "J25", time: "20:30", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "Test à la main par Mathod95: init crée un nouvel utilisateur",
+      cmd: `ssh dotbox-test
+su -
+/tmp/dotbox init`,
+      does: "Lancé par toi, dans le terminal, en répondant <test> (un compte qui n'existait pas) à la question du nom. Couvre le cas que J22 et J23 ne testaient pas: la création, avec le mot de passe demandé par passwd.",
+      effect: "Serveur: crée l'utilisateur <test> (uid 1001, groupe <test>, dossier /home/<test>), l'ajoute au groupe sudo. Supprimé en J27.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  user     user that runs the apps [<user>]: <test>
+  create   user <test>
+New password:
+Retype new password:
+passwd: password updated successfully
+  group    <test> added to sudo
+  next     Docker, Traefik, Authelia and CrowdSec: not available yet in this version` },
+    { id: "J26", time: "20:33", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Regarder le compte <test> avant de le supprimer",
+      cmd: `ssh dotbox-test 'getent passwd <test>; getent group <test>; id -nG <test>; ps -u <test> -o pid,cmd'`,
+      does: "Vérifie ce que le compte a créé et qu'aucun processus ne tourne sous son nom.",
+      effect: "Aucun.",
+      result: `<test>:x:1001:1001::/home/<test>:/bin/bash
+groupes: <test> sudo
+aucun processus` },
+    { id: "J27", time: "20:33", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Supprimer le compte <test> et /tmp/dotbox",
+      cmd: `python3 su_run.py 'rm -f /tmp/dotbox; /usr/sbin/userdel -r <test>'
+python3 su_run.py 'getent passwd <test>; getent group <test>; getent group sudo; ls -d /home/<test>'`,
+      does: "Supprime le compte, son groupe et son dossier (qui ne contenait que .bash_logout, .bashrc et .profile), puis la copie du binaire. Vérifie qu'il ne reste rien.",
+      effect: "Serveur: plus de compte <test>, plus de /home/<test>, plus de /tmp/dotbox. Le groupe sudo ne contient plus que <user>.",
+      note: "Premier essai avec userdel sans chemin: « command not found », même cause qu'en J20 (su -c garde le PATH de <user>). Rien n'avait été supprimé à part /tmp/dotbox. Relancé avec /usr/sbin/userdel. su_run.py utilise maintenant su - -c, qui donne le PATH de root.",
+      result: `userdel: <test> mail spool (/var/mail/<test>) not found
+userdel_exit=0
+getent passwd <test>: rien
+getent group <test>: rien
+sudo:x:27:<user>
+ls: cannot access '/home/<test>': No such file or directory
+ls: cannot access '/tmp/dotbox': No such file or directory` },
+    { id: "J28", time: "20:37", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Changer le mot de passe de <user> (D11)",
+      cmd: `printf '<user>:%s\\n' '••••' | ssh dotbox-test 'umask 077; cat > /tmp/.pw'
+python3 su_run.py 'chpasswd < /tmp/.pw; rm -f /tmp/.pw'`,
+      does: "Écrit « <user>:mot de passe » dans un fichier lisible par <user> seul (umask 077), le passe à chpasswd en root, puis le supprime. Le mot de passe n'apparaît dans aucune commande visible sur le serveur, ni sur cette page.",
+      effect: "Serveur: nouveau mot de passe pour <user>. /tmp/.pw supprimé.",
+      result: `-rw------- /tmp/.pw
+chpasswd_exit=0
+ls: cannot access '/tmp/.pw': No such file or directory` },
+    { id: "J29", time: "20:38", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Vérifier sudo avec ce mot de passe",
+      cmd: `ssh dotbox-test 'sudo -S -k -p "" true && echo SUDO_OK'   # mot de passe par l'entrée standard
+python3 sudo_run.py 'whoami; command -v usermod'`,
+      does: "sudo accepte le mot de passe. sudo_run.py est le nouvel outil du PC (hors repo) qui remplace su_run.py: il envoie le mot de passe à sudo -S par l'entrée standard, lance la commande dans un shell de connexion root (bash -l), et masque le mot de passe et l'IP dans la sortie.",
+      effect: "Aucun.",
+      result: `SUDO_OK
+root
+/usr/sbin/usermod
+exit=0` },
+    { id: "J30", time: "20:42", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Installer dotbox dans /usr/local/bin, à la main",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && rm /tmp/dotbox'
+ssh dotbox-test 'command -v dotbox; dotbox --version; dotbox --help'`,
+      does: "Fait à la main ce que fera install.sh au premier tag (D10): place le binaire dans /usr/local/bin, pour que dotbox marche directement. Il sera remplacé de la même façon à chaque nouvelle version pendant les tests.",
+      effect: "Serveur: /usr/local/bin/dotbox (root, 755). /tmp/dotbox supprimé.",
+      result: `sha256 ce7b62a06222… identique sur le PC et sur le serveur
+/usr/local/bin/dotbox
+dotbox 0.0.1
+Commands:
+  init  Set up the server: system check, sudo and the user that runs the apps`,
+      undo: `sudo rm /usr/local/bin/dotbox` },
+    { id: "J31", time: "20:42", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "sudo dotbox init depuis le PATH",
+      cmd: `python3 sudo_run.py 'dotbox init --user <user>'`,
+      does: "Vérifie que sudo trouve dotbox dans /usr/local/bin. Tout est déjà en place: rien ne doit changer.",
+      effect: "Aucun.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  check    user <user>
+  check    <user> in group sudo
+  next     Docker, Traefik, Authelia and CrowdSec: not available yet in this version
+exit=0` },
+    { id: "J32", time: "20:57", status: "fait", where: "PC", kind: "lecture",
+      title: "Vérifier la clé officielle du dépôt Docker",
+      cmd: `curl -fsSL https://download.docker.com/linux/debian/gpg -o key-debian.asc
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o key-ubuntu.asc
+sha256sum key-*.asc
+gpg --show-keys --with-fingerprint key-debian.asc`,
+      does: "Télécharge la clé des deux dépôts et affiche son empreinte, pour l'embarquer dans le binaire (C.3).",
+      effect: "PC: copie la clé dans assets/docker.asc du repo.",
+      result: `1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570  key-debian.asc
+1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570  key-ubuntu.asc
+pub   rsa4096 2017-02-22 [SCEA]
+      9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+uid   Docker Release (CE deb) <docker@docker.com>` },
+    { id: "J33", time: "20:58", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étapes C.1 à C.6: Docker dans dotbox init",
+      does: "src/docker.rs: tout le plan de la phase C, dans l'ordre. src/prompt.rs: les questions dans le terminal (le nom d'utilisateur, et « remove them? [y/N] », non par défaut, non sans terminal). src/system.rs: le nom de version (UBUNTU_CODENAME, sinon VERSION_CODENAME), la version d'un paquet, l'écriture d'un fichier seulement s'il change. Deux dépendances de plus: serde_json (lire et compléter daemon.json) et, pour les tests seulement, sha2. L'aide de init dit maintenant « … and Docker ».",
+      note: "Docker est installé avec ses paquets recommandés, comme dans la doc: iptables en fait partie, et Docker en a besoin.",
+      effect: "PC: crée src/docker.rs, src/prompt.rs et assets/docker.asc, modifie src/init.rs, src/main.rs, src/system.rs et Cargo.toml. Pas commité." },
+    { id: "J34", time: "20:58", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape C.7: vérifier sur le PC",
+      cmd: `cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+      does: "Les tests de la phase B, plus cinq tests Docker.",
+      effect: "Aucun.",
+      result: `fmt: ok. clippy: aucun avertissement
+tests: 10 sur 10
+  docker.sources pour Debian 13 et 12, Ubuntu 24.04 et 26.04
+  UBUNTU_CODENAME prioritaire sur VERSION_CODENAME
+  paquets en conflit selon le système
+  clé embarquée = celle vérifiée en J32 (SHA-256)
+  daemon.json neuf, complété sans perdre ses réglages, inchangé s'il est à jour, refusé s'il est invalide
+binaire: 885 Ko, sha256 54584a05…` },
+    { id: "J35", time: "20:59", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Étape C.8: état du serveur avant Docker",
+      cmd: `ssh dotbox-test 'dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc docker-ce
+ls -la /etc/docker /etc/apt/keyrings; ls /etc/apt/sources.list.d; ss -tln; df -h /
+dpkg-query -W iptables ipset ufw firewalld'`,
+      does: "Ce qui existe avant, pour comparer après.",
+      effect: "Aucun.",
+      result: `Aucun paquet Docker ni paquet en conflit
+/etc/docker: absent. /etc/apt/keyrings: vide. /etc/apt/sources.list.d: vide
+Ports en écoute: 22, 53 et 953 (DNS), rien sur 80 ni 443
+Disque: 1,5 Go utilisés sur 117 Go
+iptables, ipset: absents. ufw, firewalld: non installés` },
+    { id: "J36", time: "20:59", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Installer le nouveau binaire, et runc exprès (C.9)",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && rm /tmp/dotbox
+apt-get install -y -q runc'`,
+      does: "Remplace /usr/local/bin/dotbox par la version avec Docker. Installe runc, un paquet de la liste des conflits, pour exercer ce chemin sur un serveur neuf.",
+      effect: "Serveur: nouveau /usr/local/bin/dotbox (sha256 54584a05…). runc installé, avec 7 dépendances qu'apt a ajoutées (criu, python3-pycriu, libcompel1, libnet1, libnl-3-200, python3-protobuf, libprotobuf32t64), retirées en J41.",
+      result: `runc 1.1.15+ds1-2+b4` },
+    { id: "J37", time: "20:59", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape C.9: init sans terminal doit refuser de retirer runc",
+      cmd: `python3 sudo_run.py 'dotbox init --user <user>'`,
+      does: "sudo_run.py n'ouvre pas de terminal: init ne peut pas demander l'accord.",
+      effect: "Aucun: runc toujours là, rien d'écrit dans /etc/docker ni /etc/apt.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  check    user <user>
+  check    <user> in group sudo
+  conflict runc (conflict with Docker's packages)
+  error    nothing changed: remove them with apt-get remove runc, then run dotbox init again` },
+    { id: "J38", time: "20:59", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape C.9: init dans un terminal, réponse « y »: Docker installé",
+      cmd: `python3 su_run.py --answer y 'dotbox init --user <user>'`,
+      does: "su_run.py ouvre un terminal et répond « y » à la question. Une minute en tout.",
+      effect: "Serveur: runc retiré. /etc/apt/keyrings/docker.asc, /etc/apt/sources.list.d/docker.sources, /etc/docker/daemon.json. Paquets Docker (et iptables, recommandé). Services docker et containerd actifs et lancés au démarrage. Network dotbox. <user> dans le groupe docker.",
+      result: `  conflict runc (conflict with Docker's packages)
+  confirm  remove them? [y/N] y
+  remove   runc
+  write    /etc/apt/keyrings/docker.asc
+  write    /etc/apt/sources.list.d/docker.sources
+  write    /etc/docker/daemon.json (local logs, live-restore)
+  install  docker-ce 5:29.9.3-1~debian.13~trixie
+  check    docker 29.9.3 local live-restore=true
+  create   network dotbox
+  group    <user> added to docker
+  note     the docker group gives root-level privileges (docs.docker.com), log in again to use it
+  next     Traefik, Authelia and CrowdSec: not available yet in this version`,
+      undo: `# sur le serveur, en root
+apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+rm -rf /var/lib/docker /var/lib/containerd /etc/docker
+rm /etc/apt/keyrings/docker.asc /etc/apt/sources.list.d/docker.sources
+gpasswd -d <user> docker` },
+    { id: "J39", time: "21:00", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape C.10: Docker en tant que <user>, sans sudo",
+      cmd: `ssh dotbox-test 'id -nG
+docker info --format "{{.ServerVersion}} {{.LoggingDriver}} live-restore={{.LiveRestoreEnabled}} cgroup={{.CgroupVersion}} storage={{.Driver}}"
+docker compose version; docker network ls --filter name=dotbox
+systemctl is-enabled docker containerd
+cat /etc/docker/daemon.json /etc/apt/sources.list.d/docker.sources
+docker run --rm hello-world && docker image rm hello-world'`,
+      does: "Une nouvelle session SSH, donc avec le groupe docker. Puis le test officiel hello-world et la suppression de son image.",
+      effect: "Aucun durable: l'image hello-world est supprimée, aucune image ne reste.",
+      result: `<user> … sudo … docker
+29.9.3 local live-restore=true cgroup=2 storage=overlayfs
+Docker Compose version v5.7.1
+dotbox bridge
+enabled / enabled
+daemon.json: {"live-restore": true, "log-driver": "local"}
+docker.sources: URIs https://download.docker.com/linux/debian, Suites trixie, Architectures amd64
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+Deleted: sha256:cf1b20a0…   (images restantes: 0)` },
+    { id: "J40", time: "21:01", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Étape C.11: relancer init, rien ne doit changer",
+      cmd: `python3 sudo_run.py 'dotbox init --user <user>'`,
+      does: "Tout est en place: que des « check ».",
+      effect: "Aucun.",
+      result: `  check    root
+  check    Debian GNU/Linux 13 (trixie) amd64
+  check    sudo
+  check    user <user>
+  check    <user> in group sudo
+  check    docker-ce 5:29.9.3-1~debian.13~trixie
+  check    docker 29.9.3 local live-restore=true
+  check    network dotbox
+  check    <user> in group docker
+  next     Traefik, Authelia and CrowdSec: not available yet in this version` },
+    { id: "J41", time: "21:01", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Retirer les 7 paquets arrivés avec runc",
+      cmd: `python3 sudo_run.py 'grep -A3 "Commandline: apt-get install -y -q runc" /var/log/apt/history.log'
+python3 sudo_run.py 'apt-get remove -y -q python3-pycriu criu libcompel1 libnet1 libnl-3-200 python3-protobuf libprotobuf32t64'`,
+      does: "L'historique d'apt confirme que ces 7 paquets sont arrivés avec runc en J36 et que plus rien ne les utilise (apt-get autoremove les proposait). Ils sont retirés par leur nom, sans autoremove général.",
+      effect: "Serveur: retour à l'état d'avant le test runc. Docker continue de tourner.",
+      result: `0 upgraded, 0 newly installed, 7 to remove
+Removing python3-pycriu, criu, libcompel1, libnet1, libnl-3-200, python3-protobuf, libprotobuf32t64
+autoremove: plus rien à retirer
+docker: active, 29.9.3` },
+    { id: "J42", time: "21:41", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Quel pare-feu sur une Debian 13 neuve (avec Docker)?",
+      cmd: `python3 sudo_run.py 'dpkg-query -W nftables iptables ufw firewalld
+systemctl is-enabled nftables; update-alternatives --query iptables; nft list tables'`,
+      does: "Pour Q3 et Q11: ce que Debian installe par défaut, et où Docker a écrit ses règles.",
+      effect: "Aucun.",
+      result: `nftables 1.1.3-1: installé, service désactivé (aucune règle chargée au démarrage)
+iptables 1.8.11-2: installé avec Docker, la commande pointe vers /usr/sbin/iptables-nft
+ufw, firewalld: non installés
+nft list tables: ip nat, ip filter, ip6 nat, ip6 filter, ip raw
+=> les règles de Docker, écrites avec iptables, sont en fait dans nftables` },
+    { id: "J43", time: "21:57", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Docker est-il toujours installé?",
+      cmd: `ssh dotbox-test 'systemctl is-active docker containerd; docker version; docker network ls
+dpkg-query -W docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'`,
+      does: "Question de Mathod95 après J41 (qui n'a retiré que les dépendances de runc).",
+      effect: "Aucun.",
+      result: `docker: active, containerd: active
+client 29.9.3 / server 29.9.3
+networks: bridge dotbox host none
+containerd.io 2.4.2, docker-buildx-plugin 0.39.0, docker-ce 29.9.3, docker-compose-plugin 5.7.1` }
+  ];
+
+  var PLAN = [
+    { phase: "0", title: "Script install.sh",
+      intro: "Modèle de rustup (D8): install.sh se contente de télécharger le binaire, de le vérifier et de le lancer. Tout le reste est fait par dotbox init. Phase terminée (J6 à J15): shellcheck ne signale rien, le script refuse de tourner sans root, et en root il s'arrête proprement au téléchargement, faute de release. Il télécharge avec wget (D9). La suite passe par le premier binaire (phase B).",
+      steps: [
+        { id: "0.1", status: "fait", ref: "J6", kind: "ecriture", where: "PC", title: "Écrire install.sh à la racine du repo",
+          does: "Un court script bash qui, dans l'ordre: 1. Vérifie qu'il tourne en root. 2. Vérifie que la machine est en amd64, sinon s'arrête avec un message clair (le binaire ne démarrerait même pas). 3. Télécharge dotbox-linux-amd64 et dotbox-linux-amd64.sha256 depuis la dernière release (D4), vérifie le SHA-256 et installe le binaire dans /usr/local/bin. Un checksum faux arrête tout. 4. Lance dotbox init en lui transmettant ses options (par exemple --user, D5), sauf avec --no-init.",
+          note: "Deux précautions. 1. Avec curl … | bash, le clavier n'est pas relié au script: c'est curl qui lui envoie son texte. dotbox init est donc lancé relié au terminal (/dev/tty), pour pouvoir poser ses questions. 2. Tout le code est dans une fonction appelée à la dernière ligne: si le téléchargement est coupé en cours de route, aucune moitié de script ne s'exécute.",
+          effect: "PC: crée install.sh dans le repo. Rien sur le serveur. Rien n'est commité sans ton accord.",
+          undo: `rm install.sh` },
+        { id: "0.2", status: "fait", ref: "J7", kind: "ecriture", where: "PC", title: "Installer shellcheck sur le PC, sans root",
+          cmd: `mkdir -p ~/.local/bin
+curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz \\
+  | tar -xJ --strip-components=1 -C ~/.local/bin shellcheck-v0.11.0/shellcheck
+shellcheck --version`,
+          does: "Télécharge la dernière version de shellcheck (v0.11.0), l'outil de référence qui repère les erreurs dans les scripts shell, et le place dans ~/.local/bin.",
+          effect: "PC: un fichier ~/.local/bin/shellcheck. Aucun paquet système.",
+          undo: `rm ~/.local/bin/shellcheck` },
+        { id: "0.3", status: "fait", ref: "J8", kind: "lecture", where: "PC", title: "Vérifier install.sh avec shellcheck",
+          cmd: `shellcheck install.sh`,
+          does: "Analyse le script sans l'exécuter: guillemets oubliés, variables non définies, commandes mal utilisées.",
+          effect: "Aucun. La sortie complète est notée ici, corrigée puis relancée jusqu'à zéro avertissement." },
+        { id: "0.4", status: "fait", ref: "J10", kind: "lecture", where: "PC → Serveur", title: "Test sans root: le script doit refuser",
+          cmd: `ssh dotbox-test 'bash -s' < install.sh`,
+          does: "Envoie le script à bash sur le serveur par l'entrée standard, comme le fait curl … | bash, mais en tant que <user>.",
+          effect: "Aucun: le script doit s'arrêter dès la première vérification, avec un message qui dit de passer root (su -)." },
+        { id: "0.5", status: "fait", ref: "J11", kind: "lecture", where: "PC → Serveur", title: "Test en root, sans release",
+          cmd: `scp install.sh dotbox-test:/tmp/install.sh
+printf '%s\\n' "$ROOT_PW" | ssh -tt dotbox-test "su -c 'bash -s < /tmp/install.sh'"
+ssh dotbox-test 'rm /tmp/install.sh'`,
+          does: "Copie le script sur le serveur, passe root avec su (mot de passe root envoyé une fois, jamais écrit sur disque ni sur cette page), lance le script par l'entrée standard comme curl … | bash, puis supprime la copie.",
+          effect: "Aucun durable: les vérifications passent, puis le script doit s'arrêter au téléchargement avec un message clair, puisqu'aucune release n'existe encore.",
+          note: "Lancé finalement avec su_run.py au lieu de cette commande (voir J11). Il a trouvé que curl manque sur le serveur (J12)." },
+        { id: "0.6", status: "fait", ref: "J14-J15", kind: "ecriture", where: "PC", title: "install.sh télécharge avec curl ou wget (selon Q8)",
+          does: "Le script utilise curl s'il est présent, sinon wget, avec les mêmes garanties (HTTPS seulement, échec franc en cas d'erreur). Puis shellcheck à nouveau, et le même test qu'en J11: le script doit s'arrêter au téléchargement, faute de release.",
+          effect: "PC: modifie install.sh. Serveur: aucun, comme J11.",
+          note: "Fait avec wget seulement, sans curl (D9)." }
+      ] },
+    { phase: "B", title: "Premier binaire dotbox (étape B)",
+      intro: "B.1 à B.7 faits (J16 à J24), tests avec et sans --user, plus la création d'un nouvel utilisateur testée à la main (J25, compte supprimé en J27). Un bug trouvé et corrigé (J20, J21). Ce premier binaire ne fait que le début de dotbox init (D8): vérifier le système, installer sudo, préparer l'utilisateur. Docker et le core viendront ensuite, dans le même binaire. Il est testé par une copie sur le serveur, sans tag (D10). Les messages sont en anglais, au style de la page CLI.",
+      steps: [
+        { id: "B.1", status: "fait", ref: "J16", kind: "ecriture", where: "PC", title: "Créer le projet Rust à la racine du repo",
+          does: "Cargo.toml (paquet dotbox, version 0.0.1, édition 2024) et src/main.rs. Une seule dépendance: clap, la bibliothèque de référence pour les options en ligne de commande, qui produit aussi l'aide. Cargo.lock commité, pour des compilations identiques. target/ ajouté au .gitignore.",
+          effect: "PC: crée Cargo.toml, Cargo.lock, src/. Rien n'est commité sans ton accord.",
+          undo: `rm -r Cargo.toml Cargo.lock src target` },
+        { id: "B.2", status: "fait", ref: "J16", kind: "ecriture", where: "PC", title: "dotbox --help et --version",
+          does: "L'aide ne liste que ce qui marche vraiment: init pour l'instant. Les autres commandes de la page CLI apparaîtront à mesure qu'elles seront codées.",
+          effect: "PC: code dans src/." },
+        { id: "B.3", status: "fait", ref: "J16", kind: "ecriture", where: "PC", title: "dotbox init, première partie",
+          does: "1. Vérifie qu'il tourne en root. 2. Lit /etc/os-release et l'architecture: Debian 12 ou 13, Ubuntu 24.04 ou 26.04, amd64, sinon s'arrête sans rien modifier. 3. Installe sudo s'il manque (apt-get update puis apt-get install sudo, sans aucune mise à jour du système). 4. Prépare l'utilisateur: --user <nom>, sinon le demande dans le terminal. Le nom proposé est le compte avec lequel on s'est connecté avant su - (lu dans /proc/self/loginuid). S'il n'existe pas, il est créé (useradd -m -s /bin/bash, puis son mot de passe avec passwd). Ajouté au groupe sudo. Un utilisateur existant garde son mot de passe, son shell et ses clés SSH. 5. Affiche que la suite (Docker, Traefik, Authelia, CrowdSec) n'est pas encore disponible et s'arrête. Relancé, il ne refait que ce qui manque.",
+          effect: "PC: code dans src/." },
+        { id: "B.4", status: "fait", ref: "J17-J18", kind: "ecriture", where: "PC", title: "Compiler et vérifier sur le PC",
+          cmd: `rustup target add x86_64-unknown-linux-musl
+cargo fmt --check
+cargo clippy -- -D warnings
+cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+          does: "Compile un binaire statique (musl): il ne dépend d'aucune bibliothèque du serveur et tourne pareil sur Debian 12 et 13 et sur Ubuntu. clippy repère les erreurs courantes, les tests vérifient la lecture de /etc/os-release et la détection de l'utilisateur. Sorties notées ici.",
+          effect: "PC: ajoute la cible musl à Rust (rustup), crée target/ (ignoré par Git).",
+          undo: `rustup target remove x86_64-unknown-linux-musl` },
+        { id: "B.5", status: "fait", ref: "J19", kind: "lecture", where: "PC → Serveur", title: "Test sur le serveur: sans root, il doit refuser",
+          cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+ssh dotbox-test '/tmp/dotbox --help; /tmp/dotbox --version; /tmp/dotbox init'`,
+          does: "Copie le binaire dans /tmp du serveur, affiche l'aide et la version, puis lance init en tant que <user>.",
+          effect: "Serveur: le fichier /tmp/dotbox, supprimé en B.7. init doit s'arrêter dès la première vérification." },
+        { id: "B.6", status: "fait", ref: "J20-J22", kind: "ecriture", where: "PC → Serveur", title: "Test en root, avec --user",
+          cmd: `python3 su_run.py '/tmp/dotbox init --user <user>'`,
+          does: "Lance init en root avec su, pour <user> qui existe déjà, sans aucune question.",
+          effect: "Serveur: installe le paquet sudo et ajoute <user> au groupe sudo. Puis init s'arrête avant Docker.",
+          undo: `# sur le serveur, en root
+gpasswd -d <user> sudo
+apt-get purge -y sudo` },
+        { id: "B.7", status: "fait", ref: "J23-J27", kind: "ecriture", where: "PC → Serveur", title: "Test en root, sans --user, puis nettoyage",
+          cmd: `python3 su_run.py '/tmp/dotbox init'
+ssh dotbox-test 'sudo -l -U <user> | head -3; rm /tmp/dotbox'`,
+          does: "Lance init sans --user: il doit demander le nom en proposant <user> (le compte connecté avant su). su_run.py répond par Entrée pour accepter. Comme tout est déjà en place depuis B.6, rien ne doit changer. Vérifie ensuite que <user> peut utiliser sudo, puis supprime la copie.",
+          effect: "Serveur: aucun changement, à part la suppression de /tmp/dotbox.",
+          note: "Tu peux aussi le lancer toi-même, pour voir la question en vrai: ssh dotbox-test, puis su -, puis /tmp/dotbox init (avant la suppression)." },
+        { id: "B.8", kind: "ecriture", where: "PC", title: "Plus tard, au premier tag: la CI de release",
+          does: "Un workflow GitHub qui, à chaque tag v*, compile le binaire musl et publie dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh dans la release (D4). Écrit seulement quand Docker et le core s'installent proprement (D10).",
+          effect: "Plus tard: .github/workflows/release.yml." }
+      ] },
+    { phase: "C", title: "Docker dans dotbox init",
+      intro: "Faite (J32 à J41): Docker 29.9.3 installé par dotbox init sur le serveur, tous les tests passés, rien à nettoyer. Après l'utilisateur (phase B), dotbox init installe Docker en suivant la doc officielle: docs.docker.com/engine/install/debian, /ubuntu et /linux-postinstall. Les deux procédures sont identiques, à trois détails près: l'adresse du dépôt (linux/debian ou linux/ubuntu), le nom de version (VERSION_CODENAME, ou UBUNTU_CODENAME sur Ubuntu) et un paquet de plus à retirer sur Ubuntu (docker-compose-v2). Debian 12 et 13, Ubuntu 24.04 et 26.04 sont tous pris en charge par Docker. Les commandes ci-dessous sont celles de la doc: dotbox les fait lui-même, dans cet ordre. Relancé, init ne refait que ce qui manque.",
+      steps: [
+        { id: "C.1", status: "fait", ref: "J33", kind: "ecriture", where: "PC (code)", title: "Docker est-il déjà là?",
+          cmd: `dpkg-query -W -f='\${Status} \${Version}' docker-ce`,
+          does: "Si docker-ce (le paquet du dépôt officiel) est déjà installé, init n'installe rien et ne le met pas à jour: il passe directement à la configuration (C.4) et au réseau (C.6). Il affiche la version trouvée.",
+          effect: "Code dans src/docker.rs." },
+        { id: "C.2", status: "fait", ref: "J33, J37-J38", kind: "ecriture", where: "PC (code)", title: "Retirer les paquets en conflit, avec accord",
+          cmd: `# Debian
+dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc
+# Ubuntu: la même liste, plus docker-compose-v2
+apt-get remove <paquets trouvés>`,
+          does: "La doc demande de retirer les paquets Docker non officiels de la distribution, et containerd et runc, que Docker fournit déjà dans containerd.io. Bonne pratique ajoutée: init ne les retire jamais en silence. S'il en trouve, il les liste et demande « remove them? [y/N] ». Sans terminal, ou sans réponse « y », il s'arrête sans rien modifier et donne la commande à lancer.",
+          effect: "Comme dans la doc: apt-get remove, pas purge. Les images, containers et volumes de /var/lib/docker ne sont pas effacés." },
+        { id: "C.3", status: "fait", ref: "J32-J33, J38", kind: "ecriture", where: "PC (code)", title: "Clé GPG et dépôt officiel",
+          cmd: `install -m 0755 -d /etc/apt/keyrings
+# /etc/apt/keyrings/docker.asc  (0644)
+# /etc/apt/sources.list.d/docker.sources :
+Types: deb
+URIs: https://download.docker.com/linux/debian      # ou linux/ubuntu
+Suites: trixie                                      # bookworm, noble, resolute
+Components: stable
+Architectures: amd64
+Signed-By: /etc/apt/keyrings/docker.asc`,
+          does: "Le dépôt est écrit au format de la doc (deb822), pour Debian ou Ubuntu selon /etc/os-release. Bonne pratique ajoutée pour la clé: la doc la télécharge avec curl, sans vérifier ce qu'elle reçoit. dotbox embarque la clé officielle dans le binaire (empreinte 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, vérifiée sur le PC avec gpg, la même pour Debian et Ubuntu). Rien à télécharger, rien à usurper, et curl n'est pas nécessaire (D9). Un test du code vérifie l'empreinte.",
+          effect: "Serveur, au test: /etc/apt/keyrings/docker.asc et /etc/apt/sources.list.d/docker.sources. Réécrits seulement si leur contenu diffère.",
+          undo: `rm /etc/apt/keyrings/docker.asc /etc/apt/sources.list.d/docker.sources` },
+        { id: "C.4", status: "fait", ref: "J33, J38", kind: "ecriture", where: "PC (code)", title: "/etc/docker/daemon.json, avant l'installation",
+          cmd: `{
+  "log-driver": "local",
+  "live-restore": true
+}`,
+          does: "Logs: la doc recommande le pilote local, qui fait tourner les logs par défaut (5 fichiers de 20 Mo par container) et prend moins de place que json-file, qui n'en fait aucune rotation et peut remplir le disque. live-restore: les containers continuent de tourner quand le service Docker redémarre ou se met à jour. Bonne pratique ajoutée: le fichier est écrit avant d'installer Docker, qui démarre donc directement avec, sans redémarrage. Si un daemon.json existe déjà, init garde ses autres réglages et n'ajoute que ces deux-là.",
+          note: "Il faudra une deuxième dépendance, serde_json, pour lire et compléter un daemon.json existant.",
+          effect: "Serveur, au test: /etc/docker/daemon.json.",
+          undo: `rm /etc/docker/daemon.json` },
+        { id: "C.5", status: "fait", ref: "J33, J38", kind: "ecriture", where: "PC (code)", title: "Installer Docker, dernière version",
+          cmd: `apt-get update
+apt-get install -y ca-certificates
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker containerd`,
+          does: "Les paquets de la doc, dernière version du dépôt. ca-certificates sert aux téléchargements HTTPS d'apt (déjà là sur le serveur). Sur Debian et Ubuntu, Docker démarre seul au démarrage du serveur: init s'en assure quand même. Puis il vérifie que le service répond (docker info).",
+          effect: "Serveur, au test: les paquets Docker, le groupe docker, les services docker et containerd.",
+          undo: `apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+rm -rf /var/lib/docker /var/lib/containerd` },
+        { id: "C.6", status: "fait", ref: "J33, J38", kind: "ecriture", where: "PC (code)", title: "Réseau dotbox et groupe docker",
+          cmd: `docker network inspect dotbox || docker network create dotbox
+usermod -aG docker <user>`,
+          does: "Le network commun de Dot Box (Traefik y joindra les apps). Puis l'utilisateur dans le groupe docker, pour lancer docker sans sudo, comme le prévoit la doc post-installation. init rappelle l'avertissement de la doc: ce groupe donne des droits équivalents à root. Il faut se reconnecter pour que le groupe compte.",
+          effect: "Serveur, au test: un network bridge dotbox, <user> dans le groupe docker.",
+          undo: `docker network rm dotbox
+gpasswd -d <user> docker` },
+        { id: "C.7", status: "fait", ref: "J34", kind: "lecture", where: "PC", title: "Vérifier sur le PC",
+          cmd: `cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+          does: "Tests ajoutés: le fichier docker.sources pour Debian 12 et 13, Ubuntu 24.04 et 26.04, la liste des paquets en conflit selon le système, l'empreinte de la clé embarquée, et un daemon.json existant complété sans perdre ses réglages.",
+          effect: "Aucun." },
+        { id: "C.8", status: "fait", ref: "J35", kind: "lecture", where: "Serveur", title: "État du serveur avant le test",
+          cmd: `dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc docker-ce
+ls -la /etc/docker /etc/apt/keyrings /etc/apt/sources.list.d
+ss -tln`,
+          does: "Ce qui existe avant, pour comparer après.",
+          effect: "Aucun." },
+        { id: "C.9", status: "fait", ref: "J36-J38, J41", kind: "ecriture", where: "PC → Serveur", title: "Tester le retrait des paquets en conflit",
+          cmd: `sudo apt-get install -y runc                 # un petit paquet de la liste, installé exprès
+sudo dotbox init --user <user> < /dev/null    # sans terminal: doit s'arrêter sans rien modifier
+# puis dans un terminal, en répondant y: retire runc et continue`,
+          does: "Le serveur est neuf, aucun paquet en conflit: on en installe un exprès (runc, sans service ni donnée) pour exercer ce chemin. Sans terminal, init doit refuser de retirer quoi que ce soit. Avec « y », il retire runc et installe Docker.",
+          effect: "Serveur: installe puis retire runc. Puis tout C.3 à C.6.",
+          undo: `# voir C.3 à C.6` },
+        { id: "C.10", status: "fait", ref: "J39", kind: "ecriture", where: "PC → Serveur", title: "Vérifier Docker en tant que <user>, puis nettoyer",
+          cmd: `ssh dotbox-test 'docker info --format "{{.ServerVersion}} {{.LoggingDriver}} live-restore={{.LiveRestoreEnabled}}"
+docker network ls --filter name=dotbox
+docker run --rm hello-world && docker image rm hello-world'`,
+          does: "Une nouvelle session SSH, donc avec le groupe docker: docker marche sans sudo, avec le pilote local et live-restore. Le test officiel hello-world, puis son image est supprimée.",
+          effect: "Serveur: rien de durable (image hello-world supprimée)." },
+        { id: "C.11", status: "fait", ref: "J40", kind: "lecture", where: "PC → Serveur", title: "Relancer init: rien ne doit changer",
+          cmd: `sudo dotbox init --user <user>`,
+          does: "Tout est en place: chaque ligne doit être un « check ».",
+          effect: "Aucun." }
+      ] },
+    { phase: "1", title: "Accès root",
+      intro: "Remplacée: c'est dotbox init, lancé par install.sh, qui installe sudo et prépare l'utilisateur (D8).",
+      steps: [
+        { id: "1A", status: "refuse", kind: "ecriture", title: "Installer sudo pour <user>, à la main",
+          cmd: `ssh -tt dotbox-test "su -c 'apt-get update && apt-get install -y sudo \\
+  && echo \\"<user> ALL=(ALL) NOPASSWD:ALL\\" > /etc/sudoers.d/<user> \\
+  && chmod 440 /etc/sudoers.d/<user> && visudo -cf /etc/sudoers.d/<user>'"
+# puis, pour vérifier
+ssh dotbox-test 'sudo -n true && echo SUDO_OK'`,
+          does: "Passe root une seule fois avec su (mot de passe root saisi une fois, jamais enregistré), installe le paquet sudo et autorise <user> à l'utiliser sans mot de passe.",
+          effect: "Serveur: met à jour la liste des paquets (pas de mise à jour du système), installe sudo, crée /etc/sudoers.d/<user>. Avantage: chaque commande root est aussi tracée dans le journal du serveur (journalctl _COMM=sudo).",
+          undo: `sudo rm /etc/sudoers.d/<user> && su -c 'apt-get purge -y sudo'` },
+        { id: "1B", status: "refuse", kind: "ecriture", title: "Autre option: se connecter directement en root avec la clé",
+          cmd: `ssh -tt dotbox-test "su -c 'install -d -m 700 /root/.ssh && cat /home/<user>/.ssh/authorized_keys >> /root/.ssh/authorized_keys'"`,
+          does: "Copie la clé dans les clés autorisées de root. L'alias pointerait ensuite vers User root.",
+          effect: "Serveur: crée ou complète /root/.ssh/authorized_keys. Ne marche que si la config SSH autorise root par clé (défaut Debian: PermitRootLogin prohibit-password). Rien n'est tracé en dehors de cette page.",
+          undo: `# sur le serveur, en root
+sed -i '/dotbox-test (WSL)$/d' /root/.ssh/authorized_keys` },
+        { id: "1C", status: "refuse", kind: "ecriture", title: "Autre option: su à chaque commande",
+          cmd: `ssh -tt dotbox-test "su -c '<commande>'"`,
+          does: "Rien à installer, mais le mot de passe root doit être fourni à chaque commande.",
+          effect: "Aucun en soi. Déconseillé: le mot de passe circulerait à chaque fois." }
+      ] },
+    { phase: "2", title: "Docker, dernière version, procédure officielle",
+      intro: "Refusée (D13): Docker est installé par dotbox init, voir la phase C. Ces étapes restent ici pour l'historique. Ces étapes restent la référence de ce que init devra faire. Commandes recopiées de docs.docker.com/engine/install/debian/ (Debian 13 trixie y est prise en charge) et de la page post-installation. Les commandes sont lancées avec ssh dotbox-test '…', écrites ici telles qu'elles s'exécutent sur le serveur. Les étapes 2.7 et 2.8 viennent de la spec Dot Box, pas de la doc d'installation.",
+      steps: [
+        { id: "2.1", status: "refuse", kind: "lecture", title: "Vérifier qu'aucun paquet en conflit n'est installé",
+          cmd: `dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc`,
+          does: "Lit si un des paquets que la doc demande de retirer est présent. Docker est absent, on attend une liste vide.",
+          effect: "Aucun. Si la liste n'est pas vide, la commande officielle sudo apt remove $(dpkg --get-selections … | cut -f1) te sera d'abord soumise." },
+        { id: "2.2", status: "refuse", kind: "ecriture", title: "Ajouter la clé GPG officielle de Docker",
+          cmd: `sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc`,
+          does: "Met à jour la liste des paquets, installe ca-certificates et curl s'ils manquent, télécharge la clé qui signe les paquets Docker.",
+          effect: "Serveur: crée /etc/apt/keyrings/docker.asc. apt update ne met rien à jour, il relit seulement les listes.",
+          undo: `sudo rm /etc/apt/keyrings/docker.asc` },
+        { id: "2.3", status: "refuse", kind: "ecriture", title: "Ajouter le dépôt Docker",
+          cmd: `sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/debian
+Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+sudo apt update`,
+          does: "Déclare le dépôt officiel de Docker pour trixie, amd64, signé par la clé de 2.2.",
+          effect: "Serveur: crée /etc/apt/sources.list.d/docker.sources.",
+          undo: `sudo rm /etc/apt/sources.list.d/docker.sources && sudo apt update` },
+        { id: "2.4", status: "refuse", kind: "ecriture", title: "Installer Docker (dernière version)",
+          cmd: `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`,
+          does: "Installe le moteur Docker, sa CLI, containerd, Buildx et Compose.",
+          effect: "Serveur: installe les paquets, crée le groupe docker, démarre et active au démarrage les services docker et containerd. Docker ajoute ses propres règles de pare-feu (iptables-nft) pour les ports publiés.",
+          undo: `sudo apt purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo rm -rf /var/lib/docker /var/lib/containerd` },
+        { id: "2.5", status: "refuse", kind: "ecriture", title: "Vérifier l'installation",
+          cmd: `sudo systemctl status docker --no-pager
+sudo docker run hello-world`,
+          does: "Vérifie que le service tourne puis lance le container de test officiel, qui affiche un message et s'arrête.",
+          effect: "Serveur: télécharge l'image hello-world et laisse un container arrêté (nettoyés en 2.6)." },
+        { id: "2.6", status: "refuse", kind: "ecriture", title: "Nettoyer le test",
+          cmd: `sudo docker rm $(sudo docker ps -aq --filter ancestor=hello-world)
+sudo docker rmi hello-world`,
+          does: "Supprime le container et l'image de test, et seulement eux.",
+          effect: "Serveur: retire le container et l'image hello-world." },
+        { id: "2.7", status: "refuse", kind: "ecriture", title: "Rotation des logs et live-restore (spec Dot Box)",
+          cmd: `sudo tee /etc/docker/daemon.json <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "3" },
+  "live-restore": true
+}
+EOF
+sudo systemctl restart docker
+sudo docker info --format '{{.LoggingDriver}} live-restore={{.LiveRestoreEnabled}}'`,
+          does: "Limite les logs de chaque container à 3 fichiers de 10 Mo, et garde les containers en marche quand le service Docker redémarre. Puis redémarre Docker (aucun container ne tourne à ce moment) et vérifie.",
+          effect: "Serveur: crée /etc/docker/daemon.json, redémarre le service docker.",
+          undo: `sudo rm /etc/docker/daemon.json && sudo systemctl restart docker` },
+        { id: "2.8", status: "refuse", kind: "ecriture", title: "Créer le network dotbox",
+          cmd: `sudo docker network create dotbox`,
+          does: "Crée le network Docker commun par lequel Traefik joindra les services. Aucun port de container n'est publié en dehors de Traefik.",
+          effect: "Serveur: un network bridge nommé dotbox.",
+          undo: `sudo docker network rm dotbox` },
+        { id: "2.9", status: "refuse", kind: "ecriture", title: "Ajouter l'utilisateur au groupe docker (voir D6)",
+          cmd: `sudo usermod -aG docker <utilisateur>`,
+          does: "Permet à cet utilisateur de lancer docker sans sudo, comme le prévoit dotbox init.",
+          effect: "Serveur: ajoute l'utilisateur au groupe docker. Attention: ce groupe donne l'équivalent des droits root.",
+          undo: `sudo gpasswd -d <utilisateur> docker` }
+      ] },
+    { phase: "3", title: "Traefik (brouillon)",
+      intro: "Brouillon, à coder dans dotbox init après Docker (D13). Le domaine sera nécessaire (Q7).",
+      steps: [
+        { id: "3.1", kind: "ecriture", title: "Fichiers de Traefik",
+          does: "/opt/traefik/compose.yml, /opt/traefik/config/traefik.yml (entrées 80 et 443, redirection 80 vers 443, Let's Encrypt en HTTP-01, un certificat par sous-domaine, provider Docker limité au network dotbox, rien d'exposé par défaut), /opt/traefik/config/acme.json en 600. Le domaine et l'e-mail dans un .env qui reste sur le serveur. Image à une version fixée (voir Q6).",
+          effect: "Serveur: crée /opt/traefik/. Même fichiers dans lab/opt/traefik/ du repo, avec example.com (voir Q5)." },
+        { id: "3.2", kind: "ecriture", title: "Démarrer Traefik",
+          cmd: `cd /opt/traefik && sudo docker compose up -d`,
+          does: "Lance le container Traefik, seul container qui publie des ports (80 et 443).",
+          effect: "Serveur: un container traefik en marche. Le premier certificat est obtenu en phase 4, pour auth.<domaine>.",
+          undo: `cd /opt/traefik && sudo docker compose down` }
+      ] },
+    { phase: "4", title: "Authelia (brouillon)",
+      intro: "Commandes exactes écrites ici avant exécution.",
+      steps: [
+        { id: "4.1", kind: "ecriture", title: "Secrets et fichiers d'Authelia",
+          does: "Secrets générés sur le serveur (openssl rand) dans /opt/dotbox/secrets/, lisibles par root seulement. /opt/authelia/compose.yml et config/: configuration.yml (stockage SQLite, notifications écrites dans un fichier, pas de SMTP), users_database.yml avec le compte admin (mot de passe haché en argon2id).",
+          effect: "Serveur: crée /opt/authelia/ et /opt/dotbox/secrets/." },
+        { id: "4.2", kind: "ecriture", title: "Démarrer Authelia sur auth.<domaine>",
+          does: "Lance Authelia derrière Traefik. Traefik obtient le certificat d'auth.<domaine>: c'est le test du HTTP-01.",
+          effect: "Serveur: un container authelia." },
+        { id: "4.3", kind: "ecriture", title: "Tester les quatre niveaux d'accès (voir Q4)",
+          does: "two_factor, one_factor, app et public, chacun sur un sous-domaine de test. Sans app installée, il faut un container de test.",
+          effect: "À préciser selon Q4." }
+      ] },
+    { phase: "5", title: "CrowdSec (brouillon)",
+      intro: "La spec dit « surveille SSH et Traefik, bloque au pare-feu et dans Traefik » sans dire comment. Proposition ci-dessous, à trancher en Q3.",
+      steps: [
+        { id: "5.1", kind: "lecture", title: "Vérifier où sont les logs SSH",
+          cmd: `ls -d /var/log/journal /var/log/auth.log 2>&1; journalctl --disk-usage`,
+          does: "Debian 13 n'écrit plus /var/log/auth.log par défaut: les logs SSH sont dans journald. Il faut savoir s'il est persistant.",
+          effect: "Aucun." },
+        { id: "5.2", kind: "ecriture", title: "Agent CrowdSec en container",
+          does: "/opt/crowdsec/compose.yml: image crowdsecurity/crowdsec, collections linux, sshd et traefik, lecture du journal système (en lecture seule) et du log d'accès de Traefik. Son API locale publiée sur 127.0.0.1 seulement, pour le bouncer du système.",
+          effect: "Serveur: crée /opt/crowdsec/, un container crowdsec." },
+        { id: "5.3", kind: "ecriture", title: "Bouncer pare-feu sur le système",
+          does: "Paquet crowdsec-firewall-bouncer-nftables depuis le dépôt officiel de CrowdSec (ajout d'une clé et d'un dépôt apt, comme pour Docker). Branché sur input et forward, sinon il ne bloquerait pas le trafic vers les ports de Traefik.",
+          effect: "Serveur: un dépôt apt, un paquet, un service, une table nftables." },
+        { id: "5.4", kind: "ecriture", title: "Bouncer dans Traefik",
+          does: "Plugin bouncer CrowdSec ajouté à la config de Traefik, en middleware sur les routes.",
+          effect: "Serveur: modifie /opt/traefik/config/." },
+        { id: "5.5", kind: "ecriture", title: "Tester un bannissement",
+          cmd: `sudo docker exec crowdsec cscli decisions add --ip 198.51.100.7 --duration 5m
+sudo nft list ruleset | grep 198.51.100.7
+sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
+          does: "Bannit une IP de documentation (pas une vraie machine), vérifie qu'elle est bloquée au pare-feu, puis la débannit.",
+          effect: "Serveur: aucune trace durable." }
+      ] }
+  ];
+
+  var DECISIONS = [
+    { t: "Accès root: 1A, 1B ou 1C?",
+      p: "Root est nécessaire pour installer le core. sudo est seulement un moyen d'y accéder.",
+      reco: "1A choisie, 1B et 1C refusées. Puis 1A elle-même remplacée par install.sh et dotbox init (D2, D8)." },
+    { t: "Pas de commandes tapées à la main sur le serveur",
+      p: "Tout passe par des scripts ou par le binaire, relus avant d'être lancés.",
+      reco: "install.sh se lance en root (su -). Il est vérifié sur le PC avec shellcheck, puis testé en vrai sur le serveur. Chaque résultat est noté ici." },
+    { t: "Qui installe quoi",
+      reco: "D'abord: install.sh pour les vérifications, sudo, l'utilisateur et le binaire, dotbox init pour Docker, Traefik, Authelia, CrowdSec et Dot Box. Revu en D8." },
+    { t: "Noms des fichiers de la release",
+      reco: "dotbox-linux-amd64 et dotbox-linux-amd64.sha256. La CI de l'étape B devra publier exactement ces noms." },
+    { t: "Option --user <nom>",
+      reco: "Oui, pour installer sans aucune question. Option discrète, pas mise en avant dans la doc. Avec D8, c'est une option de dotbox init, qu'install.sh lui transmet." },
+    { t: "dotbox init reprend l'utilisateur choisi par install.sh (proposition 6)",
+      reco: "Oui. C'est aussi lui qui entre dans le groupe docker (ancienne question de l'étape 2.9). Devenue sans objet avec D8: dotbox init demande et prépare l'utilisateur lui-même." },
+    { t: "Quand mettre la doc à jour",
+      reco: "Après les tests, en une fois: la section « What install.sh does » (proposition 5) revue selon D8, la proposition 6, l'option --user et ce que les tests auront appris. Pas avant." },
+    { t: "install.sh minimal, tout le reste dans le binaire (modèle de rustup)",
+      p: "Le binaire peut tout faire lui-même, en Rust: du code testable, dans un seul langage, relancé à chaque dotbox init. Le script ne garde que ce qui doit se passer avant que le binaire tourne: vérifier son checksum, et un message clair sur une machine qui n'est pas en amd64.",
+      reco: "install.sh vérifie root et amd64, télécharge dotbox, contrôle son SHA-256, l'installe dans /usr/local/bin et lance dotbox init (sauf --no-init). dotbox init fait tout le reste: version du système, sudo, utilisateur (--user), puis Docker, Traefik, Authelia, CrowdSec et Dot Box." },
+    { t: "wget plutôt que curl (ancienne Q8)",
+      p: "Le serveur de test n'a pas curl (J12). wget est installé par défaut sur Debian 12 et 13 comme sur Ubuntu Server 24.04 et 26.04. Après l'installation, Dot Box n'a besoin ni de l'un ni de l'autre: le binaire télécharge lui-même ce qu'il lui faut.",
+      reco: "wget seulement. La doc montre une seule commande: wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash. Le script télécharge aussi le binaire avec wget. Personne n'installe curl." },
+    { t: "Tester le premier binaire par une copie, le tag plus tard (ancienne Q1)",
+      reco: "Le binaire compilé sur le PC est copié sur le serveur pour les essais, sans tag ni release. Le premier tag (v0.0.1, qui crée la première release) attendra une installation propre de Docker et du core par dotbox init." },
+    { t: "Claude passe root avec sudo, plus avec su",
+      p: "su -c gardait l'environnement de <user> (J20, J27). Maintenant que <user> est dans le groupe sudo, Claude utilise sudo avec le mot de passe de <user>. Chaque commande root est aussi enregistrée sur le serveur (journalctl _COMM=sudo). Le mot de passe « <user> » proposé d'abord a été écarté: le serveur accepte la connexion SSH par mot de passe, et sans CrowdSec, un tel mot de passe sur un compte sudo se devine vite.",
+      reco: "Un mot de passe choisi par Mathod95 (masqué ici). Il n'est écrit ni dans le repo ni dans cette page. Claude le transmet à sudo par l'entrée standard (sudo_run.py)." },
+    { t: "Dot Box proposera une option pour durcir SSH",
+      p: "Jusqu'ici, la spec disait que Dot Box ne touche jamais à la config SSH. Décision de Mathod95: Dot Box proposera une option pour la durcir. Ce qu'elle fait est à définir (Q9).",
+      reco: "Option choisie par l'utilisateur, jamais appliquée d'office. La page Post-installation, qui dit « Dot Box never changes the SSH configuration », sera revue avec le reste de la doc (D7)." },
+    { t: "Docker et le core codés directement dans dotbox init (ancienne Q2)",
+      p: "Pas de scripts à la main dans lab/: chaque morceau est codé dans dotbox init, puis testé avec le binaire sur le serveur, comme sudo et l'utilisateur en phase B. Docker d'abord, Traefik, Authelia et CrowdSec ensuite.",
+      reco: "Docker suit la doc officielle (docs.docker.com), selon le système (Debian ou Ubuntu), avec les bonnes pratiques: paquets en conflit retirés avec accord, clé du dépôt vérifiée. Plan en phase C. L'ancienne phase 2, manuelle, est refusée." },
+    { t: "Ubuntu testé sur le PC seulement, pour l'instant (ancienne Q10)",
+      reco: "Un seul serveur, en Debian 13: le chemin Ubuntu est couvert par les tests du code sur le PC (dépôt, nom de version, paquets en conflit). Un vrai test Ubuntu viendra quand un serveur sera disponible." }
+  ];
+
+  var QUESTIONS = [
+    { n: 1, done: "D10", t: "Le premier binaire: comment le tester sur le serveur?",
+      p: "Avec D8, le binaire devient la prochaine étape: c'est lui qui vérifie le système, installe sudo et prépare l'utilisateur. Son plan (projet Rust, dotbox --help, ce que fait le premier dotbox init, CI qui publie dotbox-linux-amd64 et son checksum) sera écrit ici avant la moindre ligne de code. Rust est déjà installé sur le PC.",
+      l: ["Pousser un premier tag dès qu'il marche. Le test passe par le vrai chemin, curl … | bash. Ce tag devient la première vraie version (v0.0.1), publique, et la commande d'installation du site cesse de renvoyer une 404.",
+          "Copier sur le serveur le binaire compilé sur le PC, sans tag ni release. install.sh n'est testé de bout en bout qu'au premier tag."],
+      reco: "Proposé: la copie pour les premiers essais, puis le tag quand dotbox init fait correctement ses premières étapes." },
+    { n: 2, done: "D13", t: "Phases 2 à 5: comment les valider sans commandes à la main?",
+      p: "L'étape A devait valider sur le vrai serveur les fichiers que dotbox init produira, avant d'écrire le moteur.",
+      l: ["Les écrire comme scripts et fichiers relus dans lab/ du repo, lancés sur le serveur de la même façon qu'install.sh.",
+          "Ou passer directement au code de dotbox init, et tester sur le serveur avec le binaire."] },
+    { n: 3, t: "CrowdSec: dans un container ou sur le système? Bouncer iptables ou nftables?",
+      p: "Proposé au départ: l'agent CrowdSec en container, le bouncer pare-feu en paquet sur le système, un plugin dans Traefik. Ce que fait Saltbox (roles/crowdsec, lu le 15 novembre 2026): CrowdSec est optionnel et demande une clé d'inscription à la console CrowdSec. L'agent est installé sur le système, en paquet, depuis le dépôt packagecloud de CrowdSec, pas en container. Le bouncer pare-feu est crowdsec-firewall-bouncer-iptables, en paquet, mis en « hold » pour qu'apt ne le mette pas à jour seul. Traefik a son propre bouncer (un plugin) avec une clé créée par cscli bouncers add, et une page de bannissement. Collections: linux, iptables, sshd, traefik, plex, whitelist-good-actors. Logs lus: /var/log/auth.log et les logs de Traefik. Saltbox refuse aussi de s'installer si ufw est actif, car Docker passe outre ses règles.",
+      l: ["Conséquence 1: Docker gère ses règles avec iptables, et sa doc dit que des règles écrites directement en nft ne sont pas prises en charge. Le bouncer iptables est donc le bon choix, comme Saltbox. Sur Debian 13 et Ubuntu, la commande iptables est en fait iptables-nft: ses règles finissent dans nftables dans le noyau, mais en passant par iptables, que Docker comprend.",
+          "Conséquence 2: un bouncer qui ne bloque que la chaîne INPUT protège SSH, pas les containers. Le trafic vers Traefik (ports publiés par Docker) passe par FORWARD et la chaîne DOCKER-USER. Il faut donc ajouter DOCKER-USER au bouncer, ou compter sur le plugin de Traefik pour le web.",
+          "Conséquence 3: Debian 13 n'écrit plus /var/log/auth.log par défaut, les logs SSH sont dans journald. La configuration de Saltbox (auth.log) ne verrait rien sur Debian 13 sans rsyslog. Dot Box doit lire journald pour SSH.",
+          "Conséquence 4: comme Saltbox, init doit refuser de continuer si ufw ou firewalld est actif (Docker passe outre leurs règles)."],
+      table: [["", "iptables", "nftables"],
+              ["Âge", "Historique (2001), en maintenance", "Son successeur (2014), défaut sur Debian et Ubuntu"],
+              ["Syntaxe", "Une commande par règle, IPv4 et IPv6 séparés (iptables, ip6tables)", "Une seule syntaxe, IPv4 et IPv6 ensemble (famille inet)"],
+              ["Grandes listes d'IP", "Avec ipset", "Ensembles (sets) intégrés"],
+              ["Sur Debian 13 et Ubuntu", "La commande iptables écrit en fait dans nftables (iptables-nft)", "Natif"],
+              ["Avec Docker", "Pris en charge, chaîne DOCKER-USER pour ses propres règles", "Règles écrites directement en nft non prises en charge par Docker"],
+              ["Bouncer CrowdSec", "crowdsec-firewall-bouncer-iptables (ipset)", "crowdsec-firewall-bouncer-nftables"],
+              ["Saltbox", "Utilisé", "Non"]],
+      reco: "Proposé: bouncer iptables, chaînes INPUT et DOCKER-USER, plugin dans Traefik en plus. Agent en container ou en paquet sur le système comme Saltbox: à trancher quand on arrivera à CrowdSec, après Traefik et Authelia.",
+      more: ["Compte CrowdSec: pas nécessaire. Sans compte, l'agent partage ses alertes avec CrowdSec et reçoit la liste de blocage communautaire. La console (app.crowdsec.net, compte gratuit) ajoute un tableau de bord et d'autres listes. Saltbox l'impose, Dot Box pourrait la laisser en option.",
+             "Le plugin Traefik seul ne suffit pas: il ne voit que le trafic web, pas SSH. Le bouncer pare-feu (INPUT pour SSH, DOCKER-USER pour les containers) bloque tout. Le plugin ajoute une page de bannissement et, en option, un pare-feu applicatif (AppSec).",
+             "nftables avec Docker: pris en charge depuis Docker 29.0, mais expérimental (doc officielle: options et comportement peuvent changer). Pas de chaîne DOCKER-USER dans ce mode: ses propres règles vont dans une table à part. Déjà aujourd'hui, la commande iptables de Debian 13 écrit dans nftables (J42): seule la façon d'écrire les règles est ancienne, pas ce qui les applique."] },
+    { n: 4, t: "Tester les quatre niveaux d'accès sans app?",
+      l: ["Un container de test traefik/whoami (une page qui renvoie la requête reçue), monté quatre fois sur quatre sous-domaines, retiré après le test.",
+          "Ou reporter le test des quatre niveaux à l'arrivée des apps."] },
+    { n: 5, t: "Garder les fichiers validés dans lab/ du repo?",
+      p: "En miroir de /opt (lab/opt/traefik/compose.yml...), avec example.com. Ils serviront de fichiers de référence pour les tests du moteur." },
+    { n: 6, t: "Versions des images du core",
+      p: "Docker Engine: dernière version, comme demandé. Pour les images (Traefik, Authelia, CrowdSec), la spec interdit latest: je propose la dernière version stable au moment de l'installation, écrite en dur (par exemple traefik:v3.x.y)." },
+    { n: 7, t: "Le domaine",
+      p: "Nécessaire pour finir le point 1 (vérifier que *.<domaine> pointe vers le serveur) et pour la phase 3. Il n'apparaîtra ni sur cette page ni dans le repo." },
+    { n: 8, done: "D9", t: "curl absent du serveur: comment installer Dot Box?",
+      p: "Ce Debian 13 a wget mais pas curl (J12). La commande de la doc, curl -fsSL … | bash, échoue donc dès le départ, avant même le script. Ubuntu Server a les deux.",
+      l: ["Le script accepte curl ou wget, et la doc donne deux commandes équivalentes: curl -fsSL … | bash, ou wget -qO- … | bash si curl manque.",
+          "La doc demande d'installer curl d'abord (apt install curl), avant la commande unique.",
+          "Une seule commande avec wget, présent sur Debian comme sur Ubuntu."],
+      reco: "Proposé: la première. Rien à installer à la main, et le script marche avec l'outil disponible." },
+    { n: 9, t: "Que fait l'option de durcissement SSH, et comment la lancer?",
+      p: "Le risque principal: se fermer la porte du serveur. L'option doit d'abord vérifier qu'une clé marche pour l'utilisateur, et garder la session en cours ouverte jusqu'à ce qu'une nouvelle connexion réussisse.",
+      l: ["Connexion par clé seulement (PasswordAuthentication no), seulement si une clé marche.",
+          "Root interdit en SSH (PermitRootLogin no): on passe par l'utilisateur, puis sudo.",
+          "Un fichier à part, /etc/ssh/sshd_config.d/dotbox.conf, facile à retirer pour revenir en arrière.",
+          "Lancement: une commande (par exemple dotbox ssh harden), ou une question à la fin de dotbox init.",
+          "Changer le port SSH: déconseillé, peu utile avec CrowdSec et source d'erreurs."],
+      reco: "À trancher avant d'écrire la spec dans la doc." },
+    { n: 10, done: "D14", t: "Comment tester le chemin Ubuntu?",
+      p: "Le serveur de test est une Debian 13. Le chemin Ubuntu (dépôt linux/ubuntu, nom de version UBUNTU_CODENAME, paquet docker-compose-v2 en conflit) est couvert par les tests sur le PC, pas par une vraie installation.",
+      l: ["Réinstaller plus tard le serveur de test en Ubuntu 24.04 ou 26.04, pour un tour complet.",
+          "Un deuxième petit serveur Ubuntu, le temps d'un test.",
+          "Se contenter des tests sur le PC pour l'instant."] },
+    { n: 11, t: "Un pare-feu déjà actif (ufw, firewalld): refuser, prévenir ou ignorer?",
+      p: "Debian n'active aucun pare-feu par défaut (J42). Ubuntu Server installe ufw mais le laisse inactif. Certains hébergeurs l'activent dans leurs images. Problème connu: les ports publiés par Docker passent outre les règles d'ufw. Chez Dot Box, seul Traefik publie des ports (80 et 443), et ils doivent être ouverts de toute façon.",
+      l: ["Refuser de continuer, comme Saltbox, et demander de désactiver ufw.",
+          "Prévenir et continuer: ufw garde SSH et le reste du système, init explique que ses règles ne s'appliquent pas aux containers. dotbox doctor le rappelle.",
+          "Ignorer."],
+      reco: "Proposé: prévenir et continuer. Un pare-feu du système ne gêne pas Dot Box, et le retirer d'office affaiblirait le serveur." }
+  ];
+
+
+  // Contexte technique : des notes qui évoluent (on les complète, on ne les retire pas)
+  var NOTES = [
+    { t: "Le pare-feu de Linux: iptables, iptables-nft et nftables",
+      p: "Le filtrage réseau est fait par le noyau Linux (netfilter). On lui donne des règles avec un outil: iptables, l'historique, ou nftables, son successeur. Sur Debian 13 et Ubuntu récents, la commande iptables est en réalité iptables-nft: elle garde la syntaxe d'iptables mais écrit ses règles dans nftables. Ce qui est en maintenance, c'est l'ancien moteur iptables du noyau (iptables-legacy), que nous n'utilisons pas. Vérifié sur le serveur: la commande iptables pointe vers /usr/sbin/iptables-nft, et les règles de Docker apparaissent dans les tables nftables (nft list tables).",
+      table: [["", "iptables", "nftables"],
+              ["Âge", "Historique (2001), en maintenance", "Son successeur (2014), défaut sur Debian et Ubuntu"],
+              ["Syntaxe", "Une commande par règle, IPv4 et IPv6 séparés (iptables, ip6tables)", "Une seule syntaxe, IPv4 et IPv6 ensemble (famille inet)"],
+              ["Grandes listes d'IP", "Avec ipset", "Ensembles (sets) intégrés"],
+              ["Sur Debian 13 et Ubuntu", "La commande iptables écrit en fait dans nftables (iptables-nft)", "Natif"],
+              ["Avec Docker", "Pris en charge, chaîne DOCKER-USER pour ses propres règles", "Expérimental depuis Docker 29, pas de chaîne DOCKER-USER"],
+              ["Bouncer CrowdSec", "crowdsec-firewall-bouncer-iptables (ipset)", "crowdsec-firewall-bouncer-nftables"],
+              ["Saltbox", "Utilisé", "Non"]],
+      refs: "J42, Q3" },
+    { t: "Docker et le pare-feu",
+      p: "Docker écrit lui-même ses règles avec iptables (donc dans nftables, via iptables-nft) pour que les containers sortent sur Internet et que les ports publiés arrivent au bon container. Sa doc prévient: des règles écrites directement en nft ne sont pas prises en charge. Pour ajouter ses propres règles devant celles de Docker, on utilise la chaîne DOCKER-USER. Docker 29 sait écrire ses règles directement en nftables (\"firewall-backend\": \"nftables\" dans daemon.json), mais c'est expérimental: les options peuvent changer d'une version à l'autre, et la chaîne DOCKER-USER n'existe pas dans ce mode. Les ports publiés par Docker passent outre les règles d'ufw: Saltbox refuse donc de s'installer si ufw est actif. Chez Dot Box, seul Traefik publie des ports (80 et 443).",
+      l: ["Debian 13 neuve: nftables installé mais désactivé, ni ufw ni firewalld.",
+          "Ubuntu Server: ufw installé mais inactif par défaut. Certains hébergeurs l'activent dans leurs images.",
+          "Passer entièrement à nftables: possible le jour où le mode nftables de Docker ne sera plus expérimental."],
+      refs: "J42, Q3, Q11" },
+    { t: "CrowdSec: comment il protège, et ce que fait Saltbox",
+      p: "CrowdSec lit des logs (SSH, Traefik), y repère les attaques (essais de mots de passe, scans) et décide de bannir des IP. Il ne bloque rien lui-même: ce sont des « bouncers » qui appliquent ses décisions. Le bouncer pare-feu bloque une IP bannie avant qu'elle n'atteigne quoi que ce soit: dans la chaîne INPUT pour le système (SSH), et dans DOCKER-USER pour les containers (Traefik). Le plugin de Traefik ne voit que le trafic web: il ajoute une page « vous êtes banni » et, en option, un filtrage des requêtes (AppSec), mais ne protège pas SSH. Aucun compte n'est nécessaire: sans compte, l'agent partage ses alertes et reçoit la liste de blocage communautaire. La console (app.crowdsec.net, gratuite) ajoute un tableau de bord et d'autres listes.",
+      l: ["Saltbox (roles/crowdsec): optionnel, clé de la console obligatoire. Agent en paquet sur le système (dépôt packagecloud), pas en container.",
+          "Saltbox: bouncer crowdsec-firewall-bouncer-iptables, mis en « hold » pour qu'apt ne le mette pas à jour seul. Plugin dans Traefik avec une clé (cscli bouncers add) et une page de bannissement.",
+          "Saltbox: collections linux, iptables, sshd, traefik, plex, whitelist-good-actors. Logs lus: /var/log/auth.log et ceux de Traefik.",
+          "Piège sur Debian 13: /var/log/auth.log n'existe plus par défaut, les logs SSH sont dans journald. La configuration de Saltbox n'y verrait aucune attaque SSH. Dot Box devra lire journald."],
+      refs: "Q3" },
+    { t: "Docker tel que dotbox init l'installe",
+      p: "Procédure de la doc officielle (docs.docker.com/engine/install/debian et /ubuntu), identique pour Debian et Ubuntu à trois détails près: l'adresse du dépôt, le nom de version (UBUNTU_CODENAME sur Ubuntu) et docker-compose-v2 en conflit sur Ubuntu. Installé sur le serveur le 15 novembre 2026: docker-ce 29.9.3, containerd.io 2.4.2, docker-compose-plugin 5.7.1, docker-buildx-plugin 0.39.0.",
+      l: ["Paquets en conflit (docker.io, podman-docker, containerd, runc...): listés, retirés seulement après « y ». Testé avec runc installé exprès: refus sans terminal, retrait avec « y ».",
+          "Clé du dépôt embarquée dans le binaire, empreinte 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88 vérifiée avec gpg. La doc la télécharge sans la vérifier.",
+          "daemon.json écrit avant l'installation: pilote de logs local (rotation par défaut, 5 fichiers de 20 Mo par container, recommandé par la doc) et live-restore (les containers tournent pendant un redémarrage de Docker).",
+          "Paquets recommandés installés, comme dans la doc: iptables en fait partie et Docker en a besoin.",
+          "Groupe docker: permet docker sans sudo, mais équivaut à root (avertissement de la doc, rappelé par init)."],
+      refs: "C.1-C.11, J32-J41, D13" },
+    { t: "Passer root sur le serveur de test",
+      p: "su -c lance une commande en root mais garde l'environnement de l'utilisateur, dont son PATH sans /usr/sbin: usermod et userdel y étaient introuvables. su - (avec le tiret) donne le vrai environnement de root. Le binaire lance désormais ses commandes avec le PATH de root, quelle que soit la façon dont il est appelé. Depuis D11, Claude passe par sudo (mot de passe de <user>, jamais écrit), et chaque commande root est enregistrée sur le serveur (journalctl _COMM=sudo).",
+      refs: "J20, J21, J27, D11" }
+  ];
+
+  var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé" };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function cmdBlock(c, label) {
+    return c ? '<div class="jr-cmd"><div class="jr-cmd-head"><span class="jr-lbl">' + label + '</span><button class="jr-copy" type="button">Copier</button></div><pre>' + esc(c) + "</pre></div>" : "";
+  }
+
+  function entry(e, status) {
+    var st = e.status || status;
+    var rows = [["Fait", e.ref ? "voir " + e.ref + " dans « Déjà fait »" : ""], ["Ce que ça fait", e.does], ["Effet", e.effect], ["Note", e.note]].filter(function (r) { return r[1]; })
+      .map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("");
+    var top = '<div class="jr-top"><span class="jr-id">' + esc(e.id) + '</span><span class="jr-title">' + esc(e.title) + "</span>" +
+        (e.time ? '<span class="jr-time">' + esc(e.time) + "</span>" : "") + (e.ref ? '<span class="jr-time">' + esc(e.ref) + "</span>" : "") + "</div>";
+    var tags = '<div class="jr-tags"><span class="jr-tag st s-' + st + '">' + LABELS[st] + "</span>" +
+        (e.where ? '<span class="jr-tag">' + esc(e.where) + "</span>" : "") +
+        '<span class="jr-tag' + (e.kind === "ecriture" ? " w" : "") + '">' + (e.kind === "ecriture" ? "write" : "read") + "</span></div>";
+    var body = cmdBlock(e.cmd, "Commande") +
+      "<dl>" + rows + "</dl>" +
+      (e.result ? '<div class="jr-blk"><span class="jr-lbl">Résultat</span><pre class="jr-result">' + esc(e.result) + "</pre></div>" : "") +
+      cmdBlock(e.undo, "Pour annuler");
+    // une étape refusée, ou faite (e.ref), est repliée : seuls son nom et ses étiquettes restent visibles. Rien n'est jamais retiré.
+    var aid = ' id="' + (/^J\d/.test(e.id) ? e.id.toLowerCase() : "e" + e.id.replace(/\./g, "-").toLowerCase()) + '"';
+    if (st === "refuse" || e.ref) return '<details class="jr-entry jr-fold"' + aid + '><summary>' + top + tags + '</summary><div class="jr-body">' + body + "</div></details>";
+    return '<div class="jr-entry"' + aid + ">" + top + tags + body + "</div>";
+  }
+
+  document.getElementById("jrDone").innerHTML = DONE.map(function (e) { return entry(e); }).join("");
+  document.getElementById("jrPlan").innerHTML = PLAN.map(function (ph) {
+    return '<div class="jr-phase"><h3 id="phase-' + esc(ph.phase) + '">Phase ' + esc(ph.phase) + " · " + esc(ph.title) + "</h3>" +
+      "<p>" + esc(ph.intro) + "</p>" + ph.steps.map(function (s) { return entry(s, "propose"); }).join("") + "</div>";
+  }).join("");
+  // numéro fixe : D dans l'ordre, Q par son champ n (une question tranchée part sans renuméroter les autres)
+  function qBlock(prefix) { return function (q, i) {
+    var n = prefix.toUpperCase() + (q.n || i + 1);
+    var h = '<h3><span class="jr-qn">' + n + "</span>" + esc(q.t) + "</h3>";
+    var body = (q.p ? "<p>" + esc(q.p) + "</p>" : "") +
+      (q.l ? "<ul>" + q.l.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
+      (q.table ? '<div class="table-scroll"><table><thead><tr>' + q.table[0].map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") +
+        "</tr></thead><tbody>" + q.table.slice(1).map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") +
+        "</tbody></table></div>" : "") +
+      (q.reco ? '<p class="reco">' + esc(q.reco) + "</p>" : "") +
+      (q.more ? "<ul>" + q.more.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
+      (q.refs ? '<p class="jr-refs">Voir: ' + esc(q.refs) + "</p>" : "");
+    // une question tranchée reste à sa place, repliée, avec un renvoi vers sa décision
+    if (q.done) return '<details class="jr-qi jr-qfold" id="' + n.toLowerCase() + '"><summary>' + h +
+      '<div class="jr-tags"><span class="jr-tag st s-fait">tranchée</span><span class="jr-tag">voir ' + esc(q.done) + "</span></div></summary>" + body + "</details>";
+    return '<div class="jr-qi" id="' + n.toLowerCase() + '">' + h + body + "</div>";
+  }; }
+  document.getElementById("jrDecisions").innerHTML = DECISIONS.map(qBlock("d")).join("");
+  document.getElementById("jrQuestions").innerHTML = QUESTIONS.map(qBlock("q")).join("");
+  document.getElementById("jrNotes").innerHTML = NOTES.map(qBlock("n")).join("");
+
+  var all = DONE.concat([].concat.apply([], PLAN.map(function (p) { return p.steps.filter(function (s) { return !s.ref; }).map(function (s) { return { status: s.status || "propose" }; }); })));
+  function count(k) { return all.filter(function (e) { return e.status === k; }).length; }
+  document.getElementById("jrSummary").innerHTML = ["fait", "echec", "propose", "valide", "refuse"].filter(count)
+    .map(function (k) { return '<span class="jr-chip s-' + k + '"><b>' + count(k) + "</b> " + LABELS[k] + "</span>"; }).join("");
+  document.getElementById("jrUpdated").textContent = "Dernière mise à jour: " + UPDATED;
+
+  // lien venu de la Roadmap (#j6, #d8, #q1): l'entrée est créée par ce script, on y va une fois la page remplie
+  if (location.hash) {
+    var target = document.getElementById(location.hash.slice(1));
+    if (target) { if (target.tagName === "DETAILS") target.open = true; setTimeout(function () { target.scrollIntoView(); }, 0); }
+  }
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest(".jr-copy"); if (!b) return;
+    var pre = b.closest(".jr-cmd").querySelector("pre");
+    function select() { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    function ok() { b.textContent = "Copié"; setTimeout(function () { b.textContent = "Copier"; }, 1200); }
+    try { navigator.clipboard.writeText(pre.textContent).then(ok, select); } catch (e) { select(); }
+  });
+})();

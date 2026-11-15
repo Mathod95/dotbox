@@ -99,6 +99,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .prose h3 { margin: 6px 0 -8px; font-size: 18px; font-weight: 700; color: var(--lit); scroll-margin-top: 24px; }
 .prose p { margin: 0; color: var(--label); font-size: 16px; }
 .prose p b, .prose li b { color: var(--lit); font-weight: 600; }
+.prose a { color: var(--lit); font-weight: 600; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.prose a:hover { color: var(--accent); }
 .prose ol, .prose ul { margin: 0; padding: 0 0 0 22px; display: grid; gap: 8px; color: var(--label); }
 .prose li::marker { color: var(--muted); }
 .note { margin: 0; padding: 16px 20px; border: 1px solid #2a2414; border-radius: 14px; background: #0f0d08; color: var(--label); font-size: 15px; max-width: none !important; }
@@ -121,6 +123,22 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .footer .red { color: var(--accent); }
 .footer a { color: var(--label); text-decoration: none; }
 .footer a:hover { color: var(--lit); }
+
+/* propositions en attente de validation, numérotées par paire (blue/green) : le contenu actuel en bleu, celui qui le remplace en vert */
+.prop-old, .prop-new { display: grid; gap: 14px; position: relative; padding: 36px 18px 16px; border: 1px solid var(--design); border-radius: 12px; background: #0a1219; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); min-width: 0; }
+.prop-new { border-color: var(--accent); background: #07130e; }
+.prop-old::before, .prop-new::before { position: absolute; top: 12px; left: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.prop-old::before { content: "#" attr(data-prop) " · Sera retiré à la validation"; color: var(--design); }
+.prop-new::before { content: "#" attr(data-prop) " · Sera ajouté à la validation"; color: var(--accent); }
+html[lang="en"] .prop-old::before { content: "#" attr(data-prop) " · Removed once approved"; }
+html[lang="en"] .prop-new::before { content: "#" attr(data-prop) " · Added once approved"; }
+.prose .prop-new, .prose .prop-new p, .prose .prop-new li, .prose .prop-new b, .prose .prop-new code, .prose .prop-new h3, .prose .prop-new td { color: var(--accent); }
+.prose .prop-new pre { border-color: #134a36; color: var(--accent); }
+.prose .prop-new pre .p { color: var(--accent); }
+span.prop-old, span.prop-new { display: inline-block; padding: 28px 12px 10px; margin: 4px 0; }
+span.prop-old::before, span.prop-new::before { top: 8px; left: 12px; font-size: 10px; }
+li > span.prop-old, li > span.prop-new, td > span.prop-old, td > span.prop-new { display: block; }
+li > span.prop-old, td > span.prop-old { margin-bottom: 8px; }
 
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
@@ -200,6 +218,7 @@ __PN__
     E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
     H: ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     I: ["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"],
+    J: ["..###", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##.."],
     K: ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
     L: ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
     N: ["#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#", "#...#"],

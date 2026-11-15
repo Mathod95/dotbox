@@ -5,35 +5,51 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-types">Un core, puis tes apps</h2>
-  <p>Il n'y a pas de type d'installation à choisir. Dot Box installe toujours le même core. Ensuite, c'est toi qui choisis les apps que tu veux, une par une ou plusieurs d'un coup.</p>
+  <p>Dot Box s'installe en deux temps. D'abord le core, qui fait tourner tes apps, les rend accessibles et les protège. Ensuite les apps elles-mêmes, que tu choisis dans le catalogue (<code>dotbox list</code>).</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Composant</th><th>Rôle</th><th>Installé par</th></tr></thead>
     <tbody>
-      <tr><td>Docker</td><td>les containers et le réseau <code>dotbox</code></td><td><code>dotbox init</code></td></tr>
-      <tr><td>Traefik</td><td>sous-domaines et certificats</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Authelia</td><td>connexion unique</td><td><code>dotbox init</code></td></tr>
-      <tr><td>CrowdSec</td><td>bloque les attaques sur SSH et sur les apps</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Dot Box</td><td>interface web et API, sur <code>dotbox.example.com</code></td><td><code>dotbox init</code></td></tr>
-      <tr><td>Tes apps</td><td>celles que tu choisis dans le catalogue</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
+      <tr><td>Dot Box</td><td>Le binaire qui installe et gère tout le reste, avec l'interface web et l'API sur <code>dotbox.example.com</code></td><td><code>install.sh</code></td></tr>
+      <tr><td>Docker</td><td>Les containers et le réseau <code>dotbox</code></td><td><code>dotbox init</code></td></tr>
+      <tr><td>Traefik</td><td>Sous-domaines et certificats</td><td><code>dotbox init</code></td></tr>
+      <tr><td>Authelia</td><td>Connexion unique</td><td><code>dotbox init</code></td></tr>
+      <tr><td>CrowdSec</td><td>Bloque les attaques sur SSH et sur les apps</td><td><code>dotbox init</code></td></tr>
+      <tr><td>Tes apps</td><td>Celles que tu choisis dans le catalogue</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
-  <p>Le core n'installe aucune app de contenu: pas de serveur média ni de client de téléchargement imposés. <code>dotbox list</code> affiche le catalogue.</p>
 
   <h2 id="fr-step1">Étape 1: lancer le script d'installation</h2>
-  <p>Avant tout, <code>*.example.com</code> doit pointer vers le serveur (voir <b>Prerequisites</b>).</p>
-  <pre><span class="p">$</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | sudo bash</pre>
-  <p>Le script télécharge le binaire <code>dotbox</code> pour amd64, vérifie son checksum SHA-256 publié avec la release, l'installe dans <code>/usr/local/bin</code>, puis lance <code>dotbox init</code>. C'est un seul fichier, sans dépendance: ni Python, ni Ansible, ni repo git sur le serveur.</p>
+  <p>Avant tout, <code>*.example.com</code> doit pointer vers le serveur (voir <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
+  <p>Lance-le en root (<code>su -</code>). C'est la seule fois où root sert: ensuite, tu travailles avec ton utilisateur et <code>sudo</code>.</p>
+  <pre><span class="p">$</span> su -
+<span class="p">#</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
+
+  <h3 id="fr-installsh">Ce que fait install.sh</h3>
+  <ol>
+    <li><b>Vérifie qu'il tourne en root</b>.</li>
+    <li><b>Vérifie le système</b> selon les <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>, et s'arrête sans rien modifier s'il ne convient pas.</li>
+    <li><b>Installe <code>sudo</code></b> s'il manque.</li>
+    <li><b>Configure ton utilisateur</b>, celui qui fait tourner les apps et Dot Box: demande son nom (par défaut, le compte avec lequel tu t'es connecté), le crée s'il n'existe pas en demandant son mot de passe, et l'ajoute au groupe <code>sudo</code>. Un utilisateur existant garde son mot de passe, son shell et ses clés SSH.</li>
+    <li><b>Installe <code>dotbox</code></b>: télécharge la dernière version, vérifie son checksum SHA-256 et la place dans <code>/usr/local/bin</code>. Un checksum faux arrête l'installation.</li>
+    <li><b>Lance <code>dotbox init</code></b> pour cet utilisateur, sauf avec <code>--no-init</code> (migration, voir <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>).</li>
+  </ol>
+  <p>Il peut être relancé sans risque: il ne fait que ce qui manque.</p>
 
   <h2 id="fr-step2">Étape 2: répondre à dotbox init</h2>
+  <div class="prop-old" data-prop="6">
   <p><code>init</code> pose ses questions dans le terminal: le domaine, l'e-mail du certificat, l'utilisateur qui fera tourner les apps (par défaut celui qui a lancé le script) et le nom de l'administrateur. Il les accepte aussi en options: <code>sudo dotbox init --domain example.com</code>. Ensuite, il:</p>
+  </div>
+  <div class="prop-new" data-prop="6">
+    <p><code>init</code> demande le domaine, l'e-mail du certificat et le nom de l'administrateur, dans le terminal ou en options (<code>sudo dotbox init --domain example.com</code>). Ensuite, il:</p>
+  </div>
   <ol>
-    <li><b>vérifie le serveur</b>: version LTS, amd64, ports 80 et 443 libres, espace disque, et <code>*.example.com</code> qui pointe vers le serveur;</li>
-    <li><b>installe Docker</b> s'il est absent, avec la rotation des logs et <code>live-restore</code>, et crée le réseau <code>dotbox</code>;</li>
-    <li><b>prépare l'utilisateur</b>: le crée s'il n'existe pas, sinon l'ajoute au groupe <code>docker</code> sans toucher à son mot de passe, son shell ni ses clés SSH; lui donne <code>/opt</code> et <code>/data</code>;</li>
-    <li><b>démarre</b> Traefik, Authelia, CrowdSec et Dot Box; Traefik obtient un certificat pour chaque sous-domaine;</li>
-    <li><b>programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
+    <li><b>Vérifie le serveur</b>: ports 80 et 443 libres, espace disque, et <code>*.example.com</code> qui pointe vers le serveur.</li>
+    <li><span class="prop-old" data-prop="22"><b>Installe Docker</b> s'il est absent, avec la rotation des logs et <code>live-restore</code>, et crée le réseau <code>dotbox</code>.</span><span class="prop-new" data-prop="22"><b>Installe Docker</b> s'il est absent, depuis le dépôt officiel de Docker pour Debian ou pour Ubuntu. Si des paquets en conflit sont présents (<code>docker.io</code>, <code>podman-docker</code>...), il les liste et demande avant de les retirer. Les logs des containers tournent sur quelques fichiers, et les containers continuent de tourner quand Docker redémarre (<code>live-restore</code>). Crée le réseau <code>dotbox</code>.</span></li>
+    <li><b>Prépare l'utilisateur</b> choisi par <code>install.sh</code>: l'ajoute au groupe <code>docker</code> et lui donne <code>/opt</code> et <code>/data</code>.</li>
+    <li><b>Démarre</b> Traefik, Authelia, CrowdSec et Dot Box. Traefik obtient un certificat pour chaque sous-domaine.</li>
+    <li><b>Programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
   </ol>
-  <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <code>dotbox doctor</code> signale les mises à jour en attente et quand un redémarrage est nécessaire (voir <b>Post-installation</b>).</p>
+  <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <code>dotbox doctor</code> signale les mises à jour en attente et quand un redémarrage est nécessaire (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Tout est écrit dans <code>/opt/dotbox/dotbox.yml</code>. Les secrets (clés d'Authelia, clé de sauvegarde) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
@@ -54,40 +70,56 @@ update:
 
   <h2 id="fr-step3">Étape 3: installer tes apps</h2>
   <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
-  <p>Chaque app arrive sur son sous-domaine, avec son certificat, déjà branchée aux autres. Pas de redémarrage du serveur: Dot Box ne touche ni au noyau ni au démarrage du système.</p>
+  <p>Chaque app arrive sur son sous-domaine, avec son certificat, déjà branchée aux autres.</p>
 </article>
 
 <article class="prose" data-l="en">
   <h2 id="en-types">One core, then your apps</h2>
-  <p>There is no install type to choose. Dot Box always installs the same core. Then you pick the apps you want, one by one or several at once.</p>
+  <p>Dot Box installs in two stages. First the core, which runs your apps, makes them reachable and protects them. Then the apps themselves, which you pick from the catalog (<code>dotbox list</code>).</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Role</th><th>Installed by</th></tr></thead>
     <tbody>
-      <tr><td>Docker</td><td>containers and the <code>dotbox</code> network</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Traefik</td><td>subdomains and certificates</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Authelia</td><td>single login</td><td><code>dotbox init</code></td></tr>
-      <tr><td>CrowdSec</td><td>blocks attacks on SSH and on the apps</td><td><code>dotbox init</code></td></tr>
-      <tr><td>Dot Box</td><td>web interface and API, on <code>dotbox.example.com</code></td><td><code>dotbox init</code></td></tr>
-      <tr><td>Your apps</td><td>the ones you pick from the catalog</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
+      <tr><td>Dot Box</td><td>The binary that installs and manages everything else, with the web interface and API on <code>dotbox.example.com</code></td><td><code>install.sh</code></td></tr>
+      <tr><td>Docker</td><td>Containers and the <code>dotbox</code> network</td><td><code>dotbox init</code></td></tr>
+      <tr><td>Traefik</td><td>Subdomains and certificates</td><td><code>dotbox init</code></td></tr>
+      <tr><td>Authelia</td><td>Single login</td><td><code>dotbox init</code></td></tr>
+      <tr><td>CrowdSec</td><td>Blocks attacks on SSH and on the apps</td><td><code>dotbox init</code></td></tr>
+      <tr><td>Your apps</td><td>The ones you pick from the catalog</td><td><code>dotbox install &lt;app&gt;...</code></td></tr>
     </tbody>
   </table></div>
-  <p>The core installs no content app: no media server or download client is forced on you. <code>dotbox list</code> shows the catalog.</p>
 
   <h2 id="en-step1">Step 1: run the install script</h2>
-  <p>First, <code>*.example.com</code> must point to the server (see <b>Prerequisites</b>).</p>
-  <pre><span class="p">$</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | sudo bash</pre>
-  <p>The script downloads the <code>dotbox</code> binary for amd64, checks its SHA-256 checksum published with the release, installs it in <code>/usr/local/bin</code>, then runs <code>dotbox init</code>. It is a single file with no dependencies: no Python, no Ansible, no git repo on the server.</p>
+  <p>First, <code>*.example.com</code> must point to the server (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
+  <p>Run it as root (<code>su -</code>). It is the only time you need root: afterwards, you work with your user and <code>sudo</code>.</p>
+  <pre><span class="p">$</span> su -
+<span class="p">#</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
+
+  <h3 id="en-installsh">What install.sh does</h3>
+  <ol>
+    <li><b>Checks that it runs as root</b>.</li>
+    <li><b>Checks the system</b> against the <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>, and stops without changing anything if it does not match.</li>
+    <li><b>Installs <code>sudo</code></b> if it is missing.</li>
+    <li><b>Sets up your user</b>, the one that runs the apps and Dot Box: asks for its name (by default, the account you logged in with), creates it if it does not exist, asking for its password, and adds it to the <code>sudo</code> group. An existing user keeps its password, shell and SSH keys.</li>
+    <li><b>Installs <code>dotbox</code></b>: downloads the latest release, checks its SHA-256 checksum and puts it in <code>/usr/local/bin</code>. A wrong checksum stops the install.</li>
+    <li><b>Runs <code>dotbox init</code></b> for that user, unless <code>--no-init</code> is given (migration, see <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>).</li>
+  </ol>
+  <p>It can be run again safely: it only does what is missing.</p>
 
   <h2 id="en-step2">Step 2: answer dotbox init</h2>
+  <div class="prop-old" data-prop="6">
   <p><code>init</code> asks its questions in the terminal: the domain, the certificate email, the user that will run the apps (by default the one who ran the script) and the admin name. It also takes them as flags: <code>sudo dotbox init --domain example.com</code>. Then it:</p>
+  </div>
+  <div class="prop-new" data-prop="6">
+    <p><code>init</code> asks for the domain, the certificate email and the admin name, in the terminal or as flags (<code>sudo dotbox init --domain example.com</code>). Then it:</p>
+  </div>
   <ol>
-    <li><b>checks the server</b>: LTS release, amd64, ports 80 and 443 free, disk space, and <code>*.example.com</code> pointing to the server;</li>
-    <li><b>installs Docker</b> if it is missing, with log rotation and <code>live-restore</code>, and creates the <code>dotbox</code> network;</li>
-    <li><b>prepares the user</b>: creates it if it does not exist, otherwise adds it to the <code>docker</code> group without touching its password, shell or SSH keys; gives it <code>/opt</code> and <code>/data</code>;</li>
-    <li><b>starts</b> Traefik, Authelia, CrowdSec and Dot Box; Traefik gets a certificate for each subdomain;</li>
-    <li><b>schedules the daily backup</b>, local to begin with.</li>
+    <li><b>Checks the server</b>: ports 80 and 443 free, disk space, and <code>*.example.com</code> pointing to the server.</li>
+    <li><span class="prop-old" data-prop="22"><b>Installs Docker</b> if it is missing, with log rotation and <code>live-restore</code>, and creates the <code>dotbox</code> network.</span><span class="prop-new" data-prop="22"><b>Installs Docker</b> if it is missing, from Docker's official repository for Debian or for Ubuntu. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</span></li>
+    <li><b>Prepares the user</b> chosen by <code>install.sh</code>: adds it to the <code>docker</code> group and gives it <code>/opt</code> and <code>/data</code>.</li>
+    <li><b>Starts</b> Traefik, Authelia, CrowdSec and Dot Box. Traefik gets a certificate for each subdomain.</li>
+    <li><b>Schedules the daily backup</b>, local to begin with.</li>
   </ol>
-  <p><code>init</code> does not update the system and never reboots the server: <code>dotbox doctor</code> reports pending updates and when a reboot is needed (see <b>Post-installation</b>).</p>
+  <p><code>init</code> does not update the system and never reboots the server: <code>dotbox doctor</code> reports pending updates and when a reboot is needed (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Everything is written to <code>/opt/dotbox/dotbox.yml</code>. Secrets (Authelia keys, backup key) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
@@ -108,5 +140,5 @@ update:
 
   <h2 id="en-step3">Step 3: install your apps</h2>
   <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
-  <p>Each app lands on its own subdomain, with its certificate, already connected to the others. No server reboot: Dot Box touches neither the kernel nor the system boot.</p>
+  <p>Each app lands on its own subdomain, with its certificate, already connected to the others.</p>
 </article>

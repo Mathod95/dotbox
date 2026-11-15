@@ -160,6 +160,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
       nextV: "Sur main", nextD: "pas encore publiée",
       planned: "Prévu", new: "Nouveau", changed: "Changé", fixed: "Corrigé", removed: "Retiré",
       dl: "Télécharger ↗", diff: "Changements ↗",
+      empty: "Aucune version pour l'instant: la première arrivera avec le premier code de l'application.",
       months: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
     },
     en: {
@@ -168,6 +169,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
       nextV: "On main", nextD: "not released yet",
       planned: "Planned", new: "New", changed: "Changed", fixed: "Fixed", removed: "Removed",
       dl: "Download ↗", diff: "Changes ↗",
+      empty: "No release yet: the first one will come with the first application code.",
       months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     }
   };
@@ -239,6 +241,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
     }
     var feed = document.getElementById("feed"), toc = document.getElementById("toc");
     feed.innerHTML = ""; toc.innerHTML = "";
+    if (!DATA.length) feed.appendChild(el("p", "lede", t("empty")));
     var firstTag = DATA.filter(function (r) { return r.version !== "next"; })[0];
     DATA.forEach(function (r, i) {
       var next = r.version === "next", latest = r === firstTag;

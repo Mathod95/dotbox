@@ -6,7 +6,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
 <style>
 /* Roadmap de Dot Box : gabarit de la releasePage (docs/design/releasePage.html), mêmes valeurs.
-   Titre ROADMAP en points, puis une seule liste de features à cocher, sans version : les versions vivent dans Releases.
+   Titre ROADMAP en points, puis les features à cocher, rangées par étapes dans l'ordre des dépendances, sans version :
+   les versions vivent dans Releases. Chaque feature renvoie à sa spec et aux entrées du Journal (J, D, Q).
    Données : tools/site/roadmap.json. Un seul thème sombre. */
 :root {
   --bg: #080808;
@@ -86,6 +87,16 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .items .spec { color: var(--accent); text-decoration: none; white-space: nowrap; }
 .items .spec:hover { color: var(--lit); }
 code { font-family: var(--mono); font-size: .88em; color: var(--lit); background: #161616; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+.items .jr { color: var(--label); text-decoration: none; padding: 2px 8px; border-radius: 8px; border: 1px dashed #333; white-space: nowrap; }
+.items .jr:hover { color: var(--lit); border-color: var(--accent); }
+/* étapes : numéro, nom, avancement, puis leurs features */
+.stages { display: grid; gap: 30px; }
+.stage { display: grid; gap: 6px; min-width: 0; }
+.stage-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.stage-n { font-family: var(--mono); font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stage h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--lit); }
+.stage-count { margin-left: auto; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage-desc { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
 @media (max-width: 640px) { .items li { grid-template-columns: auto minmax(0, 1fr); } .items .meta { grid-column: 2; justify-content: flex-start; } }
 
 .footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
@@ -119,7 +130,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
       <ul class="legend" id="legend"></ul>
     </div>
     <ul class="dots" id="dots" aria-hidden="true"></ul>
-    <ul class="items" id="items"></ul>
+    <div class="stages" id="stages"></div>
   </main>
 
   <footer class="footer">
@@ -140,11 +151,11 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
   var STR = {
     fr: {
       lede: "Ce qui est prévu pour Dot Box<i>●</i>coché au fur et à mesure, les versions sont dans Releases.",
-      done: "Fait", progress: "En cours", planned: "À faire", of: "faites sur", spec: "Spec ↗"
+      done: "Fait", progress: "En cours", planned: "À faire", of: "faites sur", spec: "Spec ↗", journal: "Journal du serveur de test"
     },
     en: {
       lede: "What is planned for Dot Box<i>●</i>checked off as it ships, versions are in Releases.",
-      done: "Done", progress: "In progress", planned: "To do", of: "done out of", spec: "Spec ↗"
+      done: "Done", progress: "In progress", planned: "To do", of: "done out of", spec: "Spec ↗", journal: "Test server journal (in French)"
     }
   };
   var STATES = ["done", "progress", "planned"];
@@ -206,20 +217,39 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
     var dots = document.getElementById("dots"); dots.innerHTML = "";
     STATES.forEach(function (s) { F_.forEach(function (f) { if (f.status === s) dots.appendChild(el("li", s)); }); });
 
-    // la liste, dans l'ordre de roadmap.json
-    var ul = document.getElementById("items"); ul.innerHTML = "";
-    F_.forEach(function (f) {
-      var li = el("li", f.status); li.setAttribute("title", t(f.status));
-      li.appendChild(el("span", "box", f.status === "done" ? "✓" : ""));
-      var txt = el("span", "txt"); txt.innerHTML = inline(tr(f)); li.appendChild(txt);
-      var meta = el("span", "meta");
-      meta.appendChild(el("span", "tag", tr(DOM[f.domain].name)));
-      if (f.doc && DOCS[f.doc]) {
-        var a = el("a", "spec", t("spec")); a.href = DOCS[f.doc];
-        if (BLANK) { a.target = "_blank"; a.rel = "noopener"; }
-        meta.appendChild(a);
-      }
-      li.appendChild(meta); ul.appendChild(li);
+    // les étapes, dans l'ordre de roadmap.json, chacune avec ses features
+    var box = document.getElementById("stages"); box.innerHTML = "";
+    D.stages.forEach(function (st, i) {
+      var list = F_.filter(function (f) { return f.stage === st.id; });
+      if (!list.length) return;
+      var sec = el("section", "stage"), head = el("div", "stage-head");
+      head.appendChild(el("span", "stage-n", (i + 1 < 10 ? "0" : "") + (i + 1)));
+      head.appendChild(el("h2", "", tr(st.name)));
+      head.appendChild(el("span", "stage-count", list.filter(function (f) { return f.status === "done"; }).length + " / " + list.length));
+      sec.appendChild(head);
+      var desc = el("p", "stage-desc"); desc.innerHTML = inline(tr(st.desc)); sec.appendChild(desc);
+      var ul = el("ul", "items");
+      list.forEach(function (f) {
+        var li = el("li", f.status); li.setAttribute("title", t(f.status));
+        li.appendChild(el("span", "box", f.status === "done" ? "✓" : ""));
+        var txt = el("span", "txt"); txt.innerHTML = inline(tr(f)); li.appendChild(txt);
+        var meta = el("span", "meta");
+        meta.appendChild(el("span", "tag", tr(DOM[f.domain].name)));
+        // J commandes, D décisions, Q questions ouvertes, B.3 étapes proposées : lien vers l'entrée du Journal (#j6, #d8, #q2, #eb-3)
+        (f.journal || []).forEach(function (r) {
+          var first = r.split("-")[0], anchor = first.indexOf(".") > -1 ? "e" + first.replace(/\./g, "-") : first;
+          var j = el("a", "jr", r); j.href = DOCS.journal + "#" + anchor.toLowerCase(); j.title = t("journal");
+          if (BLANK) { j.target = "_blank"; j.rel = "noopener"; }
+          meta.appendChild(j);
+        });
+        if (f.doc && DOCS[f.doc] && f.doc !== "journal") {
+          var a = el("a", "spec", t("spec")); a.href = DOCS[f.doc];
+          if (BLANK) { a.target = "_blank"; a.rel = "noopener"; }
+          meta.appendChild(a);
+        }
+        li.appendChild(meta); ul.appendChild(li);
+      });
+      sec.appendChild(ul); box.appendChild(sec);
     });
   }
 

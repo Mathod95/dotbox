@@ -41,16 +41,30 @@
   <p class="note"><b>Un disque à part pour /data</b>: monte tout le disque sur <code>/data</code>, jamais <code>torrents</code> et <code>media</code> sur deux disques différents, sinon chaque import devient une copie.</p>
 
   <h2 id="fr-containers">Dans les containers</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>App</th><th>Chemins</th><th>Rôle</th></tr></thead>
-    <tbody>
-      <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>téléchargements, un dossier par catégorie</td></tr>
-      <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>import des films</td></tr>
-      <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>import des séries</td></tr>
-      <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>bibliothèques</td></tr>
-      <tr><td>Chaque app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>sa configuration</td></tr>
-    </tbody>
-  </table></div>
+  <div class="prop-old" data-prop="9">
+    <div class="table-scroll"><table>
+      <thead><tr><th>App</th><th>Chemins</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>téléchargements, un dossier par catégorie</td></tr>
+        <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>import des films</td></tr>
+        <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>import des séries</td></tr>
+        <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>bibliothèques</td></tr>
+        <tr><td>Chaque app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>sa configuration</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="prop-new" data-prop="9">
+    <div class="table-scroll"><table>
+      <thead><tr><th>App</th><th>Chemins</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>Téléchargements, un dossier par catégorie</td></tr>
+        <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>Import des films</td></tr>
+        <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>Import des séries</td></tr>
+        <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>Bibliothèques</td></tr>
+        <tr><td>Chaque app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>Sa configuration</td></tr>
+      </tbody>
+    </table></div>
+  </div>
 
   <h2 id="fr-move">Changer l'emplacement des données</h2>
   <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1
@@ -96,16 +110,30 @@
   <p class="note"><b>A separate disk for /data</b>: mount the whole disk on <code>/data</code>, never <code>torrents</code> and <code>media</code> on two different disks, or every import becomes a copy.</p>
 
   <h2 id="en-containers">Inside containers</h2>
-  <div class="table-scroll"><table>
-    <thead><tr><th>App</th><th>Paths</th><th>Role</th></tr></thead>
-    <tbody>
-      <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>downloads, one folder per category</td></tr>
-      <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>movie imports</td></tr>
-      <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>TV imports</td></tr>
-      <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>libraries</td></tr>
-      <tr><td>Every app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>its configuration</td></tr>
-    </tbody>
-  </table></div>
+  <div class="prop-old" data-prop="9">
+    <div class="table-scroll"><table>
+      <thead><tr><th>App</th><th>Paths</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>downloads, one folder per category</td></tr>
+        <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>movie imports</td></tr>
+        <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>TV imports</td></tr>
+        <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>libraries</td></tr>
+        <tr><td>Every app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>its configuration</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="prop-new" data-prop="9">
+    <div class="table-scroll"><table>
+      <thead><tr><th>App</th><th>Paths</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>qBittorrent</td><td><code>/data/torrents</code></td><td>Downloads, one folder per category</td></tr>
+        <tr><td>Radarr</td><td><code>/data/torrents/movies</code> → <code>/data/media/movies</code></td><td>Movie imports</td></tr>
+        <tr><td>Sonarr</td><td><code>/data/torrents/tv</code> → <code>/data/media/tv</code></td><td>TV imports</td></tr>
+        <tr><td>Jellyfin, Plex</td><td><code>/data/media</code></td><td>Libraries</td></tr>
+        <tr><td>Every app</td><td><code>/opt/&lt;app&gt;/config</code> → <code>/config</code></td><td>Its configuration</td></tr>
+      </tbody>
+    </table></div>
+  </div>
 
   <h2 id="en-move">Move the data</h2>
   <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1

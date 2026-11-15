@@ -5,34 +5,47 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-server">Le serveur</h2>
-  <p>Dot Box n'a besoin que de Docker et d'un binaire. Il tourne uniquement sur un serveur dédié chez un hébergeur, avec un nom de domaine à toi: pas d'installation à la maison.</p>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Élément</th><th>Minimum</th><th>Conseillé</th></tr></thead>
-    <tbody>
-      <tr><td>Système</td><td>versions LTS uniquement: Debian 12 ou 13, Ubuntu 24.04 ou 26.04, installation neuve</td><td>Debian 13</td></tr>
-      <tr><td>Processeur</td><td>amd64, 2 cœurs</td><td>4 cœurs, avec puce graphique pour le transcodage du serveur média</td></tr>
-      <tr><td>Mémoire</td><td>2 Go pour le core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 Go avec beaucoup d'apps</td></tr>
-      <tr><td>Disque</td><td>20 Go pour le système et <code>/opt</code></td><td><code>/data</code> sur un disque à part, assez grand pour tes médias</td></tr>
-      <tr><td>Accès</td><td>root ou sudo en SSH</td><td>une clé SSH, sans mot de passe</td></tr>
-    </tbody>
-  </table></div>
-  <p>Rien d'autre ne doit être installé. <code>dotbox init</code> installe Docker s'il est absent, et s'arrête si un autre reverse proxy occupe déjà les ports 80 et 443.</p>
+  <p>Dot Box n'a besoin que d'un serveur dédié chez un hébergeur et d'un nom de domaine à toi. Son script d'installation apporte tout le reste.</p>
+  <div class="prop-old" data-prop="1">
+    <div class="table-scroll"><table>
+      <thead><tr><th>Élément</th><th>Minimum</th><th>Conseillé</th></tr></thead>
+      <tbody>
+        <tr><td>Système</td><td>versions LTS uniquement: Debian 12 ou 13, Ubuntu 24.04 ou 26.04, installation neuve</td><td>Debian 13</td></tr>
+        <tr><td>Processeur</td><td>amd64, 2 cœurs</td><td>4 cœurs, avec puce graphique pour le transcodage du serveur média</td></tr>
+        <tr><td>Mémoire</td><td>2 Go pour le core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 Go avec beaucoup d'apps</td></tr>
+        <tr><td>Disque</td><td>20 Go pour le système et <code>/opt</code></td><td><code>/data</code> sur un disque à part, assez grand pour tes médias</td></tr>
+        <tr><td>Accès</td><td>root ou sudo en SSH</td><td>une clé SSH, sans mot de passe</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="prop-new" data-prop="1">
+    <div class="table-scroll"><table>
+      <thead><tr><th>Élément</th><th>Minimum</th><th>Conseillé</th></tr></thead>
+      <tbody>
+        <tr><td>Système</td><td>Versions LTS uniquement: Debian 12 ou 13, Ubuntu 24.04 ou 26.04, installation neuve</td><td>Debian 13</td></tr>
+        <tr><td>Processeur</td><td>amd64, 2 cœurs</td><td>4 cœurs, avec puce graphique pour le transcodage du serveur média</td></tr>
+        <tr><td>Mémoire</td><td>2 Go pour le core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 Go avec beaucoup d'apps</td></tr>
+        <tr><td>Disque</td><td>20 Go pour le système et <code>/opt</code></td><td><code>/data</code> sur un disque à part, assez grand pour tes médias</td></tr>
+        <tr><td>Accès</td><td>Root en SSH pour l'installation (<code>su -</code>), puis ton utilisateur avec <code>sudo</code></td><td>Une clé SSH, sans mot de passe</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <h3 id="fr-network">Réseau</h3>
   <ul>
-    <li><b>Ports 80 et 443</b> ouverts depuis internet, pour Traefik: le 80 sert à obtenir les certificats et à rediriger vers HTTPS, le 443 aux apps.</li>
+    <li><b>Ports 80 et 443</b> ouverts depuis internet et libres, pour Traefik: le 80 sert à obtenir les certificats et à rediriger vers HTTPS, le 443 aux apps. <code>dotbox init</code> s'arrête si un autre service les occupe.</li>
     <li><b>Le port SSH</b> (22 ou le tien), pour l'administration et l'accès de secours.</li>
   </ul>
 
   <h2 id="fr-domain">Le domaine</h2>
-  <p>Chaque app est servie sur son sous-domaine (<code>radarr.example.com</code>), jamais par IP et port: les ports des containers restent sur le réseau interne <code>dotbox</code>. Il te faut donc un nom de domaine à toi.</p>
+  <p>Chaque app est servie sur son sous-domaine (<code>radarr.example.com</code>), jamais par IP et port: les ports des containers restent sur le réseau interne <code>dotbox</code>.</p>
 
   <h2 id="fr-dns">Le DNS</h2>
-  <p>Avant de lancer l'installation, crée un seul enregistrement chez ton fournisseur DNS: <code>*.example.com</code> vers l'IP du serveur. Tous les sous-domaines arrivent alors sur le serveur, et Traefik envoie chacun vers la bonne app.</p>
+  <p>Avant de lancer l'installation, fais pointer <code>*.example.com</code> vers le serveur chez ton fournisseur DNS. Tous les sous-domaines arrivent alors sur le serveur, et Traefik envoie chacun vers la bonne app.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Nom</th><th>Type</th><th>Valeur</th></tr></thead>
     <tbody>
-      <tr><td><code>*.example.com</code></td><td>A</td><td>l'IPv4 du serveur, par exemple <code>203.0.113.10</code></td></tr>
-      <tr><td><code>*.example.com</code></td><td>AAAA</td><td>l'IPv6 du serveur, s'il en a une</td></tr>
+      <tr><td><code>*.example.com</code></td><td>A</td><td>L'IPv4 du serveur, par exemple <code>203.0.113.10</code></td></tr>
+      <tr><td><code>*.example.com</code></td><td>AAAA</td><td>L'IPv6 du serveur, s'il en a une</td></tr>
     </tbody>
   </table></div>
   <p>Dot Box n'a besoin d'aucun accès à ton compte DNS: il ne crée ni ne modifie aucun enregistrement. <code>dotbox init</code> vérifie seulement que <code>*.example.com</code> pointe bien vers le serveur avant d'aller plus loin. Tes enregistrements existants (mail, <code>www</code>...) restent prioritaires sur le wildcard.</p>
@@ -50,34 +63,47 @@
 
 <article class="prose" data-l="en">
   <h2 id="en-server">The server</h2>
-  <p>Dot Box only needs Docker and one binary. It only runs on a dedicated server at a hosting provider, with a domain name of your own: no home install.</p>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr></thead>
-    <tbody>
-      <tr><td>System</td><td>LTS releases only: Debian 12 or 13, Ubuntu 24.04 or 26.04, fresh install</td><td>Debian 13</td></tr>
-      <tr><td>CPU</td><td>amd64, 2 cores</td><td>4 cores, with a GPU for media server transcoding</td></tr>
-      <tr><td>Memory</td><td>2 GB for the core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 GB with many apps</td></tr>
-      <tr><td>Disk</td><td>20 GB for the system and <code>/opt</code></td><td><code>/data</code> on a separate disk, large enough for your media</td></tr>
-      <tr><td>Access</td><td>root or sudo over SSH</td><td>an SSH key, no password</td></tr>
-    </tbody>
-  </table></div>
-  <p>Nothing else should be installed. <code>dotbox init</code> installs Docker if it is missing, and stops if another reverse proxy already uses ports 80 and 443.</p>
+  <p>Dot Box only needs a dedicated server at a hosting provider and a domain name of your own. Its install script brings everything else.</p>
+  <div class="prop-old" data-prop="1">
+    <div class="table-scroll"><table>
+      <thead><tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr></thead>
+      <tbody>
+        <tr><td>System</td><td>LTS releases only: Debian 12 or 13, Ubuntu 24.04 or 26.04, fresh install</td><td>Debian 13</td></tr>
+        <tr><td>CPU</td><td>amd64, 2 cores</td><td>4 cores, with a GPU for media server transcoding</td></tr>
+        <tr><td>Memory</td><td>2 GB for the core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 GB with many apps</td></tr>
+        <tr><td>Disk</td><td>20 GB for the system and <code>/opt</code></td><td><code>/data</code> on a separate disk, large enough for your media</td></tr>
+        <tr><td>Access</td><td>root or sudo over SSH</td><td>an SSH key, no password</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="prop-new" data-prop="1">
+    <div class="table-scroll"><table>
+      <thead><tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr></thead>
+      <tbody>
+        <tr><td>System</td><td>LTS releases only: Debian 12 or 13, Ubuntu 24.04 or 26.04, fresh install</td><td>Debian 13</td></tr>
+        <tr><td>CPU</td><td>amd64, 2 cores</td><td>4 cores, with a GPU for media server transcoding</td></tr>
+        <tr><td>Memory</td><td>2 GB for the core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 GB with many apps</td></tr>
+        <tr><td>Disk</td><td>20 GB for the system and <code>/opt</code></td><td><code>/data</code> on a separate disk, large enough for your media</td></tr>
+        <tr><td>Access</td><td>Root over SSH for the install (<code>su -</code>), then your user with <code>sudo</code></td><td>An SSH key, no password</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <h3 id="en-network">Network</h3>
   <ul>
-    <li><b>Ports 80 and 443</b> open to the internet, for Traefik: 80 is used to get certificates and to redirect to HTTPS, 443 serves the apps.</li>
+    <li><b>Ports 80 and 443</b> open to the internet and free, for Traefik: 80 is used to get certificates and to redirect to HTTPS, 443 serves the apps. <code>dotbox init</code> stops if another service uses them.</li>
     <li><b>The SSH port</b> (22 or yours), for administration and emergency access.</li>
   </ul>
 
   <h2 id="en-domain">The domain</h2>
-  <p>Each app is served on its own subdomain (<code>radarr.example.com</code>), never by IP and port: container ports stay on the internal <code>dotbox</code> network. So you need a domain name of your own.</p>
+  <p>Each app is served on its own subdomain (<code>radarr.example.com</code>), never by IP and port: container ports stay on the internal <code>dotbox</code> network.</p>
 
   <h2 id="en-dns">DNS</h2>
-  <p>Before running the install, create a single record at your DNS provider: <code>*.example.com</code> pointing to the server's IP. Every subdomain then reaches the server, and Traefik sends each one to the right app.</p>
+  <p>Before running the install, point <code>*.example.com</code> to the server at your DNS provider. Every subdomain then reaches the server, and Traefik sends each one to the right app.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead>
     <tbody>
-      <tr><td><code>*.example.com</code></td><td>A</td><td>the server's IPv4, for example <code>203.0.113.10</code></td></tr>
-      <tr><td><code>*.example.com</code></td><td>AAAA</td><td>the server's IPv6, if it has one</td></tr>
+      <tr><td><code>*.example.com</code></td><td>A</td><td>The server's IPv4, for example <code>203.0.113.10</code></td></tr>
+      <tr><td><code>*.example.com</code></td><td>AAAA</td><td>The server's IPv6, if it has one</td></tr>
     </tbody>
   </table></div>
   <p>Dot Box needs no access to your DNS account: it creates and changes no records. <code>dotbox init</code> only checks that <code>*.example.com</code> points to the server before going further. Your existing records (mail, <code>www</code>...) take priority over the wildcard.</p>
