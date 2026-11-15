@@ -7,6 +7,41 @@ Gestionnaire d'apps auto-hébergées: un binaire Rust qui transforme des manifes
 - **Rien n'est poussé sans validation**: chaque changement est d'abord montré (artefact, fichier ou diff), puis poussé sur `main` seulement après l'accord de Mathod95 (décision du 2 novembre 2026).
 - **Le repo `Mathod95/xeneon` est en lecture seule**: on y lit la charte et les gabarits, on n'y modifie jamais rien.
 - Une page déjà créée n'est jamais modifiée pour en faire une nouvelle version: la nouvelle version vit à côté (v1, v2...).
+- **Demander avant de modifier**: aucun fichier, aucune page ni aucun document n'est modifié sans l'accord de Mathod95. Quand il pose une question, on répond sans rien changer.
+- **Rédaction**: en français ; termes Docker et Kubernetes gardés en anglais (container, service, network...) ; pas de tiret cadratin ; deux-points sans espace avant ; les états (***Running***, ***Exited***) en gras italique.
+
+## État du projet (15 novembre 2026)
+
+- **Fait**: le site (accueil, Getting Started, Roadmap, Releases), publié sur GitHub Pages. Les pages Getting Started sont la **spécification** de tout le reste.
+- **Pas encore commencé**: aucun code Rust (pas de `Cargo.toml`), pas de `install.sh`, aucun tag ni release GitHub. La commande d'installation des pages renvoie donc une 404 pour l'instant.
+- Le document de travail « Saltbox vs Dot Box : installation » (Claude Docs) a servi à trancher les décisions du 8 et du 9 novembre ; elles sont toutes reportées dans « Décisions produit » ci-dessous.
+
+## Phase en cours: le serveur de test
+
+Mathod95 a un serveur de test, réservé aux essais. Ce n'est jamais son serveur de production (un Saltbox).
+
+- **Accès**: Claude Code tourne sur le PC de Mathod95, dans un clone de ce repo, et agit sur le serveur en SSH (`ssh dotbox-test`, alias à définir dans `~/.ssh/config`). Rien n'est installé sur le serveur pour Claude Code.
+- **Prudence sur le serveur**: demander avant toute commande destructive (`rm -rf`, `docker system prune`, suppression de volumes, pare-feu) ; ne jamais modifier la config SSH (même règle que le produit) ; ne pas faire de `apt full-upgrade` ni de redémarrage sans accord.
+- **Rien de personnel dans le repo**: le repo est public. Le vrai domaine, l'IP, les e-mails et les secrets restent sur le serveur (fichier `.env` ou `/opt/dotbox/secrets/`, jamais commités). Les fichiers du repo utilisent `example.com`, `admin`, `203.0.113.10`.
+
+### Étape A: valider à la main ce que le moteur devra générer (Roadmap: « Serveur de test »)
+
+Écrire à la main, exactement comme les décrit la spec, les fichiers que `dotbox init` et `dotbox install` produiront, et les faire tourner sur le serveur. Proposé: les garder dans le repo sous `lab/`, en miroir de `/opt` (`lab/opt/traefik/compose.yml`...). Ils serviront ensuite de fichiers de référence pour les tests du moteur.
+
+1. **Vérifier le serveur**: Debian 12/13 ou Ubuntu 24.04/26.04, amd64, ports 80 et 443 libres, `*.<domaine>` qui pointe vers le serveur.
+2. **Docker** depuis le dépôt officiel, `/etc/docker/daemon.json` avec rotation des logs et `live-restore`, réseau `dotbox`.
+3. **Traefik**: certificats Let's Encrypt en HTTP-01, un par sous-domaine, redirection 80 vers 443 ; ports des containers jamais publiés, tout passe par le réseau `dotbox`.
+4. **Authelia**: un compte admin, double authentification ; les quatre niveaux d'accès (`two_factor`, `one_factor`, `app`, `public`) testés sur au moins une app chacun.
+5. **CrowdSec**: surveille SSH et Traefik, bloque au pare-feu et dans Traefik ; vérifier qu'une IP de test est bien bannie puis débannie.
+6. **Apps**: qBittorrent, Prowlarr, Radarr, Sonarr et un serveur média (Jellyfin ou Plex), chacune dans `/opt/<app>` avec `compose.yml` et `config/`, l'utilisateur et ses `PUID`/`PGID`, `/data/torrents` et `/data/media` sur le même système de fichiers.
+7. **Câblage à la main** par les API (client de téléchargement, catégorie, dossier racine, indexeurs) et noter chaque appel : c'est ce que le moteur automatisera.
+8. **Critères de réussite**: chaque sous-domaine en HTTPS avec un certificat valide ; Authelia applique le bon niveau ; un film va de Radarr à qBittorrent puis dans `/data/media` en **hardlink** (même inode) ; les apps repartent seules après un redémarrage de Docker.
+
+À la fin de l'étape A, la ligne « Serveur de test » de la Roadmap passe en `done` et sa ligne va dans `v0.0.1` de `releases.json`.
+
+### Étape B: le premier binaire
+
+Projet Rust (`Cargo.toml`), un premier `dotbox init` qui produit les fichiers validés en A, `install.sh` (dernière version, checksum SHA-256, lance `dotbox init`, `--no-init`), et une CI GitHub qui compile le binaire amd64 et publie le binaire et son checksum dans une release. Ordre et contenu à proposer à Mathod95 avant de coder.
 
 ## Arborescence
 
