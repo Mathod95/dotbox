@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "15 novembre 2026, 21:57";
+  var UPDATED = "15 novembre 2026, 22:18";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -594,7 +594,17 @@ dpkg-query -W docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-
       result: `docker: active, containerd: active
 client 29.9.3 / server 29.9.3
 networks: bridge dotbox host none
-containerd.io 2.4.2, docker-buildx-plugin 0.39.0, docker-ce 29.9.3, docker-compose-plugin 5.7.1` }
+containerd.io 2.4.2, docker-buildx-plugin 0.39.0, docker-ce 29.9.3, docker-compose-plugin 5.7.1` },
+    { id: "J44", time: "22:18", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Ranger le mot de passe de <user> sur le PC",
+      cmd: `install -d -m 700 ~/.config/dotbox-test
+# le mot de passe est écrit dans ~/.config/dotbox-test/sudo-pass (600), sans être affiché
+python3 ~/.config/dotbox-test/sudo_run.py 'whoami'`,
+      does: "À la demande de Mathod95, qui ne s'en souvenait plus: le mot de passe de <user> est rangé dans un fichier lisible par lui seul, hors du repo. Pour le lire: cat ~/.config/dotbox-test/sudo-pass. sudo_run.py est déplacé au même endroit (il était dans un dossier temporaire) et lit ce fichier.",
+      effect: "PC: ~/.config/dotbox-test/ (700) avec sudo-pass (600) et sudo_run.py. Serveur: aucun.",
+      result: `root
+exit=0`,
+      undo: `rm -r ~/.config/dotbox-test` }
   ];
 
   var PLAN = [
@@ -1041,7 +1051,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           "Groupe docker: permet docker sans sudo, mais équivaut à root (avertissement de la doc, rappelé par init)."],
       refs: "C.1-C.11, J32-J41, D13" },
     { t: "Passer root sur le serveur de test",
-      p: "su -c lance une commande en root mais garde l'environnement de l'utilisateur, dont son PATH sans /usr/sbin: usermod et userdel y étaient introuvables. su - (avec le tiret) donne le vrai environnement de root. Le binaire lance désormais ses commandes avec le PATH de root, quelle que soit la façon dont il est appelé. Depuis D11, Claude passe par sudo (mot de passe de <user>, jamais écrit), et chaque commande root est enregistrée sur le serveur (journalctl _COMM=sudo).",
+      p: "su -c lance une commande en root mais garde l'environnement de l'utilisateur, dont son PATH sans /usr/sbin: usermod et userdel y étaient introuvables. su - (avec le tiret) donne le vrai environnement de root. Le binaire lance désormais ses commandes avec le PATH de root, quelle que soit la façon dont il est appelé. Depuis D11, Claude passe par sudo (mot de passe de <user>, rangé sur le PC hors du repo, J44), et chaque commande root est enregistrée sur le serveur (journalctl _COMM=sudo).",
       refs: "J20, J21, J27, D11" }
   ];
 
