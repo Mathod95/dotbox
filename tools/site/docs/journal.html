@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "16 novembre 2026, 06:57";
+  var UPDATED = "16 novembre 2026, 06:59";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -882,7 +882,21 @@ python3 sudo_run.py 'dotbox init | head -2; echo pipe_status=$PIPESTATUS'`,
       result: `  check    *.<domaine> points to this server
 avec le domaine personnel: error *.<domaine perso> points to <IP>, not to this server (rien de modifié)
 avant la correction: panicked ... failed printing to stdout: Broken pipe
-après: pipe_status=0, puis init complet: 14 check et le récapitulatif` }
+après: pipe_status=0, puis init complet: 14 check et le récapitulatif` },
+    { id: "J69", time: "06:59", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "Étape B.8: CI de release et premier tag, v0.0.1",
+      cmd: `git push origin main                        # .github/workflows/release.yml
+git tag -a v0.0.1 -m "v0.0.1: dotbox init installe Docker, Traefik et Authelia"
+git push origin v0.0.1
+curl -fsSL -O https://github.com/Mathod95/dotbox/releases/latest/download/{install.sh,dotbox-linux-amd64,dotbox-linux-amd64.sha256}
+sha256sum -c dotbox-linux-amd64.sha256; cmp install.sh <repo>/install.sh; ./dotbox-linux-amd64 --version`,
+      does: "Le workflow vérifie que le tag correspond à Cargo.toml, relance fmt, clippy et les tests, compile le binaire statique et publie la release. Puis les fichiers sont retéléchargés depuis le PC, par les adresses qu'utilise install.sh (avec curl: le PC n'a pas wget). Décision D10 de Mathod95: tag une fois Docker et le core installés proprement, ici Docker, Traefik et Authelia (CrowdSec viendra dans une version suivante).",
+      effect: "GitHub: tag v0.0.1, release https://github.com/Mathod95/dotbox/releases/tag/v0.0.1. La commande d'installation des pages marche. Releases: next devient v0.0.1.",
+      result: `Release (CI): success
+fichiers: install.sh (3 850 octets), dotbox-linux-amd64 (1 245 968), dotbox-linux-amd64.sha256 (85)
+dotbox-linux-amd64: OK (sha256 b240ae93...)
+install.sh identique au repo
+dotbox 0.0.1, statically linked` }
   ];
 
   var PLAN = [
@@ -962,7 +976,7 @@ ssh dotbox-test 'sudo -l -U <user> | head -3; rm /tmp/dotbox'`,
           does: "Lance init sans --user: il doit demander le nom en proposant <user> (le compte connecté avant su). su_run.py répond par Entrée pour accepter. Comme tout est déjà en place depuis B.6, rien ne doit changer. Vérifie ensuite que <user> peut utiliser sudo, puis supprime la copie.",
           effect: "Serveur: aucun changement, à part la suppression de /tmp/dotbox.",
           note: "Tu peux aussi le lancer toi-même, pour voir la question en vrai: ssh dotbox-test, puis su -, puis /tmp/dotbox init (avant la suppression)." },
-        { id: "B.8", status: "valide", kind: "ecriture", where: "PC", title: "Au premier tag: la CI de release",
+        { id: "B.8", status: "fait", ref: "J69", kind: "ecriture", where: "PC", title: "Au premier tag: la CI de release",
           does: "Un workflow GitHub qui, à chaque tag v*, compile le binaire musl et publie dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh dans la release (D4). Écrit seulement quand Docker et le core s'installent proprement (D10).",
           effect: "Plus tard: .github/workflows/release.yml." }
       ] },
