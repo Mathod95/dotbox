@@ -229,24 +229,65 @@
       "doc": "installation",
       "journal": [
         "D3",
-        "D13"
+        "D13",
+        "T.1-T.8",
+        "A.1-A.10",
+        "J48-J61"
       ]
     },
     {
       "stage": "core",
       "domain": "core",
-      "status": "planned",
+      "status": "done",
       "fr": "CLI: `dotbox init` vérifie que `*.example.com` pointe vers le serveur avant d'aller plus loin",
       "en": "CLI: `dotbox init` checks that `*.example.com` points to the server before going further",
-      "doc": "prerequisites"
+      "doc": "prerequisites",
+      "journal": [
+        "T.2",
+        "J50",
+        "D16"
+      ]
     },
     {
       "stage": "core",
       "domain": "core",
-      "status": "planned",
-      "fr": "Moteur: un certificat Let's Encrypt ou ZeroSSL par sous-domaine, en HTTP-01, sans jeton DNS",
-      "en": "Engine: one Let's Encrypt or ZeroSSL certificate per subdomain, through HTTP-01, no DNS token",
-      "doc": "prerequisites"
+      "status": "done",
+      "fr": "CLI: `dotbox init` installe Traefik derrière un socket proxy en lecture seule, redirection vers HTTPS, seuls les containers autorisés sont routés, logs d'accès pour CrowdSec",
+      "en": "CLI: `dotbox init` installs Traefik behind a read-only socket proxy, redirect to HTTPS, only allowed containers are routed, access logs for CrowdSec",
+      "doc": "installation",
+      "journal": [
+        "T.1-T.8",
+        "J48-J54",
+        "D20"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "access",
+      "status": "done",
+      "fr": "CLI: `dotbox init` installe Authelia sur `auth.<domaine>`: un compte au nom de l'utilisateur, mot de passe et code à 6 chiffres ou passkey, tout refusé par défaut, tableau de bord de Traefik en `two_factor`, récapitulatif de fin",
+      "en": "CLI: `dotbox init` installs Authelia on `auth.<domain>`: one account named after the user, password and 6-digit code or passkey, everything denied by default, Traefik dashboard in `two_factor`, closing summary",
+      "doc": "accessing-apps",
+      "journal": [
+        "A.1-A.12",
+        "J55-J66",
+        "D21-D27"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "core",
+      "status": "done",
+      "fr": "Moteur: un certificat Let's Encrypt par sous-domaine, en HTTP-01, sans jeton DNS ni e-mail",
+      "en": "Engine: one Let's Encrypt certificate per subdomain, through HTTP-01, no DNS token and no email",
+      "doc": "prerequisites",
+      "journal": [
+        "T.3",
+        "J53",
+        "D17",
+        "D18",
+        "D19"
+      ]
     },
     {
       "stage": "core",
@@ -256,7 +297,9 @@
       "en": "Core: CrowdSec installed by `dotbox init`, watches SSH and Traefik and blocks attacks",
       "doc": "installation",
       "journal": [
-        "Q3"
+        "Q3",
+        "Q11",
+        "Q12"
       ]
     },
     {
@@ -312,12 +355,14 @@
     {
       "stage": "apps",
       "domain": "access",
-      "status": "planned",
+      "status": "progress",
       "fr": "Moteur: quatre niveaux d'accès par app, `two_factor`, `one_factor`, `app` et `public`",
       "en": "Engine: four access levels per app, `two_factor`, `one_factor`, `app` and `public`",
       "doc": "accessing-apps",
       "journal": [
-        "Q4"
+        "Q4",
+        "A.3",
+        "J59"
       ]
     },
     {
@@ -355,10 +400,14 @@
     {
       "stage": "apps",
       "domain": "access",
-      "status": "planned",
+      "status": "progress",
       "fr": "CLI: `dotbox user`, comptes et groupes Authelia, invitation valable 48 h",
       "en": "CLI: `dotbox user`, Authelia accounts and groups, invite valid for 48 h",
-      "doc": "post-installation"
+      "doc": "post-installation",
+      "journal": [
+        "J65",
+        "D25"
+      ]
     },
     {
       "stage": "apps",

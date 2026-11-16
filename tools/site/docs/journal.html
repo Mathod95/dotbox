@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "15 novembre 2026, 22:18";
+  var UPDATED = "16 novembre 2026, 01:58";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -604,7 +604,268 @@ python3 ~/.config/dotbox-test/sudo_run.py 'whoami'`,
       effect: "PC: ~/.config/dotbox-test/ (700) avec sudo-pass (600) et sudo_run.py. Serveur: aucun.",
       result: `root
 exit=0`,
-      undo: `rm -r ~/.config/dotbox-test` }
+      undo: `rm -r ~/.config/dotbox-test` },
+    { id: "J45", time: "23:19", status: "fait", where: "PC", kind: "lecture",
+      title: "Vérifier les enregistrements DNS du domaine de test",
+      cmd: `for n in <domaine> auth.<domaine> radarr.<domaine> <domaine perso> www.<domaine perso>; do getent ahostsv4 $n; done`,
+      does: "Mathod95 a ajouté *.dotbox et dotbox (type A, TTL 300) dans la zone de son domaine personnel, vers le serveur de test (D16). Vérifie qu'ils répondent, et que le reste du domaine pointe toujours vers sa production.",
+      effect: "Aucun.",
+      result: `<domaine>, auth.<domaine>, radarr.<domaine> -> IP du serveur de test
+<domaine perso>, www.<domaine perso> -> IP du serveur de production (inchangé)` },
+    { id: "J46", time: "23:20", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Le serveur DNS du serveur de test répond-il à tout le monde?",
+      cmd: `python3 -c '...'   # requête DNS récursive envoyée au port 53 de l'IP publique du serveur, pour example.com et wikipedia.org`,
+      does: "J5 montrait un serveur DNS (BIND) qui écoute sur l'IP publique. Un « résolveur ouvert » (qui fait des recherches DNS pour n'importe qui) peut être détourné pour des attaques par amplification. Test depuis l'extérieur.",
+      effect: "Aucun.",
+      result: `example.com   -> REFUSED, récursion non disponible
+wikipedia.org -> REFUSED, récursion non disponible
+=> pas un résolveur ouvert (voir Q12)` },
+    { id: "J47", time: "23:51", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "Avant Traefik: logrotate, adresses du serveur, résolveur DNS",
+      cmd: `python3 sudo_run.py 'dpkg-query -W logrotate; ls /etc/logrotate.d; systemctl is-enabled logrotate.timer
+ip -o -4 addr show scope global; cat /etc/resolv.conf'`,
+      does: "logrotate fera tourner les logs d'accès de Traefik (T.3). Les adresses du serveur servent à vérifier le DNS (T.2).",
+      effect: "Aucun.",
+      result: `logrotate 3.22.0-1 installé, timer actif
+IPv4 globales: l'IP publique (enp1s0), plus les bridges de Docker
+resolv.conf: les serveurs DNS du fournisseur` },
+    { id: "J48", time: "23:52", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étapes T.1 à T.4: Traefik dans dotbox init",
+      does: "src/config.rs: /opt/dotbox/dotbox.yml (domain, ca, user), les clés inconnues sont gardées, nouvelle dépendance serde_yaml_ng. src/traefik.rs: vérifications (DNS du domaine et d'un sous-domaine au hasard comparé aux IPv4 du serveur, ports 80 et 443 libres ou tenus par Traefik), compose.yml (traefik:v3.7.19 et lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106, network interne socket), traefik.yml, logrotate, démarrage et attente du healthcheck. src/init.rs: options --domain et --ca (letsencrypt ou letsencrypt-staging). Le domaine, le DNS et les ports sont vérifiés juste après le système, avant de modifier quoi que ce soit. Relancé, init relit dotbox.yml: plus besoin d'options.",
+      effect: "PC: crée src/config.rs, src/traefik.rs, tests/expected/traefik/ (fichiers attendus), modifie src/init.rs, src/main.rs, Cargo.toml. Pas commité." },
+    { id: "J49", time: "23:53", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape T.5: vérifier sur le PC",
+      cmd: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+      does: "Huit tests de plus.",
+      effect: "Aucun.",
+      result: `fmt, clippy: ok. tests: 18 sur 18
+  traefik: compose.yml et traefik.yml identiques aux fichiers attendus (tests/expected/traefik/), YAML valide,
+  IPv4 lues dans ip addr, ports lus dans ss
+  config: dotbox.yml relu sans perdre de clé, fichier vide ou invalide, noms de domaine valides et invalides
+binaire: 1,2 Mo` },
+    { id: "J50", time: "23:53", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape T.6: init avec le domaine et le staging",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && rm /tmp/dotbox
+dotbox init --user <user> --domain <domaine> --ca letsencrypt-staging'`,
+      does: "Installe le nouveau binaire et lance init.",
+      effect: "Serveur: /opt/dotbox/dotbox.yml, /opt/traefik/ (compose.yml, config/traefik.yml, logs/), /etc/logrotate.d/dotbox-traefik, containers traefik et socket-proxy, network interne traefik_socket.",
+      result: `  check    <domaine> and *.<domaine> point to this server
+  check    ports 80 and 443 free
+  ...      (système, sudo, utilisateur, Docker: que des check)
+  write    /opt/dotbox/dotbox.yml
+  write    /opt/traefik/compose.yml
+  write    /opt/traefik/config/traefik.yml (letsencrypt-staging)
+  write    /etc/logrotate.d/dotbox-traefik
+  start    traefik and socket-proxy
+  check    traefik healthy (traefik:v3.7.19)
+  next     Authelia and CrowdSec: not available yet in this version`,
+      undo: `# sur le serveur, en root
+docker compose -f /opt/traefik/compose.yml down
+rm -r /opt/traefik /opt/dotbox /etc/logrotate.d/dotbox-traefik` },
+    { id: "J51", time: "23:53", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Traefik lit Docker à travers le proxy",
+      cmd: `ssh dotbox-test 'docker ps; docker network inspect traefik_socket; cat /opt/dotbox/dotbox.yml
+docker logs traefik; docker logs socket-proxy'`,
+      does: "Vérifie les deux containers, le network interne, le fichier de configuration, et ce que Traefik demande au proxy.",
+      effect: "Aucun.",
+      result: `traefik      traefik:v3.7.19 (healthy), ports 80 et 443
+socket-proxy lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106, aucun port publié
+traefik_socket internal=true
+dotbox.yml: domain: <domaine>, ca: letsencrypt-staging, user: <user>
+socket-proxy: seulement des GET /containers/json et /containers/<id>/json, tous acceptés (200)
+traefik: un avertissement de sécurité, aliasHeadersStrategy is not configured (voir J52)` },
+    { id: "J52", time: "23:54", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Supprimer les en-têtes « alias » (aliasHeadersStrategy: delete)",
+      cmd: `# traefik.yml, section global
+aliasHeadersStrategy: delete
+python3 sudo_run.py 'dotbox init'      # sans option: relit dotbox.yml`,
+      does: "Avertissement de Traefik au démarrage, documenté (doc de Traefik, entrypoints, aliasHeadersStrategy, depuis v3.7.12): Traefik traite X-Auth-User, X_Auth_User et X.Auth.User comme trois en-têtes différents, alors que beaucoup d'applis (PHP, CGI, NGINX...) les lisent comme un seul. Un client pourrait donc se faire passer pour un utilisateur connecté en envoyant X_Auth_User, alors qu'Authelia transmettra justement l'utilisateur dans un en-tête. La doc recommande delete ou reject: delete retire ces en-têtes en silence, reject refuse toute la requête (400). Choisi: delete, pour tous les points d'entrée, ajouté au plan T.3.",
+      effect: "Serveur: traefik.yml réécrit, Traefik redémarré par init (seul cas où il le redémarre: sa configuration statique a changé). L'avertissement a disparu.",
+      result: `  check    ports 80 and 443 (Traefik)
+  write    /opt/traefik/config/traefik.yml (letsencrypt-staging)
+  restart  traefik (new configuration)
+  check    traefik healthy (traefik:v3.7.19)` },
+    { id: "J53", time: "23:55", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape T.7: un vrai certificat (staging), avec des containers de test",
+      cmd: `docker run -d --name whoami --network dotbox -l traefik.enable=true \\
+  -l 'traefik.http.routers.whoami.rule=Host(\`whoami.<domaine>\`)' traefik/whoami:v1.11.0
+docker run -d --name hidden --network dotbox \\
+  -l 'traefik.http.routers.hidden.rule=Host(\`hidden.<domaine>\`)' traefik/whoami:v1.11.0
+curl -I http://whoami.<domaine>/; curl -k https://whoami.<domaine>/
+openssl s_client -connect whoami.<domaine>:443 | openssl x509 -noout -issuer -subject -dates
+curl -k https://hidden.<domaine>/
+curl -k -H 'X_Auth_User: admin' -H 'X.Remote.User: admin' -H 'X-Normal: ok' https://whoami.<domaine>/
+docker rm -f whoami hidden && docker image rm traefik/whoami:v1.11.0`,
+      does: "whoami (container officiel de Traefik qui renvoie la requête reçue) sert de fausse app. hidden est le même, sans traefik.enable=true. Vérifie la redirection, le certificat, que hidden n'est pas routé, et que les en-têtes « alias » sont bien supprimés. Puis tout est supprimé.",
+      effect: "Serveur: un certificat staging pour whoami.<domaine> dans acme.json (0600). Containers et image de test supprimés: il ne reste que traefik et socket-proxy.",
+      result: `http  -> 301 vers https://whoami.<domaine>/
+https -> réponse de whoami (Host: whoami.<domaine>, X-Forwarded-Proto: https)
+certificat: issuer=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1, subject=CN=whoami.<domaine>
+            valable du 15 novembre 2026 au 18 janvier 2027 (HTTP-01)
+hidden (sans traefik.enable) -> 404
+en-têtes reçus par whoami: X-Normal: ok (X_Auth_User et X.Remote.User supprimés)
+acme.json -rw------- root, access.log: JSON, une ligne par requête` },
+    { id: "J54", time: "23:56", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape T.8: relancer init, redémarrer Docker",
+      cmd: `python3 sudo_run.py 'dotbox init'
+python3 sudo_run.py 'systemctl restart docker'
+docker inspect -f '{{.State.StartedAt}} {{.State.Health.Status}}' traefik socket-proxy`,
+      does: "Relancé, init ne fait que des « check ». Puis Docker est redémarré.",
+      effect: "Serveur: Docker redémarré. Traefik et socket-proxy n'ont pas été arrêtés (live-restore): même heure de démarrage avant et après.",
+      note: "Pendant les quelques secondes du redémarrage, Traefik ne joignait plus le proxy (le DNS interne de Docker était coupé): 5 erreurs « Provider error, retrying », puis il s'est reconnecté seul. Le vrai test de « les apps repartent seules » est un redémarrage du serveur: à faire avec ton accord, quand le core sera complet.",
+      result: `init: que des check
+docker: active
+traefik      running, healthy, restart=unless-stopped (StartedAt inchangé)
+socket-proxy running, restart=unless-stopped (StartedAt inchangé)` },
+    { id: "J55", time: "00:42", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Format de sortie du générateur de mot de passe d'Authelia",
+      cmd: `ssh dotbox-test 'docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2 --random --random.length 24'`,
+      does: "Pour que dotbox lise correctement le mot de passe et son hash (A.2). Le mot de passe de cet essai est jeté.",
+      effect: "Serveur: télécharge l'image authelia/authelia:4.39.28 (110 Mo), qui servira ensuite.",
+      result: `Random Password: <masqué>
+Digest: $argon2id$v=19$m=65536,t=3,p=4$<masqué>
+(le téléchargement de l'image affiche aussi une ligne « Digest: sha256:... », que dotbox doit ignorer)` },
+    { id: "J56", time: "00:44", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étapes A.1 à A.5: Authelia dans dotbox init",
+      does: "src/secrets.rs: secrets de 64 caractères tirés de /dev/urandom (sans biais), fichiers 0600 dans /opt/dotbox/secrets (0700), jamais réécrits. src/authelia.rs: compose.yml (chaque secret monté seul, en lecture seule, variables AUTHELIA_..._FILE), configuration.yml, users_database.yml (un compte au nom de l'utilisateur, groupe admins, seulement le hash), mot de passe tiré par Authelia et affiché une fois, attente du healthcheck. src/traefik.rs: api.dashboard et le routeur traefik.<domaine> protégé par authelia@docker. src/init.rs: Authelia après Traefik, puis l'adresse de connexion et le mot de passe à la fin.",
+      effect: "PC: crée src/secrets.rs, src/authelia.rs, tests/expected/authelia/, modifie src/traefik.rs, src/init.rs, src/main.rs, tests/expected/traefik/. Pas commité." },
+    { id: "J57", time: "00:44", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape A.6: vérifier sur le PC",
+      cmd: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+      does: "Six tests de plus.",
+      effect: "Aucun.",
+      result: `fmt, clippy: ok. tests: 24 sur 24
+  authelia: compose.yml et configuration.yml identiques aux fichiers attendus, YAML valide,
+  users_database.yml ne contient que le hash, lecture de la sortie du générateur (ligne sha256 ignorée),
+  secrets passés par fichiers et jamais en valeur
+  secrets: 64 caractères, alphabet attendu, deux tirages différents` },
+    { id: "J58", time: "00:44", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape A.7: init installe Authelia",
+      cmd: `python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && dotbox init'`,
+      does: "Sans option: init relit dotbox.yml. Le mot de passe affiché à la fin est rangé sur le PC de Mathod95, dans ~/.config/dotbox-test/authelia-pass (0600), et la sortie brute qui le contenait est supprimée.",
+      effect: "Serveur: /opt/dotbox/secrets/ (trois secrets), /opt/authelia/ (compose.yml, config/configuration.yml, config/users_database.yml en 0600, db.sqlite3, notification.txt en 0600), container authelia. Traefik recréé avec son tableau de bord.",
+      result: `  write    /opt/traefik/compose.yml
+  write    /opt/traefik/config/traefik.yml (letsencrypt-staging)
+  start    traefik and socket-proxy
+  check    traefik healthy (traefik:v3.7.19)
+  create   secret /opt/dotbox/secrets/authelia_session_secret
+  create   secret /opt/dotbox/secrets/authelia_storage_encryption_key
+  create   secret /opt/dotbox/secrets/authelia_jwt_secret
+  create   Authelia account <user> (group admins)
+  write    /opt/authelia/compose.yml
+  write    /opt/authelia/config/configuration.yml
+  start    authelia
+  check    authelia healthy (authelia/authelia:4.39.28)
+  next     CrowdSec: not available yet in this version
+  login    https://auth.<domaine> as <user>
+  password <masqué>   (shown once: keep it, then change it in Authelia)`,
+      undo: `# sur le serveur, en root
+docker compose -f /opt/authelia/compose.yml down
+rm -r /opt/authelia /opt/dotbox/secrets` },
+    { id: "J59", time: "00:45", status: "fait", where: "PC", kind: "lecture",
+      title: "Étape A.8: la protection, testée depuis le PC",
+      cmd: `curl -k https://auth.<domaine>/api/health
+curl -k https://traefik.<domaine>/                                  # sans être connecté
+curl -k -c jar -d '{"username":"<user>","password":"••••"}' https://auth.<domaine>/api/firstfactor
+curl -k -b jar https://auth.<domaine>/api/state; curl -k -b jar https://traefik.<domaine>/
+# 3 mauvais mots de passe pour <user>, puis le bon`,
+      does: "Le mot de passe est lu dans le fichier du PC et passé à curl par l'entrée standard, jamais dans la commande.",
+      effect: "Le compte <user> a été bloqué 5 minutes par le test de rafale (jusqu'à 00:50).",
+      note: "Un premier essai de rafale avec un compte qui n'existe pas ne prouvait rien: Authelia s'arrête avant de compter les essais. Refait avec le vrai compte.",
+      result: `health: {"status":"OK"}
+tableau de bord sans connexion: 302 vers https://auth.<domaine>/?rd=https://traefik.<domaine>/
+mot de passe accepté: {"status":"OK"}, state: authentication_level 1 (un seul facteur)
+tableau de bord avec le mot de passe seul: toujours 302 (two_factor exigé)
+3 mauvais mots de passe: 401, puis le bon: 401 « Authentication failed »
+log d'Authelia: « user '<user>' ... banned until 11:50:42PM (+00:00) »` },
+    { id: "J60", time: "00:45", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape A.10: relancer init, redémarrer Docker",
+      cmd: `python3 sudo_run.py 'dotbox init'
+python3 sudo_run.py 'systemctl restart docker'
+docker logs traefik`,
+      does: "Relancé: que des « check », aucun secret ni compte recréé. Puis Docker redémarré.",
+      effect: "Docker redémarré.",
+      note: "Deux constats dans les logs de Traefik. 1. Juste après le redémarrage, Authelia repasse par « health: starting »: Traefik ne route pas un container pas encore sain, le middleware authelia@docker n'existe plus pendant quelques secondes, et Traefik désactive alors le routeur du tableau de bord (404) au lieu de l'ouvrir sans protection. Bon comportement: fermé en cas de doute. 2. Un avertissement « maxResponseBodySize is not configured » (risque de saturation mémoire): la doc d'intégration d'Authelia règle pourtant cette limite à 8192 dans son exemple, oubliée dans A.4. Corrigé en J61.",
+      result: `init: que des check
+authelia: health starting puis healthy, traefik: healthy, socket-proxy: up (pas arrêté)
+traefik: middleware "authelia@docker" does not exist (pendant le démarrage d'Authelia)
+traefik: WRN maxResponseBodySize is not configured` },
+    { id: "J61", time: "00:46", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Limiter la réponse d'Authelia à 8 Ko (maxResponseBodySize)",
+      cmd: `traefik.http.middlewares.authelia.forwardauth.maxResponseBodySize: "8192"
+python3 sudo_run.py 'dotbox init'`,
+      does: "Le réglage de la doc d'Authelia, ajouté au compose.yml généré et au fichier attendu des tests.",
+      effect: "Serveur: /opt/authelia/compose.yml réécrit, Authelia recréé par init. L'avertissement a disparu.",
+      result: `  write    /opt/authelia/compose.yml
+  start    authelia
+tableau de bord sans connexion: 302 vers auth.<domaine>
+authelia healthy, plus aucun avertissement maxResponseBodySize` },
+    { id: "J62", time: "00:59", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "A.9: lire le code de vérification d'Authelia",
+      cmd: `python3 sudo_run.py 'tail -25 /opt/authelia/config/notification.txt'`,
+      does: "Mathod95 enregistre la double authentification dans son navigateur. Authelia demande d'abord un code de vérification d'identité, qu'il écrit dans notification.txt (D21). Pour le lire soi-même sur le serveur: sudo tail -20 /opt/authelia/config/notification.txt.",
+      effect: "Aucun.",
+      result: `The following one-time code should only be used in the prompt displayed in your browser.
+<code masqué>
+(plus un lien pour révoquer le code, et l'IP d'où vient la demande)` },
+    { id: "J63", time: "01:25", status: "fait", where: "Navigateur de Mathod95", kind: "ecriture",
+      title: "Étape A.9: connexion, code à 6 chiffres, tableau de bord de Traefik",
+      does: "Mathod95 ouvre traefik.<domaine> (avertissement du certificat de staging accepté), se connecte avec <user> et le mot de passe affiché par init, enregistre le code à 6 chiffres, puis arrive sur le tableau de bord de Traefik. À sa demande, la clé du code est rangée sur son PC (~/.config/dotbox-test/authelia-totp, 0600) avec un petit script qui calcule le code (totp.py), pour ne pas encombrer son app avec un serveur de test.",
+      effect: "Serveur: le code à 6 chiffres de <user> enregistré dans la base d'Authelia.",
+      note: "Trois leçons. 1. Le code de vérification d'identité n'ouvre qu'une courte fenêtre: passé ce délai, Authelia refuse l'enregistrement quel que soit le code (« user session elevation was expired »). Il a fallu recommencer, et chaque clic sur « Ajouter » crée un nouveau code et une nouvelle clé. 2. Après l'enregistrement, il faut encore taper un code pour entrer: enregistrer un appareil n'est pas s'authentifier avec. 3. Authelia n'a pas pu prévenir <user> de cet « événement important » (« no email »): le compte n'a pas d'adresse. Voir A.11. Le tableau de bord n'apparaît pas dans access.log: Traefik n'y écrit pas les requêtes vers ses propres pages (accessLog.addInternals, désactivé par défaut).",
+      result: `Authelia: TOTP de <user> enregistré
+tableau de bord de Traefik affiché dans le navigateur (après mot de passe et code à 6 chiffres)
+log d'Authelia: « Error occurred looking up user details for user '<user>' while attempting to alert them of an important event » error="no email"` },
+    { id: "J64", time: "01:32", status: "fait", where: "Serveur", kind: "lecture",
+      title: "Après un redémarrage du serveur: tout repart seul",
+      cmd: `# redémarrage lancé par Mathod95 (sudo reboot)
+ssh dotbox-test 'uptime -s; systemctl is-active docker containerd; systemctl is-enabled docker containerd
+docker ps; docker inspect -f "{{.Name}} {{.State.StartedAt}} {{.RestartCount}}" traefik socket-proxy authelia'
+curl -k https://auth.<domaine>/api/health; curl -k https://traefik.<domaine>/; curl http://auth.<domaine>/`,
+      does: "Le vrai test du critère « les apps repartent seules » (la spec), que le redémarrage de Docker ne prouvait pas à cause de live-restore.",
+      effect: "Aucun.",
+      note: "Juste après le démarrage, le tableau de bord a répondu 404 quelques secondes: Traefik n'avait pas encore pris en compte Authelia, qui venait d'être « healthy ». Fermé pendant ce court moment, jamais ouvert. Un avertissement de Traefik au démarrage, à regarder plus tard: « Traefik can reject some encoded characters in the request path [...] it is recommended to set these options to false to avoid split-view situation » (options encodedCharacters des points d'entrée, doc de migration de Traefik v3).",
+      result: `démarré à 01:32:25. docker, containerd: active et enabled
+traefik, socket-proxy, authelia: démarrés seuls 14 s après, restarts=0, traefik et authelia healthy
+auth health: {"status":"OK"}. http -> 301. certificat staging toujours servi (valable jusqu'au 18 janvier 2027)
+tableau de bord: 404 pendant quelques secondes, puis 302 vers auth.<domaine>` },
+    { id: "J65", time: "01:57", status: "fait", where: "PC", kind: "ecriture",
+      title: "Étape A.11: mot de passe gardé, adresse factice, WebAuthn, récapitulatif",
+      does: "src/secrets.rs: store et read. src/authelia.rs: le mot de passe gardé dans /opt/dotbox/secrets/authelia_password_<user> au moment où le compte est créé (D25), l'adresse factice <user>@<domaine> dans users_database.yml, ajoutée sans toucher au hash d'un compte qui n'en a pas (J63), webauthn activé avec display_name « Dot Box » (D27), Duo toujours désactivé, Authelia redémarré si sa base d'utilisateurs change. src/user.rs: nouvelle commande dotbox user password [<user>], root seulement. src/init.rs: le récapitulatif de fin (D26).",
+      effect: "PC: crée src/user.rs, modifie src/authelia.rs, src/secrets.rs, src/init.rs, src/main.rs, tests/expected/authelia/configuration.yml. Pas commité.",
+      result: `fmt, clippy: ok. tests: 25 sur 25 (nouveau: adresse ajoutée sans toucher au hash ni aux groupes)
+dotbox --help: init, user. dotbox user --help: password
+dotbox user password sans root: « the password is readable by root only »` },
+    { id: "J66", time: "01:58", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Étape A.12: A.11 sur le serveur",
+      cmd: `python3 sudo_run.py 'dotbox init'
+python3 sudo_run.py 'dotbox user password'
+curl -k -d '{"username":"<user>","password":"••••"}' https://auth.<domaine>/api/firstfactor
+# mot de passe déjà connu rangé dans les secrets, par l'entrée standard:
+ssh dotbox-test "sudo -S sh -c 'umask 077; cat > /opt/dotbox/secrets/authelia_password_<user>'"
+python3 sudo_run.py 'dotbox init; dotbox user password'`,
+      does: "Le compte de <user> existait déjà (créé avant D25): init ajoute seulement l'adresse et active WebAuthn, puis affiche le récapitulatif. dotbox user password dit qu'aucun mot de passe n'est gardé. Une vraie connexion vérifie que le hash est intact. Puis le mot de passe déjà connu est rangé dans les secrets, comme init le fait pour un nouveau compte.",
+      effect: "Serveur: users_database.yml (adresse ajoutée, toujours 0600), configuration.yml (WebAuthn), Authelia redémarré, /opt/dotbox/secrets/authelia_password_<user> (0600, root).",
+      note: "Correction en route: le récapitulatif renvoyait vers sudo dotbox user password même quand aucun mot de passe n'était gardé. Il le dit maintenant.",
+      result: `  write    /opt/authelia/config/users_database.yml (address <user>@<domaine>, never used to send)
+  write    /opt/authelia/config/configuration.yml
+  restart  authelia (new configuration)
+
+  summary  Dot Box core is running
+  server   Debian GNU/Linux 13 (trixie) amd64, Docker 29.9.3
+  domain   <domaine> (certificates: letsencrypt-staging)
+  traefik  v3.7.19, dashboard https://traefik.<domaine> (admins, two factors)
+  authelia 4.39.28, login page https://auth.<domaine>
+  login    <user> (group admins)
+  password kept for root: sudo dotbox user password
+  2fa      at first login, register a 6-digit code app or a passkey
+  codes    verification codes: sudo tail -20 /opt/authelia/config/notification.txt
+  next     CrowdSec: not available yet in this version
+connexion avec le mot de passe: {"status":"OK"} (hash intact)
+dotbox user password: <masqué> (<user>, set by dotbox init), identique à celui du PC` }
   ];
 
   var PLAN = [
@@ -770,6 +1031,163 @@ docker run --rm hello-world && docker image rm hello-world'`,
           cmd: `sudo dotbox init --user <user>`,
           does: "Tout est en place: chaque ligne doit être un « check ».",
           effect: "Aucun." }
+      ] },
+    { phase: "T", title: "Traefik dans dotbox init",
+      intro: "Faite (J48 à J54): Traefik et son socket proxy tournent sur le serveur, certificat de staging obtenu, tous les tests passés. Plan validé par Mathod95 (« tu peux déjà le coder »). Traefik v3.7.19 (dernière version stable, D15). Domaine de test <domaine> (D16), certificats de staging (D17), ni e-mail ni ZeroSSL (D18, D19). Socket proxy linuxserver (D20). Le tableau de bord de Traefik (traefik.<domaine>, niveau two_factor) attendra Authelia (la phase suivante). Docs suivies: doc.traefik.io (Docker provider, entrypoints, ACME HTTP-01).",
+      steps: [
+        { id: "T.1", status: "fait", ref: "J48, J50", kind: "ecriture", where: "PC (code)", title: "Domaine et autorité de certification dans dotbox.yml",
+          cmd: `sudo dotbox init --user <user> --domain <domaine> [--ca letsencrypt-staging]
+# /opt/dotbox/dotbox.yml
+domain: <domaine>
+ca: letsencrypt-staging        # letsencrypt (défaut) ou letsencrypt-staging (tests)
+user: <user>`,
+          does: "init demande le domaine s'il n'est pas en option (aucun e-mail, D18), puis les écrit dans /opt/dotbox/dotbox.yml, le fichier unique de la spec. Relancé, il les relit et ne redemande rien. Une dépendance de plus pour lire et écrire ce YAML.",
+          effect: "Serveur, au test: /opt/dotbox/dotbox.yml (root, 0644, sans secret)." },
+        { id: "T.2", status: "fait", ref: "J48, J50", kind: "ecriture", where: "PC (code)", title: "Vérifier le serveur avant Traefik",
+          cmd: `getent ahostsv4 <domaine> test-<aléatoire>.<domaine>    # doivent donner une IP du serveur
+ip -br addr                                               # les IP du serveur
+ss -tlnp 'sport = :80 or sport = :443'                    # rien ne doit écouter`,
+          does: "La spec: init vérifie que *.<domaine> et <domaine> pointent vers le serveur (un nom au hasard teste le joker), et que les ports 80 et 443 sont libres (ou déjà tenus par le Traefik de Dot Box). Sinon il s'arrête, sans rien modifier, et dit quoi corriger.",
+          effect: "Aucun." },
+        { id: "T.3", status: "fait", ref: "J48, J50-J52", kind: "ecriture", where: "PC (code)", title: "Les fichiers de Traefik dans /opt/traefik",
+          cmd: `/opt/traefik/compose.yml          # généré par dotbox, à ne pas modifier
+/opt/traefik/config/traefik.yml   # configuration statique
+/opt/traefik/config/acme.json     # certificats, 0600
+/opt/traefik/logs/access.log      # logs d'accès en JSON, pour CrowdSec plus tard`,
+          does: "compose.yml: deux services. traefik: image traefik:v3.7.19, ports 80 et 443 (les seuls publiés sur le serveur), networks dotbox et socket, restart unless-stopped, no-new-privileges, healthcheck (traefik healthcheck --ping). socket-proxy (D20): image lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106, socket Docker en :ro, CONTAINERS=1 et POST=0, système de fichiers en lecture seule, /run en tmpfs, seulement sur le network interne socket (internal: true, sans accès à Internet). Traefik lit Docker par tcp://socket-proxy:2375. Logs d'accès tournés chaque jour par logrotate (/etc/logrotate.d/dotbox-traefik, 14 jours gardés, Traefik rouvre son fichier sur le signal USR1). traefik.yml: entrée web (:80) qui redirige tout vers websecure (:443), sauf le challenge HTTP-01 que Traefik sert lui-même. websecure avec le certResolver par défaut. Provider Docker avec exposedByDefault: false (seuls les containers marqués traefik.enable=true sont routés) et network dotbox. certificatesResolvers: le challenge HTTP-01 sur web, caServer selon ca (staging pour les tests). Logs d'accès en JSON dans un fichier. Pas de tableau de bord exposé pour l'instant.",
+          effect: "Serveur, au test: /opt/traefik/ et /etc/logrotate.d/dotbox-traefik." },
+        { id: "T.4", status: "fait", ref: "J48, J50, J52", kind: "ecriture", where: "PC (code)", title: "Démarrer Traefik et attendre qu'il soit prêt",
+          cmd: `docker compose -f /opt/traefik/compose.yml up -d
+docker inspect -f '{{.State.Health.Status}}' traefik     # attend healthy`,
+          does: "Lance Traefik, attend que son healthcheck réponde, sinon affiche ses derniers logs et s'arrête. Relancé: si les fichiers n'ont pas changé et que Traefik tourne, rien à faire. S'ils ont changé: docker compose up -d le recrée.",
+          effect: "Serveur, au test: un container traefik.",
+          undo: `docker compose -f /opt/traefik/compose.yml down
+rm -r /opt/traefik` },
+        { id: "T.5", status: "fait", ref: "J49", kind: "lecture", where: "PC", title: "Vérifier sur le PC",
+          cmd: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+          does: "Tests ajoutés: compose.yml et traefik.yml générés pour example.com, comparés à un exemplaire attendu dans tests/ (avec staging et sans), lecture et écriture de dotbox.yml, refus d'un domaine mal formé.",
+          effect: "Aucun." },
+        { id: "T.6", status: "fait", ref: "J50-J51", kind: "ecriture", where: "PC → Serveur", title: "Installer le binaire, lancer init avec le domaine",
+          cmd: `python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox'
+python3 sudo_run.py 'dotbox init --user <user> --domain <domaine> --ca letsencrypt-staging'`,
+          does: "Tout ce qui est déjà en place n'affiche que des « check », puis Traefik est installé et démarré.",
+          effect: "Serveur: /opt/dotbox/dotbox.yml, /opt/traefik/, container traefik." },
+        { id: "T.7", status: "fait", ref: "J53", kind: "ecriture", where: "PC → Serveur", title: "Tester un vrai certificat (staging) avec un container de test",
+          cmd: `docker run -d --name whoami --network dotbox \\
+  -l traefik.enable=true -l 'traefik.http.routers.whoami.rule=Host(\`whoami.<domaine>\`)' traefik/whoami
+curl -sI http://whoami.<domaine>                    # 301 vers https
+curl -sk https://whoami.<domaine>                   # la réponse de whoami
+echo | openssl s_client -connect whoami.<domaine>:443 -servername whoami.<domaine> 2>/dev/null | openssl x509 -noout -issuer -dates
+docker rm -f whoami`,
+          does: "traefik/whoami est un petit container officiel de Traefik qui renvoie la requête reçue. Il sert de fausse app, le temps de vérifier: la redirection HTTP vers HTTPS, le certificat obtenu par HTTP-01 (émetteur « (STAGING) »), et qu'un container sans traefik.enable=true n'est pas routé. Puis il est supprimé.",
+          effect: "Serveur: un certificat staging pour whoami.<domaine> dans acme.json. Le container et son image sont supprimés après." },
+        { id: "T.8", status: "fait", ref: "J54", kind: "ecriture", where: "PC → Serveur", title: "Relancer init, puis redémarrer Docker",
+          cmd: `python3 sudo_run.py 'dotbox init --user <user>'
+python3 sudo_run.py 'systemctl restart docker'
+docker ps --format '{{.Names}} {{.Status}}'`,
+          does: "Relancé sans options: il relit dotbox.yml et n'affiche que des « check ». Puis un redémarrage de Docker: Traefik doit repartir seul (critère de réussite de la spec).",
+          effect: "Serveur: Docker redémarré, Traefik de nouveau en marche." }
+      ] },
+    { phase: "A", title: "Authelia dans dotbox init",
+      intro: "Faite (J55 à J66), test dans le navigateur compris. Plan validé (« Go »). Authelia 4.39.28 (dernière version stable, D15), derrière Traefik, sur auth.<domaine>. Docs suivies (authelia.com, v4.39.28): intégration Traefik (forward auth), « Get started », méthode des secrets, base d'utilisateurs en fichier, stockage SQLite, notifications, contrôle d'accès, et l'exemple officiel « lite ». Premier usage: le tableau de bord de Traefik sur traefik.<domaine>, au niveau two_factor comme le prévoit la spec. Codes de vérification dans un fichier (D21), un compte admin (D22), mot de passe plus code à 6 chiffres (D23), Authelia gardé (D24).",
+      steps: [
+        { id: "A.1", status: "fait", ref: "J56, J58", kind: "ecriture", where: "PC (code)", title: "Les secrets, générés sur le serveur",
+          cmd: `/opt/dotbox/secrets/                       # root, 0700
+  authelia_session_secret                  # 0600, 64 caractères aléatoires
+  authelia_storage_encryption_key          # 0600
+  authelia_jwt_secret                      # 0600 (réinitialisation de mot de passe)`,
+          does: "dotbox les tire de /dev/urandom une seule fois, puis ne les touche plus (relancer init ne les change pas, sinon toutes les sessions et la base seraient perdues). Authelia les lit par des fichiers montés en lecture seule (variables AUTHELIA_..._FILE), la méthode que recommande sa doc: jamais en variable d'environnement en clair (D20).",
+          effect: "Serveur, au test: /opt/dotbox/secrets/." },
+        { id: "A.2", status: "fait", ref: "J55-J56, J58", kind: "ecriture", where: "PC (code)", title: "Le compte Authelia",
+          cmd: `docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2 --random --random.length 24
+# /opt/authelia/config/users_database.yml   (0600)
+users:
+  <user>:                         # même nom que le compte Linux (D22)
+    displayname: '<user>'
+    password: '$argon2id$...'      # seulement le hash
+    groups: [admins]`,
+          does: "Un seul compte, au nom de l'utilisateur Linux, dans le groupe admins (D22). Le mot de passe est tiré au hasard par Authelia lui-même (option --random), haché en argon2id, et affiché une seule fois à la fin de init (comme l'exemple de la page CLI). Il n'apparaît dans aucune commande et seul son hash est écrit. Relancé, init ne recrée pas le compte.",
+          effect: "Serveur, au test: users_database.yml." },
+        { id: "A.3", status: "fait", ref: "J56, J58", kind: "ecriture", where: "PC (code)", title: "La configuration d'Authelia",
+          cmd: `/opt/authelia/config/configuration.yml
+server: address tcp://:9091
+authentication_backend: file /config/users_database.yml (argon2id)
+access_control: default_policy deny
+  traefik.<domaine> -> two_factor, groupe admins seulement
+session.cookies: domain <domaine>, authelia_url https://auth.<domaine>
+storage: SQLite /config/db.sqlite3 (chiffré par la clé de A.1)
+notifier: filesystem, /config/notification.txt (D21)
+regulation: 3 essais ratés en 2 minutes -> IP bloquée 5 minutes
+totp: issuer <domaine>, codes à 6 chiffres (D23), webauthn et duo désactivés`,
+          does: "Tout est refusé par défaut (default_policy: deny): une app n'est accessible que si une règle l'autorise. SQLite est le stockage que la doc recommande pour une petite installation. La « regulation » d'Authelia bloque les essais de mot de passe en rafale (en plus de CrowdSec, plus tard). Les règles des apps seront ajoutées par dotbox install et dotbox sync.",
+          effect: "Serveur, au test: configuration.yml." },
+        { id: "A.4", status: "fait", ref: "J56, J58, J61", kind: "ecriture", where: "PC (code)", title: "compose.yml d'Authelia et middleware de Traefik",
+          cmd: `/opt/authelia/compose.yml
+image: authelia/authelia:4.39.28, network dotbox, restart unless-stopped, no-new-privileges
+labels:
+  traefik.http.routers.authelia.rule: Host(\`auth.<domaine>\`)
+  traefik.http.middlewares.authelia.forwardAuth.address: http://authelia:9091/api/authz/forward-auth
+  traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: true
+  traefik.http.middlewares.authelia.forwardAuth.maxResponseBodySize: 8192
+  traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: Remote-User,Remote-Groups,Remote-Email,Remote-Name`,
+          does: "Les labels de la doc d'intégration d'Authelia. Le middleware authelia@docker est ce qu'une app ajoute à son routeur pour être protégée: Traefik demande à Authelia, à chaque requête, si l'utilisateur a le droit d'entrer, et sinon l'envoie sur la page de connexion. Authelia transmet ensuite l'utilisateur à l'app par les en-têtes Remote-User..., que aliasHeadersStrategy: delete protège déjà (J52).",
+          effect: "Serveur, au test: /opt/authelia/compose.yml, container authelia.",
+          undo: `docker compose -f /opt/authelia/compose.yml down
+rm -r /opt/authelia /opt/dotbox/secrets/authelia_*` },
+        { id: "A.5", status: "fait", ref: "J56, J58", kind: "ecriture", where: "PC (code)", title: "Le tableau de bord de Traefik, derrière Authelia",
+          cmd: `# traefik.yml
+api:
+  dashboard: true
+# labels du container traefik
+traefik.http.routers.dashboard.rule: Host(\`traefik.<domaine>\`)
+traefik.http.routers.dashboard.service: api@internal
+traefik.http.routers.dashboard.middlewares: authelia@docker`,
+          does: "Le tableau de bord (lecture seule: routes, services, middlewares) sur traefik.<domaine>, jamais sans Authelia. Pas d'api.insecure (qui l'ouvrirait sans protection sur le port 8080).",
+          effect: "Serveur, au test: traefik.yml et compose.yml de Traefik réécrits, Traefik recréé." },
+        { id: "A.6", status: "fait", ref: "J57", kind: "lecture", where: "PC", title: "Vérifier sur le PC",
+          cmd: `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+cargo build --release --target x86_64-unknown-linux-musl`,
+          does: "Tests: configuration.yml et compose.yml générés pour example.com, comparés aux fichiers attendus. Secrets: longueur, alphabet, jamais réécrits s'ils existent. users_database.yml: seulement le hash.",
+          effect: "Aucun." },
+        { id: "A.7", status: "fait", ref: "J58", kind: "ecriture", where: "PC → Serveur", title: "Installer le binaire, lancer init",
+          cmd: `python3 sudo_run.py 'dotbox init'`,
+          does: "Tout ce qui est en place n'affiche que des « check ». Puis Authelia: secrets, compte, configuration, démarrage, attente du healthcheck. À la fin, le mot de passe de l'administrateur, une seule fois.",
+          effect: "Serveur: /opt/authelia/, /opt/dotbox/secrets/, container authelia, Traefik recréé avec son tableau de bord." },
+        { id: "A.8", status: "fait", ref: "J59", kind: "lecture", where: "PC → Serveur", title: "Tester la protection",
+          cmd: `curl -sk https://auth.<domaine>/api/health            # Authelia répond
+curl -sk -o /dev/null -w '%{http_code} %{redirect_url}' https://traefik.<domaine>/   # 302 vers auth.<domaine>
+# connexion par l'API avec le mot de passe: 1er facteur accepté, mais le tableau de bord reste refusé (two_factor)
+# 3 mauvais mots de passe: la 4e tentative est refusée (regulation)`,
+          does: "Vérifie qu'on ne peut pas voir le tableau de bord sans être connecté, qu'un mot de passe seul ne suffit pas (double authentification exigée), et que les essais en rafale sont bloqués.",
+          effect: "Aucun durable (l'IP du PC est bloquée 5 minutes par le test de regulation)." },
+        { id: "A.9", status: "fait", ref: "J62-J63", kind: "ecriture", where: "Navigateur de Mathod95", title: "Test complet par Mathod95, dans le navigateur",
+          does: "Ouvrir https://traefik.<domaine> (le certificat de staging affiche un avertissement, à accepter), se connecter avec le compte <user> et le mot de passe affiché par init, enregistrer l'app de codes à 6 chiffres (D23), puis voir le tableau de bord de Traefik. Le code de vérification d'identité demandé par Authelia est écrit dans notification.txt (D21): Claude le lit et te le donne.",
+          effect: "Serveur: l'appareil de double authentification de l'administrateur, enregistré dans la base d'Authelia." },
+        { id: "A.10", status: "fait", ref: "J60-J61", kind: "ecriture", where: "PC → Serveur", title: "Relancer init, redémarrer Docker",
+          cmd: `python3 sudo_run.py 'dotbox init'
+python3 sudo_run.py 'systemctl restart docker'`,
+          does: "Relancé: que des « check », aucun secret ni mot de passe changé. Après le redémarrage de Docker, Authelia et Traefik sont toujours là.",
+          effect: "Aucun changement." },
+        { id: "A.11", status: "fait", ref: "J65", kind: "ecriture", where: "PC (code)", title: "Mot de passe gardé, adresse factice, WebAuthn, récapitulatif de fin",
+          cmd: `# D25: à la création du compte, en plus de l'afficher
+/opt/dotbox/secrets/authelia_password_<user>          # 0600, root seulement
+sudo dotbox user password [<user>]                    # le relit (nouvelle commande, famille « dotbox user » de la spec)
+# J63: users_database.yml
+  email: '<user>@<domaine>'                           # factice, jamais utilisée pour envoyer (notifier filesystem)
+# D27: configuration.yml
+webauthn:
+  display_name: 'Dot Box'                             # passkeys en plus du code à 6 chiffres, Duo toujours désactivé
+# D26: à la fin de init
+  summary  ...                                        # ce qui tourne, adresses, compte, mot de passe, où lire les codes`,
+          does: "Le mot de passe est écrit dans les secrets au moment où le compte est créé, jamais après (un compte créé avant n'a pas de mot de passe gardé: dotbox user password le dit). L'adresse factice est ajoutée à un compte existant qui n'en a pas, sans toucher à son hash. Le récapitulatif reprend: serveur, domaine et certificats, versions de Docker, Traefik et Authelia, adresse de connexion et compte, mot de passe (affiché seulement s'il vient d'être créé, sinon la commande pour le relire), où lire les codes de vérification, le tableau de bord, et ce qui manque encore (CrowdSec). init redémarre Authelia si sa configuration ou sa base d'utilisateurs a changé.",
+          effect: "PC: src/authelia.rs, src/init.rs, src/main.rs, nouveau src/user.rs, tests. Serveur, au test: configuration.yml et users_database.yml réécrits, Authelia redémarré." },
+        { id: "A.12", status: "fait", ref: "J66", kind: "ecriture", where: "PC → Serveur", title: "Tester A.11 sur le serveur",
+          cmd: `python3 sudo_run.py 'dotbox init'               # adresse ajoutée, WebAuthn, récapitulatif
+python3 sudo_run.py 'dotbox user password'          # compte créé avant D25: pas de mot de passe gardé
+# pour la suite des tests: le mot de passe déjà connu est rangé dans /opt/dotbox/secrets, comme le ferait init`,
+          does: "Le compte de <user> existe déjà: init doit seulement lui ajouter l'adresse, activer WebAuthn et afficher le récapitulatif. Puis dotbox user password, avant et après avoir rangé le mot de passe existant.",
+          effect: "Serveur: Authelia redémarré, /opt/dotbox/secrets/authelia_password_<user>." }
       ] },
     { phase: "1", title: "Accès root",
       intro: "Remplacée: c'est dotbox init, lancé par install.sh, qui installe sudo et prépare l'utilisateur (D8).",
@@ -948,7 +1366,49 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Pas de scripts à la main dans lab/: chaque morceau est codé dans dotbox init, puis testé avec le binaire sur le serveur, comme sudo et l'utilisateur en phase B. Docker d'abord, Traefik, Authelia et CrowdSec ensuite.",
       reco: "Docker suit la doc officielle (docs.docker.com), selon le système (Debian ou Ubuntu), avec les bonnes pratiques: paquets en conflit retirés avec accord, clé du dépôt vérifiée. Plan en phase C. L'ancienne phase 2, manuelle, est refusée." },
     { t: "Ubuntu testé sur le PC seulement, pour l'instant (ancienne Q10)",
-      reco: "Un seul serveur, en Debian 13: le chemin Ubuntu est couvert par les tests du code sur le PC (dépôt, nom de version, paquets en conflit). Un vrai test Ubuntu viendra quand un serveur sera disponible." }
+      reco: "Un seul serveur, en Debian 13: le chemin Ubuntu est couvert par les tests du code sur le PC (dépôt, nom de version, paquets en conflit). Un vrai test Ubuntu viendra quand un serveur sera disponible." },
+    { t: "Toujours la dernière version stable, fixée (ancienne Q6)",
+      p: "Pour Docker Engine, la dernière version du dépôt officiel au moment de l'installation (déjà le cas en phase C). Pour les images du core (Traefik, Authelia, CrowdSec): la dernière version stable au moment où le code est écrit.",
+      reco: "Chaque image est écrite avec sa version exacte (par exemple traefik:v3.x.y), jamais latest, comme le veut la spec. Elle est relevée sur la page officielle des versions de l'outil et notée dans le Journal. Les montées de version passeront plus tard par dotbox update et Renovate." },
+    { t: "Domaine de test: un sous-domaine du domaine de Mathod95 (ancienne Q7)",
+      p: "Le domaine personnel de Mathod95 sert déjà son serveur de production (un joker * vers la production). Pour le serveur de test: deux enregistrements A, *.dotbox et dotbox, vers le serveur de test. En DNS, le plus précis l'emporte: tout ce qui finit par .dotbox.<domaine perso> va au serveur de test, le reste ne change pas.",
+      reco: "Le domaine de Dot Box est donc <domaine> = dotbox.<domaine perso>. Il n'est écrit ni dans le repo ni dans cette page (<domaine>), seulement sur le serveur, dans /opt/dotbox/dotbox.yml. Vérifié en J45." },
+    { t: "Certificats Let's Encrypt de test (staging) pendant les essais",
+      p: "Let's Encrypt limite les certificats par domaine enregistré, ici le domaine personnel entier, que la production utilise aussi (50 nouveaux certificats par semaine, 5 par semaine pour exactement les mêmes noms). Pendant les essais, on crée, supprime et recrée des certificats: on pourrait gêner la production.",
+      reco: "Tant qu'on teste, Traefik utilise l'environnement de staging de Let's Encrypt (acme-staging-v02.api.letsencrypt.org): mêmes règles, limites beaucoup plus larges, mais certificats non reconnus par les navigateurs (émetteur « (STAGING) »). Dans dotbox.yml: ca: letsencrypt-staging. Passage aux vrais certificats (ca: letsencrypt) seulement quand tout marche, et sur décision de Mathod95." },
+    { t: "Aucun e-mail (ancienne Q13)",
+      p: "Let's Encrypt n'envoie plus d'e-mails d'expiration depuis 2025 et n'exige pas d'e-mail pour créer un compte. Remarque de Mathod95: une information facultative qui ne sert à rien n'est pas à demander, configurer ni sauvegarder.",
+      reco: "dotbox init ne demande que le domaine. Aucun e-mail dans dotbox.yml ni dans la configuration de Traefik. La spec (pages Installation et Basics: « l'e-mail du certificat ») est à revoir avec la mise à jour groupée de la doc (D7)." },
+    { t: "Pas de ZeroSSL",
+      p: "La spec du 9 novembre laissait choisir ZeroSSL à la place de Let's Encrypt (ca: zerossl). ZeroSSL exige un compte et des identifiants liés à un e-mail (D18 n'en veut pas).",
+      reco: "Let's Encrypt seulement. ca dans dotbox.yml ne garde que letsencrypt (défaut) et letsencrypt-staging (tests, D17). ZeroSSL est retiré de la spec: pages Installation, Basics et Prerequisites à revoir (D7), ligne de la Roadmap corrigée." },
+    { t: "Socket proxy pour Traefik, avec linuxserver/socket-proxy (ancienne Q14)",
+      p: "Pourquoi un socket proxy: le socket Docker est la télécommande complète de Docker. Le donner à Traefik, seul container exposé à Internet, revient à lui donner les droits de root sur le serveur. La doc officielle de Traefik le signale (« Security Note ») et recommande de filtrer les requêtes avec un socket proxy, sur un network privé réservé à Traefik. Saltbox ne le fait pas: son Traefik monte le socket directement.",
+      l: ["Pourquoi linuxserver/socket-proxy plutôt que Tecnativa (celui que cite Traefik): il est dérivé de Tecnativa et garde les mêmes variables, mais linuxserver le reconstruit chaque semaine avec les correctifs de sécurité de son image de base (dernière version le 15 novembre 2026, contre juillet 2026 pour Tecnativa). Pour un composant de sécurité, recevoir les correctifs vite compte plus que d'être l'original.",
+          "Il est fait pour tourner en lecture seule (read_only, /run en tmpfs), comme le montre sa doc. C'est aussi l'image que Saltbox a choisie pour son propre rôle de socket proxy.",
+          "Réglages: tout est fermé par défaut, on n'ouvre que ce que Traefik lit (CONTAINERS=1, avec EVENTS, PING et VERSION déjà ouverts par défaut). POST=0: aucune écriture. Le proxy n'est joignable que par Traefik, sur un network interne (sans accès à Internet).",
+          "Version fixée (D15): lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106."],
+      reco: "Si Traefik est un jour compromis, l'attaquant peut lire la liste des containers et leurs réglages, mais ne peut ni en créer, ni en lancer, ni en arrêter. D'où une règle à garder: les secrets dans des fichiers (/opt/dotbox/secrets/), jamais en variables d'environnement, qui restent lisibles. À expliquer dans la page Installation (proposition blue/green, D7)." },
+    { t: "Codes de vérification d'Authelia dans un fichier (ancienne Q15)",
+      reco: "notifier: filesystem. Le code est écrit dans /opt/authelia/config/notification.txt, l'administrateur le lit en SSH. Aucun e-mail (D18). Une commande dotbox pourra l'afficher plus tard." },
+    { t: "Un seul compte Authelia, au nom de l'utilisateur Linux (ancienne Q16)",
+      p: "D'abord noté « un compte appelé admin », sur une question de Mathod95 prise à tort pour une décision. Après explication (deux comptes différents: le compte Linux pour SSH et sudo, le compte Authelia pour la page de connexion web), Mathod95 a choisi: le compte Authelia porte le même nom que le compte Linux (comme le fait Saltbox, à notre connaissance). Il n'y a aucun compte admin en plus: un seul compte, donc pas de surface d'attaque supplémentaire.",
+      reco: "init crée un seul compte Authelia, nommé comme l'utilisateur de dotbox.yml (<user>), dans le groupe admins. « Administrateur » veut seulement dire membre de ce groupe: les règles réservent le tableau de bord de Traefik au groupe admins, et les comptes ajoutés plus tard (dotbox user) n'y seront pas. Mot de passe web tiré au hasard, affiché une seule fois, distinct du mot de passe Linux. init ne demande plus de nom d'administrateur: la spec (pages CLI et Installation) est à revoir avec la doc (D7)." },
+    { t: "Double authentification: mot de passe et code à 6 chiffres (ancienne Q17)",
+      p: "Sur son Saltbox, Mathod95 se connecte avec un nom et un mot de passe. Avec Dot Box: pareil, plus un code TOTP à 6 chiffres (Aegis, Google Authenticator, 1Password...) pour ce qui est en two_factor, comme le tableau de bord de Traefik. Les apps en one_factor ne demandent que le mot de passe.",
+      reco: "TOTP seulement. WebAuthn (passkeys, clés de sécurité) et Duo ne sont pas activés. WebAuthn pourra être ajouté plus tard." },
+    { t: "On garde Authelia",
+      p: "Question de Mathod95, avec une liste d'alternatives: Tinyauth, Authentik, Keycloak, Zitadel (voir la note de contexte « Authelia et ses alternatives »).",
+      reco: "Authelia reste: léger (un seul container, SQLite), règles par domaine qui correspondent aux niveaux d'accès de la spec (two_factor, one_factor, public), blocage des essais en rafale, et déjà connu de Mathod95 par Saltbox. Le plan de la phase A ne change pas." },
+    { t: "Le mot de passe web gardé aussi sur le serveur (ancienne Q18)",
+      p: "Le mot de passe Authelia n'était qu'affiché une fois, seul son hash restait sur le serveur: perdu, il fallait le réinitialiser. L'installation se fera sur le serveur (su -, puis wget ... | bash): c'est là que le mot de passe doit pouvoir se retrouver.",
+      reco: "En plus de l'affichage: le mot de passe est gardé dans /opt/dotbox/secrets/ (root seulement), et une commande dotbox permet de le relire. Risque faible: celui qui est déjà root sur le serveur a de toute façon tout le reste." },
+    { t: "Un récapitulatif à la fin de dotbox init",
+      p: "Idée de Mathod95: à la fin de dotbox init, un résumé de ce qui est installé et de comment s'en servir, avec le mot de passe.",
+      reco: "À définir dans le plan (A.11): adresses (auth.<domaine>, traefik.<domaine>), compte, mot de passe, comment relire le mot de passe et les codes de vérification, ce qui reste à faire." },
+    { t: "WebAuthn en plus du code à 6 chiffres, Duo toujours désactivé (ancienne Q19, modifie D23)",
+      p: "Authelia avertit que désactiver WebAuthn « sape considérablement la sécurité ». Le code à 6 chiffres peut être recopié par un faux site, une passkey non.",
+      reco: "WebAuthn activé (passkeys: Windows Hello, empreinte du téléphone, clés de sécurité), en plus du code à 6 chiffres. Chacun choisit au moment d'enregistrer un appareil. Duo reste désactivé. À coder en A.11." }
   ];
 
   var QUESTIONS = [
@@ -982,11 +1442,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { n: 4, t: "Tester les quatre niveaux d'accès sans app?",
       l: ["Un container de test traefik/whoami (une page qui renvoie la requête reçue), monté quatre fois sur quatre sous-domaines, retiré après le test.",
           "Ou reporter le test des quatre niveaux à l'arrivée des apps."] },
-    { n: 5, t: "Garder les fichiers validés dans lab/ du repo?",
+    { n: 5, done: "D13", t: "Garder les fichiers validés dans lab/ du repo?",
       p: "En miroir de /opt (lab/opt/traefik/compose.yml...), avec example.com. Ils serviront de fichiers de référence pour les tests du moteur." },
-    { n: 6, t: "Versions des images du core",
+    { n: 6, done: "D15", t: "Versions des images du core",
       p: "Docker Engine: dernière version, comme demandé. Pour les images (Traefik, Authelia, CrowdSec), la spec interdit latest: je propose la dernière version stable au moment de l'installation, écrite en dur (par exemple traefik:v3.x.y)." },
-    { n: 7, t: "Le domaine",
+    { n: 7, done: "D16", t: "Le domaine",
       p: "Nécessaire pour finir le point 1 (vérifier que *.<domaine> pointe vers le serveur) et pour la phase 3. Il n'apparaîtra ni sur cette page ni dans le repo." },
     { n: 8, done: "D9", t: "curl absent du serveur: comment installer Dot Box?",
       p: "Ce Debian 13 a wget mais pas curl (J12). La commande de la doc, curl -fsSL … | bash, échoue donc dès le départ, avant même le script. Ubuntu Server a les deux.",
@@ -1012,7 +1472,57 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Refuser de continuer, comme Saltbox, et demander de désactiver ufw.",
           "Prévenir et continuer: ufw garde SSH et le reste du système, init explique que ses règles ne s'appliquent pas aux containers. dotbox doctor le rappelle.",
           "Ignorer."],
-      reco: "Proposé: prévenir et continuer. Un pare-feu du système ne gêne pas Dot Box, et le retirer d'office affaiblirait le serveur." }
+      reco: "Proposé: prévenir et continuer. Un pare-feu du système ne gêne pas Dot Box, et le retirer d'office affaiblirait le serveur." },
+    { n: 12, t: "Le serveur DNS (BIND) du serveur de test: le laisser, le limiter ou l'arrêter?",
+      p: "J5: BIND écoute sur le port 53 de l'IP publique (et en local). Probablement installé par l'image du fournisseur du serveur dédié, pas par nous. J46: il refuse les recherches pour d'autres domaines (REFUSED), ce n'est donc pas un résolveur ouvert. Il reste un service exposé sur Internet dont on ne se sert pas.",
+      l: ["Le laisser tel quel: pas de risque connu aujourd'hui.",
+          "Le limiter à l'écoute locale (127.0.0.1), si le système s'en sert comme cache DNS.",
+          "L'arrêter et le désactiver, s'il ne sert à rien."],
+      reco: "À regarder avec la sécurité (CrowdSec): d'abord vérifier à quoi il sert (resolv.conf, paquet, configuration), puis décider. Dot Box, lui, ne touche pas à ce service." },
+    { n: 13, done: "D18, D19", t: "L'e-mail du certificat",
+      p: "La spec dit que dotbox init demande « l'e-mail du certificat ». Let's Encrypt n'envoie plus d'e-mails d'expiration depuis 2025, et l'e-mail est facultatif pour créer un compte. ZeroSSL, lui, en demande un.",
+      l: ["Le demander quand même (facultatif: Entrée pour s'en passer), et l'exiger seulement avec ca: zerossl.",
+          "Le garder obligatoire, comme dans la spec."],
+      reco: "Proposé: facultatif avec Let's Encrypt. Pour les tests: pas d'e-mail, ou celui que tu veux (il resterait sur le serveur).",
+      more: ["Remarque de Mathod95: si l'e-mail est facultatif et ne sert plus à rien chez Let's Encrypt, ce n'est pas une information à demander, configurer et sauvegarder.",
+             "ZeroSSL (choix prévu par la spec, ca: zerossl): son serveur ACME exige un compte, avec des identifiants EAB (kid et hmac) liés à un e-mail. Saltbox les obtient pour l'utilisateur (roles/traefik/tasks/subtasks/zerossl.yml) et passe l'e-mail de l'utilisateur à tous ses résolveurs, Let's Encrypt compris.",
+             "Nouvelle proposition: aucun e-mail. ZeroSSL sort de cette phase: s'il reste dans la spec, il viendra plus tard avec ses propres identifiants, sinon on le retire."] },
+    { n: 14, done: "D20", t: "Comment Traefik lit Docker: socket direct ou proxy?",
+      p: "Traefik lit le socket Docker pour découvrir les containers et leurs labels. Monter /var/run/docker.sock dans un container, même en lecture seule (:ro), donne en pratique les droits de root sur le serveur: :ro protège le fichier, pas l'API. Un « socket proxy » est un petit container qui ne laisse passer que les requêtes de lecture utiles à Traefik.",
+      l: ["Socket direct en :ro: le plus simple, c'est ce que montre la doc de Traefik.",
+          "Socket proxy (par exemple lscr.io/linuxserver/socket-proxy) sur un network interne: Traefik n'a plus qu'un accès en lecture, limité aux containers et networks."],
+      reco: "Proposé: le socket proxy. Un container de plus, mais si Traefik, exposé à Internet, est un jour compromis, il ne donne pas les clés du serveur.",
+      more: ["Ce que fait Saltbox (roles/traefik/defaults/main.yml, lu le 15 novembre 2026): Traefik monte /var/run/docker.sock directement, sans même :ro.",
+             "Saltbox a aussi un rôle docker_socket_proxy (image linuxserver/socket-proxy en latest, système de fichiers en lecture seule, /run en tmpfs), mais Traefik ne s'en sert pas: c'est un rôle à part, pour d'autres apps.",
+             "Avec linuxserver/socket-proxy, chaque partie de l'API Docker s'ouvre par une variable (CONTAINERS=1, NETWORKS=1...). Tout ce qui n'est pas ouvert est refusé, et les écritures (POST) sont refusées par défaut.",
+             "Doc officielle de Traefik (v3.7.19, Providers > Docker, « Security Note »): « Accessing the Docker API without any restriction is a security concern: if Traefik is attacked, then the attacker might get access to the underlying host. » Parmi ses solutions: filtrer les requêtes avec le socket proxy de Tecnativa, exposer le socket seulement sur un network Docker privé réservé à Traefik, et le confier à un autre container que Traefik. C'est exactement la proposition.",
+             "Deux images, mêmes variables: Tecnativa/docker-socket-proxy (celle que cite Traefik, v0.5.0 du 27 juillet 2026) et linuxserver/socket-proxy (celle de Saltbox, dérivée de Tecnativa, reconstruite chaque semaine avec les correctifs de sécurité, dernière le 15 novembre 2026).",
+             "À expliquer ensuite dans la page Installation (proposition blue/green, avec la mise à jour groupée de la doc, D7)."] },
+    { n: 15, done: "D21", t: "Authelia: comment reçoit-on les codes de vérification?",
+      p: "Avant d'enregistrer un appareil de double authentification (ou de réinitialiser un mot de passe), Authelia envoie un code pour vérifier l'identité. Il lui faut un « notifier »: SMTP (un vrai e-mail) ou filesystem (le message est écrit dans un fichier sur le serveur). La doc d'Authelia présente filesystem comme une solution de test. D18: Dot Box ne demande aucun e-mail.",
+      l: ["filesystem: le code est écrit dans /opt/authelia/config/notification.txt. L'administrateur le lit en SSH (plus tard, une commande dotbox pourrait l'afficher). Aucun e-mail, aucun serveur de mail.",
+          "SMTP: il faut un compte d'envoi (adresse, identifiants), à demander et stocker comme secret. Plus pratique pour plusieurs utilisateurs, mais contraire à D18.",
+          "filesystem maintenant, SMTP en option plus tard (dotbox.yml), pour ceux qui ont plusieurs utilisateurs."],
+      reco: "Proposé: filesystem maintenant, SMTP en option plus tard." },
+    { n: 16, done: "D22", t: "Le compte administrateur: nom et mot de passe",
+      p: "La spec: init demande « le nom de l'administrateur », et l'exemple de la page CLI affiche « admin (password shown once below) ».",
+      l: ["Nom: --admin <nom>, sinon une question, admin proposé par défaut.",
+          "Mot de passe tiré au hasard par Authelia, affiché une seule fois à la fin de init: personne n'a à l'inventer, et il ne passe jamais dans une commande.",
+          "Ou mot de passe choisi par l'utilisateur, tapé deux fois dans le terminal."],
+      reco: "Proposé: nom demandé (admin par défaut), mot de passe aléatoire affiché une seule fois. À changer ensuite dans Authelia si on veut." },
+    { n: 17, done: "D23", t: "Quelles méthodes de double authentification?",
+      p: "Authelia propose: TOTP (codes à 6 chiffres d'une app comme Aegis, Google Authenticator, 1Password...), WebAuthn (clé de sécurité ou passkey: Windows Hello, Touch ID, YubiKey...) et Duo (service payant).",
+      l: ["TOTP et WebAuthn activés, Duo désactivé.",
+          "TOTP seulement, le plus simple."],
+      reco: "Proposé: TOTP et WebAuthn. Chacun choisit son appareil au moment de l'enregistrer." },
+    { n: 18, done: "D25", t: "Le mot de passe web: seulement affiché, ou gardé aussi sur le serveur?",
+      l: ["Affiché une seule fois, seul le hash reste: le plus sûr, mais perdu s'il est oublié.",
+          "Gardé aussi dans /opt/dotbox/secrets/ (root seulement), avec une commande pour le relire."] },
+    { n: 19, done: "D27", t: "Réactiver WebAuthn (passkeys, clés de sécurité), en plus du code à 6 chiffres?",
+      p: "Pendant A.9, la page de réglages d'Authelia affiche: « Votre administrateur a désactivé WebAuthn [...]. Les identifiants WebAuthn sont largement considérés comme les moyens d'authentification les plus sûrs [...]. La décision de désactiver les identifiants WebAuthn lorsque l'authentification multi-facteurs est activée sape considérablement la sécurité et est fortement déconseillée. » La raison: un code à 6 chiffres peut être volé par un faux site (hameçonnage), qui le recopie aussitôt sur le vrai. Une passkey est liée au vrai domaine et sa clé ne quitte jamais l'appareil: un faux site ne peut rien en tirer.",
+      l: ["Réactiver WebAuthn: chacun choisit, au moment d'enregistrer un appareil, entre code à 6 chiffres et passkey. Rien n'est imposé.",
+          "Garder D23 tel quel: code à 6 chiffres seulement."],
+      reco: "Proposé: réactiver WebAuthn, en plus du code à 6 chiffres." }
   ];
 
 
@@ -1052,7 +1562,41 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       refs: "C.1-C.11, J32-J41, D13" },
     { t: "Passer root sur le serveur de test",
       p: "su -c lance une commande en root mais garde l'environnement de l'utilisateur, dont son PATH sans /usr/sbin: usermod et userdel y étaient introuvables. su - (avec le tiret) donne le vrai environnement de root. Le binaire lance désormais ses commandes avec le PATH de root, quelle que soit la façon dont il est appelé. Depuis D11, Claude passe par sudo (mot de passe de <user>, rangé sur le PC hors du repo, J44), et chaque commande root est enregistrée sur le serveur (journalctl _COMM=sudo).",
-      refs: "J20, J21, J27, D11" }
+      refs: "J20, J21, J27, D11" },
+    { t: "Certificats: Let's Encrypt, staging et limites",
+      p: "Traefik obtient un certificat par sous-domaine avec le challenge HTTP-01: Let's Encrypt demande un fichier sur http://<sous-domaine>/.well-known/acme-challenge/, sur le port 80, et Traefik le sert. Pas de jeton DNS, pas de certificat joker. Let's Encrypt limite les certificats par domaine enregistré (50 nouveaux par semaine) et par ensemble de noms identique (5 par semaine). Le domaine de test est un sous-domaine du domaine personnel de Mathod95, partagé avec sa production: les essais pourraient épuiser ces limites. D'où l'environnement de staging pendant les tests: mêmes règles, limites bien plus larges, certificats signés par une fausse autorité « (STAGING) » que les navigateurs refusent.",
+      refs: "D16, D17, phase T" },
+    { t: "Traefik tel que dotbox init l'installe",
+      p: "Traefik v3.7.19 dans /opt/traefik: compose.yml généré (à ne pas modifier, compose.override.yml pour ses propres changements), config/traefik.yml (configuration statique), config/acme.json (certificats, 0600), logs/access.log (JSON, tourné chaque jour par logrotate, 14 jours gardés). Seul container du serveur qui publie des ports: 80 et 443.",
+      l: ["Port 80: ne sert qu'au challenge HTTP-01 et à rediriger tout le reste vers HTTPS (301).",
+          "Seuls les containers marqués traefik.enable=true sont routés (exposedByDefault: false). Vérifié: un container sans ce label renvoie 404.",
+          "Docker lu à travers lscr.io/linuxserver/socket-proxy, sur un network interne réservé (traefik_socket, sans accès à Internet): seulement des lectures de containers (D20).",
+          "aliasHeadersStrategy: delete pour tous les points d'entrée. Les en-têtes dont le nom contient autre chose que lettres, chiffres et tirets (X_Auth_User, X.Remote.User) sont retirés, pour qu'ils ne puissent pas usurper ceux qu'Authelia transmettra (avertissement de Traefik, J52).",
+          "Healthcheck (traefik healthcheck --ping) sur un port interne jamais publié. init attend qu'il soit « healthy », sinon il affiche les derniers logs.",
+          "Avec live-restore, un redémarrage de Docker n'arrête ni Traefik ni le proxy (J54)."],
+      refs: "phase T, J48-J54, D15, D17, D20" },
+    { t: "Authelia et ses alternatives",
+      p: "Le rôle à tenir chez Dot Box: protéger les apps derrière Traefik (forward auth), avec des niveaux par sous-domaine (two_factor, one_factor, public, et app pour celles qui gèrent leur propre connexion), sur un petit serveur, sans rien à cliquer pour l'installer. Authelia et Tinyauth font ce travail. Authentik, Keycloak et Zitadel sont des fournisseurs d'identité complets (OIDC, SAML, interface d'administration), pensés pour des organisations: bien plus que ce qu'il faut, et plus lourds. Chiffres de mémoire donnés à titre indicatif.",
+      table: [["", "Authelia", "Tinyauth", "Authentik", "Keycloak", "Zitadel"],
+              ["Rôle", "Portail d'authentification, forward auth, OIDC", "Forward auth simple", "Fournisseur d'identité complet", "Fournisseur d'identité d'entreprise", "Fournisseur d'identité, multi-tenant"],
+              ["Mémoire", "Quelques dizaines de Mo", "Moins de 10 Mo", "Environ 1 Go", "Plus de 500 Mo", "Environ 120 Mo"],
+              ["Containers", "1 (SQLite)", "1", "Plusieurs (serveur, worker, PostgreSQL)", "1, plus une base", "1, plus une base"],
+              ["Configuration", "Un fichier YAML", "Variables d'environnement", "Interface graphique", "Interface graphique", "Interface graphique et API"],
+              ["Règles par domaine (two_factor, one_factor, public)", "Oui, natives", "Plus limité", "Oui, par flux", "Oui, complexe", "Oui"],
+              ["Utilisé par Saltbox", "Oui", "Non", "Non", "Non", "Non"]],
+      l: ["Chez Dot Box, la complexité du YAML d'Authelia ne touche pas l'utilisateur: c'est dotbox init qui l'écrit.",
+          "Tinyauth serait le plus léger, mais ses règles d'accès sont plus simples que les quatre niveaux de la spec."],
+      refs: "D24, phase A" },
+    { t: "Authelia tel que dotbox init l'installe",
+      p: "Authelia 4.39.28 sur auth.<domaine>. Traefik lui demande, à chaque requête vers une app protégée, si l'utilisateur peut entrer (forward auth, middleware authelia@docker). Tout est refusé par défaut, seules les règles écrites par dotbox autorisent un accès. Pour l'instant une seule règle: le tableau de bord de Traefik, en two_factor, pour le groupe admins.",
+      l: ["Un compte, au nom de l'utilisateur Linux, dans le groupe admins (D22). Mot de passe tiré au hasard par Authelia, affiché une fois, seul son hash est stocké (users_database.yml, 0600). Distinct du mot de passe Linux.",
+          "Double authentification: code à 6 chiffres (TOTP) ou passkey (WebAuthn), au choix de chacun, Duo désactivé (D23, D27). Les codes de vérification d'identité sont écrits dans /opt/authelia/config/notification.txt (D21). Le compte a une adresse factice (<user>@<domaine>), jamais utilisée pour envoyer: elle permet à Authelia d'écrire aussi ses alertes de sécurité dans ce fichier.",
+          "Le mot de passe web est affiché une fois à la création du compte et gardé pour root dans /opt/dotbox/secrets (D25): sudo dotbox user password le relit. init se termine par un récapitulatif (D26).",
+          "Secrets (session, clé de chiffrement de la base, jeton de réinitialisation) dans /opt/dotbox/secrets, root seulement, chacun monté seul et en lecture seule, passés par fichier (variables _FILE), jamais en valeur.",
+          "Essais en rafale: 3 ratés en 2 minutes bloquent le compte 5 minutes, même avec le bon mot de passe ensuite (testé, J59).",
+          "Fermé en cas de doute: si Authelia ne répond pas, Traefik désactive les routeurs qui en dépendent (404) au lieu de les ouvrir (J60).",
+          "Réponse d'Authelia à Traefik limitée à 8 Ko (maxResponseBodySize, doc d'Authelia, J61). Les en-têtes Remote-User... transmis aux apps sont protégés contre l'usurpation par aliasHeadersStrategy (J52)."],
+      refs: "phase A, J55-J61, D21-D24" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé" };

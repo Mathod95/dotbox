@@ -15,6 +15,22 @@
         {
           "fr": "CLI: `dotbox init` installe Docker depuis le dépôt officiel (Debian ou Ubuntu), retire les paquets en conflit avec accord, logs `local`, `live-restore`, réseau `dotbox`, utilisateur dans le groupe `docker`",
           "en": "CLI: `dotbox init` installs Docker from the official repository (Debian or Ubuntu), removes conflicting packages with consent, `local` logs, `live-restore`, `dotbox` network, user in the `docker` group"
+        },
+        {
+          "fr": "CLI: `dotbox init` demande le domaine (`--domain`), vérifie que `*.<domaine>` pointe vers le serveur et que les ports 80 et 443 sont libres, avant de modifier quoi que ce soit, et garde ses réponses dans `/opt/dotbox/dotbox.yml`",
+          "en": "CLI: `dotbox init` asks for the domain (`--domain`), checks that `*.<domain>` points to the server and that ports 80 and 443 are free, before changing anything, and keeps its answers in `/opt/dotbox/dotbox.yml`"
+        },
+        {
+          "fr": "CLI: `dotbox init` installe Traefik: certificats Let's Encrypt par sous-domaine en HTTP-01 (staging avec `--ca letsencrypt-staging`), redirection vers HTTPS, socket Docker en lecture seule à travers un socket proxy",
+          "en": "CLI: `dotbox init` installs Traefik: Let's Encrypt certificates per subdomain through HTTP-01 (staging with `--ca letsencrypt-staging`), redirect to HTTPS, read-only Docker socket through a socket proxy"
+        },
+        {
+          "fr": "CLI: `dotbox init` installe Authelia sur `auth.<domaine>`: un compte au nom de l'utilisateur (mot de passe aléatoire affiché une fois, code à 6 chiffres ou passkey), tout refusé par défaut, tableau de bord de Traefik protégé, secrets dans `/opt/dotbox/secrets`, et un récapitulatif à la fin",
+          "en": "CLI: `dotbox init` installs Authelia on `auth.<domain>`: one account named after the user (random password shown once, 6-digit code or passkey), everything denied by default, protected Traefik dashboard, secrets in `/opt/dotbox/secrets`, and a closing summary"
+        },
+        {
+          "fr": "CLI: `dotbox user password` relit le mot de passe web créé par `dotbox init` (root seulement)",
+          "en": "CLI: `dotbox user password` shows the web password created by `dotbox init` (root only)"
         }
       ],
       "changed": [],
