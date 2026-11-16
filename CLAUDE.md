@@ -15,7 +15,8 @@ Gestionnaire d'apps auto-hébergées: un binaire Rust qui transforme des manifes
 
 - **Fait**: le site (accueil, Getting Started, Roadmap, Releases, Journal), publié sur GitHub Pages. Les pages Getting Started sont la **spécification** de tout le reste.
 - **Code**: le binaire `dotbox` en Rust (`Cargo.toml`, `src/`), avec `--help`, `--version` et `dotbox init`, qui fait pour l'instant: vérifier le système, le domaine (`--domain`) et les ports, installer `sudo`, préparer l'utilisateur (`--user`), installer Docker, Traefik (derrière un socket proxy, certificats de staging pendant les tests) et Authelia (un compte au nom de l'utilisateur, code à 6 chiffres ou passkey), puis affiche un récapitulatif. `dotbox user password` relit le mot de passe web gardé pour root. Ses réponses sont gardées dans `/opt/dotbox/dotbox.yml`. `install.sh` à la racine (root, amd64, wget, checksum, lance `dotbox init`). Testé sur le serveur de test, où Docker 29.9.3, Traefik v3.7.19 et Authelia 4.39.28 tournent, installés par `dotbox init`. Le mot de passe web d'Authelia est rangé sur le PC dans `~/.config/dotbox-test/authelia-pass`.
-- **Pas encore fait**: CrowdSec et Dot Box dans `dotbox init`, la CI de release, aucun tag ni release GitHub. `install.sh` et la commande d'installation des pages ne marchent donc pas encore (pas de release à télécharger). Le premier tag attendra une installation propre de Docker et du core (Journal, D10).
+- **Première release**: `v0.0.1`, taguée le 16 novembre 2026 (Docker, Traefik et Authelia, sans CrowdSec). `.github/workflows/release.yml` publie à chaque tag `dotbox-linux-amd64`, son `.sha256` et `install.sh`: la commande d'installation des pages marche.
+- **Pas encore fait**: CrowdSec et Dot Box (interface web) dans `dotbox init`.
 - Le document de travail « Saltbox vs Dot Box : installation » (Claude Docs) a servi à trancher les décisions du 8 et du 9 novembre ; elles sont toutes reportées dans « Décisions produit » ci-dessous.
 
 ## Phase en cours: le serveur de test
@@ -56,7 +57,8 @@ pages/v1/           pages figées: index.html (v1 de la homepage, accueil + rele
 tools/site/         v2: index.html (homePage), releases.html (releasePage), releases.json (données des versions), roadmap.html et roadmap.json (la roadmap)
 tools/site/docs/    documentation Getting Started: layout.html (mise en page commune) et une page par fichier (basics.html ... cli.html)
 tools/build_site.py sans option: le site dans site/ (ignoré par Git) ; avec --fragment, --releases-fragment, --roadmap-fragment, --docs-fragments: les aperçus en artefacts
-.github/workflows/pages.yml  construit le site et le publie sur GitHub Pages à chaque push sur main
+.github/workflows/pages.yml    construit le site et le publie sur GitHub Pages à chaque push sur main
+.github/workflows/release.yml  à chaque tag v*: vérifications, binaire statique, release GitHub (dotbox-linux-amd64, .sha256, install.sh)
 ```
 
 ## Pages
@@ -119,13 +121,13 @@ tools/build_site.py sans option: le site dans site/ (ignoré par Git) ; avec --f
 
 - Passage en `1.0.0`: décision manuelle de Mathod95, jamais automatique.
 
-### Avant le premier tag: tout dans `next`, qui deviendra `v0.0.1`
+### Le premier tag: `v0.0.1`
 
-Le premier code est poussé sur `main` le 15 novembre 2026, sans tag (Journal, D10). Tant qu'aucun tag n'est poussé:
+Le premier code est poussé sur `main` le 15 novembre 2026, et `v0.0.1` est tagué le 16 novembre 2026. Avant ce tag:
 
-- Tout ce qui est livré de l'application est décrit dans **une seule entrée, `next`** (« Sur main · pas encore publiée »), qui deviendra `v0.0.1` au premier tag. On l'enrichit, on n'en crée pas d'autre.
+- Tout ce qui était livré était décrit dans **une seule entrée, `next`**, devenue `v0.0.1` au tag.
 - Les allers-retours sur quelque chose qui n'a jamais été publié ne sont **pas** des entrées « Changé » ou « Retiré »: on corrige directement la ligne « Nouveau » concernée.
-- `v0.0.1` devient une vraie version au premier tag poussé. Ensuite seulement, les règles de numérotation ci-dessus s'appliquent.
+- Depuis `v0.0.1`, les règles de numérotation ci-dessus s'appliquent. Un tag se pousse seulement avec l'accord de Mathod95, après que `version` de `Cargo.toml` a été mise au même numéro (la CI vérifie qu'ils correspondent).
 
 ### Où vivent les releases
 

@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "16 novembre 2026, 06:56";
+  var UPDATED = "16 novembre 2026, 06:57";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -962,7 +962,7 @@ ssh dotbox-test 'sudo -l -U <user> | head -3; rm /tmp/dotbox'`,
           does: "Lance init sans --user: il doit demander le nom en proposant <user> (le compte connecté avant su). su_run.py répond par Entrée pour accepter. Comme tout est déjà en place depuis B.6, rien ne doit changer. Vérifie ensuite que <user> peut utiliser sudo, puis supprime la copie.",
           effect: "Serveur: aucun changement, à part la suppression de /tmp/dotbox.",
           note: "Tu peux aussi le lancer toi-même, pour voir la question en vrai: ssh dotbox-test, puis su -, puis /tmp/dotbox init (avant la suppression)." },
-        { id: "B.8", kind: "ecriture", where: "PC", title: "Plus tard, au premier tag: la CI de release",
+        { id: "B.8", status: "valide", kind: "ecriture", where: "PC", title: "Au premier tag: la CI de release",
           does: "Un workflow GitHub qui, à chaque tag v*, compile le binaire musl et publie dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh dans la release (D4). Écrit seulement quand Docker et le core s'installent proprement (D10).",
           effect: "Plus tard: .github/workflows/release.yml." }
       ] },

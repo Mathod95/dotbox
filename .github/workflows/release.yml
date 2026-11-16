@@ -1,0 +1,58 @@
+name: Release
+
+# À chaque tag vMAJEUR.MINEUR.CORRECTIF: vérifie le code, compile le binaire statique et publie
+# dans la release GitHub ce que télécharge install.sh (Journal, B.8 et D4):
+# dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Le tag correspond à la version de Cargo.toml
+        run: |
+          version=$(grep -m1 '^version = ' Cargo.toml | cut -d '"' -f 2)
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME}, mais Cargo.toml dit ${version}"
+            exit 1
+          fi
+
+      - name: Rust stable et la cible musl
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: Vérifications (comme sur le PC)
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test --locked
+
+      - name: Binaire statique et son checksum
+        run: |
+          cargo build --release --locked --target x86_64-unknown-linux-musl
+          cp target/x86_64-unknown-linux-musl/release/dotbox dotbox-linux-amd64
+          sha256sum dotbox-linux-amd64 > dotbox-linux-amd64.sha256
+          cat dotbox-linux-amd64.sha256
+
+      - name: Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dotbox-linux-amd64 dotbox-linux-amd64.sha256 install.sh \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Notes de version: https://mathod95.github.io/dotbox/releases/"

@@ -148,20 +148,21 @@
     {
       "stage": "install",
       "domain": "core",
-      "status": "progress",
+      "status": "done",
       "fr": "Core: `install.sh` vérifie root et amd64, télécharge la dernière version de `dotbox`, vérifie son checksum et lance `dotbox init`, `--no-init` pour une migration",
       "en": "Core: `install.sh` checks root and amd64, downloads the latest `dotbox`, checks its checksum and runs `dotbox init`, `--no-init` for a migration",
       "doc": "installation",
       "journal": [
         "J6-J15",
         "D8",
-        "D9"
+        "D9",
+        "B.8"
       ]
     },
     {
       "stage": "install",
       "domain": "cli",
-      "status": "progress",
+      "status": "done",
       "fr": "CLI: premier binaire `dotbox` et une CI qui publie `dotbox-linux-amd64` et son checksum dans la release de chaque tag",
       "en": "CLI: first `dotbox` binary and a CI that publishes `dotbox-linux-amd64` and its checksum in each tag's release",
       "doc": "installation",
