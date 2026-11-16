@@ -197,8 +197,8 @@ fn container_running(name: &str) -> bool {
     system::run("docker", &["inspect", "-f", "{{.State.Running}}", name]).is_ok_and(|s| s == "true")
 }
 
-/// Avant de toucher à quoi que ce soit: le domaine et un sous-domaine au hasard (le joker)
-/// pointent vers le serveur, et les ports 80 et 443 sont libres (ou déjà tenus par Traefik).
+/// Avant de toucher à quoi que ce soit: un sous-domaine tiré au hasard (le joker) pointe vers le
+/// serveur, et les ports 80 et 443 sont libres (ou déjà tenus par Traefik).
 pub fn check(domain: &str) -> Result<(), String> {
     let mine = parse_ipv4s(&system::run(
         "ip",
@@ -208,29 +208,23 @@ pub fn check(domain: &str) -> Result<(), String> {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.subsec_nanos())
         .unwrap_or(0);
+    // Seul le joker compte: Dot Box ne sert que des sous-domaines, le domaine lui-même peut
+    // pointer ailleurs (un site web, par exemple). Un nom tiré au hasard teste le joker (Journal, D29).
     let random = format!("dotbox-check-{nanos:x}.{domain}");
-    for (name, shown) in [
-        (domain.to_string(), domain.to_string()),
-        (random, format!("*.{domain}")),
-    ] {
-        let ips = resolve(&name);
-        if ips.is_empty() {
-            return Err(format!(
-                "{shown} does not resolve: create an A record to this server, then run dotbox init again"
-            ));
-        }
-        if !ips.iter().any(|ip| mine.contains(ip)) {
-            let list: Vec<String> = ips.iter().map(IpAddr::to_string).collect();
-            return Err(format!(
-                "{shown} points to {}, not to this server: fix the A record, then run dotbox init again",
-                list.join(", ")
-            ));
-        }
+    let ips = resolve(&random);
+    if ips.is_empty() {
+        return Err(format!(
+            "*.{domain} does not resolve: create an A record to this server, then run dotbox init again"
+        ));
     }
-    say(
-        "check",
-        &format!("{domain} and *.{domain} point to this server"),
-    );
+    if !ips.iter().any(|ip| mine.contains(ip)) {
+        let list: Vec<String> = ips.iter().map(IpAddr::to_string).collect();
+        return Err(format!(
+            "*.{domain} points to {}, not to this server: fix the A record, then run dotbox init again",
+            list.join(", ")
+        ));
+    }
+    say("check", &format!("*.{domain} points to this server"));
 
     if container_running("traefik") {
         say("check", "ports 80 and 443 (Traefik)");

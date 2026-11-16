@@ -8,8 +8,9 @@ pub fn is_terminal() -> bool {
 
 /// Pose une question, rend la réponse sans espaces autour. None si l'entrée est fermée.
 pub fn ask(verb: &str, question: &str) -> Result<Option<String>, String> {
-    print!("  {verb:<9}{question} ");
-    std::io::stdout().flush().map_err(|e| e.to_string())?;
+    let mut out = std::io::stdout();
+    let _ = write!(out, "  {verb:<9}{question} ");
+    let _ = out.flush();
     let mut line = String::new();
     let n = std::io::stdin()
         .read_line(&mut line)

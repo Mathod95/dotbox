@@ -124,7 +124,7 @@ fn summary(os: &str, arch: &str, domain: &str, ca: &str, user: &str, password: O
     let docker =
         system::run("docker", &["version", "--format", "{{.Server.Version}}"]).unwrap_or_default();
     let tag = |image: &str| image.rsplit(':').next().unwrap_or("").to_string();
-    println!();
+    crate::out::blank();
     say("summary", "Dot Box core is running");
     say("server", &format!("{os} {arch}, Docker {docker}"));
     say("domain", &format!("{domain} (certificates: {ca})"));
