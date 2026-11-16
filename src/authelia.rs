@@ -5,7 +5,7 @@
 //! Relancé, il ne refait que ce qui manque: secrets et compte ne sont jamais recréés.
 
 use crate::out::say;
-use crate::{secrets, system};
+use crate::{docker, secrets, system};
 use std::time::{Duration, Instant};
 
 /// Dernière version stable, fixée (D15).
@@ -180,17 +180,42 @@ pub fn password_secret(user: &str) -> String {
     format!("authelia_password_{user}")
 }
 
-/// Lit la sortie de `authelia crypto hash generate argon2 --random`: le mot de passe et son hash.
-/// La ligne « Digest: sha256:... » d'un téléchargement d'image est ignorée.
-pub fn parse_hash_output(text: &str) -> Option<(String, String)> {
-    let password = text
-        .lines()
-        .find_map(|l| l.trim().strip_prefix("Random Password: "))?;
-    let digest = text
-        .lines()
-        .filter_map(|l| l.trim().strip_prefix("Digest: "))
-        .find(|d| d.starts_with("$argon2id$"))?;
-    Some((password.to_string(), digest.to_string()))
+/// Le hash argon2id d'un mot de passe, avec les réglages par défaut d'Authelia
+/// (m=65536, t=3, p=4, 32 octets): calculé par dotbox, sans lancer de container.
+pub fn hash_password(password: &str) -> Result<String, String> {
+    use argon2::password_hash::{PasswordHasher, SaltString};
+    use argon2::{Algorithm, Argon2, Params, Version};
+    use std::io::Read;
+    let params = Params::new(65536, 3, 4, Some(32)).map_err(|e| e.to_string())?;
+    // un sel de 16 octets tirés de /dev/urandom, comme les secrets
+    let mut bytes = [0u8; 16];
+    std::fs::File::open("/dev/urandom")
+        .and_then(|mut f| f.read_exact(&mut bytes))
+        .map_err(|e| format!("cannot read /dev/urandom: {e}"))?;
+    let salt = SaltString::encode_b64(&bytes).map_err(|e| e.to_string())?;
+    Argon2::new(Algorithm::Argon2id, Version::V0x13, params)
+        .hash_password(password.as_bytes(), &salt)
+        .map(|h| h.to_string())
+        .map_err(|e| format!("cannot hash the password: {e}"))
+}
+
+/// Longueur minimale du mot de passe Authelia (Journal, D34).
+pub const MIN_PASSWORD: usize = 12;
+
+/// Un mot de passe Authelia accepté: vide (tiré au hasard) ou 12 caractères au moins.
+pub fn password_ok(pw: &str) -> Result<(), String> {
+    match pw.chars().count() {
+        0 => Ok(()),
+        n if n < MIN_PASSWORD => Err(format!(
+            "{n} characters, {MIN_PASSWORD} or more needed (Enter alone for a random one)"
+        )),
+        _ => Ok(()),
+    }
+}
+
+/// Le compte existe-t-il déjà? (dans ce cas, init ne demande pas de mot de passe)
+pub fn account_exists(user: &str) -> bool {
+    std::fs::read_to_string(USERS).is_ok_and(|t| existing_users(&t).iter().any(|u| u == user))
 }
 
 /// Les utilisateurs déjà présents dans users_database.yml.
@@ -209,9 +234,10 @@ fn existing_users(text: &str) -> Vec<String> {
     }
 }
 
-/// Installe ou vérifie Authelia. Rend le mot de passe du compte s'il vient d'être créé
-/// (à afficher une seule fois), None sinon.
-pub fn setup(domain: &str, user: &str) -> Result<Option<String>, String> {
+/// Installe ou vérifie Authelia. `chosen`: le mot de passe tapé pendant init (vide ou absent: tiré
+/// au hasard). Rend le mot de passe du compte s'il vient d'être créé (à afficher une seule fois),
+/// None sinon.
+pub fn setup(domain: &str, user: &str, chosen: Option<&str>) -> Result<Option<String>, String> {
     let email = format!("{user}@{domain}");
     for (name, _, _) in SECRETS {
         if secrets::ensure(name)? {
@@ -241,26 +267,11 @@ pub fn setup(domain: &str, user: &str) -> Result<Option<String>, String> {
             }
         }
         Err(_) => {
-            // l'image d'abord, pour que la sortie du hash ne contienne que lui
-            system::run("docker", &["pull", "-q", IMAGE])?;
-            let out = system::run(
-                "docker",
-                &[
-                    "run",
-                    "--rm",
-                    IMAGE,
-                    "authelia",
-                    "crypto",
-                    "hash",
-                    "generate",
-                    "argon2",
-                    "--random",
-                    "--random.length",
-                    "24",
-                ],
-            )?;
-            let (pw, digest) = parse_hash_output(&out)
-                .ok_or("unexpected output from authelia crypto hash generate")?;
+            let pw = match chosen {
+                Some(p) if !p.is_empty() => p.to_string(),
+                _ => secrets::random(24)?,
+            };
+            let digest = hash_password(&pw)?;
             system::write_if_changed(USERS, &users_database(user, &digest, &email), 0o600)?;
             secrets::store(&password_secret(user), &pw)?;
             say("create", &format!("Authelia account {user} (group admins)"));
@@ -283,6 +294,7 @@ pub fn setup(domain: &str, user: &str) -> Result<Option<String>, String> {
     )
     .is_ok_and(|s| s == "true");
     if compose_changed || !running {
+        docker::pull(IMAGE)?;
         system::run(
             "docker",
             &["compose", "-f", COMPOSE, "up", "-d", "--quiet-pull"],
@@ -388,13 +400,30 @@ mod tests {
     }
 
     #[test]
-    fn hash_output() {
-        let out = "Digest: sha256:bd97cff4\nStatus: Downloaded\nRandom Password: Abc123xyz\nDigest: $argon2id$v=19$m=65536,t=3,p=4$salt$hash\n";
-        let (pw, digest) = parse_hash_output(out).unwrap();
-        assert_eq!(pw, "Abc123xyz");
-        assert_eq!(digest, "$argon2id$v=19$m=65536,t=3,p=4$salt$hash");
-        assert!(parse_hash_output("Random Password: x\n").is_none());
-        assert!(parse_hash_output("Digest: $argon2id$x\n").is_none());
+    fn password_hash_is_argon2id_for_authelia() {
+        use argon2::password_hash::{PasswordHash, PasswordVerifier};
+        let h = hash_password("correct horse battery").unwrap();
+        assert!(h.starts_with("$argon2id$v=19$m=65536,t=3,p=4$"), "{h}");
+        let parsed = PasswordHash::new(&h).unwrap();
+        assert!(
+            argon2::Argon2::default()
+                .verify_password(b"correct horse battery", &parsed)
+                .is_ok()
+        );
+        assert!(
+            argon2::Argon2::default()
+                .verify_password(b"wrong", &parsed)
+                .is_err()
+        );
+        assert_ne!(h, hash_password("correct horse battery").unwrap(), "salt");
+    }
+
+    #[test]
+    fn password_rules() {
+        assert!(password_ok("").is_ok());
+        assert!(password_ok("123456789012").is_ok());
+        assert!(password_ok("short").is_err());
+        assert!(password_ok("ééééééééééé").is_err());
     }
 
     #[test]

@@ -1,15 +1,18 @@
 //! Dot Box: le binaire qui installe et gère tout le reste (spécification: les pages Getting Started).
 
 mod authelia;
+mod authelia_cmd;
+mod card;
 mod config;
 mod docker;
 mod init;
+mod log;
 mod out;
 mod prompt;
 mod secrets;
 mod system;
 mod traefik;
-mod user;
+mod ui;
 
 use clap::{Parser, Subcommand};
 use std::process::ExitCode;
@@ -28,10 +31,10 @@ enum Command {
     /// Set up the server: checks, sudo, the user that runs the apps, Docker, Traefik and Authelia
     Init(init::Args),
 
-    /// Manage Authelia accounts
-    User {
+    /// Authelia, the login page: web password and verification codes
+    Authelia {
         #[command(subcommand)]
-        action: user::Action,
+        action: authelia_cmd::Action,
     },
 }
 
@@ -39,10 +42,12 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
         Command::Init(args) => init::run(&args),
-        Command::User { action } => user::run(&action),
+        Command::Authelia { action } => authelia_cmd::run(&action),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
+        // déjà affichée (dotbox init montre l'étape en échec et la fin du log)
+        Err(e) if e.is_empty() => ExitCode::FAILURE,
         Err(e) => {
             out::error(&e);
             ExitCode::FAILURE

@@ -5,12 +5,14 @@
 
 use std::io::Write;
 
+/// Une ligne « verbe détail ». Pendant dotbox init, c'est une sous-étape: elle va dans le log et
+/// sous la ligne de l'étape en cours (ui.rs).
 pub fn say(verb: &str, detail: &str) {
+    if crate::ui::active() {
+        crate::ui::sub(verb, detail);
+        return;
+    }
     let _ = writeln!(std::io::stdout(), "  {verb:<9}{detail}");
-}
-
-pub fn blank() {
-    let _ = writeln!(std::io::stdout());
 }
 
 pub fn error(detail: &str) {

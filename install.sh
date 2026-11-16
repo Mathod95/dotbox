@@ -22,8 +22,31 @@ BASE_URL="https://github.com/${REPO}/releases/latest/download"
 BIN="/usr/local/bin/dotbox"
 TMP_DIR=""
 
+# Affichage (mockup final de CLI Output, D38): une seule ligne, [1/7] Dot Box, puis dotbox init
+# continue de [2/7] à [7/7]. Couleurs seulement dans un terminal.
+if [ -t 2 ]; then
+  GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; DIM=$'\033[2m'; RESET=$'\033[0m'; CLEAR=$'\r\033[K'
+else
+  GREEN=""; RED=""; YELLOW=""; DIM=""; RESET=""; CLEAR=""
+fi
+PENDING=0
+
+# step MARQUE RÉSUMÉ [DURÉE]: la ligne de l'étape, sur 80 colonnes
+step() {
+  printf '%s  %s %s[1/7]%s %-13s %-49s %s%6s%s\n' "$CLEAR" "$1" "$DIM" "$RESET" "Dot Box" "$2" "$DIM" "${3:-}" "$RESET" >&2
+}
 say() { printf '  %-9s%s\n' "$1" "$2"; }
-die() { printf '  %-9s%s\n' "error" "$1" >&2; exit 1; }
+die() {
+  if [ "$PENDING" -eq 1 ]; then step "${RED}✗${RESET}" ""; fi
+  printf '  %s%-6s%s%s\n' "$RED" "error" "$RESET" "$1" >&2
+  exit 1
+}
+
+# durée depuis START (date +%s%N): « 0.8 s », « 12 s »
+elapsed() {
+  local now; now="$(date +%s%N)"
+  awk -v ms="$(( (now - START) / 1000000 ))" 'BEGIN { s = ms / 1000; if (s < 10) printf "%.1f s", s; else printf "%d s", s + 0.5 }'
+}
 cleanup() { if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi; }
 
 usage() {
@@ -51,11 +74,10 @@ main() {
     shift
   done
 
-  # 1. root
+  # 1. root (vérifications silencieuses: seule une erreur s'affiche, Journal D30)
   if [ "$(id -u)" -ne 0 ]; then
     die "run this script as root: su -, then run the same command again"
   fi
-  say "check" "root"
 
   # 2. Linux amd64: sinon le binaire ne démarrerait même pas («Exec format error»)
   local os arch
@@ -64,7 +86,6 @@ main() {
   if [ "$os" != "Linux" ] || [ "$arch" != "x86_64" ]; then
     die "Dot Box runs on Linux amd64 only (this machine: ${os} ${arch})"
   fi
-  say "check" "Linux amd64"
 
   # wget: présent par défaut sur Debian et Ubuntu, contrairement à curl
   for cmd in wget sha256sum install mktemp; do
@@ -75,7 +96,11 @@ main() {
   TMP_DIR="$(mktemp -d)"
   trap cleanup EXIT
 
-  say "download" "${ASSET} (latest release)"
+  START="$(date +%s%N)"
+  PENDING=1
+  if [ -n "$CLEAR" ]; then
+    printf '  %s⠼%s %s[1/7]%s %-13s %s' "$YELLOW" "$RESET" "$DIM" "$RESET" "Dot Box" "downloading from GitHub" >&2
+  fi
   wget -q --https-only -O "${TMP_DIR}/${ASSET}" "${BASE_URL}/${ASSET}" \
     || die "could not download ${ASSET} from ${BASE_URL}"
   wget -q --https-only -O "${TMP_DIR}/${ASSET}.sha256" "${BASE_URL}/${ASSET}.sha256" \
@@ -90,18 +115,22 @@ main() {
   if [ "$expected" != "$actual" ]; then
     die "wrong SHA-256 checksum for ${ASSET}, nothing installed"
   fi
-  say "verify" "sha256 ok"
-
   install -m 0755 "${TMP_DIR}/${ASSET}" "$BIN"
-  say "install" "$BIN"
+  local version
+  version="$("$BIN" --version 2>/dev/null | cut -d ' ' -f 2)"
+  step "${GREEN}✓${RESET}" "${version}, downloaded from GitHub, sha256 verified" "$(elapsed)"
+  PENDING=0
   cleanup
   TMP_DIR=""
 
   # 4. dotbox init, sauf --no-init
   if [ "$no_init" -eq 1 ]; then
-    say "done" "dotbox installed, init skipped (--no-init)"
+    say "done" "dotbox installed in $BIN, init skipped (--no-init)"
     return 0
   fi
+
+  # dotbox init sait ainsi que la ligne [1/7] est déjà affichée (D38)
+  export DOTBOX_INSTALLER=1
 
   # Avec wget -qO- … | bash, l'entrée du script est le texte envoyé par wget, pas le clavier.
   # dotbox init est donc relié au terminal pour pouvoir poser ses questions.

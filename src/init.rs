@@ -2,10 +2,13 @@
 //! sudo, préparer l'utilisateur qui fait tourner les apps, puis Docker (phase C) et Traefik
 //! (phase T) et Authelia (phase A). CrowdSec viendra ensuite. Les réponses sont gardées dans
 //! /opt/dotbox/dotbox.yml: relancé, il ne redemande rien et ne refait que ce qui manque.
+//! L'affichage suit le mockup final de CLI Output (phase S): une ligne par étape, le détail dans
+//! /opt/dotbox/logs/, une carte à la fin.
 
+use crate::card::{self, Component};
 use crate::config::{self, Config};
 use crate::out::say;
-use crate::{authelia, docker, prompt, secrets, system, traefik};
+use crate::{authelia, docker, log, prompt, secrets, system, traefik, ui};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -20,16 +23,59 @@ pub struct Args {
     /// Certificate authority: letsencrypt, or letsencrypt-staging for tests
     #[arg(long, value_name = "CA", value_parser = config::CAS.to_vec())]
     ca: Option<String>,
+
+    /// Show every sub-step as it happens (they are always in the log)
+    #[arg(long)]
+    verbose: bool,
 }
 
 pub fn run(args: &Args) -> Result<(), String> {
-    // 1. root
     if system::effective_uid()? != 0 {
         return Err("run dotbox init as root: su -, then run it again".into());
     }
-    say("check", "root");
+    // le log de ce lancement (D37), avant toute autre commande
+    let stamp = system::run("date", &["+%Y-%m-%d-%H%M"])?;
+    let now = system::run("date", &["+%Y-%m-%d %H:%M:%S %Z"]).unwrap_or_default();
+    log::open(
+        &stamp,
+        &format!("dotbox init {}, started {now}", env!("CARGO_PKG_VERSION")),
+    )?;
+    ui::start(args.verbose);
+    match steps(args) {
+        Ok(()) => Ok(()),
+        // l'erreur est déjà affichée par ui::fail, avec la fin du log: rien à ajouter
+        Err(e) if ui::fail(&e) => Err(String::new()),
+        Err(e) => Err(e),
+    }
+}
 
-    // 2. système pris en charge, sinon rien n'est modifié
+/// « Debian 13 », « Ubuntu 24.04 ».
+fn short_os(os: &system::OsRelease) -> String {
+    let mut id = os.id.clone();
+    if let Some(c) = id.get_mut(0..1) {
+        c.make_ascii_uppercase();
+    }
+    format!("{id} {}", os.version_id)
+}
+
+/// Le résumé de l'étape System: sans les ports s'il ne tient pas sur la ligne.
+fn system_summary(os: &str, arch: &str, domain: &str) -> String {
+    let full = format!("{os} {arch}, *.{domain}, ports 80 443");
+    if full.chars().count() <= ui::SUMMARY_W {
+        full
+    } else {
+        format!("{os} {arch}, *.{domain}")
+    }
+}
+
+/// La version d'une image: « traefik:v3.7.19 » donne « v3.7.19 ».
+fn tag(image: &str) -> String {
+    image.rsplit(':').next().unwrap_or("").to_string()
+}
+
+fn steps(args: &Args) -> Result<(), String> {
+    // 1. le système, le domaine et les ports: tout est vérifié avant de modifier quoi que ce soit
+    ui::step("System", "checking this server");
     let os = system::os_release()?;
     let arch = system::architecture()?;
     if !system::supported(&os) || arch != "amd64" {
@@ -39,19 +85,23 @@ pub fn run(args: &Args) -> Result<(), String> {
         ));
     }
     say("check", &format!("{} {arch}", os.pretty));
-
-    // 3. le domaine et l'autorité de certification (options, sinon dotbox.yml, sinon question),
-    // puis le DNS et les ports: tout est vérifié avant de modifier quoi que ce soit
     let mut cfg = Config::load()?;
     let domain = match args.domain.clone().or_else(|| cfg.get("domain")) {
-        Some(d) => d,
-        None => ask_domain()?,
+        Some(d) => {
+            if !config::valid_domain(&d) {
+                return Err(format!(
+                    "invalid domain {d:?}: for example example.com or dotbox.example.com"
+                ));
+            }
+            traefik::check_dns(&d)?;
+            d
+        }
+        None => {
+            let d = ui::ask(ask_domain)?;
+            say("check", &format!("*.{d} points to this server"));
+            d
+        }
     };
-    if !config::valid_domain(&domain) {
-        return Err(format!(
-            "invalid domain {domain:?}: for example example.com or dotbox.example.com"
-        ));
-    }
     let ca = args
         .ca
         .clone()
@@ -64,20 +114,20 @@ pub fn run(args: &Args) -> Result<(), String> {
             config::CAS.join(" or ")
         ));
     }
-    traefik::check(&domain)?;
+    traefik::check_ports()?;
+    ui::done(&system_summary(&short_os(&os), &arch, &domain));
 
-    // 4. sudo
+    // 2. sudo, l'utilisateur qui fait tourner les apps, son mot de passe Authelia
+    ui::step("User", "the account that runs the apps");
     if system::package_installed("sudo") {
         say("check", "sudo");
     } else {
         say("install", "sudo");
         system::apt_install("sudo")?;
     }
-
-    // 5. l'utilisateur qui fait tourner les apps
     let name = match args.user.clone().or_else(|| cfg.get("user")) {
         Some(n) => n,
-        None => ask_user()?,
+        None => ui::ask(ask_user)?,
     };
     if name == "root" {
         return Err("the apps do not run as root: choose another user".into());
@@ -98,11 +148,28 @@ pub fn run(args: &Args) -> Result<(), String> {
         system::run("usermod", &["-aG", "sudo", &name])?;
         say("group", &format!("{name} added to sudo"));
     }
+    // le mot de passe Authelia, demandé seulement si le compte n'existe pas encore (D34, D39);
+    // sans terminal, il est tiré au hasard
+    let chosen = if !authelia::account_exists(&name) && prompt::is_terminal() {
+        Some(ui::ask(|| {
+            prompt::password(
+                "Authelia password, 12 characters or more",
+                "Enter alone for a random one",
+                authelia::password_ok,
+            )
+        })?)
+    } else {
+        None
+    };
+    ui::done(&format!("{name}, group sudo"));
 
-    // 6. Docker
-    docker::setup(&os, &arch, &name)?;
+    // 3. Docker
+    ui::step("Docker", "official repository");
+    let docker_version = docker::setup(&os, &arch)?;
+    ui::done(&format!("{docker_version}, local logs, live-restore"));
 
-    // 7. dotbox.yml, puis Traefik
+    // 4. dotbox.yml, puis Traefik
+    ui::step("Traefik", "certificates and routing");
     cfg.set("domain", &domain);
     cfg.set("ca", &ca);
     cfg.set("user", &name);
@@ -110,118 +177,176 @@ pub fn run(args: &Args) -> Result<(), String> {
         say("write", config::PATH);
     }
     traefik::setup(&domain, &ca)?;
+    let certs = if ca == "letsencrypt-staging" {
+        "staging certs"
+    } else {
+        "Let's Encrypt certs"
+    };
+    ui::done(&format!("{}, socket proxy, {certs}", tag(traefik::IMAGE)));
 
-    // 8. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
-    let password = authelia::setup(&domain, &name)?;
+    // 5. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
+    ui::step("Authelia", "login page, password and 6-digit code");
+    let password = authelia::setup(&domain, &name, chosen.as_deref())?;
+    ui::done(&format!("{}, account {name}", tag(authelia::IMAGE)));
 
-    // 9. le récapitulatif (Journal, D26)
-    summary(&os.pretty, &arch, &domain, &ca, &name, password.as_deref());
+    // 6. CrowdSec, pas encore dans cette version
+    ui::later("CrowdSec", "not available yet");
+
+    // la carte de fin (D26, D32, D37)
+    let docker_state =
+        if system::run("systemctl", &["is-active", "docker"]).is_ok_and(|s| s == "active") {
+            "running".to_string()
+        } else {
+            "stopped".to_string()
+        };
+    let info = card::Info {
+        password_kept: secrets::read(&authelia::password_secret(&name)).is_some(),
+        user: name,
+        password,
+        log: log::path().unwrap_or_default(),
+        components: vec![
+            Component {
+                name: "Docker".into(),
+                version: docker_version,
+                state: docker_state,
+                address: String::new(),
+            },
+            Component {
+                name: "Traefik".into(),
+                version: tag(traefik::IMAGE),
+                state: traefik::container_state("traefik"),
+                address: format!("https://traefik.{domain}"),
+            },
+            Component {
+                name: "Authelia".into(),
+                version: tag(authelia::IMAGE),
+                state: traefik::container_state("authelia"),
+                address: format!("https://auth.{domain}"),
+            },
+            Component {
+                name: "CrowdSec".into(),
+                version: String::new(),
+                state: String::new(),
+                address: String::new(),
+            },
+        ],
+        elapsed: ui::duration(ui::elapsed()),
+    };
+    log::write("init finished");
+    let term = console::Term::stderr();
+    let _ = term.write_line("");
+    for line in card::render(&info) {
+        let _ = term.write_line(&line);
+    }
+    let _ = term.write_line("");
     Ok(())
 }
 
-/// Ce qui tourne, comment s'en servir, et ce qui manque encore.
-fn summary(os: &str, arch: &str, domain: &str, ca: &str, user: &str, password: Option<&str>) {
-    let docker =
-        system::run("docker", &["version", "--format", "{{.Server.Version}}"]).unwrap_or_default();
-    let tag = |image: &str| image.rsplit(':').next().unwrap_or("").to_string();
-    crate::out::blank();
-    say("summary", "Dot Box core is running");
-    say("server", &format!("{os} {arch}, Docker {docker}"));
-    say("domain", &format!("{domain} (certificates: {ca})"));
-    say(
-        "traefik",
-        &format!(
-            "{}, dashboard https://traefik.{domain} (admins, two factors)",
-            tag(traefik::IMAGE)
-        ),
-    );
-    say(
-        "authelia",
-        &format!("{}, login page https://auth.{domain}", tag(authelia::IMAGE)),
-    );
-    say("login", &format!("{user} (group admins)"));
-    match password {
-        Some(pw) => say(
-            "password",
-            &format!("{pw}   (shown once, kept for root: sudo dotbox user password)"),
-        ),
-        None if secrets::read(&authelia::password_secret(user)).is_some() => {
-            say("password", "kept for root: sudo dotbox user password")
-        }
-        None => say(
-            "password",
-            "not kept (account created before Dot Box kept passwords)",
-        ),
-    }
-    say(
-        "2fa",
-        "at first login, register a 6-digit code app or a passkey",
-    );
-    say(
-        "codes",
-        "verification codes: sudo tail -20 /opt/authelia/config/notification.txt",
-    );
-    say("next", "CrowdSec: not available yet in this version");
-}
-
-/// Demande le domaine dans le terminal.
+/// Demande le domaine. La réponse est vérifiée tout de suite: si *.domaine ne pointe pas vers
+/// ce serveur, elle est refusée avec la raison et la question reposée.
 fn ask_domain() -> Result<String, String> {
     if !prompt::is_terminal() {
         return Err("no terminal to ask for the domain: pass --domain <domain>".into());
     }
-    loop {
-        let Some(line) = prompt::ask(
-            "domain",
-            "domain of this server (*.domain must point here):",
-        )?
-        else {
-            return Err("no answer: pass --domain <domain>".into());
-        };
-        if !line.is_empty() {
-            return Ok(line.to_lowercase());
-        }
-    }
+    let d = prompt::input(
+        "Domain of this server",
+        "*.domain must point to this server",
+        None,
+        |answer| {
+            let d = answer.to_lowercase();
+            if d.is_empty() {
+                Err("a domain is needed, for example dotbox.example.com".into())
+            } else if !config::valid_domain(&d) {
+                Err(format!(
+                    "{d} is not a domain, for example dotbox.example.com"
+                ))
+            } else {
+                traefik::dns_problem(&d).map_or(Ok(()), Err)
+            }
+        },
+    )?;
+    Ok(d.to_lowercase())
 }
 
-/// Demande le nom dans le terminal. Entrée accepte le nom proposé (le compte connecté avant su).
+/// Demande l'utilisateur. Le compte connecté avant su est proposé, Entrée le garde.
 fn ask_user() -> Result<String, String> {
     if !prompt::is_terminal() {
         return Err("no terminal to ask for the user: pass --user <name>".into());
     }
     let default = system::login_user();
-    loop {
-        let question = match &default {
-            Some(d) => format!("user that runs the apps [{d}]:"),
-            None => "user that runs the apps:".to_string(),
-        };
-        let Some(line) = prompt::ask("user", &question)? else {
-            return Err("no answer: pass --user <name>".into());
-        };
-        match (line.as_str(), &default) {
-            ("", Some(d)) => return Ok(d.clone()),
-            ("", None) => continue,
-            (a, _) => return Ok(a.to_string()),
-        }
-    }
+    prompt::input(
+        "User that runs the apps",
+        "created if it does not exist",
+        default.as_deref(),
+        |answer| {
+            if answer == "root" {
+                Err("the apps do not run as root: choose another user".into())
+            } else if !system::valid_username(answer) {
+                Err("lowercase letters, digits, _ and - only".into())
+            } else {
+                Ok(())
+            }
+        },
+    )
 }
 
-/// Crée l'utilisateur et lui fait choisir son mot de passe (passwd, dans le terminal).
+/// Crée l'utilisateur avec le mot de passe Linux choisi (deux fois, masqué), appliqué par chpasswd.
 fn create_user(name: &str) -> Result<(), String> {
     if !prompt::is_terminal() {
         return Err(format!(
             "user {name} does not exist and there is no terminal to set its password"
         ));
     }
-    say("create", &format!("user {name}"));
+    let question = format!("Linux password for {name}");
+    let pw = ui::ask(|| {
+        let first = prompt::password(&question, "for sudo and SSH", |p| {
+            if p.is_empty() {
+                Err("a password is needed".into())
+            } else {
+                Ok(())
+            }
+        })?;
+        let again = first.clone();
+        prompt::password("Again", "the same password", move |p| {
+            if p == again {
+                Ok(())
+            } else {
+                Err("not the same password".into())
+            }
+        })?;
+        Ok(first)
+    })?;
     system::run("useradd", &["--create-home", "--shell", "/bin/bash", name])?;
-    let ok = system::command("passwd")
-        .arg(name)
-        .status()
-        .is_ok_and(|s| s.success());
-    if !ok {
-        return Err(format!(
-            "password not set: run passwd {name}, then dotbox init again"
-        ));
-    }
+    say("create", &format!("user {name}"));
+    system::run_with_input("chpasswd", &[], &format!("{name}:{pw}\n"))?;
+    say("password", &format!("set for {name}"));
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn system_summary_fits() {
+        assert_eq!(
+            system_summary("Debian 13", "amd64", "example.com"),
+            "Debian 13 amd64, *.example.com, ports 80 443"
+        );
+        assert_eq!(
+            system_summary("Debian 13", "amd64", "dotbox.example.com"),
+            "Debian 13 amd64, *.dotbox.example.com"
+        );
+    }
+
+    #[test]
+    fn os_and_tags() {
+        let os = system::parse_os_release("ID=ubuntu\nVERSION_ID=\"24.04\"\n");
+        assert_eq!(short_os(&os), "Ubuntu 24.04");
+        assert_eq!(tag("traefik:v3.7.19"), "v3.7.19");
+        assert_eq!(
+            tag("lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106"),
+            "3.4.7-r0-ls106"
+        );
+    }
 }

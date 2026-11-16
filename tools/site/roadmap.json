@@ -189,6 +189,21 @@
     },
     {
       "stage": "install",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox init` affiche une ligne par étape, pose ses questions façon cliclack, finit par une carte et garde le détail dans un log (`--verbose` pour le voir)",
+      "en": "CLI: `dotbox init` shows one line per step, asks its questions cliclack style, ends with a card and keeps the detail in a log (`--verbose` to see it)",
+      "doc": "cli-output",
+      "journal": [
+        "S.1-S.6",
+        "D37",
+        "D38",
+        "D39",
+        "J89"
+      ]
+    },
+    {
+      "stage": "install",
       "domain": "core",
       "status": "planned",
       "fr": "Core: `install.sh`, pouvoir choisir une version précédente au lieu de la dernière (à décider)",
@@ -273,6 +288,19 @@
         "A.1-A.12",
         "J55-J66",
         "D21-D27"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "access",
+      "status": "progress",
+      "fr": "CLI: `dotbox authelia password` (mot de passe web) et `dotbox authelia verification` (code de vérification d'identité, avec son heure d'expiration)",
+      "en": "CLI: `dotbox authelia password` (web password) and `dotbox authelia verification` (identity verification code, with its expiry time)",
+      "doc": "cli",
+      "journal": [
+        "D35",
+        "D36",
+        "J74"
       ]
     },
     {
@@ -401,13 +429,13 @@
     {
       "stage": "apps",
       "domain": "access",
-      "status": "progress",
+      "status": "planned",
       "fr": "CLI: `dotbox user`, comptes et groupes Authelia, invitation valable 48 h",
       "en": "CLI: `dotbox user`, Authelia accounts and groups, invite valid for 48 h",
       "doc": "post-installation",
       "journal": [
-        "J65",
-        "D25"
+        "D25",
+        "D35"
       ]
     },
     {

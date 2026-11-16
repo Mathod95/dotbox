@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::process::Command;
 
+use crate::log;
+
 /// Systèmes pris en charge (page Prerequisites): versions LTS seulement.
 const SUPPORTED: &[(&str, &[&str])] = &[("debian", &["12", "13"]), ("ubuntu", &["24.04", "26.04"])];
 
@@ -114,25 +116,157 @@ pub fn command(cmd: &str) -> Command {
     c
 }
 
+/// La dernière ligne non vide d'une sortie d'erreur, pour un message court.
+fn last_line(text: &str) -> &str {
+    text.lines()
+        .rev()
+        .find(|l| !l.trim().is_empty())
+        .unwrap_or("")
+        .trim()
+}
+
 /// Lance une commande et rend sa sortie, ou une erreur avec ce qu'elle a écrit.
+/// La commande, sa sortie et son code de retour vont dans le log (D37).
 pub fn run(cmd: &str, args: &[&str]) -> Result<String, String> {
+    log::write(&format!("$ {cmd} {}", args.join(" ")));
     let o = command(cmd)
         .args(args)
         .env("DEBIAN_FRONTEND", "noninteractive")
         .output()
         .map_err(|e| format!("cannot run {cmd}: {e}"))?;
+    let out = String::from_utf8_lossy(&o.stdout);
+    let err = String::from_utf8_lossy(&o.stderr);
+    log::write(&out);
+    log::write(&err);
+    log::write(&format!("  exit {}", o.status.code().unwrap_or(-1)));
     if o.status.success() {
-        Ok(String::from_utf8_lossy(&o.stdout).trim().to_string())
+        Ok(out.trim().to_string())
     } else {
-        let err = String::from_utf8_lossy(&o.stderr);
-        let last = err
-            .lines()
-            .rev()
-            .find(|l| !l.trim().is_empty())
-            .unwrap_or("")
-            .trim();
-        Err(format!("{cmd} {} failed: {last}", args.join(" ")))
+        Err(format!(
+            "{cmd} {} failed: {}",
+            args.join(" "),
+            last_line(&err)
+        ))
     }
+}
+
+/// Comme run, avec un texte envoyé sur l'entrée de la commande. Ce texte n'est jamais écrit dans
+/// le log: il sert aux secrets (chpasswd).
+pub fn run_with_input(cmd: &str, args: &[&str], input: &str) -> Result<(), String> {
+    use std::io::Write;
+    use std::process::Stdio;
+    log::write(&format!("$ {cmd} {}   (input not logged)", args.join(" ")));
+    let mut child = command(cmd)
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("cannot run {cmd}: {e}"))?;
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin
+            .write_all(input.as_bytes())
+            .map_err(|e| format!("cannot write to {cmd}: {e}"))?;
+    }
+    let o = child
+        .wait_with_output()
+        .map_err(|e| format!("cannot run {cmd}: {e}"))?;
+    let err = String::from_utf8_lossy(&o.stderr);
+    log::write(&String::from_utf8_lossy(&o.stdout));
+    log::write(&err);
+    log::write(&format!("  exit {}", o.status.code().unwrap_or(-1)));
+    if o.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "{cmd} {} failed: {}",
+            args.join(" "),
+            last_line(&err)
+        ))
+    }
+}
+
+/// Lance une commande longue et passe chaque ligne de sa sortie à `on_line` au fur et à mesure
+/// (progression d'apt ou de docker pull). Tout va dans le log.
+pub fn run_streaming(
+    cmd: &str,
+    args: &[&str],
+    mut on_line: impl FnMut(&str),
+) -> Result<(), String> {
+    use std::io::{BufRead, BufReader, Read};
+    use std::process::Stdio;
+    log::write(&format!("$ {cmd} {}", args.join(" ")));
+    let mut child = command(cmd)
+        .args(args)
+        .env("DEBIAN_FRONTEND", "noninteractive")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("cannot run {cmd}: {e}"))?;
+    let mut stderr = child.stderr.take();
+    let errors = std::thread::spawn(move || {
+        let mut text = String::new();
+        if let Some(e) = stderr.as_mut() {
+            let _ = e.read_to_string(&mut text);
+        }
+        text
+    });
+    if let Some(out) = child.stdout.take() {
+        for line in BufReader::new(out).lines().map_while(Result::ok) {
+            log::write(&line);
+            on_line(&line);
+        }
+    }
+    let status = child.wait().map_err(|e| format!("cannot run {cmd}: {e}"))?;
+    let err = errors.join().unwrap_or_default();
+    log::write(&err);
+    log::write(&format!("  exit {}", status.code().unwrap_or(-1)));
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "{cmd} {} failed: {}",
+            args.join(" "),
+            last_line(&err)
+        ))
+    }
+}
+
+/// Progression d'une ligne « pmstatus:paquet:pourcentage:texte » d'apt (APT::Status-Fd).
+pub fn apt_progress(line: &str) -> Option<f64> {
+    let rest = line
+        .strip_prefix("pmstatus:")
+        .or_else(|| line.strip_prefix("dlstatus:"))?;
+    rest.split(':').nth(1)?.parse().ok()
+}
+
+/// apt-get install, avec la progression d'apt passée à `on_pct` (0 à 100).
+pub fn apt_install_progress(
+    packages: &[&str],
+    recommends: bool,
+    on_pct: impl Fn(f64),
+) -> Result<(), String> {
+    let mut args = vec!["-o", "APT::Status-Fd=1", "install", "-y", "-q"];
+    if !recommends {
+        args.push("--no-install-recommends");
+    }
+    args.extend(packages);
+    let downloads = std::cell::Cell::new(true);
+    run_streaming("apt-get", &args, |line| {
+        if let Some(p) = apt_progress(line) {
+            // le téléchargement compte pour le premier tiers, l'installation pour le reste
+            if line.starts_with("pmstatus:") {
+                downloads.set(false);
+            }
+            let pct = if downloads.get() {
+                p / 3.0
+            } else {
+                33.0 + p * 2.0 / 3.0
+            };
+            on_pct(pct.min(100.0));
+        }
+    })
 }
 
 pub fn architecture() -> Result<String, String> {
@@ -230,6 +364,22 @@ mod tests {
         assert_eq!(parse_passwd_name(passwd, 1000).as_deref(), Some("admin"));
         assert_eq!(parse_passwd_name(passwd, 0).as_deref(), Some("root"));
         assert_eq!(parse_passwd_name(passwd, 1001), None);
+    }
+
+    #[test]
+    fn apt_status_lines() {
+        assert_eq!(
+            apt_progress("pmstatus:docker-ce:57.1429:Installing docker-ce (amd64)"),
+            Some(57.1429)
+        );
+        assert_eq!(
+            apt_progress("dlstatus:1:9.5:Retrieving file 1 of 10"),
+            Some(9.5)
+        );
+        assert_eq!(
+            apt_progress("Get:1 http://deb.debian.org trixie InRelease"),
+            None
+        );
     }
 
     #[test]

@@ -4,8 +4,8 @@
 //! avant l'installation. Relancé, il ne refait que ce qui manque.
 
 use crate::out::say;
-use crate::prompt;
 use crate::system::{self, OsRelease};
+use crate::{prompt, ui};
 
 /// Clé officielle du dépôt Docker, la même pour Debian et Ubuntu.
 /// Empreinte 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, vérifiée avec gpg (Journal C.3).
@@ -70,7 +70,9 @@ pub fn daemon_json(existing: Option<&str>) -> Result<String, String> {
     Ok(text)
 }
 
-pub fn setup(os: &OsRelease, arch: &str, user: &str) -> Result<(), String> {
+/// Installe Docker et le réseau dotbox. L'utilisateur n'entre pas dans le groupe docker: il donne
+/// les droits de root sans mot de passe, Docker s'utilise avec sudo (Journal, D33).
+pub fn setup(os: &OsRelease, arch: &str) -> Result<String, String> {
     let installed = system::package_version("docker-ce");
     match &installed {
         Some(v) => say("check", &format!("docker-ce {v}")),
@@ -100,24 +102,80 @@ pub fn setup(os: &OsRelease, arch: &str, user: &str) -> Result<(), String> {
     )?;
     say("check", &format!("docker {info}"));
 
-    if system::run("docker", &["network", "inspect", NETWORK]).is_ok() {
+    if system::run(
+        "docker",
+        &["network", "inspect", "-f", "{{.Name}}", NETWORK],
+    )
+    .is_ok()
+    {
         say("check", &format!("network {NETWORK}"));
     } else {
         system::run("docker", &["network", "create", NETWORK])?;
         say("create", &format!("network {NETWORK}"));
     }
 
-    if system::user_groups(user)?.iter().any(|g| g == "docker") {
-        say("check", &format!("{user} in group docker"));
-    } else {
-        system::run("usermod", &["-aG", "docker", user])?;
-        say("group", &format!("{user} added to docker"));
-        say(
-            "note",
-            "the docker group gives root-level privileges (docs.docker.com), log in again to use it",
-        );
+    Ok(version())
+}
+
+/// Version du serveur Docker (vide si Docker ne répond pas).
+pub fn version() -> String {
+    system::run("docker", &["version", "--format", "{{.Server.Version}}"]).unwrap_or_default()
+}
+
+/// Télécharge une image si elle manque, avec la progression des couches sous l'étape en cours.
+pub fn pull(image: &str) -> Result<(), String> {
+    if system::run(
+        "docker",
+        &["image", "inspect", "--format", "{{.Id}}", image],
+    )
+    .is_ok()
+    {
+        say("check", &format!("image {image}"));
+        return Ok(());
     }
+    say("pull", &format!("{image} from {}", registry(image)));
+    let mut layers = Layers::default();
+    system::run_streaming("docker", &["pull", image], |line| {
+        if let Some(p) = layers.read(line) {
+            ui::progress(p);
+        }
+    })?;
+    say("pulled", image);
     Ok(())
+}
+
+/// D'où vient une image: Docker Hub, sauf si son nom commence par un registre (lscr.io...).
+pub fn registry(image: &str) -> &str {
+    match image.split_once('/') {
+        Some((host, _)) if host.contains('.') => host,
+        _ => "Docker Hub",
+    }
+}
+
+/// Suit les couches d'un docker pull: « <id>: Pulling fs layer », « <id>: Pull complete »...
+#[derive(Default)]
+pub struct Layers {
+    seen: Vec<String>,
+    done: Vec<String>,
+}
+
+impl Layers {
+    /// Lit une ligne, rend le pourcentage de couches prêtes s'il a pu changer.
+    pub fn read(&mut self, line: &str) -> Option<f64> {
+        let (id, what) = line.split_once(": ")?;
+        if id.len() < 6 || !id.chars().all(|c| c.is_ascii_hexdigit()) {
+            return None;
+        }
+        if !self.seen.iter().any(|s| s == id) {
+            self.seen.push(id.to_string());
+        }
+        if (what.starts_with("Pull complete") || what.starts_with("Already exists"))
+            && !self.done.iter().any(|s| s == id)
+        {
+            self.done.push(id.to_string());
+        }
+        Some(100.0 * self.done.len() as f64 / self.seen.len() as f64)
+    }
 }
 
 fn install(os: &OsRelease, arch: &str) -> Result<(), String> {
@@ -132,7 +190,8 @@ fn install(os: &OsRelease, arch: &str) -> Result<(), String> {
             "conflict",
             &format!("{list} (conflict with Docker's packages)"),
         );
-        if !prompt::confirm("remove them? [y/N]")? {
+        let question = format!("{} conflict with Docker\nRemove them?", found.join(", "));
+        if !ui::ask(|| prompt::confirm(&question, "←/→ to choose, Enter to confirm"))? {
             return Err(format!(
                 "nothing changed: remove them with apt-get remove {list}, then run dotbox init again"
             ));
@@ -160,9 +219,11 @@ fn install(os: &OsRelease, arch: &str) -> Result<(), String> {
 
     // 4. les paquets, avec leurs recommandations comme dans la doc (dont iptables)
     system::run("apt-get", &["update", "-q"])?;
-    let mut args = vec!["install", "-y", "-q"];
-    args.extend(PACKAGES);
-    system::run("apt-get", &args)?;
+    say(
+        "install",
+        "docker-ce and its packages (official repository)",
+    );
+    system::apt_install_progress(PACKAGES, true, ui::progress)?;
     let v = system::package_version("docker-ce").unwrap_or_default();
     say("install", &format!("docker-ce {v}"));
     Ok(())
@@ -255,6 +316,28 @@ mod tests {
             "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570"
         );
         assert!(KEY.starts_with("-----BEGIN PGP PUBLIC KEY BLOCK-----"));
+    }
+
+    #[test]
+    fn pull_progress_by_layers() {
+        let mut l = Layers::default();
+        assert_eq!(l.read("4.39.28: Pulling from authelia/authelia"), None);
+        assert_eq!(l.read("a1b2c3d4e5f6: Pulling fs layer"), Some(0.0));
+        assert_eq!(l.read("b2c3d4e5f6a1: Already exists"), Some(50.0));
+        assert_eq!(l.read("a1b2c3d4e5f6: Downloading"), Some(50.0));
+        assert_eq!(l.read("a1b2c3d4e5f6: Pull complete"), Some(100.0));
+        assert_eq!(l.read("Digest: sha256:abc"), None);
+        assert_eq!(l.read("Status: Downloaded newer image"), None);
+    }
+
+    #[test]
+    fn registries() {
+        assert_eq!(registry("traefik:v3.7.19"), "Docker Hub");
+        assert_eq!(registry("authelia/authelia:4.39.28"), "Docker Hub");
+        assert_eq!(
+            registry("lscr.io/linuxserver/socket-proxy:3.4.7"),
+            "lscr.io"
+        );
     }
 
     #[test]

@@ -2,6 +2,53 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "v0.0.2",
+      "date": "2026-11-16",
+      "tagged": true,
+      "title": {
+        "fr": "Installation plus lisible",
+        "en": "Clearer install"
+      },
+      "new": [
+        {
+          "fr": "CLI: `dotbox authelia verification` affiche le dernier code de vérification d'identité d'Authelia et l'heure où il expire",
+          "en": "CLI: `dotbox authelia verification` shows the last Authelia identity verification code and when it expires"
+        },
+        {
+          "fr": "CLI: `dotbox init` affiche une ligne par étape, avec ce qu'elle fait et sa progression pendant qu'elle tourne, puis une carte de fin (compte, commandes Authelia, composants, post-installation)",
+          "en": "CLI: `dotbox init` shows one line per step, with what it does and its progress while it runs, then an end card (account, Authelia commands, components, post-installation)"
+        },
+        {
+          "fr": "CLI: `dotbox init` garde tout le détail dans `/opt/dotbox/logs/init-<date>.log` (un fichier par lancement, lisible par root seul) et en affiche la fin en cas d'erreur, `--verbose` pour le voir en direct",
+          "en": "CLI: `dotbox init` keeps every detail in `/opt/dotbox/logs/init-<date>.log` (one file per run, readable by root only) and shows its end on error, `--verbose` to see it live"
+        },
+        {
+          "fr": "CLI: `dotbox init` pose ses questions sous l'étape en cours, vérifie le domaine dès la réponse et demande le mot de passe Authelia (12 caractères ou plus, Entrée pour un mot de passe au hasard)",
+          "en": "CLI: `dotbox init` asks its questions under the current step, checks the domain as soon as it is typed and asks for the Authelia password (12 characters or more, Enter for a random one)"
+        }
+      ],
+      "changed": [
+        {
+          "fr": "CLI: `dotbox user password` devient `dotbox authelia password`",
+          "en": "CLI: `dotbox user password` becomes `dotbox authelia password`"
+        },
+        {
+          "fr": "Core: `install.sh` n'affiche qu'une ligne, `[1/7] Dot Box`, puis `dotbox init` continue de `[2/7]` à `[7/7]`",
+          "en": "Core: `install.sh` prints a single line, `[1/7] Dot Box`, then `dotbox init` goes on from `[2/7]` to `[7/7]`"
+        },
+        {
+          "fr": "CLI: `dotbox init` n'ajoute plus l'utilisateur au groupe `docker`, Docker s'utilise avec `sudo`",
+          "en": "CLI: `dotbox init` no longer adds the user to the `docker` group, Docker is used with `sudo`"
+        },
+        {
+          "fr": "CLI: le mot de passe Linux d'un utilisateur créé par `dotbox init` est demandé deux fois, masqué",
+          "en": "CLI: the Linux password of a user created by `dotbox init` is asked twice, masked"
+        }
+      ],
+      "fixed": [],
+      "removed": []
+    },
+    {
       "version": "v0.0.1",
       "date": "2026-11-16",
       "tagged": true,

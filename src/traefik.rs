@@ -4,7 +4,7 @@
 //! (D20, recommandé par la doc de Traefik). Relancé, il ne refait que ce qui manque.
 
 use crate::out::say;
-use crate::system;
+use crate::{docker, system};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
@@ -197,52 +197,78 @@ fn container_running(name: &str) -> bool {
     system::run("docker", &["inspect", "-f", "{{.State.Running}}", name]).is_ok_and(|s| s == "true")
 }
 
-/// Avant de toucher à quoi que ce soit: un sous-domaine tiré au hasard (le joker) pointe vers le
-/// serveur, et les ports 80 et 443 sont libres (ou déjà tenus par Traefik).
-pub fn check(domain: &str) -> Result<(), String> {
-    let mine = parse_ipv4s(&system::run(
-        "ip",
-        &["-o", "-4", "addr", "show", "scope", "global"],
-    )?);
+/// Le joker *.domaine pointe-t-il vers ce serveur? Rend la raison courte du refus, sinon None.
+/// Seul le joker compte: Dot Box ne sert que des sous-domaines, le domaine lui-même peut pointer
+/// ailleurs (un site web, par exemple). Un nom tiré au hasard teste le joker (Journal, D29).
+pub fn dns_problem(domain: &str) -> Option<String> {
+    let mine = match system::run("ip", &["-o", "-4", "addr", "show", "scope", "global"]) {
+        Ok(text) => parse_ipv4s(&text),
+        Err(e) => return Some(e),
+    };
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.subsec_nanos())
         .unwrap_or(0);
-    // Seul le joker compte: Dot Box ne sert que des sous-domaines, le domaine lui-même peut
-    // pointer ailleurs (un site web, par exemple). Un nom tiré au hasard teste le joker (Journal, D29).
-    let random = format!("dotbox-check-{nanos:x}.{domain}");
-    let ips = resolve(&random);
+    let ips = resolve(&format!("dotbox-check-{nanos:x}.{domain}"));
     if ips.is_empty() {
-        return Err(format!(
-            "*.{domain} does not resolve: create an A record to this server, then run dotbox init again"
-        ));
+        return Some(format!("*.{domain} does not resolve"));
     }
     if !ips.iter().any(|ip| mine.contains(ip)) {
         let list: Vec<String> = ips.iter().map(IpAddr::to_string).collect();
-        return Err(format!(
-            "*.{domain} points to {}, not to this server: fix the A record, then run dotbox init again",
+        return Some(format!(
+            "*.{domain} points to {}, not here",
             list.join(", ")
         ));
     }
-    say("check", &format!("*.{domain} points to this server"));
+    None
+}
 
+/// Le domaine donné en option ou relu dans dotbox.yml: même vérification, avec quoi faire.
+pub fn check_dns(domain: &str) -> Result<(), String> {
+    match dns_problem(domain) {
+        Some(why) => Err(format!(
+            "{why}: point an A record for *.{domain} to this server, then run dotbox init again"
+        )),
+        None => {
+            say("check", &format!("*.{domain} points to this server"));
+            Ok(())
+        }
+    }
+}
+
+/// Les ports 80 et 443 sont libres, ou déjà tenus par Traefik.
+pub fn check_ports() -> Result<(), String> {
     if container_running("traefik") {
         say("check", "ports 80 and 443 (Traefik)");
-    } else {
-        let busy: Vec<u16> = parse_listening_ports(&system::run("ss", &["-Htln"])?)
-            .into_iter()
-            .filter(|p| *p == 80 || *p == 443)
-            .collect();
-        if !busy.is_empty() {
-            let who = system::run("ss", &["-Htlnp", "( sport = :80 or sport = :443 )"])
-                .unwrap_or_default();
-            return Err(format!(
-                "ports 80 and 443 must be free for Traefik, in use:\n{who}"
-            ));
-        }
-        say("check", "ports 80 and 443 free");
+        return Ok(());
     }
+    let busy: Vec<u16> = parse_listening_ports(&system::run("ss", &["-Htln"])?)
+        .into_iter()
+        .filter(|p| *p == 80 || *p == 443)
+        .collect();
+    if !busy.is_empty() {
+        let who =
+            system::run("ss", &["-Htlnp", "( sport = :80 or sport = :443 )"]).unwrap_or_default();
+        return Err(format!(
+            "ports 80 and 443 must be free for Traefik, in use:\n{who}"
+        ));
+    }
+    say("check", "ports 80 and 443 free");
     Ok(())
+}
+
+/// État d'un container: « healthy », « running »... vide s'il n'existe pas.
+pub fn container_state(name: &str) -> String {
+    system::run(
+        "docker",
+        &[
+            "inspect",
+            "-f",
+            "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
+            name,
+        ],
+    )
+    .unwrap_or_default()
 }
 
 pub fn setup(domain: &str, ca: &str) -> Result<(), String> {
@@ -261,6 +287,8 @@ pub fn setup(domain: &str, ca: &str) -> Result<(), String> {
 
     let running = container_running("traefik") && container_running("socket-proxy");
     if compose_changed || !running {
+        docker::pull(PROXY_IMAGE)?;
+        docker::pull(IMAGE)?;
         system::run(
             "docker",
             &["compose", "-f", COMPOSE, "up", "-d", "--quiet-pull"],
