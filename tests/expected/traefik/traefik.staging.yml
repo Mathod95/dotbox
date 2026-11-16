@@ -1,0 +1,50 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+  # En-têtes au nom « alias » (X_Auth_User pour X-Auth-User) supprimés: ils pourraient
+  # usurper ceux qu'Authelia transmet aux apps (doc de Traefik, aliasHeadersStrategy).
+  aliasHeadersStrategy: delete
+
+log:
+  level: INFO
+
+# Logs d'accès en JSON, pour CrowdSec. Tournés chaque jour par logrotate.
+accessLog:
+  filePath: /logs/access.log
+  format: json
+
+# Pour le healthcheck, sur un port interne jamais publié.
+ping: {}
+
+# Le tableau de bord, seulement par son routeur protégé par Authelia (jamais api.insecure)
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+
+providers:
+  docker:
+    endpoint: "tcp://socket-proxy:2375"
+    exposedByDefault: false
+    network: dotbox
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web

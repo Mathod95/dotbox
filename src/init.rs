@@ -1,15 +1,25 @@
-//! `dotbox init` (décision D8 du Journal): vérifier le système, installer sudo, préparer
-//! l'utilisateur qui fait tourner les apps, puis Docker (phase C). Traefik, Authelia et CrowdSec
-//! viendront ensuite. Relancé, il ne refait que ce qui manque.
+//! `dotbox init` (décision D8 du Journal): vérifier le système, le domaine et les ports, installer
+//! sudo, préparer l'utilisateur qui fait tourner les apps, puis Docker (phase C) et Traefik
+//! (phase T) et Authelia (phase A). CrowdSec viendra ensuite. Les réponses sont gardées dans
+//! /opt/dotbox/dotbox.yml: relancé, il ne redemande rien et ne refait que ce qui manque.
 
+use crate::config::{self, Config};
 use crate::out::say;
-use crate::{docker, prompt, system};
+use crate::{authelia, docker, prompt, secrets, system, traefik};
 
 #[derive(clap::Args)]
 pub struct Args {
     /// User that runs the apps and Dot Box (asked if not given)
     #[arg(long, value_name = "NAME")]
     user: Option<String>,
+
+    /// Domain of the server: *.DOMAIN must point to it (asked if not given)
+    #[arg(long, value_name = "DOMAIN")]
+    domain: Option<String>,
+
+    /// Certificate authority: letsencrypt, or letsencrypt-staging for tests
+    #[arg(long, value_name = "CA", value_parser = config::CAS.to_vec())]
+    ca: Option<String>,
 }
 
 pub fn run(args: &Args) -> Result<(), String> {
@@ -30,7 +40,33 @@ pub fn run(args: &Args) -> Result<(), String> {
     }
     say("check", &format!("{} {arch}", os.pretty));
 
-    // 3. sudo
+    // 3. le domaine et l'autorité de certification (options, sinon dotbox.yml, sinon question),
+    // puis le DNS et les ports: tout est vérifié avant de modifier quoi que ce soit
+    let mut cfg = Config::load()?;
+    let domain = match args.domain.clone().or_else(|| cfg.get("domain")) {
+        Some(d) => d,
+        None => ask_domain()?,
+    };
+    if !config::valid_domain(&domain) {
+        return Err(format!(
+            "invalid domain {domain:?}: for example example.com or dotbox.example.com"
+        ));
+    }
+    let ca = args
+        .ca
+        .clone()
+        .or_else(|| cfg.get("ca"))
+        .unwrap_or_else(|| config::DEFAULT_CA.to_string());
+    if !config::CAS.contains(&ca.as_str()) {
+        return Err(format!(
+            "unknown ca {ca:?} in {}: {}",
+            config::PATH,
+            config::CAS.join(" or ")
+        ));
+    }
+    traefik::check(&domain)?;
+
+    // 4. sudo
     if system::package_installed("sudo") {
         say("check", "sudo");
     } else {
@@ -38,9 +74,9 @@ pub fn run(args: &Args) -> Result<(), String> {
         system::apt_install("sudo")?;
     }
 
-    // 4. l'utilisateur qui fait tourner les apps
-    let name = match &args.user {
-        Some(n) => n.clone(),
+    // 5. l'utilisateur qui fait tourner les apps
+    let name = match args.user.clone().or_else(|| cfg.get("user")) {
+        Some(n) => n,
         None => ask_user()?,
     };
     if name == "root" {
@@ -63,15 +99,88 @@ pub fn run(args: &Args) -> Result<(), String> {
         say("group", &format!("{name} added to sudo"));
     }
 
-    // 5. Docker
+    // 6. Docker
     docker::setup(&os, &arch, &name)?;
 
-    // 6. la suite n'existe pas encore
-    say(
-        "next",
-        "Traefik, Authelia and CrowdSec: not available yet in this version",
-    );
+    // 7. dotbox.yml, puis Traefik
+    cfg.set("domain", &domain);
+    cfg.set("ca", &ca);
+    cfg.set("user", &name);
+    if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
+        say("write", config::PATH);
+    }
+    traefik::setup(&domain, &ca)?;
+
+    // 8. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
+    let password = authelia::setup(&domain, &name)?;
+
+    // 9. le récapitulatif (Journal, D26)
+    summary(&os.pretty, &arch, &domain, &ca, &name, password.as_deref());
     Ok(())
+}
+
+/// Ce qui tourne, comment s'en servir, et ce qui manque encore.
+fn summary(os: &str, arch: &str, domain: &str, ca: &str, user: &str, password: Option<&str>) {
+    let docker =
+        system::run("docker", &["version", "--format", "{{.Server.Version}}"]).unwrap_or_default();
+    let tag = |image: &str| image.rsplit(':').next().unwrap_or("").to_string();
+    println!();
+    say("summary", "Dot Box core is running");
+    say("server", &format!("{os} {arch}, Docker {docker}"));
+    say("domain", &format!("{domain} (certificates: {ca})"));
+    say(
+        "traefik",
+        &format!(
+            "{}, dashboard https://traefik.{domain} (admins, two factors)",
+            tag(traefik::IMAGE)
+        ),
+    );
+    say(
+        "authelia",
+        &format!("{}, login page https://auth.{domain}", tag(authelia::IMAGE)),
+    );
+    say("login", &format!("{user} (group admins)"));
+    match password {
+        Some(pw) => say(
+            "password",
+            &format!("{pw}   (shown once, kept for root: sudo dotbox user password)"),
+        ),
+        None if secrets::read(&authelia::password_secret(user)).is_some() => {
+            say("password", "kept for root: sudo dotbox user password")
+        }
+        None => say(
+            "password",
+            "not kept (account created before Dot Box kept passwords)",
+        ),
+    }
+    say(
+        "2fa",
+        "at first login, register a 6-digit code app or a passkey",
+    );
+    say(
+        "codes",
+        "verification codes: sudo tail -20 /opt/authelia/config/notification.txt",
+    );
+    say("next", "CrowdSec: not available yet in this version");
+}
+
+/// Demande le domaine dans le terminal.
+fn ask_domain() -> Result<String, String> {
+    if !prompt::is_terminal() {
+        return Err("no terminal to ask for the domain: pass --domain <domain>".into());
+    }
+    loop {
+        let Some(line) = prompt::ask(
+            "domain",
+            "domain of this server (*.domain must point here):",
+        )?
+        else {
+            return Err("no answer: pass --domain <domain>".into());
+        };
+        if !line.is_empty() {
+            return Ok(line.to_lowercase());
+        }
+    }
 }
 
 /// Demande le nom dans le terminal. Entrée accepte le nom proposé (le compte connecté avant su).

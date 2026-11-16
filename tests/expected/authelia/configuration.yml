@@ -1,0 +1,50 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+# Les secrets sont lus dans /opt/dotbox/secrets (variables *_FILE du compose.yml).
+server:
+  address: 'tcp://:9091'
+
+log:
+  level: 'info'
+
+theme: 'auto'
+
+# Double authentification: code à 6 chiffres ou passkey, au choix de chacun (Journal, D23 et D27).
+# Duo (service payant) désactivé.
+totp:
+  issuer: 'example.com'
+webauthn:
+  display_name: 'Dot Box'
+duo_api:
+  disable: true
+
+authentication_backend:
+  file:
+    path: '/config/users_database.yml'
+
+# Tout est refusé, sauf ce qu'une règle autorise
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain: 'traefik.example.com'
+      subject: 'group:admins'
+      policy: 'two_factor'
+
+session:
+  cookies:
+    - domain: 'example.com'
+      authelia_url: 'https://auth.example.com'
+
+# Essais de mot de passe en rafale: 3 ratés en 2 minutes, bloqué 5 minutes
+regulation:
+  max_retries: 3
+  find_time: '2 minutes'
+  ban_time: '5 minutes'
+
+storage:
+  local:
+    path: '/config/db.sqlite3'
+
+# Codes de vérification écrits dans un fichier, pas d'e-mail (Journal, D21)
+notifier:
+  filesystem:
+    filename: '/config/notification.txt'

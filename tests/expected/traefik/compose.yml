@@ -1,0 +1,57 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+# Vos changements vont dans compose.override.yml, à côté.
+name: traefik
+services:
+  traefik:
+    image: traefik:v3.7.19
+    container_name: traefik
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - dotbox
+      - socket
+    volumes:
+      - /opt/traefik/config:/etc/traefik
+      - /opt/traefik/logs:/logs
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dashboard.rule: Host(`traefik.example.com`)
+      traefik.http.routers.dashboard.entrypoints: websecure
+      traefik.http.routers.dashboard.service: api@internal
+      traefik.http.routers.dashboard.middlewares: authelia@docker
+
+  # Seul à tenir le socket Docker, en lecture: Traefik ne peut que lire les containers (Journal, D20).
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106
+    container_name: socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - socket
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  dotbox:
+    external: true
+  socket:
+    internal: true
