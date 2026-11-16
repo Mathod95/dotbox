@@ -52,6 +52,7 @@ DOCS = [
     {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
+    {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},
 ]
 
 # artefacts claude.ai : les pages se répondent par leurs boutons
@@ -71,6 +72,7 @@ ARTIFACT_DOCS = {
     "sandbox": "https://claude.ai/artifact/KxbLBXFF5kiVWdmpx3rb34",
     "cli": "https://claude.ai/artifact/GZz8HJqNBqMgY65VygEe9x",
     "journal": "https://claude.ai/artifact/WE96WdBsdMnxaUejtN6BUk",
+    "cli-output": "https://claude.ai/artifact/KxU39np5ruPo9QJ6ciEXTz",
 }
 BLANK = ' target="_blank" rel="noopener"'
 

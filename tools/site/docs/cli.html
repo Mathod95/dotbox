@@ -42,6 +42,10 @@
   </section>
 
 <!-- CSS -->
+/* proposition en cours sur une colonne ou une ligne: le texte en vert, l'encadré sur l'en-tête ou la première cellule */
+.prop-col { color: var(--accent) !important; }
+/* sudo devant une commande, en vert */
+code .sudo { color: var(--accent); font-weight: 600; }
 .facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
 .facts b { color: var(--accent); font-weight: 500; margin-right: .5em; text-transform: none; }
 /* sections */
@@ -151,7 +155,7 @@ td:last-child code { color: var(--label); }
   // out : lignes de sortie, [classe, texte] (ok = accent, warn = jaune, dim = discret, lit = clair)
   var GROUPS = [
     { id: "server", name: { fr: "Serveur", en: "Server" }, cmds: [
-      { name: "init", args: "[--domain <domain>] [--user <name>] [--ca <ca>]", hargs: "[--domain <d>] [--user <n>] [--ca <ca>]",
+      { name: "init", args: "[--domain <domain>] [--user <name>] [--ca <ca>]", sudo: true, hargs: "[--domain <d>] [--user <n>] [--ca <ca>]",
         d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik, Authelia et CrowdSec", en: "Prepare the server: Docker, dotbox network, Traefik, Authelia and CrowdSec" },
         ex: "dotbox init --domain example.com",
         out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  dns      *.example.com → 203.0.113.10"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["ok", "  up       crowdsec    Running"], ["", "  cert     dotbox.example.com (Let's Encrypt, HTTP-01)"], ["dim", "  admin    admin (password shown once below)"]] },
@@ -163,7 +167,7 @@ td:last-child code { color: var(--label); }
         d: { fr: "Vérifie Docker, DNS, certificats, ports, CrowdSec, mises à jour et espace disque", en: "Check Docker, DNS, certificates, ports, CrowdSec, updates and disk space" },
         ex: "dotbox doctor",
         out: [["ok", "  ok    docker 28.2, daemon running"], ["ok", "  ok    *.example.com resolves to 203.0.113.10"], ["ok", "  ok    certificates valid (6 subdomains)"], ["ok", "  ok    crowdsec running"], ["ok", "  ok    ports 80 and 443 open"], ["warn", "  warn  14 system updates pending (3 security)"], ["warn", "  warn  /data 86% used (612 GB free)"]] },
-      { name: "upgrade", args: "",
+      { name: "upgrade", args: "", sudo: true,
         d: { fr: "Met à jour Dot Box lui-même", en: "Update Dot Box itself" },
         ex: "dotbox upgrade",
         out: [["", "  dotbox   0.1.0 → 0.2.0"], ["", "  restart  dotbox"], ["ok", "  done     apps untouched"]] },
@@ -234,16 +238,24 @@ td:last-child code { color: var(--label); }
         d: { fr: "Sauvegarde /opt app par app, compressée et chiffrée", en: "Back up /opt app by app, compressed and encrypted" },
         ex: "dotbox backup --to /backups",
         out: [["", "  dotbox     12 MB"], ["", "  radarr     stop, archive 84 MB, Running"], ["", "  sonarr     stop, archive 61 MB, Running"], ["", "  prowlarr   snapshot, archive 38 MB"], ["ok", "  sent       /backups, keep 7"]] },
-      { name: "restore", args: "<archive|latest> [--app <app>] [--key <file>]",
+      { name: "restore", args: "<archive|latest> [--app <app>] [--key <file>]", sudo: true,
         d: { fr: "Restaure une app ou tout le serveur, ici ou sur un serveur neuf", en: "Restore one app or the whole server, here or on a new one" },
         ex: "dotbox restore latest --app radarr",
         out: [["", "  archive  /backups/radarr-2026-11-02.tar.zst.age"], ["", "  stop     radarr"], ["", "  extract  /opt/radarr"], ["ok", "  up       radarr      Running"]] }
     ] },
     { id: "users", name: { fr: "Utilisateurs", en: "Users" }, cmds: [
-      { name: "user", args: "add|list|remove|passwd|password <name>",
+      { name: "user", args: "add|list|remove|passwd <name>",
         d: { fr: "Gère les comptes Authelia", en: "Manage Authelia accounts" },
         ex: "dotbox user add lea --group family",
-        out: [["", "  user     lea (group family)"], ["dim", "  access   seerr"], ["ok", "  invite   link valid 48 h"]] }
+        out: [["", "  user     lea (group family)"], ["dim", "  access   seerr"], ["ok", "  invite   link valid 48 h"]] },
+      { name: "authelia password", args: "[<name>]", sudo: true,
+        d: { fr: "Affiche le mot de passe web d'un compte Authelia, celui de la page de connexion, créé par dotbox init. Ce n'est pas le mot de passe Linux", en: "Shows the web password of an Authelia account, the one of the login page, created by dotbox init. It is not the Linux password" },
+        ex: "dotbox authelia password",
+        out: [["", "  password Xq7vR2mLp9sTe4KcWb8nZd3F   (admin, set by dotbox init)"], ["dim", "  note     if it was changed in Authelia since, this one no longer works"]] },
+      { name: "authelia", args: "verification", sudo: true,
+        d: { fr: "Affiche le dernier code de vérification d'identité, celui qu'Authelia demande avant d'enregistrer un appareil, et l'heure où il expire. Ce n'est pas le code à 6 chiffres, qui vient de l'app du téléphone", en: "Shows the last identity verification code, the one Authelia asks for before registering a device, and when it expires. It is not the 6-digit code, which comes from the phone app" },
+        ex: "dotbox authelia verification",
+        out: [["", "  code     CQLM7VEH   (created 09:22, valid until 09:27)"], ["dim", "  note     this is not the 6-digit code: that one comes from the app on your phone"]] }
     ] },
     { id: "config", name: { fr: "Configuration", en: "Configuration" }, cmds: [
       { name: "config", args: "get|set <key> [value]",
@@ -265,11 +277,28 @@ td:last-child code { color: var(--label); }
     { f: "--no-color", d: { fr: "sortie sans couleurs", en: "output without colors" } },
     { f: "-h, --help", d: { fr: "l'aide de la commande", en: "help for the command" } }
   ];
-  var ALL = []; GROUPS.forEach(function (g) { g.cmds.forEach(function (c) { ALL.push(c); }); });
+  var ALL = []; GROUPS.forEach(function (g) { g.cmds.forEach(function (c) { if (!c.added) ALL.push(c); }); });
 
   // Propositions (blue/green, comme les autres pages): une commande qui porte « prop » (numéro) et
   // « was » (anciennes valeurs) s'affiche dans le tableau avec l'ancien texte en bleu et le nouveau
   // en vert. Le terminal garde l'ancien texte tant que la proposition n'est pas validée.
+  // « sudo » en vert devant les commandes qui en ont besoin. Proposition #45: tant que SUDO_PROP vaut 45,
+  // le tableau montre l'ancien texte (sans sudo) en bleu et le nouveau en vert, le terminal garde l'ancien.
+  var SUDO_PROP = null;   // numéro de la proposition en cours sur le sudo, null quand il n'y en a pas
+  function sudoCode(text, withSudo) {
+    var code = el("code");
+    if (withSudo) { code.appendChild(el("span", "sudo", "sudo")); code.appendChild(document.createTextNode(" ")); }
+    code.appendChild(document.createTextNode(text)); return code;
+  }
+  function sudoCell(c, text) {
+    var td = el("td");
+    if (!c.sudo) { td.appendChild(sudoCode(text, false)); return td; }
+    if (!SUDO_PROP || c.added) { td.appendChild(sudoCode(text, true)); return td; }
+    var o = el("span", "prop-old"), n = el("span", "prop-new");
+    o.setAttribute("data-prop", SUDO_PROP); n.setAttribute("data-prop", SUDO_PROP);
+    o.appendChild(sudoCode(text, false)); n.appendChild(sudoCode(text, true));
+    td.appendChild(o); td.appendChild(n); return td;
+  }
   function cur(c, k) { return c.was && k in c.was ? c.was[k] : c[k]; }
   function propCell(c, k, render) {
     var td = el("td");
@@ -300,6 +329,7 @@ td:last-child code { color: var(--label); }
       var s = el("div"); s.appendChild(el("h3", "", tr(g.name)));
       var dl = el("dl", "cmds");
       g.cmds.forEach(function (c) {
+        if (c.added) return;
         var dt = el("dt"), b = el("button"); b.type = "button";
         b.appendChild(document.createTextNode(c.name));
         var a = cur(c, "hargs") || cur(c, "args");
@@ -317,7 +347,7 @@ td:last-child code { color: var(--label); }
   }
   function showCmd(c) {
     shown = c; screen.innerHTML = "";
-    screen.appendChild(prompt(c.ex));
+    screen.appendChild(prompt((c.sudo && !SUDO_PROP ? "sudo " : "") + c.ex));
     var ul = el("ul", "out");
     c.out.forEach(function (l) { ul.appendChild(el("li", l[0], l[1])); });
     screen.appendChild(ul);
@@ -333,9 +363,19 @@ td:last-child code { color: var(--label); }
       var hr = el("tr"), th = el("th", "", tr(g.name)); th.colSpan = 3; th.scope = "colgroup"; hr.appendChild(th); tb.appendChild(hr);
       g.cmds.forEach(function (c) {
         var tr_ = el("tr");
-        tr_.appendChild(propCell(c, "args", function (a) { return el("code", "", "dotbox " + c.name + (a ? " " + a : "")); }));
+        tr_.appendChild(c.was && "args" in c.was
+          ? propCell(c, "args", function (a) { return el("code", "", "dotbox " + c.name + (a ? " " + a : "")); })
+          : sudoCell(c, "dotbox " + c.name + (c.args ? " " + c.args : "")));
         tr_.appendChild(propCell(c, "d", function (d) { return document.createTextNode(tr(d)); }));
-        var c3 = el("td"); c3.appendChild(el("code", "", c.ex)); tr_.appendChild(c3);
+        // exemple: trop étroit pour un encadré, le nouveau texte s'affiche en vert tant que #45 n'est pas validée
+        var c3 = el("td", c.sudo && SUDO_PROP && !c.added ? "prop-col" : ""); c3.appendChild(sudoCode(c.ex, !!c.sudo)); tr_.appendChild(c3);
+        // commande ajoutée (prop + added): encadré vert sur la première cellule, le reste en vert
+        if (c.added) {
+          var first = tr_.firstChild, box = el("span", "prop-new"); box.setAttribute("data-prop", c.prop);
+          while (first.firstChild) box.appendChild(first.firstChild);
+          first.appendChild(box);
+          for (var k = 1; k < tr_.children.length; k++) tr_.children[k].classList.add("prop-col");
+        }
         tb.appendChild(tr_);
       });
     });

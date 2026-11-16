@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "16 novembre 2026, 06:59";
+  var UPDATED = "16 novembre 2026, 10:40";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -896,7 +896,230 @@ sha256sum -c dotbox-linux-amd64.sha256; cmp install.sh <repo>/install.sh; ./dotb
 fichiers: install.sh (3 850 octets), dotbox-linux-amd64 (1 245 968), dotbox-linux-amd64.sha256 (85)
 dotbox-linux-amd64: OK (sha256 b240ae93...)
 install.sh identique au repo
-dotbox 0.0.1, statically linked` }
+dotbox 0.0.1, statically linked` },
+    { id: "J70", time: "07:25", status: "fait", where: "Serveur réinstallé", kind: "ecriture",
+      title: "Parcours complet par Mathod95, sur une Debian 13 réinstallée",
+      cmd: `su -
+wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --ca letsencrypt-staging`,
+      does: "Mathod95 réinstalle Debian 13 sur le serveur de test (même IP, DNS inchangé), puis suit seul la doc: la commande d'installation de la release v0.0.1. Il répond <domaine> à la question du domaine et Entrée pour l'utilisateur proposé. Premier vrai test de bout en bout: install.sh, le téléchargement depuis la release, le checksum, et la question posée par init alors que le script arrive par un tuyau (/dev/tty).",
+      effect: "Serveur: sudo, Docker 29.9.3, Traefik v3.7.19 et socket proxy, Authelia 4.39.28, compte <user>, certificats de staging pour auth.<domaine> et traefik.<domaine>.",
+      note: "Points relevés: 1. « check root » apparaît deux fois (install.sh puis init). 2. <user> vient d'entrer dans les groupes sudo et docker: il faut se reconnecter pour s'en servir, mais seul docker est rappelé. 3. Le mot de passe web a été recopié dans la conversation avec Claude: à changer dans Authelia.",
+      result: `  check    root
+  check    Linux amd64
+  download dotbox-linux-amd64 (latest release)
+  verify   sha256 ok
+  install  /usr/local/bin/dotbox
+  ...      (init: système, *.<domaine>, ports, sudo, <user>, Docker, Traefik, Authelia)
+  summary  Dot Box core is running
+  password <masqué>   (shown once, kept for root: sudo dotbox user password)
+vérifié depuis le PC: auth health OK, http -> 301, tableau de bord -> 302 vers auth.<domaine>, sous-domaine inconnu -> 404,
+certificats staging pour auth. et traefik. (émis à 06:29), ports 2375, 9091 et 8080 fermés depuis Internet` },
+    { id: "J71", time: "08:09", status: "fait", where: "PC", kind: "ecriture",
+      title: "install.sh n'affiche plus ses vérifications (D30)",
+      cmd: `shellcheck install.sh; bash -n install.sh; ./install.sh`,
+      does: "Les vérifications root et Linux amd64 restent, mais ne s'affichent plus qu'en cas d'erreur. La ligne install donne la version installée, puis une ligne run dotbox init annonce la suite.",
+      effect: "PC: install.sh. Pas commité. Sortie attendue: download, verify, install /usr/local/bin/dotbox (version), run dotbox init.",
+      result: `shellcheck: aucun avertissement
+sans root: error run this script as root: su -, then run the same command again` },
+    { id: "J72", time: "08:23", status: "fait", where: "PC → Serveur réinstallé", kind: "lecture",
+      title: "Accès de Claude au serveur réinstallé",
+      cmd: `sshpass -e ssh-copy-id -o StrictHostKeyChecking=accept-new -i ~/.ssh/dotbox-test.pub dotbox-test
+ssh dotbox-test 'whoami; id -nG'
+python3 sudo_run.py 'whoami; dotbox --version; docker ps'`,
+      does: "Après la réinstallation, l'ancienne empreinte du serveur est retirée du PC (ssh-keygen -R), le nouveau mot de passe Linux de <user> est rangé dans ~/.config/dotbox-test/sudo-pass (donné par Mathod95), puis la clé SSH de Claude est déposée. Elle y était déjà: Mathod95 l'avait copiée.",
+      effect: "PC: ~/.ssh/known_hosts (nouvelle empreinte ED25519 SHA256:Lidmvup8cjDjSYgNLSEtgdrsji51XuoShy0rSexZa4c), sudo-pass. Serveur: rien de nouveau.",
+      result: `<user>, groupes: sudo, docker...
+sudo: root. dotbox 0.0.1. authelia, traefik, socket-proxy: up depuis l'installation de J70` },
+    { id: "J73", time: "09:16", status: "fait", where: "PC", kind: "ecriture",
+      title: "Page CLI: sudo devant les commandes, dotbox authelia code. Page CLI Output",
+      does: "Page CLI. #44 validée: dotbox authelia code est une commande de la page. #43 (une colonne sudo) retirée sans être appliquée: Mathod95 préfère écrire sudo en vert devant chaque commande qui en a besoin, sans colonne de plus. C'est la proposition #45, qui fait aussi de dotbox user password sa propre ligne (seule cette sous-commande de dotbox user demande sudo). Dans la colonne Exemple, trop étroite pour un encadré, le nouveau texte s'affiche en vert. Il n'y avait pas d'ancienne commande dotbox user code à retirer: elle n'a jamais été codée ni écrite dans la doc. Nouvelle page CLI Output sous Journal, avec les maquettes de la sortie de dotbox init (Q27). La variante A (couleurs seulement) en est retirée à la demande de Mathod95.",
+      effect: "PC: tools/site/docs/cli.html, tools/site/docs/cli-output.html (nouvelle), tools/build_site.py, CLAUDE.md. Pas commité." },
+    { id: "J74", time: "09:24", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "dotbox authelia password et dotbox authelia verification (D36)",
+      cmd: `python3 sudo_run.py 'dotbox authelia password; dotbox authelia verification'
+ssh dotbox-test 'dotbox authelia verification'                       # sans sudo: refusé
+# un vrai code, demandé à Authelia par son API (comme le bouton « Enregistrer l'appareil »):
+curl -k -d '{"username":"<user>","password":"••••"}' https://auth.<domaine>/api/firstfactor
+curl -k -X POST https://auth.<domaine>/api/user/session/elevation
+python3 sudo_run.py 'dotbox authelia verification'`,
+      does: "src/authelia_cmd.rs remplace src/user.rs. dotbox authelia password relit le mot de passe web. dotbox authelia verification lit le dernier code de vérification d'identité dans notification.txt, et calcule son heure d'expiration (5 minutes, le défaut d'Authelia, Q25). Le premier essai avec un vrai code ne trouvait rien: dans le fichier, le code est entouré de lignes de tirets. Corrigé, et le test utilise maintenant le format réel. Le récapitulatif de init renvoie vers les deux nouvelles commandes.",
+      effect: "PC: src/authelia_cmd.rs (nouveau), src/user.rs (supprimé), src/main.rs, src/init.rs. Serveur: nouveau /usr/local/bin/dotbox, un code de vérification créé pour le test (expiré seul 5 minutes après).",
+      result: `  password <masqué>   (<user>, set by dotbox init)
+  code     none yet: Authelia writes one when you click « Register device » in its settings
+sans sudo: error readable by root only: run it with sudo
+après la demande d'un code:
+  code     <masqué>   (created 09:22, valid until 09:27)
+  note     this is not the 6-digit code: that one comes from the app on your phone
+tests: 27 sur 27` },
+    { id: "J75", time: "09:48", status: "fait", where: "PC", kind: "ecriture",
+      title: "Propositions #45, #46 et #47 appliquées, terminal en tête de CLI Output",
+      does: "Page CLI: sudo en vert devant init, upgrade, restore, authelia password et authelia verification, ligne user réduite à add|list|remove|passwd. Installation et Post-installation: sudo dotbox authelia password. Le terminal cliquable montre maintenant ces commandes. CLI Output: une fenêtre de terminal en tête de page, avec les deux commandes d'installation (su -, puis wget ... | bash -s -- --ca letsencrypt-staging), dictée par Mathod95. Son nom d'utilisateur y est remplacé par admin, comme partout dans le site.",
+      effect: "PC: tools/site/docs/cli.html, installation.html, post-installation.html, cli-output.html. Aucune proposition en attente. Pas commité." },
+    { id: "J76", time: "10:40", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: le mockup final de la sortie de dotbox init",
+      does: "Construit avec Mathod95, au fil de ses demandes: les deux commandes d'installation, une ligne pour Dot Box (version, téléchargement, sha256), les six étapes numérotées avec leur marque (✓ fini, ⠼ en cours, - pas disponible) à côté du compteur et leur durée alignée, sous chaque étape ses sous-étapes (celles de l'installation réelle, J70, mises à jour avec D30, D33 et D34) et une ligne d'état (● docker running...), la barre de progression de l'étape en cours, puis la carte de fin en quatre blocs (compte, adresses, commandes Authelia, suite). Deux fenêtres: pendant l'installation (Authelia en cours) et une fois tout fini. Un bouton « Rejouer » fait apparaître les lignes une par une, testé dans un navigateur sans écran. Les variantes B, C, D et E, reprises dans le mockup, sont repliées. La question du domaine est raccourcie (domain (*.domain must point here):) pour tenir dans 80 colonnes, à reporter dans le code.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      result: `Rejouer: au repos 46/46 lignes, à 4 s 24/46 (Docker en cours), à 8 s 37/46 (Authelia en cours), à la fin 46/46, état au repos rétabli` },
+    { id: "J77", time: "10:55", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: retour au mockup final sans les sous-étapes",
+      does: "À la demande de Mathod95, les sous-étapes ajoutées en J76 sous chaque étape (et le bouton « Rejouer ») sont retirées: le rendu sur plusieurs lignes n'était pas beau. Le mockup final revient à son état d'avant J76. Piste à l'étude: masquer les sous-étapes dans le terminal et les garder en entier dans un fichier de log.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version de J76 est gardée hors du repo (cli-output.multiline.html, dossier de travail de Claude)` },
+    { id: "J78", time: "11:10", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: une ligne par étape finie, un tableau des composants",
+      does: "Format donné par Mathod95. Pendant l'installation, seule l'étape en cours affiche, en dessous de sa ligne, ce qu'elle fait et sa barre de progression. Une fois validée, il ne reste que sa ligne [n/6]: les lignes d'état (● docker running...) sous les étapes finies sont retirées. À la fin, un tableau Component, Version, State, Address (Docker, Traefik, Authelia, CrowdSec) reprend les adresses de Traefik et d'Authelia, retirées de la carte. La carte garde le compte, les commandes Authelia et la suite, élargie à 80 colonnes comme le tableau.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version d'avant est gardée hors du repo (cli-output.before-table.html, dossier de travail de Claude)` },
+    { id: "J79", time: "11:25", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: le tableau des composants fusionné dans la carte de fin (D37)",
+      does: "À la demande de Mathod95, le tableau Component, Version, State, Address passe dans la carte de fin, entre les commandes (Verify) et la suite (Next). Les séparateurs de la carte deviennent les bords du tableau (├┬┤, ├┴┤), le tout sur 80 colonnes. La carte gagne une ligne Log avec le chemin du fichier de log (/opt/dotbox/logs/init-<date>.log, D37).",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version avec deux tableaux séparés est gardée hors du repo (cli-output.two-tables.html, dossier de travail de Claude)` },
+    { id: "J80", time: "11:35", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: Dot Box devient l'étape [1/7]",
+      does: "Demande de Mathod95: la ligne Dot Box sans compteur cassait l'alignement. Elle devient [1/7], les étapes suivantes passent de [1/6]...[6/6] à [2/7]...[7/7], dans les deux fenêtres du mockup final. Les variantes repliées ne changent pas.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J81", time: "11:45", status: "fait", where: "PC", kind: "ecriture",
+      title: "D38: dotbox init seul numérote ses étapes de [1/6] à [6/6]",
+      does: "Validé par Mathod95. Noté en D38 et dans CLI Output, sous le mockup final.",
+      effect: "PC: tools/site/docs/journal.html, tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J82", time: "11:50", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: la variante G repliée",
+      does: "Demande de Mathod95: G (tableau des composants), reprise dans la carte de fin du mockup final (J79), est repliée comme B, C, D et E.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J83", time: "12:05", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: mockup avec cliclack pour les questions",
+      does: "Demande de Mathod95: les questions de dotbox init posées façon cliclack (variante F), au moment où l'étape en a besoin, sous la ligne de l'étape en cours. Quatre fenêtres: le domaine pendant System, une réponse refusée (en jaune, avec la raison), l'utilisateur et le mot de passe web masqué pendant User, la confirmation des paquets en conflit pendant Docker (Non par défaut). ◆ question en cours, ◇ répondue, ▲ refusée. Les étapes pas encore commencées sont marquées · waiting, pour ne pas les confondre avec - not available yet. Une fois l'étape validée, il ne reste que sa ligne [n/7].",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version d'avant est gardée hors du repo (cli-output.before-cliclack.html, dossier de travail de Claude)` },
+    { id: "J84", time: "12:15", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: les questions cliclack sous l'étape, sans décalage",
+      does: "Demande de Mathod95: les questions ne sont plus décalées sous la description de l'étape (colonne 24), elles commencent sous le marqueur de l'étape (◆ sous ⠼).",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J85", time: "12:20", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: une ligne vide après les questions cliclack",
+      does: "Demande de Mathod95, pour voir le rendu: une ligne vide sépare la fin des questions (└) de l'étape suivante, dans les quatre fenêtres.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J86", time: "12:30", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: un exemple cliclack dans le mockup final, la section cliclack repliée",
+      does: "Demande de Mathod95: la section « Mockup avec cliclack » est gardée, repliée comme les variantes. Le mockup final commence par un exemple: le mot de passe web demandé pendant l'étape User, après les commandes d'installation.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité." },
+    { id: "J87", time: "12:45", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: « Web password » devient « Authelia password » (D39)",
+      does: "Validé par Mathod95. Dans le mockup final et la section cliclack: la question devient « Authelia password, 12 characters or more », la carte de fin affiche « Authelia password » (colonne des libellés élargie pour l'aligner), le texte cite « Linux password for admin » pour un utilisateur à créer. Les variantes repliées ne changent pas.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version d'avant est gardée hors du repo (cli-output.before-rename.html, dossier de travail de Claude)` },
+    { id: "J88", time: "12:55", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: la suite (Next) pointe vers les pages de la doc",
+      does: "Demande de Mathod95: dans la carte de fin, Next passe sur sa propre ligne et les étapes 1, 2, 3 commencent au bord de la carte, sans le grand écart. Sous chaque étape, l'adresse de la page Getting Started qui l'explique: 1 (exit, exec su - admin) Installation, 2 (adresse d'Authelia, app à 6 chiffres) Accessing Apps, 3 devient « check the server: doctor, SSH, backups » avec Post-installation. Installation ne parle pas encore de exec su, ni Post-installation de la double authentification: à couvrir par les propositions #48 et suivantes.",
+      effect: "PC: tools/site/docs/cli-output.html. Pas commité.",
+      undo: `la version d'avant est gardée hors du repo (cli-output.before-next.html, dossier de travail de Claude)` },
+    { id: "J89", time: "19:45", status: "fait", where: "PC", kind: "ecriture",
+      title: "Phase S codée et testée sur le PC (S.1 à S.5)",
+      does: "Nouveaux modules ui (une ligne par étape, indicateur, barre de progression, questions sous l'étape effacées à la fin), log (/opt/dotbox/logs/init-<date>.log, 0600, dossier 0700, un fichier par lancement, chaque commande avec sa sortie et son code de retour, jamais de secret) et card (la carte de fin, 80 colonnes, plus large si le domaine est long). prompt réécrit avec cliclack (thème décalé de 2 colonnes, indication sous la question). Le domaine est vérifié dès la réponse. Le mot de passe Linux d'un nouvel utilisateur est demandé deux fois puis appliqué par chpasswd (entrée jamais écrite dans le log). Le mot de passe Authelia est haché par dotbox en argon2id (m=65536, t=3, p=4), sans docker run. Plus de groupe docker (D33). Barre de progression: apt (APT::Status-Fd) et docker pull (couches prêtes). install.sh affiche [1/7] Dot Box et passe DOTBOX_INSTALLER=1. Un test vérifie que chaque page citée dans la carte existe dans tools/site/docs. Affichage vérifié dans un pseudo-terminal avec une commande de démonstration temporaire, retirée ensuite.",
+      effect: "PC: src/ui.rs, src/log.rs, src/card.rs (nouveaux), src/init.rs, src/prompt.rs, src/system.rs, src/docker.rs, src/traefik.rs, src/authelia.rs, src/out.rs, src/main.rs, install.sh, Cargo.toml (cliclack 0.5.7, indicatif 0.18.6, console 0.16.6, argon2 0.5.3). Pas commité.",
+      result: `cargo fmt --check: ok
+cargo clippy --all-targets -- -D warnings: ok
+cargo test: 43 sur 43
+shellcheck install.sh: ok
+cargo build --release --target x86_64-unknown-linux-musl: ok, 1.7 Mo
+pseudo-terminal: questions sous l'étape, réponse refusée en jaune, questions effacées à la fin de l'étape, une ligne ✓ par étape, ✗ et l'erreur en cas d'échec` },
+    { id: "J90", time: "19:55", status: "fait", where: "PC", kind: "ecriture",
+      title: "CLI Output: le mockup aligné sur le code",
+      does: "Demande de Mathod95: Next devient un tableau # / Post-installation, comme celui des composants, avec l'adresse de la page sous chaque étape. Lignes d'étape sur 80 colonnes (résumé de System sans les ports quand il ne tient pas). Comme dans le code: pas de lignes · waiting pour les étapes à venir (une question interactive ne peut pas s'afficher au-dessus de lignes déjà écrites), CrowdSec seulement à la fin, « checking this server » pendant System, les paquets en conflit séparés par des virgules.",
+      effect: "PC: tools/site/docs/cli-output.html, tools/site/releases.json (next), tools/site/roadmap.json. Pas commité.",
+      undo: `la version d'avant est gardée hors du repo (cli-output.before-code.html, dossier de travail de Claude)` },
+    { id: "J91", time: "20:52", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "S.6: le binaire de la phase S sur le serveur",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && rm /tmp/dotbox && sha256sum /usr/local/bin/dotbox && dotbox --version'`,
+      does: "Remplace /usr/local/bin/dotbox par le binaire de J89, avec l'accord de Mathod95.",
+      effect: "Serveur: nouveau /usr/local/bin/dotbox (sha256 355b78e8…). /tmp/dotbox supprimé.",
+      result: `355b78e89377233e…  /usr/local/bin/dotbox
+dotbox 0.0.1        (la version passera à 0.0.2 au tag)`,
+      undo: `remettre le binaire de v0.0.1: install.sh --no-init` },
+    { id: "J92", time: "20:52", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "S.6: dotbox init relancé sur le serveur déjà installé",
+      cmd: `python3 sudo_run.py 'dotbox init; echo "code=$?"; ls -la /opt/dotbox/logs/'`,
+      does: "Lancé par SSH, sans terminal: pas d'indicateur ni de couleur. Tout est déjà installé, aucune question n'est posée.",
+      effect: "Serveur: /opt/dotbox/logs/ créé (root, 0700) avec init-2026-11-16-2052.log (root, 0600). Rien d'autre ne change.",
+      result: `  ✓ [1/6] System        Debian 13 amd64, *.<domaine>, ports 80 443  0.2 s
+  ✓ [2/6] User          <user>, group sudo                                 0.0 s
+  ✓ [3/6] Docker        29.9.3, local logs, live-restore                   0.4 s
+  ✓ [4/6] Traefik       v3.7.19, socket proxy, staging certs               0.2 s
+  ✓ [5/6] Authelia      4.39.28, account <user>                            0.1 s
+  - [6/6] CrowdSec      not available yet
+
+  ╭─ ✓ Dot Box is ready ─── 1.1 s ─╮   (carte complète: compte, commandes, log,
+  ...                                    composants tous ● running / healthy,
+  ╰────┴───...───╯                       Post-installation avec ses 3 liens)
+code=0` },
+    { id: "J93", time: "20:52", status: "fait", where: "Serveur", kind: "lecture",
+      title: "S.6: lecture du log de J92",
+      cmd: `python3 sudo_run.py 'cat /opt/dotbox/logs/init-2026-11-16-2052.log'`,
+      does: "Vérifie que le log contient chaque commande, sa sortie et son code de retour, et aucun secret.",
+      result: `dotbox init 0.0.1, started 2026-11-16 20:52:04 CET
+[    0.0s] == [1/6] System: checking this server
+[    0.0s] $ dpkg --print-architecture
+[    0.0s] amd64
+[    0.0s]   exit 0
+...
+[    1.0s] ok [5/6] Authelia: 4.39.28, account <user> (0.1 s)
+[    1.0s] -- [6/6] CrowdSec: not available yet
+[    1.1s] init finished
+Aucun mot de passe ni secret. À revoir: docker network inspect y recopie tout son JSON (60 lignes).
+<user> est encore dans le groupe docker (ajouté avant D33): init ne l'y ajoute plus, mais ne l'en retire pas.` },
+    { id: "J94", time: "20:52", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "S.6: test d'erreur, un domaine qui ne pointe pas vers le serveur",
+      cmd: `python3 sudo_run.py 'sha256sum /opt/dotbox/dotbox.yml; dotbox init --domain example.com; echo "code=$?"; sha256sum /opt/dotbox/dotbox.yml; ls -la /opt/dotbox/logs/'`,
+      does: "L'étape System doit échouer avant toute modification.",
+      effect: "Serveur: un second log, init-2026-11-16-2052-2.log (0600). dotbox.yml inchangé (même sha256 avant et après).",
+      result: `  ✗ [1/6] System
+
+  error *.example.com does not resolve: point an A record for *.example.com to …
+
+  last lines of the log
+  [    0.0s] check    Debian GNU/Linux 13 (trixie) amd64
+  ...
+  [    0.0s] error    *.example.com does not resolve: point an A record for *.e…
+
+  log      /opt/dotbox/logs/init-2026-11-16-2052-2.log
+code=1
+Deux défauts d'affichage: le message d'erreur est coupé à 80 colonnes au lieu de passer à la ligne (la fin « then run dotbox init again » disparaît), et la ligne ✗ reste vide (ni ce que faisait l'étape, ni sa durée).` },
+    { id: "J95", time: "20:55", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "S.6: Mathod95 relance dotbox init dans son terminal",
+      cmd: `su -
+dotbox init`,
+      does: "Le test de Mathod95, dans un vrai terminal (Windows Terminal, par SSH), en root après su -, sans sudo.",
+      effect: "Serveur: un log de plus dans /opt/dotbox/logs/. Rien d'autre ne change.",
+      result: `Les 5 étapes en ✓ en 1,1 s, CrowdSec en « not available yet », puis la carte entière: couleurs du mockup, lignes sur 80 colonnes, tableaux alignés, grille qui passe des composants à la Post-installation.
+Tout étant déjà installé, l'indicateur, la barre de progression et les questions ne se sont pas affichés.
+La police du terminal dessine ✓ comme √.` },
+    { id: "J96", time: "21:20", status: "fait", where: "PC", kind: "ecriture",
+      title: "S.6: les trois défauts de J93 et J94 corrigés",
+      does: "Demande de Mathod95. 1. Le message d'erreur passe à la ligne entre les mots (au plus 6 lignes) au lieu d'être coupé à 80 colonnes. 2. La ligne ✗ reprend ce que faisait l'étape et sa durée. 3. Le réseau dotbox se vérifie avec docker network inspect -f {{.Name}}: le log n'y recopie plus 60 lignes de JSON.",
+      effect: "PC: src/ui.rs (wrap, error_lines, un test de plus), src/docker.rs. Pas commité.",
+      result: `cargo fmt --check: ok
+cargo clippy --all-targets -- -D warnings: ok
+cargo test: 44 sur 44
+cargo build --release --target x86_64-unknown-linux-musl: ok (sha256 b4962ee0…)` },
+    { id: "J97", time: "21:24", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "S.6: le binaire corrigé sur le serveur, test d'erreur refait",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox
+python3 sudo_run.py 'install -m 0755 /tmp/dotbox /usr/local/bin/dotbox && rm /tmp/dotbox && sha256sum /usr/local/bin/dotbox; dotbox init --domain example.com; echo "code=$?"; dotbox init >/dev/null 2>&1; echo "code=$?"; l=$(ls -t /opt/dotbox/logs/ | head -1); grep -A2 "network inspect" /opt/dotbox/logs/$l'`,
+      does: "Remplace le binaire de J91, refait le test d'erreur de J94, puis relance dotbox init normalement pour lire la vérification du réseau dans son log.",
+      effect: "Serveur: nouveau /usr/local/bin/dotbox (sha256 b4962ee0…), deux logs de plus dans /opt/dotbox/logs/. dotbox.yml inchangé.",
+      result: `  ✗ [1/6] System        checking this server                               0.0 s
+
+  error *.example.com does not resolve: point an A record for *.example.com to
+        this server, then run dotbox init again
+  ...
+code=1
+code=0
+[    0.4s] $ docker network inspect -f {{.Name}} dotbox
+[    0.5s] dotbox
+[    0.5s]   exit 0`,
+      undo: `remettre le binaire de v0.0.1: install.sh --no-init` }
   ];
 
   var PLAN = [
@@ -1220,6 +1443,28 @@ python3 sudo_run.py 'dotbox user password'          # compte créé avant D25: p
           does: "Le compte de <user> existe déjà: init doit seulement lui ajouter l'adresse, activer WebAuthn et afficher le récapitulatif. Puis dotbox user password, avant et après avoir rangé le mot de passe existant.",
           effect: "Serveur: Authelia redémarré, /opt/dotbox/secrets/authelia_password_<user>." }
       ] },
+    { phase: "S", title: "v0.0.2: la sortie de dotbox init",
+      intro: "Le mockup final de CLI Output, validé par Mathod95 (« Tous me semble OK pour que tu code »), avec les décisions D32, D33, D34, D37, D38 et D39. D31 (--2fa) viendra dans une phase à part: elle touche aux règles d'accès d'Authelia, pas à la sortie. Crates: cliclack (questions), indicatif (indicateur et barre), console (couleurs, effacer des lignes), argon2 (le hash du mot de passe Authelia, calculé par dotbox au lieu d'un docker run). Code et tests sur le PC d'abord, puis tests sur le serveur, chacun proposé avant d'être lancé.",
+      steps: [
+        { id: "S.1", status: "fait", ref: "J89", kind: "ecriture", where: "PC (code)", title: "Une ligne par étape, le détail dans le log",
+          does: "Nouveau module ui: l'étape en cours affiche son indicateur ⠼, en dessous ce qu'elle fait et, quand on la connaît, une barre de progression (paquets apt et couches des images Docker). Une fois finie, il ne reste que sa ligne ✓ [n/N] avec son résumé et sa durée, sur 80 colonnes. Chaque sous-étape, chaque commande, sa sortie et son code de retour vont dans /opt/dotbox/logs/init-<date>.log (0600, dossier 0700), un fichier par lancement, jamais un secret (D37). En cas d'erreur: ✗, les 10 dernières lignes du log et son chemin. --verbose affiche les sous-étapes en direct.",
+          effect: "PC: nouveaux src/ui.rs et src/log.rs, src/out.rs, src/system.rs, src/init.rs, Cargo.toml." },
+        { id: "S.2", status: "fait", ref: "J89", kind: "ecriture", where: "PC (code)", title: "Les questions avec cliclack, sous l'étape en cours",
+          does: "Le domaine (vérifié tout de suite: une réponse dont *.domaine ne pointe pas vers le serveur est refusée en jaune et la question reposée), l'utilisateur (le compte connecté proposé), son mot de passe Linux s'il faut le créer (deux fois, masqué, appliqué par chpasswd au lieu de passwd), le mot de passe Authelia (12 caractères ou plus, Entrée pour un mot de passe au hasard, D34 et D39), la confirmation des paquets en conflit avec Docker (Non par défaut). Les questions disparaissent quand l'étape est validée.",
+          effect: "PC: src/prompt.rs, src/init.rs, src/docker.rs, src/authelia.rs." },
+        { id: "S.3", status: "fait", ref: "J89", kind: "ecriture", where: "PC (code)", title: "Numérotation [1/7] avec install.sh, [1/6] sinon (D38)",
+          does: "install.sh affiche sa ligne ✓ [1/7] Dot Box (version, sha256, durée) et lance dotbox init avec DOTBOX_INSTALLER=1: init numérote alors de [2/7] à [7/7]. Relancé seul, de [1/6] à [6/6].",
+          effect: "PC: install.sh, src/ui.rs." },
+        { id: "S.4", status: "fait", ref: "J89", kind: "ecriture", where: "PC (code)", title: "La carte de fin",
+          does: "Le compte et le mot de passe Authelia (affiché une fois), les commandes sudo dotbox authelia password et verification, le chemin du log, le tableau des composants (version, état, adresse), puis le tableau Post-installation avec l'adresse de la page Getting Started de chaque étape (D32: exit, puis exec su - <user>). La carte s'élargit si le domaine est long. Un test vérifie que chaque page citée existe dans tools/site/docs.",
+          effect: "PC: src/init.rs." },
+        { id: "S.5", status: "fait", ref: "J89", kind: "ecriture", where: "PC (code)", title: "Plus de groupe docker (D33), mot de passe Authelia choisi",
+          does: "init n'ajoute plus l'utilisateur au groupe docker (Docker s'utilise avec sudo). Le mot de passe Authelia est celui tapé ou tiré au hasard, haché par dotbox en argon2id avec les réglages par défaut d'Authelia (m=65536, t=3, p=4).",
+          effect: "PC: src/docker.rs, src/authelia.rs." },
+        { id: "S.6", status: "fait", ref: "J91", kind: "ecriture", where: "PC → Serveur", title: "Tester sur le serveur",
+          does: "Copier le binaire dans /usr/local/bin/dotbox, relancer sudo dotbox init sur le serveur déjà installé (rien à refaire: chaque étape doit passer en ✓ sans question), vérifier le log, puis un test d'erreur sans danger (un domaine qui ne pointe pas vers le serveur). Une installation complète depuis un serveur neuf se fera avec Mathod95, au prochain tag.",
+          effect: "Serveur: /usr/local/bin/dotbox, /opt/dotbox/logs/. Fait en J91 à J97: tout passe en ✓, le log ne contient aucun secret, une erreur s'arrête avant toute modification. Trois défauts d'affichage trouvés et corrigés (J96)." }
+      ] },
     { phase: "1", title: "Accès root",
       intro: "Remplacée: c'est dotbox init, lancé par install.sh, qui installe sudo et prépare l'utilisateur (D8).",
       steps: [
@@ -1444,7 +1689,41 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Pourquoi la page CLI est construite en JavaScript: son terminal affiche dotbox --help, et chaque commande est cliquable pour voir un exemple de sortie. Chaque commande apparaît trois fois (aide, tableau, exemple), en deux langues: elle n'est décrite qu'une fois, dans GROUPS et FLAGS, qui servent aussi de spécification de la CLI. Mathod95 tient au terminal cliquable, qui aide à comprendre ce que fait chaque commande.",
       reco: "Une commande peut porter prop (numéro) et was (anciennes valeurs). Le tableau des commandes affiche alors l'ancien texte en bleu et le nouveau en vert, comme les autres pages. Le terminal garde l'ancien texte tant que la proposition n'est pas validée. Premières propositions: #40 (options de init), #41 (dotbox user password), #42 (plus d'e-mail dans dotbox config)." },
     { t: "init ne vérifie que *.domaine (ancienne Q20)",
-      reco: "Dot Box ne sert que des sous-domaines: seul le joker est vérifié (un sous-domaine tiré au hasard doit pointer vers le serveur), comme le dit la page Prerequisites. Le domaine lui-même peut pointer ailleurs, vers un site web par exemple. Corrigé en J68." }
+      reco: "Dot Box ne sert que des sous-domaines: seul le joker est vérifié (un sous-domaine tiré au hasard doit pointer vers le serveur), comme le dit la page Prerequisites. Le domaine lui-même peut pointer ailleurs, vers un site web par exemple. Corrigé en J68." },
+    { t: "install.sh n'affiche que ce qu'il fait (ancienne Q23)",
+      reco: "Ses vérifications (root, Linux amd64) restent, mais ne s'affichent qu'en cas d'erreur. Sa sortie: download, verify, install, puis run dotbox init, dont la sortie suit." },
+    { t: "Double authentification: imposée par défaut sur les pages du serveur, deux autres modes au choix (ancienne Q24)",
+      p: "Décision de Mathod95. Par défaut, comme aujourd'hui: two_factor pour ce qui donne la main sur le serveur (Dot Box, Traefik, Portainer, code-server), one_factor pour les autres apps derrière Authelia. Remarque de Mathod95: une app comme qBittorrent, si elle était piratée, permettrait de télécharger du contenu illégal sur le serveur, d'où un mode qui impose la double authentification partout. Et l'utilisateur doit pouvoir choisir une installation moins sûre, en connaissant les risques.",
+      l: ["Mode par défaut: celui d'aujourd'hui.",
+          "Mode « paranoïa »: two_factor sur toutes les pages derrière Authelia. Les apps qui gardent leur propre connexion (Jellyfin, Plex, Vaultwarden) et les pages publiques ne changent pas: Authelia ne les protège pas.",
+          "Mode sans double authentification: one_factor partout, y compris les pages du serveur. La doc rappelle les risques.",
+          "Le choix se fait à l'installation, et reste modifiable ensuite dans dotbox.yml. Le réglage par app (apps.<app>.access) garde le dernier mot.",
+          "Doc: une section « Activer la double authentification » en tête de Post-installation (première connexion, code de vérification, QR code avec Google Authenticator ou Aegis, passkey), avec les trois modes et leurs risques."],
+      reco: "Une seule option à trois valeurs, noms choisis par Mathod95: dotbox init --2fa default (par défaut), --2fa all (paranoïa), --2fa off (sans double authentification). La doc explique ce que fait chaque valeur, avec un tableau: chaque app, si Authelia la protège, et la méthode de connexion dans chaque mode. Il montre aussi que Jellyfin, Plex ou Vaultwarden ne passent pas par Authelia." },
+    { t: "Fin d'installation: exit, puis exec su - <user> (ancienne Q22)",
+      reco: "La dernière ligne du récapitulatif dit quoi faire: exit, puis exec su - <user> (ou se reconnecter en SSH) pour que le groupe sudo compte. exec remplace la session au lieu d'en empiler une nouvelle. Saltbox, lui, impose un redémarrage à la fin de l'installation." },
+    { t: "L'utilisateur n'entre plus dans le groupe docker",
+      p: "Le groupe docker équivaut à root (doc de Docker) et ne sert qu'à éviter de taper sudo devant docker. Mathod95: sudo docker ps prend deux secondes, et quelqu'un qui aurait accès au compte sans le mot de passe sudo ne pourrait plus toucher à Docker. Dot Box n'en a pas besoin: init tourne en root, et la CLI passera par l'API de Dot Box (spec, pas encore codée).",
+      reco: "init n'ajoute plus l'utilisateur au groupe docker. Docker s'utilise avec sudo. À reporter dans la page Installation (proposition blue/green) et dans CLAUDE.md. Le groupe sudo, lui, reste (sans NOPASSWD)." },
+    { t: "Mot de passe web: 12 caractères minimum, annoncés avant de taper",
+      reco: "init demande le mot de passe web en annonçant tout de suite la règle (« 12 characters or more, Enter for a random one »), pour ne pas faire taper un mot de passe refusé ensuite. Entrée seul en tire un au hasard. La doc le dit aussi. Caractères spéciaux imposés ou non: à décider plus tard." },
+    { t: "La commande du code de vérification: sudo dotbox authelia code (ancienne Q26)",
+      reco: "Elle dit d'où vient le code, et pourra regrouper d'autres commandes propres à Authelia. Elle affiche le dernier code de vérification et l'heure à laquelle il expire." },
+    { t: "Deux commandes Authelia aux noms explicites: password et verification",
+      p: "Remarque de Mathod95: user password et authelia code devenaient confus. Il y a trois secrets dans la connexion: le mot de passe web, le code de vérification d'identité (8 caractères, valable 5 minutes, écrit par Authelia dans un fichier, demandé seulement pour enregistrer un appareil) et le code à 6 chiffres (calculé par l'app du téléphone, que Dot Box ne peut jamais afficher). Appeler la commande otp ou 2fa ferait croire qu'elle donne le code à 6 chiffres.",
+      reco: "sudo dotbox authelia password [<nom>] affiche le mot de passe web. sudo dotbox authelia verification affiche le code de vérification d'identité et son heure d'expiration. dotbox user garde la gestion des comptes (add, list, remove, passwd), comme dans la spec. Remplace D35 (authelia code)." },
+    { t: "dotbox init: le détail dans un fichier de log, une ligne par étape dans le terminal",
+      p: "Le mockup avec toutes les sous-étapes affichées sur plusieurs lignes n'était pas beau (J76, J77). Mathod95 veut un terminal court, et un suivi complet de la première installation.",
+      reco: "Le terminal affiche une ligne par étape. L'étape en cours montre en dessous ce qu'elle fait et sa barre de progression, une fois validée il ne reste que sa ligne [n/6]. Tout le détail (chaque sous-étape avec l'heure, chaque commande avec sa sortie complète et son code de retour, versions, durées, jamais de secret) va dans /opt/dotbox/logs/init-<date>.log, à côté de dotbox.yml pour tout trouver au même endroit. Un fichier par lancement, le premier reste donc intact. Lisible par root seulement (0600). En cas d'erreur, l'étape passe en ✗ et le terminal affiche les 10 dernières lignes du log et son chemin. --verbose affiche les sous-étapes en direct. Le chemin du log est dans la carte de fin." },
+    { t: "La numérotation des étapes: [1/7] avec install.sh, [1/6] avec dotbox init seul",
+      p: "Mathod95 veut que la ligne Dot Box ait son compteur, sinon l'alignement casse (J80). Or c'est install.sh qui télécharge Dot Box, avant de lancer dotbox init.",
+      reco: "Lancé par install.sh, install.sh affiche [1/7] Dot Box et dotbox init continue de [2/7] à [7/7]. Relancé seul, dotbox init numérote ses étapes de [1/6] à [6/6], sans ligne Dot Box. install.sh indique à dotbox init par où commencer." },
+    { t: "Le mot de passe web s'appelle « Authelia password »",
+      p: "Remarque de Mathod95: « web password » n'est pas parlant, comme l'était « user password » avant D36. Précise D34, qui reste valable sur le fond (12 caractères ou plus, Entrée pour un mot de passe au hasard).",
+      reco: "La question de dotbox init: « Authelia password, 12 characters or more », avec « Enter alone for a random one » en dessous. La carte de fin: « Authelia password ». Le même nom que la commande qui le relit (sudo dotbox authelia password). Le mot de passe Linux, demandé seulement si l'utilisateur n'existe pas: « Linux password for <user> ». Les pages Installation et Post-installation suivront en propositions." },
+    { t: "Les apps avant CrowdSec, CrowdSec avant le serveur média",
+      p: "La méthode prévoyait CrowdSec (étape 5) avant les apps (étape 6). Les apps ne dépendent que de Docker, Traefik et Authelia, qui tournent déjà. Les premières (Prowlarr, qBittorrent, Radarr, Sonarr) seront au niveau two_factor, derrière Authelia, qui bloque déjà un compte après plusieurs essais ratés. Le blocage de CrowdSec dans Traefik se branche sur l'entrée HTTPS, pas app par app: l'ajouter plus tard ne change rien au moteur. Jellyfin et Plex, eux, seront au niveau app, avec leur propre page de connexion sans Authelia devant: c'est là que CrowdSec sert vraiment.",
+      reco: "Choix de Mathod95: 1. Clore v0.0.2. 2. Le moteur et les premières apps, toutes derrière Authelia. 3. CrowdSec. 4. Jellyfin ou Plex. La Roadmap ne change pas: elle range les features par dépendances, et CrowdSec reste dans le core." }
   ];
 
   var QUESTIONS = [
@@ -1568,7 +1847,40 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "La page CLI ne s'écrit pas en HTML comme les autres: ses commandes viennent des tableaux GROUPS et FLAGS de son JavaScript, qui fabriquent l'aide, le tableau et les exemples. Les encadrés bleus et verts ne s'y posent donc pas tels quels. Changements à proposer: init accepte --user et --ca en plus de --domain, dotbox user a une sous-commande password, et dotbox config ne parle plus d'e-mail (D18).",
       l: ["Ajouter au JavaScript de la page un champ de proposition: le tableau des commandes affiche alors l'ancien texte en bleu et le nouveau en vert, numérotés comme ailleurs.",
           "Ou décrire les changements dans un encadré en tête de page."],
-      reco: "Proposé: le champ de proposition, pour que la page CLI se valide comme les autres." }
+      reco: "Proposé: le champ de proposition, pour que la page CLI se valide comme les autres." },
+    { n: 22, done: "D32", t: "Fin d'installation: comment éviter d'avoir à se reconnecter?",
+      p: "Après l'installation, <user> vient d'entrer dans les groupes sudo et docker, mais une session Linux ne voit ses groupes qu'à la connexion: il faut se reconnecter (J70). Le récapitulatif ne le rappelle que pour docker. Idée de Mathod95: que la fin de l'installation fasse quitter root, pour que ce soit fluide. Limite technique: un programme ne peut pas changer l'utilisateur du terminal qui l'a lancé, il peut seulement en ouvrir un nouveau par-dessus.",
+      l: ["Une dernière ligne claire dans le récapitulatif: « now: exit, then reconnect (ssh) to use sudo and docker ». Simple, pas de surprise.",
+          "install.sh ouvre lui-même une session de <user> à la fin (su - <user>), avec les nouveaux groupes. Mais on se retrouve avec trois sessions empilées (la tienne, root, puis <user>): exit ramène dans root, déroutant."],
+      reco: "Proposé: la ligne claire dans le récapitulatif.",
+      more: ["Essai de Mathod95 (J70): exit depuis root ramène dans la session de départ de <user>, ouverte avant l'installation, donc sans les nouveaux groupes: docker ps y est refusé. Recharger .bashrc n'y change rien: les groupes sont fixés à l'ouverture de la session.",
+             "Sans se déconnecter: exec su - <user> remplace la session par une nouvelle (mot de passe de <user> demandé), qui a ses groupes. Pas de sessions empilées, puisque exec remplace la session au lieu d'en ouvrir une par-dessus.",
+             "Saltbox (docs.saltbox.dev, Install): un redémarrage du serveur est une étape obligatoire de l'installation (« Step 6: Reboot », « ALL STEPS ARE REQUIRED »), et après la préinstallation, il faut « su username » ou se reconnecter en SSH. Saltbox met aussi le groupe sudo en NOPASSWD dans /etc/sudoers (sudo sans mot de passe)."] },
+    { n: 23, done: "D30", t: "Sortie de l'installation: « check root » deux fois",
+      p: "install.sh et init vérifient tous les deux root, et l'affichent tous les deux (J70).",
+      l: ["install.sh n'affiche que ce qu'il fait vraiment (télécharger, vérifier, installer, lancer init). Ses vérifications restent, mais ne s'affichent qu'en cas d'erreur.",
+          "Garder tout, avec un titre pour chaque partie (install.sh, puis dotbox init)."],
+      reco: "Proposé: install.sh plus discret." },
+    { n: 24, done: "D31", t: "Authelia après l'installation: double authentification imposée ou optionnelle, et sa doc",
+      p: "Remarque de Mathod95: après l'installation, la première page protégée envoie sur Authelia, qui demande tout de suite d'enregistrer la double authentification (code de vérification dans un fichier, QR code, app). Aucune page de doc ne l'explique. Aujourd'hui, seul le tableau de bord de Traefik (et plus tard Dot Box, Portainer, code-server) est en two_factor. Les apps comme Radarr ou Sonarr seront en one_factor (mot de passe seul), comme le prévoit la spec.",
+      l: ["Garder la double authentification imposée pour ce qui donne la main sur le serveur, et écrire la doc d'enregistrement (Google Authenticator, Aegis, ou passkey). Pour l'assouplir, la spec prévoit déjà le niveau d'accès par app dans dotbox.yml (apps.traefik.access: one_factor).",
+          "Tout en one_factor par défaut, la double authentification devient une option à activer.",
+          "Où mettre la doc: une section « Activer la double authentification » en tête de Post-installation, ou une page Authelia à part.",
+          "En plus: sudo dotbox user code, qui affiche le dernier code de vérification au lieu de lire notification.txt à la main."],
+      reco: "Proposé: imposée pour les pages d'administration, section en tête de Post-installation, et dotbox user code." },
+    { n: 25, t: "Authelia: allonger la durée de vie du code de vérification?",
+      p: "Par défaut (doc d'Authelia, identity_validation.elevated_session): le code est valable 5 minutes (code_lifespan), puis la fenêtre pour enregistrer l'appareil dure 10 minutes (elevation_lifespan). Lors du premier test (J63), la fenêtre s'est refermée avant la fin.",
+      l: ["Passer code_lifespan à 15 minutes: le code n'arrive que dans un fichier lisible par root, le risque est faible.",
+          "Garder les valeurs par défaut, et afficher l'heure exacte d'expiration avec dotbox authelia code (D35)."],
+      reco: "En attente: on garde les valeurs par défaut pour l'instant, à trancher plus tard." },
+    { n: 26, done: "D35", t: "Le nom de la commande qui affiche le code de vérification",
+      p: "Proposé d'abord: sudo dotbox user code. Remarque de Mathod95: rien n'y évoque Authelia, ce qui complique la compréhension.",
+      l: ["dotbox authelia code: dit clairement de quoi il s'agit, et ouvre une famille pour d'autres commandes Authelia plus tard.",
+          "dotbox 2fa code: parle de ce que l'utilisateur est en train de faire (la double authentification).",
+          "dotbox user code, avec une aide qui précise « the last Authelia verification code »."] },
+    { n: 27, t: "La sortie de dotbox init: plus moderne",
+      p: "Mathod95 trouve le récapitulatif et le déroulé de l'installation austères. Maquettes dans l'artefact « Récap dotbox init » puis dans la page de doc Sortie CLI (sous Journal). Il aime B (étapes numérotées puis carte encadrée) et D (barre de progression), et veut: chaque étape avec son nom, ce qu'elle fait et une barre de progression, puis le récapitulatif encadré. Pistes qu'il a apportées: carte avec séparateurs, tableau de composants, crates comfy-table, owo-colors ou colored, console, cliclack.",
+      reco: "À choisir sur la page Sortie CLI." }
   ];
 
 

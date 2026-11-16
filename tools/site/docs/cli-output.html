@@ -1,0 +1,396 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">La sortie de dotbox init<i>●</i>des maquettes pour la rendre plus moderne.</p>
+<p class="lede" data-l="en">The output of dotbox init<i>●</i>mockups to make it more modern (page in French).</p>
+
+<!-- CONTENT -->
+<article class="prose so">
+  <h2 id="mockup">Mockup final</h2>
+  <p><b>Pendant une question</b>, ici le mot de passe Authelia pendant l'étape User. Les questions sont posées façon cliclack sous la ligne de l'étape en cours, puis disparaissent une fois l'étape validée. Les autres questions sont dans « Mockup avec cliclack », plus bas:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>ssh admin@dotbox</span></div>
+<pre><span class="g">admin@dotbox</span>:<span class="b">~</span>$ su -
+Password:
+<span class="r">root@dotbox</span>:<span class="b">~</span># wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --ca letsencrypt-staging
+
+  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="g">✓</span> <span class="d">[2/7]</span> System        Debian 13 amd64, *.dotbox.example.com             <span class="d"> 0.4 s</span>
+  <span class="y">⠼</span> <span class="d">[3/7]</span> User          the account that runs the apps
+  <span class="g">◇  </span>User that runs the apps
+  <span class="d">│</span>  <span class="d">admin</span>
+  <span class="d">│</span>
+  <span class="b">◆  </span><span class="w">Authelia password, 12 characters or more</span>
+  <span class="b">│</span>  ▪▪▪▪▪▪▪▪▪▪▪▪▪▪<span class="cur">█</span>
+  <span class="b">└</span>  <span class="d">Enter alone for a random one</span>
+</pre>
+  </div>
+  <p><b>Pendant l'installation</b>, ici pendant le téléchargement d'Authelia:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>ssh admin@dotbox</span></div>
+<pre><span class="g">admin@dotbox</span>:<span class="b">~</span>$ su -
+Password:
+<span class="r">root@dotbox</span>:<span class="b">~</span># wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --ca letsencrypt-staging
+
+  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="g">✓</span> <span class="d">[2/7]</span> System        Debian 13 amd64, *.dotbox.example.com             <span class="d"> 0.4 s</span>
+  <span class="g">✓</span> <span class="d">[3/7]</span> User          admin, group sudo                                 <span class="d"> 1.2 s</span>
+  <span class="g">✓</span> <span class="d">[4/7]</span> Docker        29.9.3, local logs, live-restore                  <span class="d">  48 s</span>
+  <span class="g">✓</span> <span class="d">[5/7]</span> Traefik       v3.7.19, socket proxy, staging certs              <span class="d">  14 s</span>
+  <span class="y">⠼</span> <span class="d">[6/7]</span> Authelia      login page, password and 6-digit code
+                        <span class="d">pulling authelia/authelia:4.39.28 from Docker Hub</span>
+                        <span class="g">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><span class="d">━━━━━━━━━━━━━━━  68 %   6 s</span></pre>
+  </div>
+  <p><b>Une fois tout fini</b>:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>ssh admin@dotbox</span></div>
+<pre><span class="g">admin@dotbox</span>:<span class="b">~</span>$ su -
+Password:
+<span class="r">root@dotbox</span>:<span class="b">~</span># wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --ca letsencrypt-staging
+
+  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="g">✓</span> <span class="d">[2/7]</span> System        Debian 13 amd64, *.dotbox.example.com             <span class="d"> 0.4 s</span>
+  <span class="g">✓</span> <span class="d">[3/7]</span> User          admin, group sudo                                 <span class="d"> 1.2 s</span>
+  <span class="g">✓</span> <span class="d">[4/7]</span> Docker        29.9.3, local logs, live-restore                  <span class="d">  48 s</span>
+  <span class="g">✓</span> <span class="d">[5/7]</span> Traefik       v3.7.19, socket proxy, staging certs              <span class="d">  14 s</span>
+  <span class="g">✓</span> <span class="d">[6/7]</span> Authelia      4.39.28, account admin                            <span class="d">   9 s</span>
+  <span class="d">-</span> <span class="d">[7/7]</span> <span class="d">CrowdSec      not available yet</span>
+
+<span class="g">  ╭─ </span><span class="g">✓ </span><span class="w">Dot Box is ready</span> <span class="g">──────────────────────────────────────────</span> <span class="d">1 min 13 s</span><span class="g"> ─╮</span>
+<span class="g">  │</span>                                                                            <span class="g">│</span>
+<span class="g">  │</span>  User               admin<span class="d">  group admins</span>                                    <span class="g">│</span>
+<span class="g">  │</span>  Authelia password  <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span><span class="d">  shown once</span>                   <span class="g">│</span>
+<span class="g">  ├────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="g">  │</span>  Password           <span class="b">sudo dotbox authelia password</span><span class="d">  read it again</span>           <span class="g">│</span>
+<span class="g">  │</span>  Verify             <span class="b">sudo dotbox authelia verification</span><span class="d">  code for a device</span>   <span class="g">│</span>
+<span class="g">  │</span>  Log                <span class="b">/opt/dotbox/logs/init-2026-11-16-1402.log</span><span class="d">  root only</span>   <span class="g">│</span>
+<span class="g">  ├────────────┬───────────┬─────────────┬─────────────────────────────────────┤</span>
+<span class="g">  │</span><span class="w"> Component</span>  <span class="d">│</span><span class="w"> Version</span>   <span class="d">│</span><span class="w"> State</span>       <span class="d">│</span><span class="w"> Address</span>                             <span class="g">│</span>
+<span class="g">  ├────────────┼───────────┼─────────────┼─────────────────────────────────────┤</span>
+<span class="g">  │</span> Docker     <span class="d">│</span> 29.9.3    <span class="d">│</span><span class="g"> ● running</span>   <span class="d">│</span><span class="d"> -</span>                                   <span class="g">│</span>
+<span class="g">  │</span> Traefik    <span class="d">│</span> v3.7.19   <span class="d">│</span><span class="g"> ● healthy</span>   <span class="d">│</span><span class="u"> https://traefik.dotbox.example.com</span>  <span class="g">│</span>
+<span class="g">  │</span> Authelia   <span class="d">│</span> 4.39.28   <span class="d">│</span><span class="g"> ● healthy</span>   <span class="d">│</span><span class="u"> https://auth.dotbox.example.com</span>     <span class="g">│</span>
+<span class="g">  │</span><span class="d"> CrowdSec</span>   <span class="d">│</span><span class="d"> -</span>         <span class="d">│</span><span class="d"> ○ later</span>     <span class="d">│</span><span class="d"> -</span>                                   <span class="g">│</span>
+<span class="g">  ├────┬───────┴───────────┴─────────────┴─────────────────────────────────────┤</span>
+<span class="g">  │</span><span class="w"> #</span>  <span class="d">│</span><span class="w"> Post-installation</span>                                                     <span class="g">│</span>
+<span class="g">  ├────┼───────────────────────────────────────────────────────────────────────┤</span>
+<span class="g">  │</span><span class="y"> 1</span>  <span class="d">│</span> exit, then: exec su - admin                                           <span class="g">│</span>
+<span class="g">  │</span>    <span class="d">│</span><span class="u"> https://mathod95.github.io/dotbox/getting-started/installation/</span>       <span class="g">│</span>
+<span class="g">  │</span><span class="y"> 2</span>  <span class="d">│</span> open the Authelia address, add a 6-digit code app                     <span class="g">│</span>
+<span class="g">  │</span>    <span class="d">│</span><span class="u"> https://mathod95.github.io/dotbox/getting-started/accessing-apps/</span>     <span class="g">│</span>
+<span class="g">  │</span><span class="y"> 3</span>  <span class="d">│</span> check the server: doctor, SSH, backups                                <span class="g">│</span>
+<span class="g">  │</span>    <span class="d">│</span><span class="u"> https://mathod95.github.io/dotbox/getting-started/post-installation/</span>  <span class="g">│</span>
+<span class="g">  ╰────┴───────────────────────────────────────────────────────────────────────╯</span></pre>
+  </div>
+  <p>Ici, Dot Box est installé par <code>install.sh</code>, qui affiche l'étape <code>[1/7]</code> puis passe la main à <code>dotbox init</code> pour les étapes <code>[2/7]</code> à <code>[7/7]</code>. Relancé seul, <code>dotbox init</code> numérote ses étapes de <code>[1/6]</code> à <code>[6/6]</code>, sans ligne Dot Box (Journal, D38).</p>
+  <details class="variant fold" aria-labelledby="mockup-cliclack">
+    <summary><div class="vhead"><span class="letter">◆</span><h2 id="mockup-cliclack">Mockup avec cliclack</h2><span class="tag">les questions</span></div></summary>
+  <p>Le mockup final, avec les questions posées façon cliclack (variante F) au moment où l'étape en a besoin, sous la ligne de l'étape en cours. <span class="b-on">◆</span> marque la question en cours, <span class="g-on">◇</span> une question répondue, <span class="y-on">▲</span> une réponse refusée. Une fois l'étape validée, ses questions disparaissent avec le reste: il ne reste que sa ligne <code>[n/7]</code>, qui reprend les réponses (domaine, utilisateur). La fin de l'installation est celle du mockup final.</p>
+  <p><b>Le domaine</b>, pendant l'étape System:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>root@dotbox · install.sh</span></div>
+<pre>  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="y">⠼</span> <span class="d">[2/7]</span> System        checking this server
+  <span class="b">◆  </span><span class="w">Domain of this server</span>
+  <span class="b">│</span>  dotbox.example.com<span class="cur">█</span>
+  <span class="b">└</span>  <span class="d">*.domain must point to this server</span>
+</pre>
+  </div>
+  <p>Une réponse refusée reste à l'écran, en jaune, avec la raison, et la question est reposée:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>root@dotbox · install.sh</span></div>
+<pre>  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="y">⠼</span> <span class="d">[2/7]</span> System        checking this server
+  <span class="y">▲  </span><span class="w">Domain of this server</span>
+  <span class="y">│</span>  dotbox.exemple.com<span class="cur">█</span>
+  <span class="y">└</span>  <span class="y">*.dotbox.exemple.com does not point here</span>
+</pre>
+  </div>
+  <p><b>L'utilisateur et le mot de passe Authelia</b>, pendant l'étape User. Le mot de passe est masqué pendant la saisie (D34). Si l'utilisateur n'existe pas encore, deux questions de plus demandent son mot de passe Linux (<code>Linux password for admin</code>), masqué lui aussi:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>root@dotbox · install.sh</span></div>
+<pre>  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="g">✓</span> <span class="d">[2/7]</span> System        Debian 13 amd64, *.dotbox.example.com             <span class="d"> 0.4 s</span>
+  <span class="y">⠼</span> <span class="d">[3/7]</span> User          the account that runs the apps
+  <span class="g">◇  </span>User that runs the apps
+  <span class="d">│</span>  <span class="d">admin</span>
+  <span class="d">│</span>
+  <span class="b">◆  </span><span class="w">Authelia password, 12 characters or more</span>
+  <span class="b">│</span>  ▪▪▪▪▪▪▪▪▪▪▪▪▪▪<span class="cur">█</span>
+  <span class="b">└</span>  <span class="d">Enter alone for a random one</span>
+</pre>
+  </div>
+  <p><b>Une confirmation</b>, pendant l'étape Docker, seulement si des paquets en conflit sont installés. Les flèches choisissent, Entrée valide, et la réponse par défaut est Non: rien n'est retiré sans accord:</p>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i><span>root@dotbox · install.sh</span></div>
+<pre>  <span class="g">✓</span> <span class="d">[1/7]</span> Dot Box       0.0.2, downloaded from GitHub, sha256 verified    <span class="d"> 0.8 s</span>
+  <span class="g">✓</span> <span class="d">[2/7]</span> System        Debian 13 amd64, *.dotbox.example.com             <span class="d"> 0.4 s</span>
+  <span class="g">✓</span> <span class="d">[3/7]</span> User          admin, group sudo                                 <span class="d"> 1.2 s</span>
+  <span class="y">⠼</span> <span class="d">[4/7]</span> Docker        official repository
+  <span class="b">◆  </span><span class="w">docker.io, containerd conflict with Docker</span>
+  <span class="b">│</span>  Remove them?
+  <span class="b">│</span>  <span class="d">○ Yes</span> <span class="d">/</span> <span class="g">●</span> No
+  <span class="b">└</span>
+</pre>
+  </div>
+  </details>
+
+  <p>Maquettes de la sortie de <code>sudo dotbox init</code>, pour la rendre plus lisible et plus moderne (Journal, Q27). Toutes sont réalisables dans le binaire. Les exemples utilisent <code>example.com</code>, l'utilisateur <code>admin</code> et un faux mot de passe. Les messages du terminal restent en anglais, comme le reste de la CLI. Retenues par Mathod95 pour l'instant: B et D, réunies dans E.</p>
+
+  <details class="variant fold" aria-labelledby="v-b">
+    <summary><div class="vhead"><span class="letter">B</span><h2 id="v-b">Étapes numérotées, puis une carte</h2><span class="tag reco">proposé</span></div></summary>
+    <p class="vdesc">Pendant l'installation, une ligne par étape avec un ✓ et sa durée, au lieu de chaque vérification. Le détail reste disponible avec <code>--verbose</code>. À la fin, une carte encadrée: ce qui tourne, comment se connecter, quoi faire maintenant.</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="d">[1/6]</span> System        <span class="g">✓</span> Debian 13 amd64, *.dotbox.example.com, ports 80 443
+  <span class="d">[2/6]</span> User          <span class="g">✓</span> admin, group sudo
+  <span class="d">[3/6]</span> Docker        <span class="g">✓</span> 29.9.3, local logs, live-restore          <span class="d">48 s</span>
+  <span class="d">[4/6]</span> Traefik       <span class="g">✓</span> v3.7.19, socket proxy, staging certs     <span class="d">14 s</span>
+  <span class="d">[5/6]</span> Authelia      <span class="g">✓</span> 4.39.28, account admin                    <span class="d">9 s</span>
+  <span class="d">[6/6]</span> CrowdSec      <span class="d">- not available yet</span>
+
+  <span class="g">╭──</span> <span class="w">Dot Box is ready</span> <span class="g">─────────────────────────────────────────────────╮</span>
+  <span class="g">│</span>                                                                     <span class="g">│</span>
+  <span class="g">│</span>  <span class="d">LOGIN</span>     <span class="u">https://auth.dotbox.example.com</span>                          <span class="g">│</span>
+  <span class="g">│</span>  user      admin <span class="d">(group admins)</span>                                     <span class="g">│</span>
+  <span class="g">│</span>  password  <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span>  <span class="d">shown once</span>                     <span class="g">│</span>
+  <span class="g">│</span>            <span class="d">read it again: sudo dotbox authelia password</span>             <span class="g">│</span>
+  <span class="g">│</span>                                                                     <span class="g">│</span>
+  <span class="g">│</span>  <span class="d">ADMIN</span>     <span class="u">https://traefik.dotbox.example.com</span>   <span class="d">password + code</span>     <span class="g">│</span>
+  <span class="g">│</span>                                                                     <span class="g">│</span>
+  <span class="g">│</span>  <span class="d">NOW</span>       <span class="y">1</span>  exit, then: exec su - admin                           <span class="g">│</span>
+  <span class="g">│</span>            <span class="y">2</span>  open the login page, register a 6-digit code app      <span class="g">│</span>
+  <span class="g">│</span>            <span class="y">3</span>  read Getting Started, Post-installation               <span class="g">│</span>
+  <span class="g">│</span>                                                                     <span class="g">│</span>
+  <span class="g">╰─────────────────────────────────────────────────────────────────────╯</span>
+    <span class="d">certificates: letsencrypt-staging · 2 min 11 s · dotbox 0.0.2</span></pre>
+    </div>
+    <ul class="facts">
+      <li><b>Pour</b>Six lignes au lieu de trente pendant l'installation, et une carte qu'on lit d'un coup d'œil. Les étapes à faire ensuite sont numérotées.</li>
+      <li><b>Contre</b>Le cadre se dessine avec des caractères spéciaux: il faut une version sans cadre quand le terminal ne les affiche pas bien, ou quand la sortie est copiée dans un fichier.</li>
+    </ul>
+  </details>
+
+  <details class="variant fold" aria-labelledby="v-c">
+    <summary><div class="vhead"><span class="letter">C</span><h2 id="v-c">Sections avec pastilles d'état</h2><span class="tag">façon dotbox doctor</span></div></summary>
+    <p class="vdesc">Pas de cadre: des titres de section en vert, une pastille par service (● en marche, ○ pas encore là), les adresses alignées. Le même style pourra servir à <code>dotbox status</code> et <code>dotbox doctor</code>.</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="g">✓</span> <span class="w">Dot Box core is running</span>  <span class="d">2 min 11 s</span>
+
+  <span class="g">SERVICES</span>
+    <span class="g">●</span> docker      29.9.3     running
+    <span class="g">●</span> traefik     v3.7.19    healthy   <span class="u">https://traefik.dotbox.example.com</span>
+    <span class="g">●</span> authelia    4.39.28    healthy   <span class="u">https://auth.dotbox.example.com</span>
+    <span class="d">○ crowdsec    -          not available yet</span>
+
+  <span class="g">LOGIN</span>
+    user        admin <span class="d">(group admins)</span>
+    password    <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span>   <span class="d">shown once, sudo dotbox authelia password</span>
+    two-factor  <span class="d">at first login: a 6-digit code app or a passkey</span>
+
+  <span class="g">NEXT</span>
+    <span class="y">1</span>  exit, then: exec su - admin
+    <span class="y">2</span>  open <span class="u">https://auth.dotbox.example.com</span> and register the code
+    <span class="y">3</span>  certificates are staging: switch to letsencrypt when it works</pre>
+    </div>
+    <ul class="facts">
+      <li><b>Pour</b>Lisible sans cadre, se copie bien, et donne un style commun à toutes les commandes qui montrent un état.</li>
+      <li><b>Contre</b>Moins « carte de fin » que B: le moment où l'installation est finie se voit moins.</li>
+    </ul>
+  </details>
+
+  <details class="variant fold" aria-labelledby="v-d">
+    <summary><div class="vhead"><span class="letter">D</span><h2 id="v-d">Barre de progression vivante</h2><span class="tag">le plus visuel</span></div></summary>
+    <p class="vdesc">Pendant les étapes longues (Docker, téléchargement des images), une ligne qui se met à jour sur place avec un indicateur qui tourne, puis se fige en ✓. La fin reprend la carte de B ou les sections de C. Ici, la capture prise pendant l'installation de Docker.</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="g">✓</span> System        Debian 13 amd64, *.dotbox.example.com, ports 80 443
+  <span class="g">✓</span> User          admin, group sudo
+  <span class="y">⠼</span> Docker        installing docker-ce 29.9.3  <span class="g">━━━━━━━━━━━━━━</span><span class="d">━━━━━━━━━━</span>  <span class="d">31 s</span>
+  <span class="d">· Traefik</span>
+  <span class="d">· Authelia</span>
+  <span class="d">· CrowdSec      not available yet</span></pre>
+    </div>
+    <ul class="facts">
+      <li><b>Pour</b>On voit que ça avance pendant la minute de Docker, au lieu d'un terminal muet.</li>
+      <li><b>Contre</b>Le plus long à coder. Il faut aussi une sortie simple quand init ne tourne pas dans un vrai terminal (journal, CI, sortie redirigée).</li>
+    </ul>
+  </details>
+
+  <details class="variant fold" aria-labelledby="v-e">
+    <summary><div class="vhead"><span class="letter">E</span><h2 id="v-e">Étapes avec barre de progression, puis carte</h2><span class="tag reco">B + D, proposé</span></div></summary>
+    <p class="vdesc">Ce que tu as demandé: chaque étape avec son nom et ce qu'elle fait. L'étape en cours a sa barre de progression, qui se met à jour sur place. Les étapes finies restent affichées avec leur durée. À la fin, une carte encadrée et découpée en trois blocs: se connecter, administrer, et la suite.</p>
+    <p class="vdesc"><b>Pendant l'installation</b> (capture prise pendant Docker):</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="w">dotbox init</span><span class="d">  ·  dotbox.example.com  ·  certificates: staging</span>
+
+  <span class="g">✓</span>  <span class="w">System    </span>OS, domain and ports checked                          <span class="d">0.4 s</span>
+  <span class="g">✓</span>  <span class="w">User      </span>sudo installed, admin ready                           <span class="d">1.2 s</span>
+  <span class="y">⠼</span>  <span class="w">Docker    </span>installing docker-ce 29.9.3 from Docker&#x27;s repository
+               <span class="g">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><span class="d">━━━━━━━━━━━━━━━</span><span class="d">  68 %   31 s</span>
+  <span class="d">·</span>  <span class="d">Traefik   </span><span class="d">subdomains, certificates, socket proxy</span>
+  <span class="d">·</span>  <span class="d">Authelia  </span><span class="d">login page, password and 6-digit code</span>
+  <span class="d">·</span>  <span class="d">CrowdSec  </span><span class="d">not available yet</span></pre>
+    </div>
+    <p class="vdesc"><b>À la fin</b>:</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="g">✓</span>  <span class="w">System    </span>OS, domain and ports checked                          <span class="d">0.4 s</span>
+  <span class="g">✓</span>  <span class="w">User      </span>sudo installed, admin ready                           <span class="d">1.2 s</span>
+  <span class="g">✓</span>  <span class="w">Docker    </span>29.9.3, official repository, local logs              <span class="d">48.1 s</span>
+  <span class="g">✓</span>  <span class="w">Traefik   </span>v3.7.19, socket proxy, staging certificates          <span class="d">14.0 s</span>
+  <span class="g">✓</span>  <span class="w">Authelia  </span>4.39.28, account admin                                <span class="d">9.3 s</span>
+  <span class="d">-</span>  <span class="d">CrowdSec  </span><span class="d">not available yet</span>
+
+<span class="g">  ╭─ </span><span class="g">✓ </span><span class="w">Dot Box is ready</span> <span class="g">──────────────────────────────────────</span> <span class="d">1 min 13 s</span><span class="g"> ─╮</span>
+<span class="g">  │</span>                                                                        <span class="g">│</span>
+<span class="g">  │</span>  Login     <span class="u">https://auth.dotbox.example.com</span>                             <span class="g">│</span>
+<span class="g">  │</span>  User      admin<span class="d">  group admins</span>                                         <span class="g">│</span>
+<span class="g">  │</span>  Password  <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span><span class="d">  shown once</span>                        <span class="g">│</span>
+<span class="g">  ├────────────────────────────────────────────────────────────────────────┤</span>
+<span class="g">  │</span>  Admin     <span class="u">https://traefik.dotbox.example.com</span><span class="d">  password + code</span>         <span class="g">│</span>
+<span class="g">  │</span>  Password  <span class="b">sudo dotbox authelia password</span><span class="d">  read it again</span>                <span class="g">│</span>
+<span class="g">  │</span>  Verify    <span class="b">sudo dotbox authelia verification</span><span class="d">  code for a device</span>        <span class="g">│</span>
+<span class="g">  ├────────────────────────────────────────────────────────────────────────┤</span>
+<span class="g">  │</span>  Next      <span class="y">1</span>  exit, then: exec su - admin                              <span class="g">│</span>
+<span class="g">  │</span>            <span class="y">2</span>  open the login page, add a 6-digit code app              <span class="g">│</span>
+<span class="g">  │</span>            <span class="y">3</span>  Getting Started: Post-installation                       <span class="g">│</span>
+<span class="g">  │</span>                                                                        <span class="g">│</span>
+<span class="g">  ╰────────────────────────────────────────────────────────────────────────╯</span></pre>
+    </div>
+    <ul class="facts">
+      <li><b>Pour</b>On voit ce qui se passe et combien de temps ça prend. La carte se lit d'un coup d'œil, et les trois blocs séparent ce qu'on fait tout de suite de ce qu'on garde pour plus tard.</li>
+      <li><b>Pour le coder</b>Deux crates très répandues, console (couleurs, détection du terminal) et indicatif (barres de progression et indicateurs qui tournent), qui viennent des mêmes auteurs.</li>
+    </ul>
+  </details>
+
+  <section class="variant" aria-labelledby="v-f">
+    <div class="vhead"><span class="letter">F</span><h2 id="v-f">Façon cliclack</h2><span class="tag">questions comprises</span></div>
+    <p class="vdesc">Le style des installeurs modernes en JavaScript, repris par la crate Rust cliclack: un fil vertical relie les questions, les étapes et la note de fin. C'est la seule variante qui modernise aussi les questions (domaine, utilisateur, mot de passe), avec un mot de passe masqué pendant la saisie.</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre><span class="d">┌  </span><span class="inv"> Dot Box </span><span class="d">  dotbox init</span>
+<span class="d">│</span>
+<span class="g">◇  </span><span class="w">Domain of this server</span>
+<span class="d">│  </span><span class="d">dotbox.example.com</span>
+<span class="d">│</span>
+<span class="g">◇  </span><span class="w">User that runs the apps</span>
+<span class="d">│  </span><span class="d">admin</span>
+<span class="d">│</span>
+<span class="g">◇  </span><span class="w">Web password, 12 characters or more</span>
+<span class="d">│  </span><span class="d">random, shown at the end</span>
+<span class="d">│</span>
+<span class="g">◇  </span><span class="w">System, user</span><span class="d">  done in 1.6 s</span>
+<span class="d">│</span>
+<span class="y">◒  </span><span class="w">Docker</span><span class="d">  installing docker-ce 29.9.3</span>
+<span class="d">│  </span><span class="g">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><span class="d">━━━━━━━━━━━━━━</span><span class="d">  68 %</span>
+<span class="d">│</span>
+<span class="g">◇  </span><span class="w">Dot Box is ready </span><span class="d">──────────────────────────────────────╮</span>
+<span class="d">│  </span>                                                       <span class="d">│</span>
+<span class="d">│  </span>Login     <span class="u">https://auth.dotbox.example.com</span>              <span class="d">│</span>
+<span class="d">│  </span>User      admin                                        <span class="d">│</span>
+<span class="d">│  </span>Password  <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span>                     <span class="d">│</span>
+<span class="d">│  </span>Admin     <span class="u">https://traefik.dotbox.example.com</span>           <span class="d">│</span>
+<span class="d">│  </span>                                                       <span class="d">│</span>
+<span class="d">├─────────────────────────────────────────────────────────╯</span>
+<span class="d">│</span>
+<span class="d">└  </span><span class="w">Next: exit, then exec su - admin</span></pre>
+    </div>
+    <p class="vdesc">Capture assemblée: les questions, une étape en cours, puis la note de fin. Dans le vrai terminal, ◒ tourne et la barre avance.</p>
+    <ul class="facts">
+      <li><b>Pour</b>Tout le parcours a la même allure, des questions jusqu'à la fin. Le mot de passe tapé ne s'affiche pas, ce qu'il faudra de toute façon pour le mot de passe web (D34).</li>
+      <li><b>Contre</b>Le fil vertical prend de la place, et la sortie ressemble moins à celle des autres commandes dotbox, qui restent en lignes simples.</li>
+    </ul>
+  </section>
+
+  <details class="variant fold" aria-labelledby="v-g">
+    <summary><div class="vhead"><span class="letter">G</span><h2 id="v-g">Tableau des composants</h2><span class="tag">façon comfy-table</span></div></summary>
+    <p class="vdesc">Le récapitulatif sous forme de tableau: un composant par ligne, sa version, son état et son adresse. Il montre d'un coup ce qui tourne et ce qui manque encore.</p>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i><span>root@server · sudo dotbox init</span></div>
+<pre>  <span class="g">✓</span> <span class="w">Dot Box core is running</span><span class="d">  ·  1 min 13 s</span>
+
+<span class="d">  ╭────────────┬───────────┬─────────────┬─────────────────────────────────────╮</span>
+<span class="d">  │</span> <span class="w">Component </span> <span class="d">│</span> <span class="w">Version  </span> <span class="d">│</span> <span class="w">State      </span> <span class="d">│</span> <span class="w">Address                            </span> <span class="d">│</span>
+<span class="d">  ├────────────┼───────────┼─────────────┼─────────────────────────────────────┤</span>
+<span class="d">  │</span> Docker     <span class="d">│</span> 29.9.3    <span class="d">│</span> <span class="g">● running  </span> <span class="d">│</span> <span class="d">-                                  </span> <span class="d">│</span>
+<span class="d">  │</span> Traefik    <span class="d">│</span> v3.7.19   <span class="d">│</span> <span class="g">● healthy  </span> <span class="d">│</span> <span class="u">https://traefik.dotbox.example.com </span> <span class="d">│</span>
+<span class="d">  │</span> Authelia   <span class="d">│</span> 4.39.28   <span class="d">│</span> <span class="g">● healthy  </span> <span class="d">│</span> <span class="u">https://auth.dotbox.example.com    </span> <span class="d">│</span>
+<span class="d">  │</span> <span class="d">CrowdSec  </span> <span class="d">│</span> <span class="d">-        </span> <span class="d">│</span> <span class="d">○ later    </span> <span class="d">│</span> <span class="d">-                                  </span> <span class="d">│</span>
+<span class="d">  ╰────────────┴───────────┴─────────────┴─────────────────────────────────────╯</span>
+
+  <span class="d">Login</span>     admin, password <span class="w">Xq7vR2mLp9sTe4KcWb8nZd3F</span><span class="d"> (shown once)</span>
+  <span class="d">Next</span>      exit, then: exec su - admin</pre>
+    </div>
+    <ul class="facts">
+      <li><b>Pour</b>Très clair quand il y a beaucoup de composants, et le même tableau peut servir à dotbox status.</li>
+      <li><b>Contre</b>Large: avec de longues adresses, il dépasse 80 colonnes et se coupe mal dans un petit terminal.</li>
+    </ul>
+  </details>
+
+  <section class="variant" aria-labelledby="v-crates">
+    <div class="vhead"><span class="letter">+</span><h2 id="v-crates">Les crates qui feraient le travail</h2></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Crate</th><th>Ce qu'elle apporte</th><th>Variantes</th></tr></thead>
+      <tbody>
+        <tr><td><code>console</code></td><td>Couleurs, gras, détection d'un vrai terminal et de NO_COLOR, largeur du terminal</td><td>Toutes</td></tr>
+        <tr><td><code>indicatif</code></td><td>Barres de progression et indicateurs qui tournent, mis à jour sur place</td><td>D, E</td></tr>
+        <tr><td><code>cliclack</code></td><td>Questions, mot de passe masqué, indicateurs, notes encadrées, dans le style de F</td><td>F</td></tr>
+        <tr><td><code>comfy-table</code></td><td>Tableaux avec bordures et alignement automatique</td><td>G</td></tr>
+        <tr><td><code>owo-colors</code>, <code>colored</code></td><td>Seulement les couleurs, très légères</td><td>A</td></tr>
+      </tbody>
+    </table></div>
+    <p class="vdesc">Aujourd'hui, dotbox dépend de trois crates (clap, serde_json, serde_yaml_ng). Une ou deux de plus, très utilisées et bien maintenues, restent raisonnables pour un binaire qu'on installe une fois.</p>
+  </section>
+
+  <section class="common" aria-labelledby="v-all">
+    <h2 id="v-all">Ce qui vaut pour toutes</h2>
+    <ul>
+      <li>Les couleurs, les barres de progression et les caractères spéciaux ne s'affichent que dans un vrai terminal. Redirigée vers un fichier, ou avec <code>NO_COLOR</code>, la sortie redevient du texte simple, lisible partout.</li>
+      <li>Tout tient en 80 colonnes, la largeur d'un terminal SSH par défaut.</li>
+      <li>Les erreurs gardent leur forme actuelle, en rouge: la ligne qui dit quoi corriger reste la plus importante.</li>
+      <li>Le mot de passe n'apparaît que lorsqu'il vient d'être créé, jamais lors d'une relance.</li>
+    </ul>
+  </section>
+</article>
+
+<!-- CSS -->
+/* variantes repliées: on les garde, elles prennent peu de place */
+.so details.fold { display: grid; gap: 14px; margin-top: 18px; border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; background: var(--panel); }
+.so details.fold > summary { list-style: none; cursor: pointer; }
+.so details.fold > summary::-webkit-details-marker { display: none; }
+.so details.fold > summary .vhead::before { content: "›"; font-family: var(--mono); color: var(--muted); transition: transform .15s; display: inline-block; }
+.so details.fold[open] > summary .vhead::before { transform: rotate(90deg); }
+.so details.fold[open] { padding-bottom: 18px; }
+.so details.fold > * + * { margin-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .so details.fold > summary .vhead::before { transition: none; } }
+/* Sortie CLI: maquettes de terminal (venues de l'artefact « Récap dotbox init »). Tout est préfixé .so. */
+.so { --term: #050505; --warn: #f5b942; --info: #5aa9e6; --bad: #f87171; }
+.so section.variant { display: grid; gap: 14px; min-width: 0; margin-top: 18px; }
+.so .vhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.so .letter { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: .14em; }
+.so .vhead h2 { margin: 0; }
+.so .vhead .tag { margin-left: auto; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+.so .vhead .tag.reco { color: var(--accent); border-color: var(--accent); }
+.so .vdesc { margin: 0; }
+.so .vdesc b { color: var(--lit); font-weight: 600; }
+.so .term { border: 1px solid var(--line); border-radius: 14px; background: var(--term); overflow: hidden; min-width: 0; }
+.so .bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .08em; }
+.so .bar i { width: 9px; height: 9px; border-radius: 50%; background: #262626; }
+.so .bar span { margin-left: 6px; }
+.so .term pre { margin: 0; border: 0; border-radius: 0; background: transparent; padding: 16px 18px 18px; overflow-x: auto; font-size: 13px; line-height: 1.62; color: var(--label); }
+.so pre .g { color: var(--accent); } .so pre .y { color: var(--warn); } .so pre .b { color: var(--info); } .so pre .r { color: var(--bad); }
+.so pre .d { color: var(--muted); } .so pre .w { color: var(--lit); font-weight: 600; } .so pre .u { color: var(--lit); text-decoration: underline; text-underline-offset: 3px; }
+.so pre .cur { color: var(--lit); animation: so-blink 1s steps(1) infinite; } @keyframes so-blink { 50% { opacity: 0; } }
+.so .b-on { color: var(--info); } .so .g-on { color: var(--accent); } .so .y-on { color: var(--warn); }
+.so pre .inv { background: var(--accent); color: var(--term); font-weight: 600; }
+.so .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 28px; margin: 0; padding: 0; list-style: none; }
+.so .facts li { display: grid; gap: 2px; min-width: 0; }
+.so .facts b { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.so .table-wrap { overflow-x: auto; }
+.so .table-wrap td:first-child { white-space: nowrap; }
+.so .common { display: grid; gap: 12px; padding: 20px 22px; margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.so .common h2 { margin: 0; }
+@media (max-width: 560px) { .so .vhead .tag { margin-left: 0; } .so .term pre { font-size: 12px; padding: 14px; } }
+
+<!-- JS -->

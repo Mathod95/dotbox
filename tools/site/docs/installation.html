@@ -41,7 +41,7 @@
     <li><b>Programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
   </ol>
   <p class="note"><b>Traefik ne tient pas les clés de Docker.</b> C'est le seul container exposé à Internet: il lit Docker à travers un socket proxy qui ne laisse passer que la liste des containers. S'il était compromis, il ne pourrait ni lancer ni arrêter de container.</p>
-  <p>À la fin, <code>init</code> affiche un récapitulatif: les adresses, ton compte et son mot de passe web, affiché une seule fois. Root peut le relire avec <code>sudo dotbox user password</code>.</p>
+  <p>À la fin, <code>init</code> affiche un récapitulatif: les adresses, ton compte et son mot de passe web, affiché une seule fois. Root peut le relire avec <code>sudo dotbox authelia password</code>.</p>
   <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <code>dotbox doctor</code> signale les mises à jour en attente et quand un redémarrage est nécessaire (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Tout est écrit dans <code>/opt/dotbox/dotbox.yml</code>. Les secrets (clés d'Authelia, clé de sauvegarde) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
@@ -102,7 +102,7 @@ schedule: off</pre>
     <li><b>Schedules the daily backup</b>, local to begin with.</li>
   </ol>
   <p class="note"><b>Traefik does not hold the keys to Docker.</b> It is the only container exposed to the internet: it reads Docker through a socket proxy that only lets the list of containers through. If it were compromised, it could neither start nor stop a container.</p>
-  <p>At the end, <code>init</code> shows a summary: the addresses, your account and its web password, shown once. Root can read it again with <code>sudo dotbox user password</code>.</p>
+  <p>At the end, <code>init</code> shows a summary: the addresses, your account and its web password, shown once. Root can read it again with <code>sudo dotbox authelia password</code>.</p>
   <p><code>init</code> does not update the system and never reboots the server: <code>dotbox doctor</code> reports pending updates and when a reboot is needed (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Everything is written to <code>/opt/dotbox/dotbox.yml</code>. Secrets (Authelia keys, backup key) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>

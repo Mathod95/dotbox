@@ -42,7 +42,7 @@
   <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="fr-users">Créer les comptes</h2>
-  <p>Ton compte existe déjà: <code>init</code> l'a créé dans le groupe <code>admins</code>. Son mot de passe se relit avec <code>sudo dotbox user password</code>. Pour les autres:</p>
+  <p>Ton compte existe déjà: <code>init</code> l'a créé dans le groupe <code>admins</code>. Son mot de passe se relit avec <code>sudo dotbox authelia password</code>. Pour les autres:</p>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Les groupes décident des apps accessibles: <code>family</code> voit le serveur média et Seerr, <code>admins</code> voit tout. Le compte reçoit un lien d'invitation valable 48 heures pour choisir son mot de passe et sa double authentification.</p>
 
@@ -92,7 +92,7 @@
   <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="en-users">Create accounts</h2>
-  <p>Your account already exists: <code>init</code> created it in the <code>admins</code> group. Its password can be read again with <code>sudo dotbox user password</code>. For the others:</p>
+  <p>Your account already exists: <code>init</code> created it in the <code>admins</code> group. Its password can be read again with <code>sudo dotbox authelia password</code>. For the others:</p>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Groups decide which apps are reachable: <code>family</code> sees the media server and Seerr, <code>admins</code> sees everything. The account gets an invite link, valid for 48 hours, to choose its password and two-factor method.</p>
 
