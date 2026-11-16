@@ -151,7 +151,7 @@ td:last-child code { color: var(--label); }
   // out : lignes de sortie, [classe, texte] (ok = accent, warn = jaune, dim = discret, lit = clair)
   var GROUPS = [
     { id: "server", name: { fr: "Serveur", en: "Server" }, cmds: [
-      { name: "init", args: "[--domain <domain>]", hargs: "[--domain <d>]",
+      { name: "init", args: "[--domain <domain>] [--user <name>] [--ca <ca>]", hargs: "[--domain <d>] [--user <n>] [--ca <ca>]",
         d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik, Authelia et CrowdSec", en: "Prepare the server: Docker, dotbox network, Traefik, Authelia and CrowdSec" },
         ex: "dotbox init --domain example.com",
         out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  dns      *.example.com → 203.0.113.10"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["ok", "  up       crowdsec    Running"], ["", "  cert     dotbox.example.com (Let's Encrypt, HTTP-01)"], ["dim", "  admin    admin (password shown once below)"]] },
@@ -240,14 +240,14 @@ td:last-child code { color: var(--label); }
         out: [["", "  archive  /backups/radarr-2026-11-02.tar.zst.age"], ["", "  stop     radarr"], ["", "  extract  /opt/radarr"], ["ok", "  up       radarr      Running"]] }
     ] },
     { id: "users", name: { fr: "Utilisateurs", en: "Users" }, cmds: [
-      { name: "user", args: "add|list|remove|passwd <name>",
+      { name: "user", args: "add|list|remove|passwd|password <name>",
         d: { fr: "Gère les comptes Authelia", en: "Manage Authelia accounts" },
         ex: "dotbox user add lea --group family",
         out: [["", "  user     lea (group family)"], ["dim", "  access   seerr"], ["ok", "  invite   link valid 48 h"]] }
     ] },
     { id: "config", name: { fr: "Configuration", en: "Configuration" }, cmds: [
       { name: "config", args: "get|set <key> [value]",
-        d: { fr: "Lit ou change la config: domaine, e-mail, chemins", en: "Read or change the config: domain, email, paths" },
+        d: { fr: "Lit ou change la config: domaine, chemins", en: "Read or change the config: domain, paths" },
         ex: "dotbox config get domain",
         out: [["", "  example.com"]] },
       { name: "completion", args: "bash|zsh|fish",
@@ -266,6 +266,19 @@ td:last-child code { color: var(--label); }
     { f: "-h, --help", d: { fr: "l'aide de la commande", en: "help for the command" } }
   ];
   var ALL = []; GROUPS.forEach(function (g) { g.cmds.forEach(function (c) { ALL.push(c); }); });
+
+  // Propositions (blue/green, comme les autres pages): une commande qui porte « prop » (numéro) et
+  // « was » (anciennes valeurs) s'affiche dans le tableau avec l'ancien texte en bleu et le nouveau
+  // en vert. Le terminal garde l'ancien texte tant que la proposition n'est pas validée.
+  function cur(c, k) { return c.was && k in c.was ? c.was[k] : c[k]; }
+  function propCell(c, k, render) {
+    var td = el("td");
+    if (!(c.was && k in c.was)) { td.appendChild(render(c[k])); return td; }
+    var o = el("span", "prop-old"), n = el("span", "prop-new");
+    o.setAttribute("data-prop", c.prop); n.setAttribute("data-prop", c.prop);
+    o.appendChild(render(c.was[k])); n.appendChild(render(c[k]));
+    td.appendChild(o); td.appendChild(n); return td;
+  }
 
   // ---------- 2 · faits
   function facts() {
@@ -289,10 +302,10 @@ td:last-child code { color: var(--label); }
       g.cmds.forEach(function (c) {
         var dt = el("dt"), b = el("button"); b.type = "button";
         b.appendChild(document.createTextNode(c.name));
-        var a = c.hargs || c.args;
+        var a = cur(c, "hargs") || cur(c, "args");
         if (a) { b.appendChild(document.createTextNode(" ")); b.appendChild(el("span", "", a)); }
         b.addEventListener("click", function () { showCmd(c); });
-        dt.appendChild(b); dl.appendChild(dt); dl.appendChild(el("dd", "", tr(c.d)));
+        dt.appendChild(b); dl.appendChild(dt); dl.appendChild(el("dd", "", tr(cur(c, "d"))));
       });
       s.appendChild(dl); h.appendChild(s);
     });
@@ -320,8 +333,8 @@ td:last-child code { color: var(--label); }
       var hr = el("tr"), th = el("th", "", tr(g.name)); th.colSpan = 3; th.scope = "colgroup"; hr.appendChild(th); tb.appendChild(hr);
       g.cmds.forEach(function (c) {
         var tr_ = el("tr");
-        var c1 = el("td"); c1.appendChild(el("code", "", "dotbox " + c.name + (c.args ? " " + c.args : ""))); tr_.appendChild(c1);
-        tr_.appendChild(el("td", "", tr(c.d)));
+        tr_.appendChild(propCell(c, "args", function (a) { return el("code", "", "dotbox " + c.name + (a ? " " + a : "")); }));
+        tr_.appendChild(propCell(c, "d", function (d) { return document.createTextNode(tr(d)); }));
         var c3 = el("td"); c3.appendChild(el("code", "", c.ex)); tr_.appendChild(c3);
         tb.appendChild(tr_);
       });

@@ -30,7 +30,7 @@
   <p>Après un redémarrage, Docker relance toutes les apps.</p>
 
   <h2 id="fr-ssh">Sécuriser SSH</h2>
-  <p>Dot Box ne modifie jamais la configuration SSH: une erreur pourrait te fermer la porte du serveur. <code>doctor</code> signale ce qui manque, à toi de l'appliquer dans <code>/etc/ssh/sshd_config</code>:</p>
+  <p>Dot Box ne modifie jamais la configuration SSH de lui-même: une erreur pourrait te fermer la porte du serveur. <code>doctor</code> signale ce qui manque. Une option de Dot Box pourra l'appliquer pour toi, seulement si tu la lances (à venir). En attendant, c'est dans <code>/etc/ssh/sshd_config</code>:</p>
   <ul>
     <li><b>Clés seulement</b>: <code>PasswordAuthentication no</code>.</li>
     <li><b>Pas de root</b>: <code>PermitRootLogin no</code>.</li>
@@ -42,6 +42,7 @@
   <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="fr-users">Créer les comptes</h2>
+  <p>Ton compte existe déjà: <code>init</code> l'a créé dans le groupe <code>admins</code>. Son mot de passe se relit avec <code>sudo dotbox user password</code>. Pour les autres:</p>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Les groupes décident des apps accessibles: <code>family</code> voit le serveur média et Seerr, <code>admins</code> voit tout. Le compte reçoit un lien d'invitation valable 48 heures pour choisir son mot de passe et sa double authentification.</p>
 
@@ -79,7 +80,7 @@
   <p>After a reboot, Docker starts every app again.</p>
 
   <h2 id="en-ssh">Secure SSH</h2>
-  <p>Dot Box never changes the SSH configuration: a mistake could lock you out of the server. <code>doctor</code> reports what is missing, and you apply it in <code>/etc/ssh/sshd_config</code>:</p>
+  <p>Dot Box never changes the SSH configuration on its own: a mistake could lock you out of the server. <code>doctor</code> reports what is missing. A Dot Box option will be able to apply it for you, only when you run it (coming later). Until then, it goes in <code>/etc/ssh/sshd_config</code>:</p>
   <ul>
     <li><b>Keys only</b>: <code>PasswordAuthentication no</code>.</li>
     <li><b>No root</b>: <code>PermitRootLogin no</code>.</li>
@@ -91,6 +92,7 @@
   <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="en-users">Create accounts</h2>
+  <p>Your account already exists: <code>init</code> created it in the <code>admins</code> group. Its password can be read again with <code>sudo dotbox user password</code>. For the others:</p>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Groups decide which apps are reachable: <code>family</code> sees the media server and Seerr, <code>admins</code> sees everything. The account gets an invite link, valid for 48 hours, to choose its password and two-factor method.</p>
 

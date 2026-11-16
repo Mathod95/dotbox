@@ -102,7 +102,7 @@
    À chaque commande lancée sur le serveur : une entrée dans DONE (heure, commande, effet, résultat). */
 (function () {
   "use strict";
-  var UPDATED = "16 novembre 2026, 01:58";
+  var UPDATED = "16 novembre 2026, 06:56";
 
   var DONE = [
     { id: "J1", time: "04:41", status: "fait", where: "PC", kind: "ecriture",
@@ -865,7 +865,24 @@ python3 sudo_run.py 'dotbox init; dotbox user password'`,
   codes    verification codes: sudo tail -20 /opt/authelia/config/notification.txt
   next     CrowdSec: not available yet in this version
 connexion avec le mot de passe: {"status":"OK"} (hash intact)
-dotbox user password: <masqué> (<user>, set by dotbox init), identique à celui du PC` }
+dotbox user password: <masqué> (<user>, set by dotbox init), identique à celui du PC` },
+    { id: "J67", time: "06:52", status: "fait", where: "PC", kind: "ecriture",
+      title: "Doc Getting Started remise à jour (D7)",
+      does: "La mise à jour groupée prévue en D7, en propositions blue/green validées une par une par Mathod95. Appliquées: #1, #8, #9, #11, #22 à #39 (Basics, Prerequisites, Installation, Post-installation, Accessing Apps, Restore) et #40 à #42 (page CLI, avec le nouveau champ de proposition, D28). Retirées sans être appliquées: #6 et #10, dépassées (remplacées par #29 et #39).",
+      effect: "PC: tools/site/docs/*.html. Ce que dit maintenant la doc: wget, install.sh au modèle de rustup, init qui demande le domaine et l'utilisateur et vérifie tout avant de modifier quoi que ce soit, pas d'e-mail ni de ZeroSSL, un sous-domaine possible comme domaine, le socket proxy, le compte Authelia au nom de l'utilisateur, le récapitulatif et dotbox user password, mot de passe puis code à 6 chiffres ou passkey, l'option SSH à venir. Pas encore commité.",
+      note: "Reste dans la doc: des points-virgules dans les descriptions de la page CLI (règle de rédaction), à proposer plus tard." },
+    { id: "J68", time: "06:56", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "init ne vérifie plus que le joker (D29), et ne plante plus si sa sortie est coupée",
+      cmd: `python3 sudo_run.py 'dotbox init | head -4'
+python3 sudo_run.py 'dotbox init --domain <domaine perso>'      # test inverse: un domaine qui pointe ailleurs
+# correction de src/out.rs, puis:
+python3 sudo_run.py 'dotbox init | head -2; echo pipe_status=$PIPESTATUS'`,
+      does: "src/traefik.rs: seul un sous-domaine tiré au hasard est vérifié, plus le domaine lui-même. Test inverse avec le domaine personnel de Mathod95, dont le joker pointe vers sa production: init doit refuser avant de modifier quoi que ce soit. Le premier essai, avec la sortie coupée par head, a fait planter init en plein milieu (« failed printing to stdout: Broken pipe »). Rien n'avait été modifié (l'arrêt est venu juste après les vérifications), mais une installation ne doit jamais s'interrompre parce que son affichage est coupé. src/out.rs et src/prompt.rs: les erreurs d'écriture sont désormais ignorées.",
+      effect: "Serveur: nouveau /usr/local/bin/dotbox. dotbox.yml inchangé (vérifié). PC: src/traefik.rs, src/out.rs, src/prompt.rs, src/init.rs. Pas commité.",
+      result: `  check    *.<domaine> points to this server
+avec le domaine personnel: error *.<domaine perso> points to <IP>, not to this server (rien de modifié)
+avant la correction: panicked ... failed printing to stdout: Broken pipe
+après: pipe_status=0, puis init complet: 14 check et le récapitulatif` }
   ];
 
   var PLAN = [
@@ -1408,7 +1425,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       reco: "À définir dans le plan (A.11): adresses (auth.<domaine>, traefik.<domaine>), compte, mot de passe, comment relire le mot de passe et les codes de vérification, ce qui reste à faire." },
     { t: "WebAuthn en plus du code à 6 chiffres, Duo toujours désactivé (ancienne Q19, modifie D23)",
       p: "Authelia avertit que désactiver WebAuthn « sape considérablement la sécurité ». Le code à 6 chiffres peut être recopié par un faux site, une passkey non.",
-      reco: "WebAuthn activé (passkeys: Windows Hello, empreinte du téléphone, clés de sécurité), en plus du code à 6 chiffres. Chacun choisit au moment d'enregistrer un appareil. Duo reste désactivé. À coder en A.11." }
+      reco: "WebAuthn activé (passkeys: Windows Hello, empreinte du téléphone, clés de sécurité), en plus du code à 6 chiffres. Chacun choisit au moment d'enregistrer un appareil. Duo reste désactivé. À coder en A.11." },
+    { t: "La page CLI garde son terminal interactif, avec un champ de proposition (ancienne Q21)",
+      p: "Pourquoi la page CLI est construite en JavaScript: son terminal affiche dotbox --help, et chaque commande est cliquable pour voir un exemple de sortie. Chaque commande apparaît trois fois (aide, tableau, exemple), en deux langues: elle n'est décrite qu'une fois, dans GROUPS et FLAGS, qui servent aussi de spécification de la CLI. Mathod95 tient au terminal cliquable, qui aide à comprendre ce que fait chaque commande.",
+      reco: "Une commande peut porter prop (numéro) et was (anciennes valeurs). Le tableau des commandes affiche alors l'ancien texte en bleu et le nouveau en vert, comme les autres pages. Le terminal garde l'ancien texte tant que la proposition n'est pas validée. Premières propositions: #40 (options de init), #41 (dotbox user password), #42 (plus d'e-mail dans dotbox config)." },
+    { t: "init ne vérifie que *.domaine (ancienne Q20)",
+      reco: "Dot Box ne sert que des sous-domaines: seul le joker est vérifié (un sous-domaine tiré au hasard doit pointer vers le serveur), comme le dit la page Prerequisites. Le domaine lui-même peut pointer ailleurs, vers un site web par exemple. Corrigé en J68." }
   ];
 
   var QUESTIONS = [
@@ -1522,7 +1544,17 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Pendant A.9, la page de réglages d'Authelia affiche: « Votre administrateur a désactivé WebAuthn [...]. Les identifiants WebAuthn sont largement considérés comme les moyens d'authentification les plus sûrs [...]. La décision de désactiver les identifiants WebAuthn lorsque l'authentification multi-facteurs est activée sape considérablement la sécurité et est fortement déconseillée. » La raison: un code à 6 chiffres peut être volé par un faux site (hameçonnage), qui le recopie aussitôt sur le vrai. Une passkey est liée au vrai domaine et sa clé ne quitte jamais l'appareil: un faux site ne peut rien en tirer.",
       l: ["Réactiver WebAuthn: chacun choisit, au moment d'enregistrer un appareil, entre code à 6 chiffres et passkey. Rien n'est imposé.",
           "Garder D23 tel quel: code à 6 chiffres seulement."],
-      reco: "Proposé: réactiver WebAuthn, en plus du code à 6 chiffres." }
+      reco: "Proposé: réactiver WebAuthn, en plus du code à 6 chiffres." },
+    { n: 20, done: "D29", t: "dotbox init vérifie le domaine lui-même en plus de *.domaine: le garder?",
+      p: "La spec (page Prerequisites) ne demande que *.example.com, et Dot Box ne sert que des sous-domaines (auth., traefik., les apps). Le code de T.2 vérifie pourtant aussi le domaine lui-même (example.com). Sans conséquence pour le serveur de test, où dotbox et *.dotbox pointent tous les deux vers lui. Mais quelqu'un dont example.com pointe vers son site web ailleurs serait bloqué à tort.",
+      l: ["Corriger le code: ne vérifier que le joker (un sous-domaine tiré au hasard), comme le dit la spec.",
+          "Garder les deux vérifications, et ajouter le domaine lui-même dans la page Prerequisites."],
+      reco: "Proposé: corriger le code." },
+    { n: 21, done: "D28", t: "Comment proposer les changements de la page CLI?",
+      p: "La page CLI ne s'écrit pas en HTML comme les autres: ses commandes viennent des tableaux GROUPS et FLAGS de son JavaScript, qui fabriquent l'aide, le tableau et les exemples. Les encadrés bleus et verts ne s'y posent donc pas tels quels. Changements à proposer: init accepte --user et --ca en plus de --domain, dotbox user a une sous-commande password, et dotbox config ne parle plus d'e-mail (D18).",
+      l: ["Ajouter au JavaScript de la page un champ de proposition: le tableau des commandes affiche alors l'ancien texte en bleu et le nouveau en vert, numérotés comme ailleurs.",
+          "Ou décrire les changements dans un encadré en tête de page."],
+      reco: "Proposé: le champ de proposition, pour que la page CLI se valide comme les autres." }
   ];
 
 

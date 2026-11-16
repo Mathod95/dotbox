@@ -22,50 +22,41 @@
   <p>Avant tout, <code>*.example.com</code> doit pointer vers le serveur (voir <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
   <p>Lance-le en root (<code>su -</code>). C'est la seule fois où root sert: ensuite, tu travailles avec ton utilisateur et <code>sudo</code>.</p>
   <pre><span class="p">$</span> su -
-<span class="p">#</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
-
+<span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
   <h3 id="fr-installsh">Ce que fait install.sh</h3>
   <ol>
-    <li><b>Vérifie qu'il tourne en root</b>.</li>
-    <li><b>Vérifie le système</b> selon les <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>, et s'arrête sans rien modifier s'il ne convient pas.</li>
-    <li><b>Installe <code>sudo</code></b> s'il manque.</li>
-    <li><b>Configure ton utilisateur</b>, celui qui fait tourner les apps et Dot Box: demande son nom (par défaut, le compte avec lequel tu t'es connecté), le crée s'il n'existe pas en demandant son mot de passe, et l'ajoute au groupe <code>sudo</code>. Un utilisateur existant garde son mot de passe, son shell et ses clés SSH.</li>
+    <li><b>Vérifie qu'il tourne en root</b> et que la machine est en amd64.</li>
     <li><b>Installe <code>dotbox</code></b>: télécharge la dernière version, vérifie son checksum SHA-256 et la place dans <code>/usr/local/bin</code>. Un checksum faux arrête l'installation.</li>
-    <li><b>Lance <code>dotbox init</code></b> pour cet utilisateur, sauf avec <code>--no-init</code> (migration, voir <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>).</li>
+    <li><b>Lance <code>dotbox init</code></b>, sauf avec <code>--no-init</code> (migration, voir <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>). Ses autres options passent à <code>init</code>: <code>bash -s -- --domain example.com</code>.</li>
   </ol>
-  <p>Il peut être relancé sans risque: il ne fait que ce qui manque.</p>
+  <p>Le reste est le travail de <code>init</code>, à l'étape 2. Le script peut être relancé sans risque: il remet la dernière version de <code>dotbox</code> et relance <code>init</code>, qui ne refait que ce qui manque.</p>
 
   <h2 id="fr-step2">Étape 2: répondre à dotbox init</h2>
-  <div class="prop-old" data-prop="6">
-  <p><code>init</code> pose ses questions dans le terminal: le domaine, l'e-mail du certificat, l'utilisateur qui fera tourner les apps (par défaut celui qui a lancé le script) et le nom de l'administrateur. Il les accepte aussi en options: <code>sudo dotbox init --domain example.com</code>. Ensuite, il:</p>
-  </div>
-  <div class="prop-new" data-prop="6">
-    <p><code>init</code> demande le domaine, l'e-mail du certificat et le nom de l'administrateur, dans le terminal ou en options (<code>sudo dotbox init --domain example.com</code>). Ensuite, il:</p>
-  </div>
+  <p><code>init</code> demande le domaine et ton utilisateur, celui qui fait tourner les apps (par défaut, le compte avec lequel tu t'es connecté avant <code>su -</code>), dans le terminal ou en options: <code>dotbox init --domain example.com --user admin</code>. Ensuite, il:</p>
   <ol>
-    <li><b>Vérifie le serveur</b>: ports 80 et 443 libres, espace disque, et <code>*.example.com</code> qui pointe vers le serveur.</li>
-    <li><span class="prop-old" data-prop="22"><b>Installe Docker</b> s'il est absent, avec la rotation des logs et <code>live-restore</code>, et crée le réseau <code>dotbox</code>.</span><span class="prop-new" data-prop="22"><b>Installe Docker</b> s'il est absent, depuis le dépôt officiel de Docker pour Debian ou pour Ubuntu. Si des paquets en conflit sont présents (<code>docker.io</code>, <code>podman-docker</code>...), il les liste et demande avant de les retirer. Les logs des containers tournent sur quelques fichiers, et les containers continuent de tourner quand Docker redémarre (<code>live-restore</code>). Crée le réseau <code>dotbox</code>.</span></li>
-    <li><b>Prépare l'utilisateur</b> choisi par <code>install.sh</code>: l'ajoute au groupe <code>docker</code> et lui donne <code>/opt</code> et <code>/data</code>.</li>
-    <li><b>Démarre</b> Traefik, Authelia, CrowdSec et Dot Box. Traefik obtient un certificat pour chaque sous-domaine.</li>
+    <li><b>Vérifie le serveur</b>, avant de modifier quoi que ce soit: le système (voir <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), ports 80 et 443 libres, espace disque, et <code>*.example.com</code> qui pointe vers le serveur.</li>
+    <li><b>Installe Docker</b> s'il est absent, depuis le dépôt officiel de Docker pour Debian ou pour Ubuntu. Si des paquets en conflit sont présents (<code>docker.io</code>, <code>podman-docker</code>...), il les liste et demande avant de les retirer. Les logs des containers tournent sur quelques fichiers, et les containers continuent de tourner quand Docker redémarre (<code>live-restore</code>). Crée le réseau <code>dotbox</code>.</li>
+    <li><b>Installe <code>sudo</code></b> s'il manque <b>et prépare ton utilisateur</b>: le crée s'il n'existe pas, en demandant son mot de passe, l'ajoute aux groupes <code>sudo</code> et <code>docker</code> et lui donne <code>/opt</code> et <code>/data</code>. Un utilisateur existant garde son mot de passe, son shell et ses clés SSH.</li>
+    <li><b>Démarre</b> Traefik, Authelia, CrowdSec et Dot Box. Traefik obtient un certificat pour chaque sous-domaine. Authelia reçoit ton compte, au même nom que ton utilisateur, avec un mot de passe tiré au hasard.</li>
     <li><b>Programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
   </ol>
+  <p class="note"><b>Traefik ne tient pas les clés de Docker.</b> C'est le seul container exposé à Internet: il lit Docker à travers un socket proxy qui ne laisse passer que la liste des containers. S'il était compromis, il ne pourrait ni lancer ni arrêter de container.</p>
+  <p>À la fin, <code>init</code> affiche un récapitulatif: les adresses, ton compte et son mot de passe web, affiché une seule fois. Root peut le relire avec <code>sudo dotbox user password</code>.</p>
   <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <code>dotbox doctor</code> signale les mises à jour en attente et quand un redémarrage est nécessaire (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Tout est écrit dans <code>/opt/dotbox/dotbox.yml</code>. Les secrets (clés d'Authelia, clé de sauvegarde) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
-email: admin@example.com          <span class="c"># Let's Encrypt</span>
-ca: letsencrypt                 <span class="c"># ou zerossl</span>
-user: admin                     <span class="c"># fait tourner les apps</span>
-admin: admin
+ca: letsencrypt                 <span class="c"># ou letsencrypt-staging, pour des essais</span>
+user: admin                     <span class="c"># fait tourner les apps, même nom dans Authelia</span>
 paths:
-  data: /data
+data: /data
 backup:
-  schedule: daily 04:00
-  keep: 7
-  destinations:
-    - local: /backups
+schedule: daily 04:00
+keep: 7
+destinations:
+  - local: /backups
 update:
-  schedule: off</pre>
+schedule: off</pre>
   <p><code>sudo dotbox init</code> peut être relancé sans risque: il vérifie, complète ce qui manque et ne recrée rien qui existe déjà.</p>
 
   <h2 id="fr-step3">Étape 3: installer tes apps</h2>
@@ -92,50 +83,41 @@ update:
   <p>First, <code>*.example.com</code> must point to the server (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
   <p>Run it as root (<code>su -</code>). It is the only time you need root: afterwards, you work with your user and <code>sudo</code>.</p>
   <pre><span class="p">$</span> su -
-<span class="p">#</span> curl -fsSL https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
-
+<span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
   <h3 id="en-installsh">What install.sh does</h3>
   <ol>
-    <li><b>Checks that it runs as root</b>.</li>
-    <li><b>Checks the system</b> against the <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>, and stops without changing anything if it does not match.</li>
-    <li><b>Installs <code>sudo</code></b> if it is missing.</li>
-    <li><b>Sets up your user</b>, the one that runs the apps and Dot Box: asks for its name (by default, the account you logged in with), creates it if it does not exist, asking for its password, and adds it to the <code>sudo</code> group. An existing user keeps its password, shell and SSH keys.</li>
+    <li><b>Checks that it runs as root</b> and that the machine is amd64.</li>
     <li><b>Installs <code>dotbox</code></b>: downloads the latest release, checks its SHA-256 checksum and puts it in <code>/usr/local/bin</code>. A wrong checksum stops the install.</li>
-    <li><b>Runs <code>dotbox init</code></b> for that user, unless <code>--no-init</code> is given (migration, see <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>).</li>
+    <li><b>Runs <code>dotbox init</code></b>, unless <code>--no-init</code> is given (migration, see <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>). Its other options go to <code>init</code>: <code>bash -s -- --domain example.com</code>.</li>
   </ol>
-  <p>It can be run again safely: it only does what is missing.</p>
+  <p>The rest is the job of <code>init</code>, in step 2. The script can be run again safely: it puts back the latest <code>dotbox</code> and runs <code>init</code> again, which only does what is missing.</p>
 
   <h2 id="en-step2">Step 2: answer dotbox init</h2>
-  <div class="prop-old" data-prop="6">
-  <p><code>init</code> asks its questions in the terminal: the domain, the certificate email, the user that will run the apps (by default the one who ran the script) and the admin name. It also takes them as flags: <code>sudo dotbox init --domain example.com</code>. Then it:</p>
-  </div>
-  <div class="prop-new" data-prop="6">
-    <p><code>init</code> asks for the domain, the certificate email and the admin name, in the terminal or as flags (<code>sudo dotbox init --domain example.com</code>). Then it:</p>
-  </div>
+  <p><code>init</code> asks for the domain and your user, the one that runs the apps (by default, the account you logged in with before <code>su -</code>), in the terminal or as flags: <code>dotbox init --domain example.com --user admin</code>. Then it:</p>
   <ol>
-    <li><b>Checks the server</b>: ports 80 and 443 free, disk space, and <code>*.example.com</code> pointing to the server.</li>
-    <li><span class="prop-old" data-prop="22"><b>Installs Docker</b> if it is missing, with log rotation and <code>live-restore</code>, and creates the <code>dotbox</code> network.</span><span class="prop-new" data-prop="22"><b>Installs Docker</b> if it is missing, from Docker's official repository for Debian or for Ubuntu. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</span></li>
-    <li><b>Prepares the user</b> chosen by <code>install.sh</code>: adds it to the <code>docker</code> group and gives it <code>/opt</code> and <code>/data</code>.</li>
-    <li><b>Starts</b> Traefik, Authelia, CrowdSec and Dot Box. Traefik gets a certificate for each subdomain.</li>
+    <li><b>Checks the server</b>, before changing anything: the system (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), ports 80 and 443 free, disk space, and <code>*.example.com</code> pointing to the server.</li>
+    <li><b>Installs Docker</b> if it is missing, from Docker's official repository for Debian or for Ubuntu. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</li>
+    <li><b>Installs <code>sudo</code></b> if it is missing <b>and prepares your user</b>: creates it if it does not exist, asking for its password, adds it to the <code>sudo</code> and <code>docker</code> groups and gives it <code>/opt</code> and <code>/data</code>. An existing user keeps its password, shell and SSH keys.</li>
+    <li><b>Starts</b> Traefik, Authelia, CrowdSec and Dot Box. Traefik gets a certificate for each subdomain. Authelia gets your account, with the same name as your user and a random password.</li>
     <li><b>Schedules the daily backup</b>, local to begin with.</li>
   </ol>
+  <p class="note"><b>Traefik does not hold the keys to Docker.</b> It is the only container exposed to the internet: it reads Docker through a socket proxy that only lets the list of containers through. If it were compromised, it could neither start nor stop a container.</p>
+  <p>At the end, <code>init</code> shows a summary: the addresses, your account and its web password, shown once. Root can read it again with <code>sudo dotbox user password</code>.</p>
   <p><code>init</code> does not update the system and never reboots the server: <code>dotbox doctor</code> reports pending updates and when a reboot is needed (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
   <p>Everything is written to <code>/opt/dotbox/dotbox.yml</code>. Secrets (Authelia keys, backup key) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
-email: admin@example.com          <span class="c"># Let's Encrypt</span>
-ca: letsencrypt                 <span class="c"># or zerossl</span>
-user: admin                     <span class="c"># runs the apps</span>
-admin: admin
+ca: letsencrypt                 <span class="c"># or letsencrypt-staging, for trials</span>
+user: admin                     <span class="c"># runs the apps, same name in Authelia</span>
 paths:
-  data: /data
+data: /data
 backup:
-  schedule: daily 04:00
-  keep: 7
-  destinations:
-    - local: /backups
+schedule: daily 04:00
+keep: 7
+destinations:
+  - local: /backups
 update:
-  schedule: off</pre>
+schedule: off</pre>
   <p><code>sudo dotbox init</code> can be run again safely: it checks, fills in what is missing and recreates nothing that already exists.</p>
 
   <h2 id="en-step3">Step 3: install your apps</h2>
