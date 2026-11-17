@@ -1,0 +1,125 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Sonarr<i>●</i>tu dis quelles séries tu suis, il récupère chaque épisode et le range.</p>
+<p class="lede" data-l="en">Sonarr<i>●</i>you say which shows you follow, it fetches every episode and files it.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/Sonarr/Sonarr" target="_blank" rel="noopener">Code source ↗</a> <a href="https://sonarr.tv" target="_blank" rel="noopener">Site ↗</a> <a href="https://wiki.servarr.com/sonarr" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-sonarr" target="_blank" rel="noopener">Image linuxserver ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://sonarr.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/sonarr:4.0.20.3014-ls329</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install sonarr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Sonarr</h2>
+  <ul>
+    <li>Tu ajoutes une série, en entier ou à partir d'une saison, et la qualité voulue.</li>
+    <li>Sonarr suit son calendrier de diffusion et cherche chaque épisode à sa sortie, sur les sites que lui fournit <a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a>.</li>
+    <li>Il envoie le téléchargement à qBittorrent, qui le range dans <code>/data/torrents</code>.</li>
+    <li>Une fois fini, il renomme l'épisode et le range dans <code>/data/media/tv</code>, par série et par saison, en hardlink: le même fichier à deux endroits, sans copie ni place en plus.</li>
+    <li>Il comble les épisodes manquants d'une série déjà commencée, et peut remplacer un épisode par une meilleure version.</li>
+  </ul>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/sonarr/config</code>, puis <code>/data</code>, <code>/data/torrents</code>, <code>/data/media</code> et <code>/data/media/tv</code>, à ton utilisateur.</li>
+    <li>Elle vérifie que <code>torrents/</code> et <code>media/</code> sont sur le même disque, sans quoi un hardlink est impossible: <code>dotbox</code> le dit et s'arrête.</li>
+    <li>Elle écrit ses réglages dans <code>config.xml</code> (plus bas), sans toucher au reste.</li>
+    <li>Elle écrit <code>/opt/sonarr/compose.yml</code>, démarre Sonarr et attend qu'il réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/sonarr/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/sonarr/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/sonarr/config/config.xml</code></td><td><code>/config/config.xml</code></td><td>Les réglages de démarrage et la clé d'API de Sonarr. Lisible par ton utilisateur seul.</td></tr>
+      <tr><td><code>/opt/sonarr/config/sonarr.db</code></td><td><code>/config/sonarr.db</code></td><td>La base: tes séries, les réglages faits dans l'interface, l'historique.</td></tr>
+      <tr><td><code>/opt/sonarr/config/logs/</code></td><td><code>/config/logs/</code></td><td>Les logs.</td></tr>
+      <tr><td><code>/data/media/tv</code></td><td><code>/data/media/tv</code></td><td>Ta bibliothèque de séries.</td></tr>
+      <tr><td><code>/data/torrents</code></td><td><code>/data/torrents</code></td><td>Les téléchargements, que Sonarr vient chercher.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Les réglages que Dot Box ajoute</h2>
+  <p>Dans <code>config.xml</code>, comme le fait Saltbox, et vérifiés dans le code de Sonarr 4.0.20:</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>AuthenticationMethod</code></td><td><code>External</code></td><td>Authelia vérifie déjà qui se connecte: sans ça, Sonarr demanderait un second mot de passe. Son API garde sa clé.</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td><code>sonarr.example.com,sonarr</code></td><td>Sonarr refuse les autres noms d'hôte, une protection contre certaines attaques passées par le navigateur. <code>sonarr</code> est le nom du container, pour les autres apps.</td></tr>
+      <tr><td><code>TrustedNetworks</code></td><td>le réseau <code>dotbox</code></td><td>Sonarr croit les en-têtes <code>X-Forwarded-*</code> de Traefik: il voit la vraie adresse des visiteurs et sait qu'on vient en HTTPS.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose: aucun port publié, <code>/data</code> au même chemin que sur le serveur (pour les hardlinks), <code>PUID</code> et <code>PGID</code> de ton utilisateur, <code>no-new-privileges</code>, et un redémarrage automatique.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Sonarr installé ne connaît encore ni qBittorrent, ni Prowlarr, ni son dossier de séries. Dans son interface: ajoute <code>/data/media/tv</code> comme dossier racine (Settings, Media Management), qBittorrent comme client de téléchargement (Settings, Download Clients), puis Sonarr dans Prowlarr (Settings, Apps).</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/Sonarr/Sonarr" target="_blank" rel="noopener">Source code ↗</a> <a href="https://sonarr.tv" target="_blank" rel="noopener">Website ↗</a> <a href="https://wiki.servarr.com/sonarr" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-sonarr" target="_blank" rel="noopener">linuxserver image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://sonarr.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then 6-digit code)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/sonarr:4.0.20.3014-ls329</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install sonarr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Sonarr does</h2>
+  <ul>
+    <li>You add a show, whole or from a given season, and the quality you want.</li>
+    <li>Sonarr follows its airing schedule and searches each episode when it comes out, on the sites provided by <a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a>.</li>
+    <li>It sends the download to qBittorrent, which stores it in <code>/data/torrents</code>.</li>
+    <li>Once done, it renames the episode and files it in <code>/data/media/tv</code>, by show and season, as a hardlink: the same file in two places, with no copy and no extra space.</li>
+    <li>It fills in missing episodes of a show you already started, and can replace an episode with a better version.</li>
+  </ul>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/sonarr/config</code>, then <code>/data</code>, <code>/data/torrents</code>, <code>/data/media</code> and <code>/data/media/tv</code>, owned by your user.</li>
+    <li>It checks that <code>torrents/</code> and <code>media/</code> are on the same disk, otherwise a hardlink is impossible: <code>dotbox</code> says so and stops.</li>
+    <li>It writes its settings into <code>config.xml</code> (below), without touching the rest.</li>
+    <li>It writes <code>/opt/sonarr/compose.yml</code>, starts Sonarr and waits until it answers.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/sonarr/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/sonarr/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/sonarr/config/config.xml</code></td><td><code>/config/config.xml</code></td><td>Sonarr's startup settings and API key. Readable by your user only.</td></tr>
+      <tr><td><code>/opt/sonarr/config/sonarr.db</code></td><td><code>/config/sonarr.db</code></td><td>The database: your shows, the settings made in the interface, the history.</td></tr>
+      <tr><td><code>/opt/sonarr/config/logs/</code></td><td><code>/config/logs/</code></td><td>The logs.</td></tr>
+      <tr><td><code>/data/media/tv</code></td><td><code>/data/media/tv</code></td><td>Your TV library.</td></tr>
+      <tr><td><code>/data/torrents</code></td><td><code>/data/torrents</code></td><td>The downloads, which Sonarr picks up.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">The settings Dot Box adds</h2>
+  <p>In <code>config.xml</code>, as Saltbox does, checked in Sonarr 4.0.20's code:</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>AuthenticationMethod</code></td><td><code>External</code></td><td>Authelia already checks who logs in: without it, Sonarr would ask for a second password. Its API keeps its key.</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td><code>sonarr.example.com,sonarr</code></td><td>Sonarr refuses other host names, a protection against some browser-based attacks. <code>sonarr</code> is the container name, for the other apps.</td></tr>
+      <tr><td><code>TrustedNetworks</code></td><td>the <code>dotbox</code> network</td><td>Sonarr trusts Traefik's <code>X-Forwarded-*</code> headers: it sees the visitors' real address and knows they came over HTTPS.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose: no published port, <code>/data</code> at the same path as on the server (for hardlinks), <code>PUID</code> and <code>PGID</code> of your user, <code>no-new-privileges</code>, and automatic restart.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>Once installed, Sonarr does not know qBittorrent, Prowlarr or its TV folder yet. In its interface: add <code>/data/media/tv</code> as the root folder (Settings, Media Management), qBittorrent as the download client (Settings, Download Clients), then Sonarr in Prowlarr (Settings, Apps).</p>
+</article>
+
+<!-- CSS -->
+.app-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; }
+.app-links a { color: var(--accent); text-decoration: none; }
+.app-links a:hover { text-decoration: underline; }

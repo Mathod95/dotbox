@@ -1,0 +1,99 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Prowlarr<i>●</i>tes indexeurs à un seul endroit, pour Radarr et Sonarr.</p>
+<p class="lede" data-l="en">Prowlarr<i>●</i>your indexers in one place, for Radarr and Sonarr.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/Prowlarr/Prowlarr" target="_blank" rel="noopener">Code source ↗</a> <a href="https://prowlarr.com" target="_blank" rel="noopener">Site ↗</a> <a href="https://wiki.servarr.com/prowlarr" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-prowlarr" target="_blank" rel="noopener">Image linuxserver ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://prowlarr.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/prowlarr:3.0.2.5780-ls169</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install prowlarr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Prowlarr</h2>
+  <ul>
+    <li>Un indexeur est un site qui répertorie des torrents (ou des fichiers Usenet). Tu les ajoutes une seule fois, dans Prowlarr.</li>
+    <li>Prowlarr les envoie à <a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a> et à <a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a>, et les tient à jour: un indexeur ajouté ou retiré l'est partout.</li>
+    <li>Il connaît des centaines d'indexeurs: leurs définitions sont fournies et mises à jour avec lui.</li>
+    <li>Il ne télécharge rien et ne touche pas à <code>/data</code>: il cherche, les autres apps font le reste.</li>
+  </ul>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/prowlarr/config</code>, à ton utilisateur.</li>
+    <li>Elle écrit <code>/opt/prowlarr/compose.yml</code>, démarre Prowlarr et attend qu'il réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/prowlarr/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/prowlarr/compose.override.yml</code></td><td></td><td>Le tien, facultatif, jamais touché par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/config.xml</code></td><td><code>/config/config.xml</code></td><td>Les réglages de démarrage et la clé d'API de Prowlarr.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/prowlarr.db</code></td><td><code>/config/prowlarr.db</code></td><td>La base: tes indexeurs, les apps reliées, l'historique des recherches.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/Definitions/</code></td><td><code>/config/Definitions/</code></td><td>Les définitions des indexeurs connus.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/logs/</code></td><td><code>/config/logs/</code></td><td>Les logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Les réglages que Dot Box ajoute</h2>
+  <p>Aucun pour l'instant. À la première visite, derrière Authelia, Prowlarr demande donc de créer son propre compte. Les mêmes réglages que pour <a href="__DOC_RADARR__#fr-settings"__DOC_RADARR_TARGET__>Radarr</a> sont prévus.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Dans son interface: ajoute tes indexeurs (Indexers), puis Radarr et Sonarr (Settings, Apps) pour qu'il leur envoie.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/Prowlarr/Prowlarr" target="_blank" rel="noopener">Source code ↗</a> <a href="https://prowlarr.com" target="_blank" rel="noopener">Website ↗</a> <a href="https://wiki.servarr.com/prowlarr" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-prowlarr" target="_blank" rel="noopener">linuxserver image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://prowlarr.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then 6-digit code)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/prowlarr:3.0.2.5780-ls169</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install prowlarr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Prowlarr does</h2>
+  <ul>
+    <li>An indexer is a site that lists torrents (or Usenet files). You add them once, in Prowlarr.</li>
+    <li>Prowlarr sends them to <a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a> and <a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a>, and keeps them in sync: an indexer added or removed is added or removed everywhere.</li>
+    <li>It knows hundreds of indexers: their definitions ship and update with it.</li>
+    <li>It downloads nothing and does not touch <code>/data</code>: it searches, the other apps do the rest.</li>
+  </ul>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/prowlarr/config</code>, owned by your user.</li>
+    <li>It writes <code>/opt/prowlarr/compose.yml</code>, starts Prowlarr and waits until it answers.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/prowlarr/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/prowlarr/compose.override.yml</code></td><td></td><td>Yours, optional, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/config.xml</code></td><td><code>/config/config.xml</code></td><td>Prowlarr's startup settings and API key.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/prowlarr.db</code></td><td><code>/config/prowlarr.db</code></td><td>The database: your indexers, the connected apps, the search history.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/Definitions/</code></td><td><code>/config/Definitions/</code></td><td>The definitions of the known indexers.</td></tr>
+      <tr><td><code>/opt/prowlarr/config/logs/</code></td><td><code>/config/logs/</code></td><td>The logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">The settings Dot Box adds</h2>
+  <p>None yet. On the first visit, behind Authelia, Prowlarr therefore asks you to create its own account. The same settings as for <a href="__DOC_RADARR__#en-settings"__DOC_RADARR_TARGET__>Radarr</a> are planned.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>In its interface: add your indexers (Indexers), then Radarr and Sonarr (Settings, Apps) so that it sends them over.</p>
+</article>
+
+<!-- CSS -->
+.app-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; }
+.app-links a { color: var(--accent); text-decoration: none; }
+.app-links a:hover { text-decoration: underline; }

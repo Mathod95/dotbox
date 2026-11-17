@@ -2,6 +2,59 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "next",
+      "title": {
+        "fr": "Moteur, catalogue et CrowdSec",
+        "en": "Engine, catalog and CrowdSec"
+      },
+      "new": [
+        {
+          "fr": "CLI: `dotbox install <app>...` installe une ou plusieurs apps du catalogue dans `/opt/<app>`, derrière Traefik et Authelia, attend qu'elles soient prêtes et affiche leur adresse",
+          "en": "CLI: `dotbox install <app>...` installs one or more catalog apps in `/opt/<app>`, behind Traefik and Authelia, waits until they are ready and shows their address"
+        },
+        {
+          "fr": "CLI: `dotbox remove <app>` arrête l'app et garde sa configuration pour une réinstallation, `--purge` efface `/opt/<app>` et l'image après une confirmation",
+          "en": "CLI: `dotbox remove <app>` stops the app and keeps its configuration for a reinstall, `--purge` erases `/opt/<app>` and the image after a confirmation"
+        },
+        {
+          "fr": "Moteur: génère le `compose.yml` d'une app à partir de son manifest (image à une version fixée, réseau `dotbox`, aucun port web publié, `/data` au même chemin dans le container)",
+          "en": "Engine: generates an app's `compose.yml` from its manifest (image at a pinned version, `dotbox` network, no web port published, `/data` at the same path in the container)"
+        },
+        {
+          "fr": "Moteur: prépare `/data/torrents` et `/data/media` pour l'utilisateur et vérifie qu'ils sont sur le même système de fichiers (hardlinks)",
+          "en": "Engine: prepares `/data/torrents` and `/data/media` for the user and checks they are on the same filesystem (hardlinks)"
+        },
+        {
+          "fr": "Catalogue: Prowlarr, Radarr, Sonarr et qui",
+          "en": "Catalog: Prowlarr, Radarr, Sonarr and qui"
+        },
+        {
+          "fr": "Catalogue: le core (Traefik, Authelia, CrowdSec et son bouncer) dans `catalog/core/`, une nouvelle version ne demande plus de nouveau `dotbox`",
+          "en": "Catalog: the core (Traefik, Authelia, CrowdSec and its bouncer) in `catalog/core/`, a new version no longer needs a new `dotbox`"
+        },
+        {
+          "fr": "CLI: `dotbox init` lit le catalogue sur GitHub, vérifie chaque fichier et le range dans `/opt/dotbox/catalog/`, `--catalog <dossier>` pour les tests",
+          "en": "CLI: `dotbox init` reads the catalog from GitHub, checks every file and stores it in `/opt/dotbox/catalog/`, `--catalog <dir>` for tests"
+        },
+        {
+          "fr": "CLI: `dotbox init` installe CrowdSec: il surveille SSH et Traefik, partage ses alertes avec la communauté, et son bouncer bloque les IP bannies au pare-feu (iptables, chaînes INPUT et DOCKER-USER)",
+          "en": "CLI: `dotbox init` installs CrowdSec: it watches SSH and Traefik, shares its alerts with the community, and its bouncer blocks banned IPs in the firewall (iptables, INPUT and DOCKER-USER chains)"
+        },
+        {
+          "fr": "CLI: `dotbox init` pose une seule règle Authelia pour toutes les apps (`*.<domaine>`, double authentification)",
+          "en": "CLI: `dotbox init` sets a single Authelia rule for every app (`*.<domain>`, two-factor)"
+        }
+      ],
+      "changed": [
+        {
+          "fr": "CLI: `dotbox init` a une étape de plus, Catalog (`[1/8]` quand il est lancé par `install.sh`), et l'étape CrowdSec, jusque-là « not available yet », installe CrowdSec",
+          "en": "CLI: `dotbox init` has one more step, Catalog (`[1/8]` when run by `install.sh`), and the CrowdSec step, until now « not available yet », installs CrowdSec"
+        }
+      ],
+      "fixed": [],
+      "removed": []
+    },
+    {
       "version": "v0.0.2",
       "date": "2026-11-16",
       "tagged": true,

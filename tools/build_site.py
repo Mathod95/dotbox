@@ -46,13 +46,20 @@ DOCS = [
     {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL"},
     {"slug": "update", "name": "Update", "dots": "UPDATE"},
     {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS"},
+    {"slug": "security", "name": "Security", "dots": "SECURITY"},
     {"slug": "paths", "name": "Paths", "dots": "PATHS"},
     {"slug": "backup", "name": "Backup", "dots": "BACKUP", "group": "Backup / Restore"},
     {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "group": "Backup / Restore"},
     {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX"},
+    {"slug": "apps", "name": "Overview", "dots": "APPS", "group": "Apps"},
+    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "group": "Apps"},
+    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "group": "Apps"},
+    {"slug": "qui", "name": "qui", "dots": "QUI", "group": "Apps"},
+    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},
+    {"slug": "en-vrac", "name": "En vrac", "dots": "EN-VRAC"},
 ]
 
 # artefacts claude.ai : les pages se répondent par leurs boutons
@@ -177,7 +184,7 @@ def site_urls(depth):
 def artifact_urls():
     urls = {"HOME": ARTIFACT_PAGE, "RELEASES": ARTIFACT_RELEASE, "ROADMAP": ARTIFACT_ROADMAP, "GS": ARTIFACT_DOCS[DOCS[0]["slug"]]}
     for d in DOCS:
-        urls["DOC_" + ukey(d["slug"])] = ARTIFACT_DOCS[d["slug"]]
+        urls["DOC_" + ukey(d["slug"])] = ARTIFACT_DOCS.get(d["slug"], "#")
     return urls
 
 

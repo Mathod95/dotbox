@@ -1,0 +1,92 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Les apps<i>●</i>comment Dot Box les installe, et d'où elles viennent.</p>
+<p class="lede" data-l="en">Apps<i>●</i>how Dot Box installs them, and where they come from.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-install">Installer une app</h2>
+  <pre><span class="p">$</span> sudo dotbox install radarr</pre>
+  <p>Chaque app du catalogue est décrite par un manifest, un petit fichier YAML: son image, son port, son niveau d'accès, ses dossiers. <code>dotbox install</code> en fait une app qui tourne:</p>
+  <ul>
+    <li>Un dossier <code>/opt/&lt;app&gt;</code>, avec <code>compose.yml</code> (généré, réécrit à chaque install) et <code>config/</code> (les réglages et la base de l'app).</li>
+    <li>Le container sur le réseau <code>dotbox</code>, sans port publié: l'app répond sur <code>https://&lt;app&gt;.example.com</code>, par Traefik, derrière Authelia selon son niveau d'accès.</li>
+    <li>Ses fichiers à ton utilisateur (<code>PUID</code>, <code>PGID</code>), jamais à root.</li>
+    <li>Pour les apps de médias, <code>/data</code> au même chemin dans le container et sur le serveur, pour que les hardlinks marchent.</li>
+    <li>Les réglages que Dot Box ajoute dans la configuration de l'app, chacun expliqué sur la page de l'app.</li>
+    <li>L'app notée dans <code>apps:</code> de <code>/opt/dotbox/dotbox.yml</code>, avec son sous-domaine et son niveau d'accès.</li>
+  </ul>
+  <p>Relancé, <code>dotbox install</code> ne refait que ce qui manque. L'app n'est redémarrée que si quelque chose a changé. Les apps installées ne savent rien les unes des autres: les relier (qBittorrent dans Radarr, par exemple) est une étape à part.</p>
+
+  <h2 id="fr-remove">Retirer une app</h2>
+  <pre><span class="p">$</span> sudo dotbox remove radarr
+<span class="p">$</span> sudo dotbox remove radarr --purge</pre>
+  <p><code>remove</code> arrête l'app et garde sa configuration dans <code>/opt/&lt;app&gt;/config</code>: une nouvelle installation la reprend. <code>--purge</code> efface aussi <code>/opt/&lt;app&gt;</code> et l'image, après une confirmation.</p>
+
+  <h2 id="fr-images">D'où viennent les images</h2>
+  <p>Dot Box prend <b>l'image officielle du projet</b>, quand il en publie une et la maintient. Sinon, celle de <b>linuxserver.io</b>. Toujours à une <b>version précise</b>, jamais <code>latest</code>: une mise à jour est un changement voulu et testé, jamais une surprise au redémarrage.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Composant</th><th>Image</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td>Traefik, Authelia, qui</td><td>officielles</td><td>Les projets publient leur image.</td></tr>
+      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>Le projet Servarr ne publie pas d'image officielle. Son wiki renvoie vers linuxserver et hotio.</td></tr>
+      <tr><td>Socket proxy de Traefik</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
+
+  <h2 id="fr-catalog">Les apps du catalogue</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
+    <tbody>
+      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Les indexeurs, pour Radarr et Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>Une interface web pour qBittorrent</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Les films</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>Les séries</td><td>two_factor</td></tr>
+    </tbody>
+  </table></div>
+  <p>Une app a sa page quand elle entre dans le catalogue. Celles qui viendront ensuite sont dans la <a href="__ROADMAP__">Roadmap</a>.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-install">Installing an app</h2>
+  <pre><span class="p">$</span> sudo dotbox install radarr</pre>
+  <p>Each app of the catalog is described by a manifest, a small YAML file: its image, its port, its access level, its folders. <code>dotbox install</code> turns it into a running app:</p>
+  <ul>
+    <li>A folder <code>/opt/&lt;app&gt;</code>, with <code>compose.yml</code> (generated, rewritten on every install) and <code>config/</code> (the app's settings and database).</li>
+    <li>The container on the <code>dotbox</code> network, with no published port: the app answers on <code>https://&lt;app&gt;.example.com</code>, through Traefik, behind Authelia according to its access level.</li>
+    <li>Its files owned by your user (<code>PUID</code>, <code>PGID</code>), never by root.</li>
+    <li>For media apps, <code>/data</code> at the same path in the container and on the server, so that hardlinks work.</li>
+    <li>The settings Dot Box adds to the app's configuration, each explained on the app's page.</li>
+    <li>The app recorded in <code>apps:</code> of <code>/opt/dotbox/dotbox.yml</code>, with its subdomain and access level.</li>
+  </ul>
+  <p>Run again, <code>dotbox install</code> only does what is missing. The app is restarted only if something changed. Installed apps know nothing about each other: connecting them (qBittorrent in Radarr, for example) is a separate step.</p>
+
+  <h2 id="en-remove">Removing an app</h2>
+  <pre><span class="p">$</span> sudo dotbox remove radarr
+<span class="p">$</span> sudo dotbox remove radarr --purge</pre>
+  <p><code>remove</code> stops the app and keeps its configuration in <code>/opt/&lt;app&gt;/config</code>: a new install picks it up. <code>--purge</code> also deletes <code>/opt/&lt;app&gt;</code> and the image, after a confirmation.</p>
+
+  <h2 id="en-images">Where the images come from</h2>
+  <p>Dot Box uses <b>the project's official image</b>, when it publishes and maintains one. Otherwise, the <b>linuxserver.io</b> one. Always at a <b>precise version</b>, never <code>latest</code>: an update is a deliberate, tested change, never a surprise on restart.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Component</th><th>Image</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Traefik, Authelia, qui</td><td>official</td><td>The projects publish their image.</td></tr>
+      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>The Servarr project does not publish an official image. Its wiki points to linuxserver and hotio.</td></tr>
+      <tr><td>Traefik's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
+
+  <h2 id="en-catalog">Apps in the catalog</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
+    <tbody>
+      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Indexers, for Radarr and Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>A web interface for qBittorrent</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Movies</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>TV shows</td><td>two_factor</td></tr>
+    </tbody>
+  </table></div>
+  <p>An app gets its page when it joins the catalog. Those coming next are in the <a href="__ROADMAP__">Roadmap</a>.</p>
+</article>

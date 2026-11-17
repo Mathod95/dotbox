@@ -1,0 +1,156 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Sécurité<i>●</i>ce que Dot Box met en place pour protéger ton serveur, couche par couche.</p>
+<p class="lede" data-l="en">Security<i>●</i>what Dot Box sets up to protect your server, layer by layer.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p>Un serveur exposé sur Internet est attaqué en permanence: sur un serveur neuf, des milliers d'essais de mots de passe SSH arrivent chaque jour. Dot Box ne compte pas sur une seule protection, il les empile. Une requête doit les passer toutes avant d'atteindre une app.</p>
+
+  <h2 id="fr-glance">En un coup d'œil</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Couche</th><th>Ce qu'elle fait</th><th>État</th></tr></thead>
+    <tbody>
+      <tr><td>Ports ouverts</td><td>Seuls 80 et 443 (Traefik) et SSH. Aucune app ne publie de port web.</td><td>En place</td></tr>
+      <tr><td>Traefik</td><td>HTTPS partout, seules les routes déclarées existent, Docker lu en lecture seule.</td><td>En place</td></tr>
+      <tr><td>Authelia</td><td>Tout est refusé par défaut. Mot de passe, puis code à 6 chiffres ou passkey.</td><td>En place</td></tr>
+      <tr><td>Apps</td><td>Lancées avec ton utilisateur, sans privilège en plus, à une version fixée.</td><td>En place</td></tr>
+      <tr><td>CrowdSec</td><td>Repère les attaques dans les logs de SSH et de Traefik, bannit l'IP pour tout le serveur.</td><td>Prévu</td></tr>
+      <tr><td>AppSec</td><td>Bloque une requête d'attaque connue dès la première, sur les apps sans Authelia devant.</td><td>Prévu</td></tr>
+      <tr><td>SSH</td><td>Une option de durcissement, que tu choisis d'appliquer.</td><td>Prévu</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-ports">Les ports ouverts</h2>
+  <ul>
+    <li><code>80</code> et <code>443</code>, publiés par Traefik. Le port 80 ne sert qu'à obtenir les certificats et à rediriger vers HTTPS.</li>
+    <li><code>22</code>, ton SSH, que Dot Box ne touche pas.</li>
+    <li>Les ports qui ne sont pas du web et qu'une app déclare, comme celui des pairs de qBittorrent. Jamais un port web: tout le web passe par Traefik.</li>
+  </ul>
+  <p>L'API de CrowdSec n'écoute que sur <code>127.0.0.1</code>, jamais sur Internet. Dot Box n'installe ni n'active aucun pare-feu du système (ufw, firewalld), et ne gère pas celui qui serait déjà actif.</p>
+
+  <h2 id="fr-traefik">Traefik</h2>
+  <ul>
+    <li>HTTPS partout: un certificat Let's Encrypt par sous-domaine, et le HTTP redirigé vers HTTPS.</li>
+    <li>Seules les apps installées par Dot Box sont routées: un container n'est exposé que s'il le demande (<code>exposedByDefault: false</code>).</li>
+    <li>Traefik ne touche pas au socket Docker. Un petit proxy le lit pour lui, en lecture seule: il ne peut que lister les containers, jamais en créer ni en modifier, et il n'est joignable que par Traefik.</li>
+    <li>Les en-têtes qui imitent ceux d'Authelia (<code>X_Auth_User</code> pour <code>X-Auth-User</code>) sont supprimés, pour qu'un visiteur ne puisse pas se faire passer pour un utilisateur connecté.</li>
+    <li>Le tableau de bord de Traefik n'est joignable que derrière Authelia, en double authentification.</li>
+    <li>Pas de télémétrie: Traefik ne vérifie pas ses mises à jour et n'envoie pas de statistiques.</li>
+    <li>Un log d'accès, lu par CrowdSec.</li>
+  </ul>
+
+  <h2 id="fr-authelia">Authelia</h2>
+  <ul>
+    <li>Tout est refusé par défaut. Seules les règles écrites par Dot Box ouvrent un accès.</li>
+    <li>Pour les apps derrière Authelia, la double authentification: ton mot de passe, puis un code à 6 chiffres ou une passkey.</li>
+    <li>Trois mots de passe ratés en deux minutes bloquent le compte cinq minutes, même avec le bon mot de passe ensuite.</li>
+    <li>Fermé en cas de doute: si Authelia ne répond pas, Traefik refuse les apps qu'il protège au lieu de les ouvrir.</li>
+    <li>Ton mot de passe est stocké haché (argon2id), et ses secrets sont dans <code>/opt/dotbox/secrets</code>, lisibles par root seul.</li>
+  </ul>
+  <p>Les niveaux d'accès, app par app, sont décrits dans <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>.</p>
+
+  <h2 id="fr-apps">Les apps</h2>
+  <ul>
+    <li>Aucune ne publie de port web: elles ne sont joignables que par Traefik, derrière Authelia selon leur niveau.</li>
+    <li>Elles tournent avec ton utilisateur, jamais en root, et sans pouvoir gagner de privilèges (<code>no-new-privileges</code>).</li>
+    <li>Leur image est l'officielle du projet, sinon celle de linuxserver, toujours à une version fixée: une mise à jour est un changement voulu et testé (<a href="__DOC_APPS__#fr-images"__DOC_APPS_TARGET__>d'où viennent les images</a>).</li>
+    <li>Les réglages que Dot Box ajoute renforcent l'app quand c'est utile: par exemple, Radarr et Sonarr ne répondent qu'à leur propre adresse, et leur fichier de configuration, qui contient leur clé d'API, n'est lisible que par ton utilisateur.</li>
+  </ul>
+
+  <h2 id="fr-crowdsec">CrowdSec <small>(prévu)</small></h2>
+  <ul>
+    <li>Il lit les connexions SSH (dans le journal du système) et le log d'accès de Traefik, et y repère les attaques: essais de mots de passe, scans de pages, failles connues.</li>
+    <li>Une IP qui attaque est bannie pour tout le serveur: elle n'atteint plus ni SSH, ni Traefik, ni aucune app. Le blocage se fait dans le noyau, par une liste d'IP bannies, avec iptables-nft: la commande <code>iptables</code> de Debian et d'Ubuntu, qui écrit ses règles dans nftables. Docker s'en sert déjà pour ses propres règles. Le bouncer ajoute ses règles dans deux chaînes: <code>INPUT</code> (SSH) et <code>DOCKER-USER</code> (Traefik et les ports des apps). Rien d'autre n'est bloqué.</li>
+    <li>Il partage les attaques qu'il voit avec la communauté CrowdSec, et reçoit en échange une liste d'IP déjà repérées ailleurs, bloquées d'avance. Ce qui part: le type d'attaque, l'heure et l'IP de l'attaquant.</li>
+    <li>Dot Box installe l'image officielle de CrowdSec, et le binaire officiel du bouncer, son empreinte vérifiée.</li>
+  </ul>
+
+  <h2 id="fr-appsec">AppSec <small>(prévu)</small></h2>
+  <p>Le pare-feu web de CrowdSec. Il examine chaque requête avant qu'elle n'atteigne l'app, et bloque dès la première une tentative d'exploiter une faille connue, même venant d'une IP jamais vue. Dot Box l'active sur les apps sans Authelia devant (Jellyfin, Plex, Seerr, Vaultwarden, Wizarr), celles qu'Internet peut atteindre directement. Les autres sont déjà protégées par Authelia.</p>
+
+  <h2 id="fr-ssh">SSH <small>(prévu)</small></h2>
+  <p>Dot Box ne modifie jamais la configuration de SSH de lui-même: c'est ton accès au serveur. Une option, que tu choisiras d'appliquer, le durcira (son contenu est encore à définir). En attendant, CrowdSec bannira les IP qui essaient des mots de passe.</p>
+
+  <h2 id="fr-not">Ce que Dot Box ne fait pas</h2>
+  <ul>
+    <li>Il n'installe ni ne gère de pare-feu du système.</li>
+    <li>Il ne change pas la configuration de SSH sans ton accord.</li>
+    <li>Il ne met pas à jour le système et ne redémarre pas le serveur: <code>dotbox doctor</code> te signale ce qui attend.</li>
+  </ul>
+</article>
+
+<article class="prose" data-l="en">
+  <p>A server exposed to the Internet is attacked all the time: on a brand new server, thousands of SSH password attempts arrive every day. Dot Box does not rely on a single protection, it stacks them. A request has to get through all of them before reaching an app.</p>
+
+  <h2 id="en-glance">At a glance</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Layer</th><th>What it does</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Open ports</td><td>Only 80 and 443 (Traefik) and SSH. No app publishes a web port.</td><td>In place</td></tr>
+      <tr><td>Traefik</td><td>HTTPS everywhere, only declared routes exist, Docker read in read-only mode.</td><td>In place</td></tr>
+      <tr><td>Authelia</td><td>Everything is denied by default. Password, then 6-digit code or passkey.</td><td>In place</td></tr>
+      <tr><td>Apps</td><td>Run as your user, without extra privileges, at a fixed version.</td><td>In place</td></tr>
+      <tr><td>CrowdSec</td><td>Spots attacks in the SSH and Traefik logs, bans the IP for the whole server.</td><td>Planned</td></tr>
+      <tr><td>AppSec</td><td>Blocks a known attack request from the first one, on apps without Authelia in front.</td><td>Planned</td></tr>
+      <tr><td>SSH</td><td>A hardening option, which you choose to apply.</td><td>Planned</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-ports">Open ports</h2>
+  <ul>
+    <li><code>80</code> and <code>443</code>, published by Traefik. Port 80 is only used to get certificates and to redirect to HTTPS.</li>
+    <li><code>22</code>, your SSH, which Dot Box does not touch.</li>
+    <li>Non-web ports an app declares, such as qBittorrent's peer port. Never a web port: all web traffic goes through Traefik.</li>
+  </ul>
+  <p>CrowdSec's API only listens on <code>127.0.0.1</code>, never on the Internet. Dot Box neither installs nor enables any system firewall (ufw, firewalld), and does not manage one that would already be active.</p>
+
+  <h2 id="en-traefik">Traefik</h2>
+  <ul>
+    <li>HTTPS everywhere: a Let's Encrypt certificate per subdomain, and HTTP redirected to HTTPS.</li>
+    <li>Only the apps installed by Dot Box are routed: a container is exposed only if it asks to be (<code>exposedByDefault: false</code>).</li>
+    <li>Traefik does not touch the Docker socket. A small proxy reads it on its behalf, read-only: it can only list containers, never create or change them, and only Traefik can reach it.</li>
+    <li>Headers that mimic Authelia's (<code>X_Auth_User</code> for <code>X-Auth-User</code>) are removed, so that a visitor cannot pose as a logged-in user.</li>
+    <li>Traefik's dashboard is only reachable behind Authelia, with two-factor authentication.</li>
+    <li>No telemetry: Traefik does not check for updates and sends no statistics.</li>
+    <li>An access log, read by CrowdSec.</li>
+  </ul>
+
+  <h2 id="en-authelia">Authelia</h2>
+  <ul>
+    <li>Everything is denied by default. Only the rules written by Dot Box open access.</li>
+    <li>For apps behind Authelia, two-factor authentication: your password, then a 6-digit code or a passkey.</li>
+    <li>Three failed passwords in two minutes lock the account for five minutes, even with the right password afterwards.</li>
+    <li>Closed when in doubt: if Authelia does not answer, Traefik refuses the apps it protects instead of opening them.</li>
+    <li>Your password is stored hashed (argon2id), and its secrets are in <code>/opt/dotbox/secrets</code>, readable by root only.</li>
+  </ul>
+  <p>Access levels, app by app, are described in <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>.</p>
+
+  <h2 id="en-apps">Apps</h2>
+  <ul>
+    <li>None publishes a web port: they are only reachable through Traefik, behind Authelia according to their level.</li>
+    <li>They run as your user, never as root, and cannot gain privileges (<code>no-new-privileges</code>).</li>
+    <li>Their image is the project's official one, otherwise linuxserver's, always at a fixed version: an update is a deliberate, tested change (<a href="__DOC_APPS__#en-images"__DOC_APPS_TARGET__>where images come from</a>).</li>
+    <li>The settings Dot Box adds harden the app when useful: for example, Radarr and Sonarr only answer to their own address, and their configuration file, which holds their API key, is readable by your user only.</li>
+  </ul>
+
+  <h2 id="en-crowdsec">CrowdSec <small>(planned)</small></h2>
+  <ul>
+    <li>It reads SSH connections (in the system journal) and Traefik's access log, and spots attacks there: password attempts, page scans, known vulnerabilities.</li>
+    <li>An attacking IP is banned for the whole server: it no longer reaches SSH, Traefik or any app. Blocking happens in the kernel, through a list of banned IPs, with iptables-nft: the <code>iptables</code> command of Debian and Ubuntu, which writes its rules into nftables. Docker already uses it for its own rules. The bouncer adds its rules to two chains: <code>INPUT</code> (SSH) and <code>DOCKER-USER</code> (Traefik and the apps' ports). Nothing else is blocked.</li>
+    <li>It shares the attacks it sees with the CrowdSec community, and receives in return a list of IPs already spotted elsewhere, blocked in advance. What is sent: the type of attack, the time and the attacker's IP.</li>
+    <li>Dot Box installs CrowdSec's official image, and the bouncer's official binary, its checksum verified.</li>
+  </ul>
+
+  <h2 id="en-appsec">AppSec <small>(planned)</small></h2>
+  <p>CrowdSec's web application firewall. It inspects each request before it reaches the app, and blocks an attempt to exploit a known vulnerability from the very first one, even from an IP never seen before. Dot Box enables it on apps without Authelia in front (Jellyfin, Plex, Seerr, Vaultwarden, Wizarr), the ones the Internet can reach directly. The others are already protected by Authelia.</p>
+
+  <h2 id="en-ssh">SSH <small>(planned)</small></h2>
+  <p>Dot Box never changes the SSH configuration on its own: it is your access to the server. An option, which you will choose to apply, will harden it (its content is still to be defined). Meanwhile, CrowdSec will ban the IPs that try passwords.</p>
+
+  <h2 id="en-not">What Dot Box does not do</h2>
+  <ul>
+    <li>It neither installs nor manages a system firewall.</li>
+    <li>It does not change the SSH configuration without your agreement.</li>
+    <li>It does not update the system or reboot the server: <code>dotbox doctor</code> tells you what is pending.</li>
+  </ul>
+</article>

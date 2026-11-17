@@ -235,7 +235,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
         var txt = el("span", "txt"); txt.innerHTML = inline(tr(f)); li.appendChild(txt);
         var meta = el("span", "meta");
         meta.appendChild(el("span", "tag", tr(DOM[f.domain].name)));
-        // J commandes, D décisions, Q questions ouvertes, B.3 étapes proposées : lien vers l'entrée du Journal (#j6, #d8, #q2, #eb-3)
+        // J commandes, D décisions, Q questions ouvertes, 2.3 étapes proposées : lien vers l'entrée du Journal (#j6, #d8, #q2, #e2-3)
         (f.journal || []).forEach(function (r) {
           var first = r.split("-")[0], anchor = first.indexOf(".") > -1 ? "e" + first.replace(/\./g, "-") : first;
           var j = el("a", "jr", r); j.href = DOCS.journal + "#" + anchor.toLowerCase(); j.title = t("journal");

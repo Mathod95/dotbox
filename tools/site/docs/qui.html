@@ -1,0 +1,101 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">qui<i>●</i>une interface web rapide pour tes qBittorrent.</p>
+<p class="lede" data-l="en">qui<i>●</i>a fast web interface for your qBittorrent clients.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/autobrr/qui" target="_blank" rel="noopener">Code source ↗</a> <a href="https://getqui.com" target="_blank" rel="noopener">Documentation ↗</a> <a href="https://github.com/autobrr/qui/pkgs/container/qui" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://qui.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres), puis le compte de qui</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/autobrr/qui:v1.35.0</code>, l'image officielle du projet</td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install qui</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait qui</h2>
+  <ul>
+    <li>Il remplace l'interface web de qBittorrent par une interface plus rapide, faite pour les grandes collections de torrents.</li>
+    <li>Il gère plusieurs qBittorrent depuis un seul endroit.</li>
+    <li>Il retrouve les mêmes torrents sur d'autres trackers pour les partager aussi (cross-seed), et applique des règles automatiques (conditions et actions).</li>
+    <li>Il sauvegarde régulièrement l'état de tes torrents, avec plusieurs façons de les restaurer.</li>
+    <li>Il est fait par l'équipe d'autobrr. Il ne télécharge rien lui-même: il pilote qBittorrent.</li>
+  </ul>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/qui/config</code>, à ton utilisateur.</li>
+    <li>Elle écrit <code>/opt/qui/compose.yml</code>, démarre qui et attend que le healthcheck de son image réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/qui/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/qui/compose.override.yml</code></td><td></td><td>Le tien, facultatif, jamais touché par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/qui/config/config.toml</code></td><td><code>/config/config.toml</code></td><td>Les réglages de qui, dont la clé qui protège ses sessions. Lisible par ton utilisateur seul.</td></tr>
+      <tr><td><code>/opt/qui/config/qui.db</code></td><td><code>/config/qui.db</code></td><td>La base: ton compte, tes qBittorrent, tes règles.</td></tr>
+      <tr><td><code>/opt/qui/config/backups/</code></td><td><code>/config/backups/</code></td><td>Les sauvegardes de l'état de tes torrents.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Les réglages que Dot Box ajoute</h2>
+  <p>Aucun dans la configuration de qui. Dans le compose: <code>PUID</code> et <code>PGID</code> (l'image passe à ton utilisateur et lui donne <code>/config</code>), aucun port publié, et le healthcheck de l'image, gardé tel quel. Sa mise à jour automatique est désactivée de fait: qui ne peut pas réécrire son propre programme dans le container, les versions passent par le catalogue.</p>
+  <p>qui a sa propre connexion, en plus d'Authelia. Il sait la couper, mais seulement si on le lui confirme par deux réglages, dont l'un s'appelle « I acknowledge this is a bad idea ». Dot Box ne le fait pas pour l'instant.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>À la première visite, crée le compte de qui, puis ajoute ton qBittorrent (son adresse sur le réseau <code>dotbox</code>, son utilisateur et son mot de passe).</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/autobrr/qui" target="_blank" rel="noopener">Source code ↗</a> <a href="https://getqui.com" target="_blank" rel="noopener">Documentation ↗</a> <a href="https://github.com/autobrr/qui/pkgs/container/qui" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://qui.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then 6-digit code), then qui's own account</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/autobrr/qui:v1.35.0</code>, the project's official image</td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install qui</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What qui does</h2>
+  <ul>
+    <li>It replaces qBittorrent's web interface with a faster one, built for large torrent collections.</li>
+    <li>It manages several qBittorrent clients from one place.</li>
+    <li>It finds the same torrents on other trackers to seed them there too (cross-seed), and applies automatic rules (conditions and actions).</li>
+    <li>It regularly backs up the state of your torrents, with several ways to restore them.</li>
+    <li>It is made by the autobrr team. It downloads nothing itself: it drives qBittorrent.</li>
+  </ul>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/qui/config</code>, owned by your user.</li>
+    <li>It writes <code>/opt/qui/compose.yml</code>, starts qui and waits until its image's healthcheck answers.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/qui/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/qui/compose.override.yml</code></td><td></td><td>Yours, optional, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/qui/config/config.toml</code></td><td><code>/config/config.toml</code></td><td>qui's settings, including the key that protects its sessions. Readable by your user only.</td></tr>
+      <tr><td><code>/opt/qui/config/qui.db</code></td><td><code>/config/qui.db</code></td><td>The database: your account, your qBittorrent clients, your rules.</td></tr>
+      <tr><td><code>/opt/qui/config/backups/</code></td><td><code>/config/backups/</code></td><td>The backups of your torrents' state.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">The settings Dot Box adds</h2>
+  <p>None in qui's configuration. In the compose: <code>PUID</code> and <code>PGID</code> (the image switches to your user and gives it <code>/config</code>), no published port, and the image's own healthcheck, kept as is. Its self-update is disabled in practice: qui cannot rewrite its own program inside the container, versions go through the catalog.</p>
+  <p>qui has its own login, on top of Authelia. It can turn it off, but only when told so by two settings, one of them called "I acknowledge this is a bad idea". Dot Box does not do it for now.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>On the first visit, create qui's account, then add your qBittorrent (its address on the <code>dotbox</code> network, its user and password).</p>
+</article>
+
+<!-- CSS -->
+.app-links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; }
+.app-links a { color: var(--accent); text-decoration: none; }
+.app-links a:hover { text-decoration: underline; }

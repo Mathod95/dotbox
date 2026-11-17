@@ -156,7 +156,7 @@
         "J6-J15",
         "D8",
         "D9",
-        "B.8"
+        "2.8"
       ]
     },
     {
@@ -167,7 +167,7 @@
       "en": "CLI: first `dotbox` binary and a CI that publishes `dotbox-linux-amd64` and its checksum in each tag's release",
       "doc": "installation",
       "journal": [
-        "B.1-B.8",
+        "2.1-2.8",
         "J16-J31",
         "D4",
         "D10"
@@ -181,7 +181,7 @@
       "en": "CLI: `dotbox init` checks the system version, installs `sudo` if missing and sets up the user that runs the apps (`--user`)",
       "doc": "installation",
       "journal": [
-        "B.3",
+        "2.3",
         "J16-J31",
         "D5",
         "D8"
@@ -195,7 +195,7 @@
       "en": "CLI: `dotbox init` shows one line per step, asks its questions cliclack style, ends with a card and keeps the detail in a log (`--verbose` to see it)",
       "doc": "cli-output",
       "journal": [
-        "S.1-S.6",
+        "6.1-6.6",
         "D37",
         "D38",
         "D39",
@@ -230,7 +230,7 @@
       "en": "CLI: `dotbox init` installs Docker from the official repository (Debian or Ubuntu), removes conflicting packages with consent, `local` logs, `live-restore`, `dotbox` network, user in the `docker` group",
       "doc": "installation",
       "journal": [
-        "C.1-C.11",
+        "3.1-3.11",
         "J32-J41",
         "D13",
         "D14"
@@ -246,8 +246,8 @@
       "journal": [
         "D3",
         "D13",
-        "T.1-T.8",
-        "A.1-A.10",
+        "4.1-4.8",
+        "5.1-5.10",
         "J48-J61"
       ]
     },
@@ -259,7 +259,7 @@
       "en": "CLI: `dotbox init` checks that `*.example.com` points to the server before going further",
       "doc": "prerequisites",
       "journal": [
-        "T.2",
+        "4.2",
         "J50",
         "D16"
       ]
@@ -272,7 +272,7 @@
       "en": "CLI: `dotbox init` installs Traefik behind a read-only socket proxy, redirect to HTTPS, only allowed containers are routed, access logs for CrowdSec",
       "doc": "installation",
       "journal": [
-        "T.1-T.8",
+        "4.1-4.8",
         "J48-J54",
         "D20"
       ]
@@ -285,7 +285,7 @@
       "en": "CLI: `dotbox init` installs Authelia on `auth.<domain>`: one account named after the user, password and 6-digit code or passkey, everything denied by default, Traefik dashboard in `two_factor`, closing summary",
       "doc": "accessing-apps",
       "journal": [
-        "A.1-A.12",
+        "5.1-5.12",
         "J55-J66",
         "D21-D27"
       ]
@@ -311,7 +311,7 @@
       "en": "Engine: one Let's Encrypt certificate per subdomain, through HTTP-01, no DNS token and no email",
       "doc": "prerequisites",
       "journal": [
-        "T.3",
+        "4.3",
         "J53",
         "D17",
         "D18",
@@ -326,9 +326,13 @@
       "en": "Core: CrowdSec installed by `dotbox init`, watches SSH and Traefik and blocks attacks",
       "doc": "installation",
       "journal": [
+        "10.1-10.8",
         "Q3",
         "Q11",
-        "Q12"
+        "Q12",
+        "Q31-Q33",
+        "D56",
+        "D57"
       ]
     },
     {
@@ -369,17 +373,30 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "planned",
+      "status": "progress",
       "fr": "Manifest: format d'une app (image, volumes, sous-domaine, SSO, câblage)",
-      "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)"
+      "en": "Manifest: app format (image, volumes, subdomain, SSO, wiring)",
+      "journal": [
+        "7.1",
+        "7.8",
+        "D41",
+        "J99"
+      ]
     },
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "planned",
+      "status": "progress",
       "fr": "Moteur: installer, supprimer, logs, avec un `compose.yml` généré par app",
       "en": "Engine: install, remove, logs, with one generated `compose.yml` per app",
-      "doc": "basics"
+      "doc": "basics",
+      "journal": [
+        "7.2",
+        "7.4",
+        "7.5",
+        "D42",
+        "J99-J108"
+      ]
     },
     {
       "stage": "apps",
@@ -390,17 +407,35 @@
       "doc": "accessing-apps",
       "journal": [
         "Q4",
-        "A.3",
-        "J59"
+        "5.3",
+        "J59",
+        "7.3"
       ]
     },
     {
       "stage": "apps",
       "domain": "engine",
       "status": "planned",
-      "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et du serveur média (Jellyfin ou Plex) par leurs API",
-      "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and the media server (Jellyfin or Plex) through their APIs",
-      "doc": "basics"
+      "fr": "Moteur: câblage de qBittorrent, Radarr, Sonarr, Prowlarr et du serveur média (Jellyfin ou Plex) par leurs API, avec une commande à part, jamais par `dotbox install`",
+      "en": "Engine: wiring of qBittorrent, Radarr, Sonarr, Prowlarr and the media server (Jellyfin or Plex) through their APIs, with a separate command, never by `dotbox install`",
+      "doc": "basics",
+      "journal": [
+        "9.1-9.6",
+        "D45",
+        "Q30"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "engine",
+      "status": "planned",
+      "fr": "Moteur: un manifest peut publier un port qui n'est pas du web, en TCP ou UDP (le port des pairs de qBittorrent), jamais un port web",
+      "en": "Engine: a manifest may publish a port that is not web, TCP or UDP (qBittorrent's peer port), never a web port",
+      "journal": [
+        "D44",
+        "7.8",
+        "8.4"
+      ]
     },
     {
       "stage": "apps",
@@ -445,6 +480,189 @@
       "fr": "CLI: options globales `--json`, `--local`, `--yes` et autocomplétion du shell",
       "en": "CLI: global flags `--json`, `--local`, `--yes` and shell completion",
       "doc": "cli"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "Prowlarr: les indexeurs à un seul endroit, envoyés à Radarr et Sonarr",
+      "en": "Prowlarr: indexers in one place, sent to Radarr and Sonarr",
+      "doc": "prowlarr",
+      "journal": [
+        "8.1",
+        "J99-J108",
+        "J115"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "Radarr: les films, trouvés, téléchargés et rangés par hardlink dans `/data/media/movies`",
+      "en": "Radarr: movies, found, downloaded and filed as hardlinks in `/data/media/movies`",
+      "doc": "radarr",
+      "journal": [
+        "8.2",
+        "J109-J113"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "Sonarr: les séries, comme Radarr pour les films",
+      "en": "Sonarr: TV shows, like Radarr for movies",
+      "journal": [
+        "8.3",
+        "J117-J119"
+      ],
+      "doc": "sonarr"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "qBittorrent: le client de téléchargement, port des pairs publié en TCP et UDP",
+      "en": "qBittorrent: the download client, peer port published over TCP and UDP",
+      "journal": [
+        "8.4",
+        "D44",
+        "Q29"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "qui: une autre interface web pour qBittorrent",
+      "en": "qui: another web interface for qBittorrent",
+      "doc": "qui",
+      "journal": [
+        "8.5",
+        "J120-J122"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "autobrr: attrape les nouvelles sorties sur les canaux d'annonce des trackers",
+      "en": "autobrr: grabs new releases from the trackers' announce channels"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Seerr: les demandes de films et de séries, pour toi et tes proches",
+      "en": "Seerr: movie and TV requests, for you and your family",
+      "journal": [
+        "8.7",
+        "D56"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Jellyfin: le serveur média (niveau `app`, après CrowdSec)",
+      "en": "Jellyfin: the media server (`app` level, after CrowdSec)",
+      "journal": [
+        "8.6",
+        "D40",
+        "D56"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Plex: le serveur média (niveau `app`, après CrowdSec)",
+      "en": "Plex: the media server (`app` level, after CrowdSec)",
+      "journal": [
+        "D40"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Tautulli: les statistiques et l'historique de Plex",
+      "en": "Tautulli: Plex statistics and history"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Tracearr: le suivi des lectures du serveur média (base de données à côté, à vérifier)",
+      "en": "Tracearr: media server playback tracking (database alongside, to check)"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Maintainerr: le ménage dans la bibliothèque, selon des règles",
+      "en": "Maintainerr: rule-based library cleanup"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Wizarr: les invitations au serveur média, par lien",
+      "en": "Wizarr: media server invitations, by link"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Vaultwarden: le gestionnaire de mots de passe (niveau `app`, après CrowdSec)",
+      "en": "Vaultwarden: the password manager (`app` level, after CrowdSec)",
+      "journal": [
+        "D40"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Gitea: l'hébergement de dépôts Git (un port SSH publié pour `git push`)",
+      "en": "Gitea: Git repository hosting (an SSH port published for `git push`)",
+      "journal": [
+        "D44"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "code-server: un éditeur et un terminal dans le navigateur, toujours en `two_factor`",
+      "en": "code-server: an editor and a terminal in the browser, always `two_factor`"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Backstage: à préciser (plusieurs containers et une base de données, que le moteur ne gère pas encore)",
+      "en": "Backstage: to be clarified (several containers and a database, not yet handled by the engine)"
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "WireGuard: un VPN vers le serveur (port UDP publié, droits réseau sur le container)",
+      "en": "WireGuard: a VPN to the server (published UDP port, network privileges on the container)",
+      "journal": [
+        "D44"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "NetBird: un réseau privé entre tes appareils et le serveur (port UDP, droits réseau)",
+      "en": "NetBird: a private network between your devices and the server (UDP port, network privileges)",
+      "journal": [
+        "D44"
+      ]
     },
     {
       "stage": "web",
@@ -560,10 +778,28 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
-      "fr": "Catalogue: repo `Mathod95/dotbox-catalog`, un manifest par app dans `apps/`, publié en versions datées",
-      "en": "Catalog: `Mathod95/dotbox-catalog` repository, one manifest per app in `apps/`, published as dated versions",
-      "doc": "update"
+      "status": "progress",
+      "fr": "Catalogue: un manifest par app dans `catalog/` de ce repo, lisible sur GitHub, lu par `dotbox` sur `main` à un commit précis, dès `dotbox init`",
+      "en": "Catalog: one manifest per app in `catalog/` of this repo, readable on GitHub, read by `dotbox` from `main` at a given commit, from `dotbox init` on",
+      "doc": "update",
+      "journal": [
+        "D41",
+        "D64",
+        "7.1",
+        "7.6",
+        "7.13"
+      ]
+    },
+    {
+      "stage": "updates",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "Catalogue: le core (Traefik, Authelia, CrowdSec, le bouncer et le plugin) dans `catalog/core/`, mis à jour sans nouvelle version de `dotbox`",
+      "en": "Catalog: the core (Traefik, Authelia, CrowdSec, the bouncer and the plugin) in `catalog/core/`, updated without a new `dotbox` release",
+      "journal": [
+        "D64",
+        "7.12"
+      ]
     },
     {
       "stage": "updates",
@@ -587,7 +823,11 @@
       "status": "planned",
       "fr": "Catalogue: app GitHub Renovate installée sur le repo, avec son `renovate.json`",
       "en": "Catalog: Renovate GitHub app installed on the repository, with its `renovate.json`",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "7.14",
+        "D64"
+      ]
     },
     {
       "stage": "updates",
@@ -603,7 +843,11 @@
       "status": "planned",
       "fr": "Catalogue: CI des pull requests, qui valide le manifest, démarre le container et attend qu'il tourne",
       "en": "Catalog: pull request CI that validates the manifest, starts the container and waits for it to run",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "7.14",
+        "D64"
+      ]
     },
     {
       "stage": "updates",

@@ -72,6 +72,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .toc a:hover { color: var(--lit); }
 .toc a[aria-current="true"] { color: var(--lit); }
 .toc .h3 { padding-left: 14px; font-size: 12.5px; }
+.toc .h4 { padding-left: 28px; font-size: 12px; }
 
 /* article */
 .doc { display: grid; gap: 40px; min-width: 0; }
@@ -212,6 +213,13 @@ __PN__
   // 14 px au plus, réduite pour que le titre le plus long de la documentation (data-all) tienne sur une ligne
   var F = {
     A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
+    F: ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
+    G: [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".###."],
+    M: ["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
+    V: ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
+    W: ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
+    Y: ["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
+    Z: ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
     B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
     C: [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
     D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
@@ -255,16 +263,18 @@ __PN__
     }
   }
 
-  // sommaire de la page en cours, sous son entrée dans la barre de gauche : les titres h2 / h3 visibles de l'article
+  // sommaire de la page en cours, sous son entrée dans la barre de gauche : les titres h2 / h3 visibles de l'article,
+  // et les éléments marqués data-toc (un niveau plus bas, même repliés: le Journal y met les apps de l'étape 8)
   var observer = null;
   function buildToc() {
     var toc = document.getElementById("pageToc"); if (!toc) return;
     toc.innerHTML = "";
-    var heads = Array.prototype.filter.call(document.querySelectorAll(".doc h2[id], .doc h3[id]"), function (h) { return h.offsetParent !== null || h.getClientRects().length; });
+    var heads = Array.prototype.filter.call(document.querySelectorAll(".doc h2[id], .doc h3[id], .doc [data-toc][id]"), function (h) { return h.hasAttribute("data-toc") || h.offsetParent !== null || h.getClientRects().length; });
     heads.forEach(function (h) {
       var li = document.createElement("li"), a = document.createElement("a");
-      a.href = "#" + h.id; a.textContent = h.textContent; a.setAttribute("data-id", h.id);
-      if (h.tagName === "H3") li.className = "h3";
+      a.href = "#" + h.id; a.textContent = h.getAttribute("data-toc") || h.textContent; a.setAttribute("data-id", h.id);
+      if (h.hasAttribute("data-toc")) li.className = "h4";
+      else if (h.tagName === "H3") li.className = "h3";
       li.appendChild(a); toc.appendChild(li);
     });
     if (observer) observer.disconnect();

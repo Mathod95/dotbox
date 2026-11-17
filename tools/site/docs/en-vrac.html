@@ -1,0 +1,66 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">En vrac<i>●</i>des blocs d'information à ranger plus tard dans la doc.</p>
+<p class="lede" data-l="en">Loose notes<i>●</i>blocks of information to file into the docs later (page in French).</p>
+
+<!-- CONTENT -->
+<article class="prose vrac-page">
+  <p class="note"><b>Page de travail.</b> Ce n'est pas la spécification. On y met ce qu'on apprend en avançant et qui n'a pas encore sa place dans la doc. Chaque bloc a un numéro fixe (V1, V2...), dit où il ira, et cite ses sources. Quand il passe dans une page de la doc (par une proposition, en encadrés), il reste ici, marqué « rangé dans ».</p>
+
+  <section class="vrac vrac-done" id="v1">
+    <div class="vrac-head"><span class="vrac-n">V1</span><h2 id="v1-images">Les images Docker: d'où elles viennent, et pourquoi</h2></div>
+    <dl class="vrac-meta">
+      <dt>Rangé dans</dt><dd><a href="__DOC_APPS__#fr-images"__DOC_APPS_TARGET__>Apps · Overview, « D'où viennent les images »</a> (17 novembre 2026, Journal D55)</dd>
+      <dt>Sources</dt><dd><a href="https://wiki.servarr.com/radarr/installation/docker" target="_blank" rel="noopener">Wiki Servarr ↗</a> <a href="https://docs.linuxserver.io/" target="_blank" rel="noopener">linuxserver.io ↗</a> <a href="https://hotio.dev/" target="_blank" rel="noopener">hotio ↗</a> <a href="https://github.com/saltyorg/Saltbox" target="_blank" rel="noopener">Saltbox ↗</a> · Journal: D15, D20, J109</dd>
+    </dl>
+
+    <h4>La règle</h4>
+    <p>Pour chaque app, Dot Box prend <b>l'image officielle du projet</b>, quand il en publie une et la maintient. Sinon, celle de <b>linuxserver.io</b>. Toujours à une <b>version précise</b>, jamais <code>latest</code> (Journal, D15): une mise à jour est un changement voulu, proposé par Renovate et testé, jamais une surprise au redémarrage.</p>
+
+    <h4>Les images utilisées</h4>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Composant</th><th>Image</th><th>Fournisseur</th><th>Pourquoi</th></tr></thead>
+      <tbody>
+        <tr><td>Traefik</td><td><code>traefik:v3.7.19</code></td><td>Traefik Labs, officielle</td><td>Le projet publie son image.</td></tr>
+        <tr><td>Authelia</td><td><code>authelia/authelia:4.39.28</code></td><td>Authelia, officielle</td><td>Le projet publie son image.</td></tr>
+        <tr><td>Socket proxy</td><td><code>lscr.io/linuxserver/socket-proxy</code></td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker, pour Traefik (Journal, D20).</td></tr>
+        <tr><td>Prowlarr</td><td><code>lscr.io/linuxserver/prowlarr</code></td><td>linuxserver</td><td>Pas d'image officielle (voir plus bas).</td></tr>
+        <tr><td>Radarr</td><td><code>lscr.io/linuxserver/radarr</code></td><td>linuxserver</td><td>Pas d'image officielle.</td></tr>
+        <tr><td>Sonarr</td><td><code>lscr.io/linuxserver/sonarr</code></td><td>linuxserver, prévue</td><td>Pas d'image officielle. À confirmer avec Sonarr.</td></tr>
+        <tr><td>qBittorrent</td><td><code>lscr.io/linuxserver/qbittorrent</code></td><td>linuxserver, prévue</td><td>À confirmer avec qBittorrent.</td></tr>
+        <tr><td>Jellyfin, Plex</td><td>à décider</td><td></td><td>Les deux projets publient une image officielle: la règle la désignerait. À vérifier le moment venu.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Pourquoi pas l'image de Radarr?</h4>
+    <p>Elle n'existe pas. Le wiki de Radarr (Servarr) le dit: « The Radarr team does not offer an official Docker image ». Il renvoie vers deux images tenues par d'autres: celle de linuxserver et celle de hotio. Il n'y a pas d'image <code>radarr/radarr</code>, ni sur Docker Hub ni sur ghcr.io (vérifié le 17 novembre 2026). Même chose pour Prowlarr et Sonarr, du même projet Servarr.</p>
+
+    <h4>Pourquoi linuxserver plutôt que hotio</h4>
+    <ul>
+      <li>Une seule famille d'images pour presque tout Dot Box, avec les mêmes conventions: <code>PUID</code> et <code>PGID</code> pour l'utilisateur, <code>TZ</code>, la configuration dans <code>/config</code>.</li>
+      <li>Des versions précises: dans <code>7.0.3.10918-ls328</code>, <code>7.0.3.10918</code> est la version de Radarr et <code>ls328</code> le numéro de reconstruction de linuxserver. Ils reconstruisent régulièrement l'image avec les correctifs de sécurité du système de base, chaque fois avec un nouveau tag. Renovate sait lire ces tags.</li>
+      <li>L'image la plus utilisée et la mieux documentée.</li>
+    </ul>
+    <p>hotio fait un travail comparable: ce n'est pas un mauvais choix, c'est un choix de cohérence. Les deux respectent ce que demande le wiki de Radarr: un <code>/data</code> commun pour les hardlinks, et les droits réglés par l'utilisateur et le groupe.</p>
+
+    <h4>Le revers</h4>
+    <p>On dépend d'un tiers en plus du projet: quand Radarr sort une version, il faut attendre que linuxserver reconstruise son image, en général quelques heures. Radarr 7.0.3 est sorti le 16 novembre 2026, l'image <code>-ls328</code> était là le lendemain.</p>
+
+    <h4>Ce que fait Saltbox</h4>
+    <p>Radarr vient de hotio, en <code>release</code>, sans version fixée: la dernière version au moment de l'installation. qBittorrent vient de sa propre image, <code>saltydk/qbittorrent</code> (code de Saltbox lu le 17 novembre 2026).</p>
+  </section>
+</article>
+
+<!-- CSS -->
+.vrac-page { display: grid; gap: 22px; }
+.vrac { display: grid; gap: 14px; padding: 20px 22px; border: 1px solid #2a2a2a; border-left: 4px solid var(--design); border-radius: 16px; background: var(--panel); min-width: 0; }
+.vrac-done { border-left-color: var(--muted); }
+.vrac-head { display: flex; align-items: baseline; gap: 12px; }
+.vrac-head h2 { margin: 0; }
+.vrac-n { font-family: var(--mono); font-size: 13px; color: var(--design); }
+.vrac-meta { margin: 0; display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 6px 14px; }
+.vrac-meta dt { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.vrac-meta dd { margin: 0; }
+.vrac-meta a { margin-right: 12px; color: var(--accent); text-decoration: none; font-family: var(--mono); font-size: 12px; }
+.vrac-meta a:hover { text-decoration: underline; }
+.vrac h4 { margin: 6px 0 -4px; font-size: 16px; font-weight: 700; color: var(--lit); }
+@media (max-width: 640px) { .vrac { padding: 16px; } .vrac-meta { grid-template-columns: 1fr; } }
