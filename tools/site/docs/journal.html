@@ -1527,7 +1527,13 @@ grep dans git diff et les nouveaux fichiers: le domaine, l'IP du serveur, le nom
       cmd: `git add -A; git commit (feat: moteur, catalogue, CrowdSec, le core dans le catalogue); git push`,
       does: "Accordé par Mathod95 (« Fait le push ! »). Tout ce qui attendait depuis v0.0.2: le moteur (install, remove), le catalogue (Prowlarr, Radarr, Sonarr, qui, et le core), CrowdSec, la lecture du catalogue par init, les pages Apps, Security et En vrac, le Journal. Releases: une entrée next. Pas de tag: install.sh installe toujours la dernière version publiée, v0.0.2.",
       effect: "GitHub: main, catalog/ lisible par dotbox, le site republié par pages.yml.",
-      result: "poussé sur main" }
+      result: "poussé sur main" },
+    { id: "J137", time: "11:34", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.15: release v0.0.3",
+      cmd: `releases.json: next devient v0.0.3; git commit; git tag v0.0.3; git push origin main v0.0.3`,
+      does: "Accordé par Mathod95 (« Go pour 1 »): pour que la réinstallation du serveur passe par la vraie commande d'installation, install.sh installant la dernière version publiée (v0.0.2 jusque-là).",
+      effect: "GitHub: le tag v0.0.3, la release publiée par release.yml (dotbox-linux-amd64, son .sha256, install.sh).",
+      result: "tag poussé, release en cours de publication par la CI" }
   ];
 
   var PLAN = [
@@ -2794,7 +2800,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "4": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 68],
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136],
+    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };

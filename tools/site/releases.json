@@ -2,7 +2,9 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
-      "version": "next",
+      "version": "v0.0.3",
+      "date": "2026-11-17",
+      "tagged": true,
       "title": {
         "fr": "Moteur, catalogue et CrowdSec",
         "en": "Engine, catalog and CrowdSec"
