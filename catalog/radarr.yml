@@ -1,0 +1,28 @@
+# Radarr: cherche les films, les fait télécharger, puis les range dans /data/media/movies.
+# Format: Journal, étape 7 (7.1, 7.8). Les {{...}} sont remplis par dotbox à l'installation.
+name: radarr
+description: Movie collection manager
+min_dotbox: 0.0.3
+image: lscr.io/linuxserver/radarr:7.0.3.10918-ls328
+port: 7878
+access: two_factor
+health: /ping
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config
+  - /data:/data
+data:
+  - media/movies
+# Comme Saltbox (Journal, N11): la connexion confiée à Authelia, les noms acceptés (l'adresse
+# de l'app et le nom de son container) et le réseau de Traefik, dont Radarr croit les en-têtes
+# X-Forwarded-*.
+settings:
+  file: config/config.xml
+  format: xml
+  values:
+    AuthenticationMethod: External
+    AllowedHosts: "{{host}},{{app}}"
+    TrustedNetworks: "{{subnet}}"

@@ -1,0 +1,17 @@
+# qui: une interface web rapide pour un ou plusieurs qBittorrent, par l'équipe d'autobrr.
+# Format: Journal, étape 7 (7.1). Les {{...}} sont remplis par dotbox à l'installation.
+name: qui
+description: Web interface for qBittorrent
+min_dotbox: 0.0.3
+image: ghcr.io/autobrr/qui:v1.35.0
+port: 7476
+access: two_factor
+# l'image a son propre healthcheck (wget sur /health)
+health: image
+# l'image passe à cet utilisateur et lui donne /config (son entrypoint, su-exec)
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config

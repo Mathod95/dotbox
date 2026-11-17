@@ -1,0 +1,27 @@
+# Sonarr: suit les séries, fait télécharger les épisodes, puis les range dans /data/media/tv.
+# Format: Journal, étape 7 (7.1, 7.8). Les {{...}} sont remplis par dotbox à l'installation.
+name: sonarr
+description: TV show collection manager
+min_dotbox: 0.0.3
+image: lscr.io/linuxserver/sonarr:4.0.20.3014-ls329
+port: 8989
+access: two_factor
+health: /ping
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config
+  - /data:/data
+data:
+  - media/tv
+# Comme Radarr (page Radarr, Journal N11), vérifiés dans le code de Sonarr 4.0.20: la connexion
+# confiée à Authelia, les noms acceptés et le réseau de Traefik.
+settings:
+  file: config/config.xml
+  format: xml
+  values:
+    AuthenticationMethod: External
+    AllowedHosts: "{{host}},{{app}}"
+    TrustedNetworks: "{{subnet}}"

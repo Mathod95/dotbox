@@ -1,4 +1,4 @@
-//! Authelia, installé par `dotbox init` (Journal, phase A): le portail de connexion sur
+//! Authelia, installé par `dotbox init` (Journal, étape 5): le portail de connexion sur
 //! auth.<domaine> et le middleware authelia@docker de Traefik (forward auth), comme dans la doc
 //! d'intégration d'Authelia. Un seul compte, au nom de l'utilisateur Linux, dans le groupe admins
 //! (D22), mot de passe et code à 6 chiffres (D23), codes de vérification dans un fichier (D21).
@@ -8,8 +8,7 @@ use crate::out::say;
 use crate::{docker, secrets, system};
 use std::time::{Duration, Instant};
 
-/// Dernière version stable, fixée (D15).
-pub const IMAGE: &str = "authelia/authelia:4.39.28";
+// La version d'Authelia, fixée (D15), est dans le catalogue: catalog/core/authelia.yml (D64).
 
 const COMPOSE: &str = "/opt/authelia/compose.yml";
 const CONFIG: &str = "/opt/authelia/config/configuration.yml";
@@ -35,7 +34,7 @@ const SECRETS: &[(&str, &str, &str)] = &[
     ),
 ];
 
-pub fn compose(domain: &str) -> String {
+pub fn compose(domain: &str, image: &str) -> String {
     let mut env = String::new();
     let mut vols = String::from("      - /opt/authelia/config:/config\n");
     for (name, target, var) in SECRETS {
@@ -48,7 +47,7 @@ pub fn compose(domain: &str) -> String {
 name: authelia
 services:
   authelia:
-    image: {IMAGE}
+    image: {image}
     container_name: authelia
     restart: unless-stopped
     networks:
@@ -105,6 +104,10 @@ access_control:
   default_policy: 'deny'
   rules:
     - domain: 'traefik.{domain}'
+      subject: 'group:admins'
+      policy: 'two_factor'
+    # Toute app derrière authelia@docker: groupe admins, deux facteurs (Journal, 7.3)
+    - domain: '*.{domain}'
       subject: 'group:admins'
       policy: 'two_factor'
 
@@ -237,7 +240,18 @@ fn existing_users(text: &str) -> Vec<String> {
 /// Installe ou vérifie Authelia. `chosen`: le mot de passe tapé pendant init (vide ou absent: tiré
 /// au hasard). Rend le mot de passe du compte s'il vient d'être créé (à afficher une seule fois),
 /// None sinon.
-pub fn setup(domain: &str, user: &str, chosen: Option<&str>) -> Result<Option<String>, String> {
+/// La règle qui couvre les apps two_factor est-elle en place? (posée par dotbox init, 7.3)
+pub fn apps_rule_present(domain: &str) -> bool {
+    std::fs::read_to_string(CONFIG).is_ok_and(|t| t.contains(&format!("- domain: '*.{domain}'")))
+}
+
+pub fn setup(
+    domain: &str,
+    user: &str,
+    chosen: Option<&str>,
+    core: &crate::catalog::Core,
+) -> Result<Option<String>, String> {
+    let image = core.image("authelia")?;
     let email = format!("{user}@{domain}");
     for (name, _, _) in SECRETS {
         if secrets::ensure(name)? {
@@ -279,7 +293,7 @@ pub fn setup(domain: &str, user: &str, chosen: Option<&str>) -> Result<Option<St
         }
     }
 
-    let compose_changed = system::write_if_changed(COMPOSE, &compose(domain), 0o644)?;
+    let compose_changed = system::write_if_changed(COMPOSE, &compose(domain, image), 0o644)?;
     if compose_changed {
         say("write", COMPOSE);
     }
@@ -294,7 +308,7 @@ pub fn setup(domain: &str, user: &str, chosen: Option<&str>) -> Result<Option<St
     )
     .is_ok_and(|s| s == "true");
     if compose_changed || !running {
-        docker::pull(IMAGE)?;
+        docker::pull(image)?;
         system::run(
             "docker",
             &["compose", "-f", COMPOSE, "up", "-d", "--quiet-pull"],
@@ -305,7 +319,7 @@ pub fn setup(domain: &str, user: &str, chosen: Option<&str>) -> Result<Option<St
         say("restart", "authelia (new configuration)");
     }
     wait_healthy(Duration::from_secs(90))?;
-    say("check", &format!("authelia healthy ({IMAGE})"));
+    say("check", &format!("authelia healthy ({image})"));
     Ok(password)
 }
 
@@ -338,9 +352,15 @@ mod tests {
 
     #[test]
     fn files_are_the_expected_ones() {
+        let core = crate::catalog::load_core(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("catalog"),
+            "authelia",
+        )
+        .unwrap();
+        let image = core.image("authelia").unwrap();
         assert_eq!(
-            compose("example.com"),
-            include_str!("../tests/expected/authelia/compose.yml")
+            compose("example.com", image),
+            include_str!("../tests/expected/authelia/compose.yml").replace("<authelia>", image)
         );
         assert_eq!(
             configuration("example.com"),
@@ -351,7 +371,7 @@ mod tests {
     #[test]
     fn generated_yaml_is_valid() {
         for text in [
-            compose("example.com"),
+            compose("example.com", "authelia/authelia:4.39.28"),
             configuration("example.com"),
             users_database(
                 "admin",
@@ -428,7 +448,7 @@ mod tests {
 
     #[test]
     fn secrets_are_files_never_values() {
-        let c = compose("example.com");
+        let c = compose("example.com", "authelia/authelia:4.39.28");
         for (name, target, var) in SECRETS {
             assert!(c.contains(&format!("{var}: {target}")));
             assert!(c.contains(&format!("/opt/dotbox/secrets/{name}:{target}:ro")));

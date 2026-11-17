@@ -1,0 +1,42 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+# Vos changements vont dans compose.override.yml, à côté.
+name: crowdsec
+services:
+  crowdsec:
+    image: <crowdsec>
+    container_name: crowdsec
+    restart: unless-stopped
+    networks:
+      - dotbox
+    ports:
+      # L'API locale, pour le bouncer pare-feu du système: sur 127.0.0.1, jamais sur Internet.
+      - "127.0.0.1:8080:8080"
+    environment:
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors"
+    volumes:
+      - /opt/crowdsec/config:/etc/crowdsec
+      - /opt/crowdsec/data:/var/lib/crowdsec/data
+      # Les connexions SSH, dans le journal du système (Debian 13 n'écrit plus auth.log).
+      - /var/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      # Le log d'accès de Traefik.
+      - /opt/traefik/logs:/var/log/traefik:ro
+    # La clé du bouncer pare-feu: l'image l'enregistre au démarrage (bouncer « firewall »).
+    secrets:
+      - bouncer_key_firewall
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "cscli", "lapi", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+secrets:
+  bouncer_key_firewall:
+    file: /opt/dotbox/secrets/crowdsec_bouncer_firewall
+
+networks:
+  dotbox:
+    external: true

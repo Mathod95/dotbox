@@ -1,0 +1,6 @@
+# Authelia: le portail de connexion, mot de passe puis code à 6 chiffres ou passkey.
+# Le core (Journal, D64): dotbox init installe cette version. Comment l'installer reste dans dotbox.
+name: authelia
+min_dotbox: 0.0.3
+images:
+  authelia: authelia/authelia:4.39.28

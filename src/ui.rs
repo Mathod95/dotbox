@@ -23,7 +23,7 @@ const LEFT: usize = 24;
 const TIME_W: usize = 6;
 pub const SUMMARY_W: usize = WIDTH - LEFT - 1 - TIME_W;
 const SPINNER: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ";
-const STEPS: usize = 6;
+const STEPS: usize = 7;
 
 struct Current {
     n: usize,
@@ -75,6 +75,15 @@ pub fn numbering(installer: bool) -> (usize, usize) {
 pub fn start(verbose: bool) {
     let installer = std::env::var("DOTBOX_INSTALLER").is_ok_and(|v| v == "1");
     let (first, total) = numbering(installer);
+    begin(first, total, verbose);
+}
+
+/// Pour install et remove: `total` étapes, de [1/total] à [total/total].
+pub fn start_steps(total: usize, verbose: bool) {
+    begin(1, total, verbose);
+}
+
+fn begin(first: usize, total: usize, verbose: bool) {
     *lock() = Some(State {
         first,
         total,
@@ -338,19 +347,26 @@ pub fn done(summary: &str) {
     ));
 }
 
-/// Une étape qui n'existe pas encore dans cette version (CrowdSec).
-pub fn later(name: &str, text: &str) {
+/// L'étape s'arrête parce que l'utilisateur l'a choisi (une confirmation refusée): une ligne
+/// neutre « - », sans erreur ni extrait du log. Rend false si aucune étape n'est en cours.
+pub fn cancel(text: &str) -> bool {
+    log::write(&format!("cancelled {text}"));
     let mut g = lock();
-    let Some(s) = g.as_mut() else { return };
-    let n = s.first + s.count;
-    s.count += 1;
-    log::write(&format!("-- [{n}/{}] {name}: {text}", s.total));
-    print(&format!(
-        "  {} {} {}",
-        style("-").dim(),
-        counter(n, s.total),
-        style(format!("{name:<NAME_W$} {text}")).dim()
+    let Some(s) = g.as_mut() else { return false };
+    let Some(c) = s.cur.take() else { return false };
+    close(&c);
+    print(&cancel_line(
+        c.n,
+        s.total,
+        &c.name,
+        text,
+        &duration(c.started.elapsed()),
     ));
+    true
+}
+
+fn cancel_line(n: usize, total: usize, name: &str, text: &str, time: &str) -> String {
+    step_line(&style("-").dim().to_string(), n, total, name, text, time)
 }
 
 /// L'étape en cours a échoué: ✗, puis les dernières lignes du log et son chemin (D37).
@@ -436,8 +452,8 @@ mod tests {
 
     #[test]
     fn numbering_with_and_without_install_sh() {
-        assert_eq!(numbering(true), (2, 7));
-        assert_eq!(numbering(false), (1, 6));
+        assert_eq!(numbering(true), (2, 8));
+        assert_eq!(numbering(false), (1, 7));
     }
 
     #[test]
@@ -453,6 +469,16 @@ mod tests {
         let lines = error_lines(&many);
         assert_eq!(lines.len(), 6);
         assert!(lines[5].ends_with('…') || lines[5].ends_with(" …"));
+    }
+
+    #[test]
+    fn a_cancelled_step_is_a_neutral_line() {
+        console::set_colors_enabled(false);
+        console::set_colors_enabled_stderr(false);
+        assert_eq!(
+            cancel_line(1, 1, "Prowlarr", "cancelled, nothing changed", "1.8 s"),
+            "  - [1/1] Prowlarr      cancelled, nothing changed                         1.8 s"
+        );
     }
 
     #[test]

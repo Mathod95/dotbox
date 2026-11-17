@@ -3,7 +3,7 @@
 name: authelia
 services:
   authelia:
-    image: authelia/authelia:4.39.28
+    image: <authelia>
     container_name: authelia
     restart: unless-stopped
     networks:

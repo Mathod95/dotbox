@@ -1,0 +1,19 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+[Unit]
+Description=The firewall bouncer for CrowdSec
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/crowdsec-firewall-bouncer -c /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+ExecStartPre=/usr/local/bin/crowdsec-firewall-bouncer -c /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml -t
+ExecStartPost=/bin/sleep 0.1
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+# Ne pas tuer les processus enfants: le mode iptables lance ipset plusieurs fois pour s'arrêter.
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 name: Release
 
 # À chaque tag vMAJEUR.MINEUR.CORRECTIF: vérifie le code, compile le binaire statique et publie
-# dans la release GitHub ce que télécharge install.sh (Journal, B.8 et D4):
+# dans la release GitHub ce que télécharge install.sh (Journal, 2.8 et D4):
 # dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh.
 on:
   push:

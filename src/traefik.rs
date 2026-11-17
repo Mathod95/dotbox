@@ -1,16 +1,16 @@
-//! Traefik, installé par `dotbox init` (Journal, phase T): un certificat Let's Encrypt par
+//! Traefik, installé par `dotbox init` (Journal, étape 4): un certificat Let's Encrypt par
 //! sous-domaine en HTTP-01, redirection de HTTP vers HTTPS, seuls les containers marqués
 //! traefik.enable=true sont routés. Traefik lit Docker à travers un socket proxy en lecture seule
 //! (D20, recommandé par la doc de Traefik). Relancé, il ne refait que ce qui manque.
 
+use crate::catalog::Core;
 use crate::out::say;
 use crate::{docker, system};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
-/// Dernières versions stables, fixées (D15).
-pub const IMAGE: &str = "traefik:v3.7.19";
-pub const PROXY_IMAGE: &str = "lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106";
+// Les versions de Traefik et du socket proxy sont dans le catalogue: catalog/core/traefik.yml
+// (D64). Ici, la façon de les installer.
 
 const COMPOSE: &str = "/opt/traefik/compose.yml";
 const STATIC: &str = "/opt/traefik/config/traefik.yml";
@@ -22,14 +22,14 @@ const LE_STAGING: &str = "https://acme-staging-v02.api.letsencrypt.org/directory
 
 /// compose.yml de Traefik et de son socket proxy. Le tableau de bord de Traefik est sur
 /// traefik.<domaine>, derrière Authelia (two_factor, groupe admins).
-pub fn compose(domain: &str) -> String {
+pub fn compose(domain: &str, image: &str, proxy_image: &str) -> String {
     format!(
         r#"# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
 # Vos changements vont dans compose.override.yml, à côté.
 name: traefik
 services:
   traefik:
-    image: {IMAGE}
+    image: {image}
     container_name: traefik
     restart: unless-stopped
     depends_on:
@@ -60,7 +60,7 @@ services:
 
   # Seul à tenir le socket Docker, en lecture: Traefik ne peut que lire les containers (Journal, D20).
   socket-proxy:
-    image: {PROXY_IMAGE}
+    image: {proxy_image}
     container_name: socket-proxy
     restart: unless-stopped
     environment:
@@ -271,8 +271,11 @@ pub fn container_state(name: &str) -> String {
     .unwrap_or_default()
 }
 
-pub fn setup(domain: &str, ca: &str) -> Result<(), String> {
-    let compose_changed = system::write_if_changed(COMPOSE, &compose(domain), 0o644)?;
+pub fn setup(domain: &str, ca: &str, core: &Core) -> Result<(), String> {
+    let image = core.image("traefik")?;
+    let proxy_image = core.image("socket-proxy")?;
+    let compose_changed =
+        system::write_if_changed(COMPOSE, &compose(domain, image, proxy_image), 0o644)?;
     if compose_changed {
         say("write", COMPOSE);
     }
@@ -287,8 +290,8 @@ pub fn setup(domain: &str, ca: &str) -> Result<(), String> {
 
     let running = container_running("traefik") && container_running("socket-proxy");
     if compose_changed || !running {
-        docker::pull(PROXY_IMAGE)?;
-        docker::pull(IMAGE)?;
+        docker::pull(proxy_image)?;
+        docker::pull(image)?;
         system::run(
             "docker",
             &["compose", "-f", COMPOSE, "up", "-d", "--quiet-pull"],
@@ -300,7 +303,7 @@ pub fn setup(domain: &str, ca: &str) -> Result<(), String> {
         say("restart", "traefik (new configuration)");
     }
     wait_healthy("traefik", Duration::from_secs(90))?;
-    say("check", &format!("traefik healthy ({IMAGE})"));
+    say("check", &format!("traefik healthy ({image})"));
     Ok(())
 }
 
@@ -332,10 +335,20 @@ mod tests {
 
     #[test]
     fn compose_is_the_expected_one() {
-        assert_eq!(
-            compose("example.com"),
-            include_str!("../tests/expected/traefik/compose.yml")
+        let core = crate::catalog::load_core(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("catalog"),
+            "traefik",
+        )
+        .unwrap();
+        let (image, proxy) = (
+            core.image("traefik").unwrap(),
+            core.image("socket-proxy").unwrap(),
         );
+        // les versions viennent du catalogue: une mise à jour par Renovate ne casse pas le test
+        let expected = include_str!("../tests/expected/traefik/compose.yml")
+            .replace("<traefik>", image)
+            .replace("<socket-proxy>", proxy);
+        assert_eq!(compose("example.com", image, proxy), expected);
     }
 
     #[test]
@@ -351,7 +364,14 @@ mod tests {
 
     #[test]
     fn generated_yaml_is_valid() {
-        for text in [compose("example.com"), static_config("letsencrypt")] {
+        for text in [
+            compose(
+                "example.com",
+                "traefik:v3.7.19",
+                "lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106",
+            ),
+            static_config("letsencrypt"),
+        ] {
             serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&text).unwrap();
         }
     }

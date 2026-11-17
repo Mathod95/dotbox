@@ -1,14 +1,16 @@
 //! `dotbox init` (décision D8 du Journal): vérifier le système, le domaine et les ports, installer
-//! sudo, préparer l'utilisateur qui fait tourner les apps, puis Docker (phase C) et Traefik
-//! (phase T) et Authelia (phase A). CrowdSec viendra ensuite. Les réponses sont gardées dans
+//! sudo, préparer l'utilisateur qui fait tourner les apps, puis Docker (étape 3) et Traefik
+//! (étape 4), Authelia (étape 5) et CrowdSec (étape 10), aux versions du catalogue lu sur GitHub
+//! juste après les vérifications (Journal, 7.6, 7.12, D64). Les réponses sont gardées dans
 //! /opt/dotbox/dotbox.yml: relancé, il ne redemande rien et ne refait que ce qui manque.
-//! L'affichage suit le mockup final de CLI Output (phase S): une ligne par étape, le détail dans
+//! L'affichage suit le mockup final de CLI Output (étape 6): une ligne par étape, le détail dans
 //! /opt/dotbox/logs/, une carte à la fin.
 
 use crate::card::{self, Component};
+use crate::catalog::{self, Core};
 use crate::config::{self, Config};
 use crate::out::say;
-use crate::{authelia, docker, log, prompt, secrets, system, traefik, ui};
+use crate::{authelia, crowdsec, docker, github, log, prompt, secrets, system, traefik, ui};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -24,6 +26,10 @@ pub struct Args {
     #[arg(long, value_name = "CA", value_parser = config::CAS.to_vec())]
     ca: Option<String>,
 
+    /// Read the catalog from this folder instead of GitHub (for tests)
+    #[arg(long, value_name = "DIR")]
+    catalog: Option<std::path::PathBuf>,
+
     /// Show every sub-step as it happens (they are always in the log)
     #[arg(long)]
     verbose: bool,
@@ -37,6 +43,7 @@ pub fn run(args: &Args) -> Result<(), String> {
     let stamp = system::run("date", &["+%Y-%m-%d-%H%M"])?;
     let now = system::run("date", &["+%Y-%m-%d %H:%M:%S %Z"]).unwrap_or_default();
     log::open(
+        "init",
         &stamp,
         &format!("dotbox init {}, started {now}", env!("CARGO_PKG_VERSION")),
     )?;
@@ -117,7 +124,44 @@ fn steps(args: &Args) -> Result<(), String> {
     traefik::check_ports()?;
     ui::done(&system_summary(&short_os(&os), &arch, &domain));
 
-    // 2. sudo, l'utilisateur qui fait tourner les apps, son mot de passe Authelia
+    // 2. le catalogue: les versions du core et des apps, lues sur GitHub (D64); tout le core y
+    // est lu et vérifié avant d'installer quoi que ce soit
+    ui::step("Catalog", "versions of the core and the apps");
+    let (dir, from) = match &args.catalog {
+        Some(dir) => {
+            say("check", &format!("local catalog {}", dir.display()));
+            (dir.clone(), format!("local {}", dir.display()))
+        }
+        None => {
+            let source = github::fetch()?;
+            (
+                std::path::PathBuf::from(github::DIR),
+                format!("{} of {}", source.short(), source.date),
+            )
+        }
+    };
+    let load = |name: &str| -> Result<Core, String> {
+        let core = catalog::load_core(&dir, name)?;
+        say(
+            "check",
+            &format!(
+                "core/{name}.yml: {}",
+                core.images
+                    .iter()
+                    .map(|(_, i)| i.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        );
+        Ok(core)
+    };
+    let (traefik_core, authelia_core, crowdsec_core) =
+        (load("traefik")?, load("authelia")?, load("crowdsec")?);
+    let bouncer_version = crowdsec_core.file("firewall-bouncer")?.version.clone();
+    let apps = catalog::app_names(&dir).len();
+    ui::done(&format!("{from}, {apps} apps"));
+
+    // 3. sudo, l'utilisateur qui fait tourner les apps, son mot de passe Authelia
     ui::step("User", "the account that runs the apps");
     if system::package_installed("sudo") {
         say("check", "sudo");
@@ -163,12 +207,12 @@ fn steps(args: &Args) -> Result<(), String> {
     };
     ui::done(&format!("{name}, group sudo"));
 
-    // 3. Docker
+    // 4. Docker
     ui::step("Docker", "official repository");
     let docker_version = docker::setup(&os, &arch)?;
     ui::done(&format!("{docker_version}, local logs, live-restore"));
 
-    // 4. dotbox.yml, puis Traefik
+    // 5. dotbox.yml, puis Traefik
     ui::step("Traefik", "certificates and routing");
     cfg.set("domain", &domain);
     cfg.set("ca", &ca);
@@ -176,21 +220,28 @@ fn steps(args: &Args) -> Result<(), String> {
     if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
         say("write", config::PATH);
     }
-    traefik::setup(&domain, &ca)?;
+    traefik::setup(&domain, &ca, &traefik_core)?;
+    let traefik_image = traefik_core.image("traefik")?;
     let certs = if ca == "letsencrypt-staging" {
         "staging certs"
     } else {
         "Let's Encrypt certs"
     };
-    ui::done(&format!("{}, socket proxy, {certs}", tag(traefik::IMAGE)));
+    ui::done(&format!("{}, socket proxy, {certs}", tag(traefik_image)));
 
-    // 5. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
+    // 6. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
     ui::step("Authelia", "login page, password and 6-digit code");
-    let password = authelia::setup(&domain, &name, chosen.as_deref())?;
-    ui::done(&format!("{}, account {name}", tag(authelia::IMAGE)));
+    let password = authelia::setup(&domain, &name, chosen.as_deref(), &authelia_core)?;
+    let authelia_image = authelia_core.image("authelia")?;
+    ui::done(&format!("{}, account {name}", tag(authelia_image)));
 
-    // 6. CrowdSec, pas encore dans cette version
-    ui::later("CrowdSec", "not available yet");
+    // 7. CrowdSec: l'agent en container, le bouncer pare-feu sur le système (étape 10)
+    ui::step("CrowdSec", "attack detection and firewall bouncer");
+    crowdsec::setup(&crowdsec_core)?;
+    let crowdsec_version = crowdsec::version(crowdsec_core.image("crowdsec")?);
+    ui::done(&format!(
+        "{crowdsec_version}, SSH and Traefik watched, bouncer {bouncer_version}"
+    ));
 
     // la carte de fin (D26, D32, D37)
     let docker_state =
@@ -213,20 +264,20 @@ fn steps(args: &Args) -> Result<(), String> {
             },
             Component {
                 name: "Traefik".into(),
-                version: tag(traefik::IMAGE),
+                version: tag(traefik_image),
                 state: traefik::container_state("traefik"),
                 address: format!("https://traefik.{domain}"),
             },
             Component {
                 name: "Authelia".into(),
-                version: tag(authelia::IMAGE),
+                version: tag(authelia_image),
                 state: traefik::container_state("authelia"),
                 address: format!("https://auth.{domain}"),
             },
             Component {
                 name: "CrowdSec".into(),
-                version: String::new(),
-                state: String::new(),
+                version: crowdsec_version,
+                state: crowdsec::state(),
                 address: String::new(),
             },
         ],

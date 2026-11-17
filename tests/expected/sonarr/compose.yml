@@ -1,0 +1,36 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: sonarr
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:<version>
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/sonarr/config:/config
+      - /data:/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8989/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.sonarr.rule: Host(`sonarr.example.com`)
+      traefik.http.routers.sonarr.entrypoints: websecure
+      traefik.http.services.sonarr.loadbalancer.server.port: "8989"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.sonarr.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

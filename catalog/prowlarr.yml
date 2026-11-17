@@ -1,0 +1,15 @@
+# Prowlarr: gère les indexeurs et les envoie à Radarr et Sonarr.
+# Format: Journal, étape 7 (7.1). Les {{...}} sont remplis par dotbox à l'installation.
+name: prowlarr
+description: Indexer manager for the *arr apps
+min_dotbox: 0.0.3
+image: lscr.io/linuxserver/prowlarr:3.0.2.5780-ls169
+port: 9696
+access: two_factor
+health: /ping
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config

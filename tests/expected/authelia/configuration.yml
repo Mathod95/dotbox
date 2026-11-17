@@ -28,6 +28,10 @@ access_control:
     - domain: 'traefik.example.com'
       subject: 'group:admins'
       policy: 'two_factor'
+    # Toute app derrière authelia@docker: groupe admins, deux facteurs (Journal, 7.3)
+    - domain: '*.example.com'
+      subject: 'group:admins'
+      policy: 'two_factor'
 
 session:
   cookies:

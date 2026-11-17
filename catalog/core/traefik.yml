@@ -1,0 +1,7 @@
+# Traefik: le reverse proxy, HTTPS et les certificats, et le proxy en lecture seule du socket Docker.
+# Le core (Journal, D64): dotbox init installe ces versions. Comment les installer reste dans dotbox.
+name: traefik
+min_dotbox: 0.0.3
+images:
+  traefik: traefik:v3.7.19
+  socket-proxy: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106

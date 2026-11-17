@@ -1,5 +1,5 @@
 //! Docker, installé par `dotbox init` en suivant la doc officielle (docs.docker.com/engine/install/
-//! debian, /ubuntu, /linux-postinstall), avec les bonnes pratiques du Journal (phase C):
+//! debian, /ubuntu, /linux-postinstall), avec les bonnes pratiques du Journal (étape 3):
 //! paquets en conflit retirés seulement avec accord, clé du dépôt embarquée, daemon.json écrit
 //! avant l'installation. Relancé, il ne refait que ce qui manque.
 
@@ -8,7 +8,7 @@ use crate::system::{self, OsRelease};
 use crate::{prompt, ui};
 
 /// Clé officielle du dépôt Docker, la même pour Debian et Ubuntu.
-/// Empreinte 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, vérifiée avec gpg (Journal C.3).
+/// Empreinte 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, vérifiée avec gpg (Journal 3.3).
 const KEY: &str = include_str!("../assets/docker.asc");
 const KEYRING: &str = "/etc/apt/keyrings/docker.asc";
 const SOURCES: &str = "/etc/apt/sources.list.d/docker.sources";
@@ -115,6 +115,27 @@ pub fn setup(os: &OsRelease, arch: &str) -> Result<String, String> {
     }
 
     Ok(version())
+}
+
+/// Le sous-réseau IPv4 du réseau dotbox (« 172.18.0.0/16 »): là où sont Traefik et les apps.
+pub fn network_subnet() -> Result<String, String> {
+    let out = system::run(
+        "docker",
+        &[
+            "network",
+            "inspect",
+            "-f",
+            "{{range .IPAM.Config}}{{.Subnet}} {{end}}",
+            NETWORK,
+        ],
+    )?;
+    first_ipv4_subnet(&out).ok_or(format!("no IPv4 subnet for the network {NETWORK}"))
+}
+
+pub fn first_ipv4_subnet(text: &str) -> Option<String> {
+    text.split_whitespace()
+        .find(|s| s.contains('.') && s.contains('/'))
+        .map(String::from)
 }
 
 /// Version du serveur Docker (vide si Docker ne répond pas).
@@ -243,6 +264,16 @@ fn write_daemon_json() -> Result<bool, String> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn subnet_of_the_network() {
+        assert_eq!(
+            first_ipv4_subnet("172.18.0.0/16 fd00::/64 ").as_deref(),
+            Some("172.18.0.0/16")
+        );
+        assert_eq!(first_ipv4_subnet("fd00::/64"), None);
+    }
+
     use super::*;
     use crate::system::parse_os_release;
     use sha2::{Digest, Sha256};

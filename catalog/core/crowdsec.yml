@@ -1,0 +1,15 @@
+# CrowdSec: l'agent, qui lit les logs et bannit, et le bouncer pare-feu, qui bloque les IP bannies.
+# Le core (Journal, D64): dotbox init installe ces versions. Comment les installer reste dans dotbox.
+name: crowdsec
+min_dotbox: 0.0.3
+images:
+  crowdsec: crowdsecurity/crowdsec:v1.8.2-debian
+files:
+  # Le binaire officiel du bouncer, publié sur GitHub (pas d'image officielle). Les empreintes de
+  # l'archive (donnée par GitHub) et du binaire qu'elle contient sont vérifiées à l'installation.
+  firewall-bouncer:
+    version: v0.0.38
+    url: https://github.com/crowdsecurity/cs-firewall-bouncer/releases/download/v0.0.38/crowdsec-firewall-bouncer-linux-amd64.tgz
+    sha256: 3cb7ca302438ede690849218d585dee6cbba7915982f79f3dd45024a9eced31e
+    binary: crowdsec-firewall-bouncer-v0.0.38/crowdsec-firewall-bouncer
+    binary_sha256: 321ecc808f333d4983c565d314d6f670fe9b960258f0d9e125febd3834774727

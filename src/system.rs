@@ -314,6 +314,45 @@ pub fn write_if_changed(path: &str, content: &str, mode: u32) -> Result<bool, St
     Ok(true)
 }
 
+/// UID et GID d'un utilisateur (PUID et PGID des apps).
+pub fn user_ids(name: &str) -> Result<(u32, u32), String> {
+    let id = |flag: &str| -> Result<u32, String> {
+        run("id", &[flag, name])?
+            .parse()
+            .map_err(|_| format!("cannot read the ids of {name}"))
+    };
+    Ok((id("-u")?, id("-g")?))
+}
+
+/// Le fuseau horaire du serveur (« Europe/Paris »), Etc/UTC s'il est introuvable.
+pub fn timezone() -> String {
+    if let Ok(t) = fs::read_to_string("/etc/timezone") {
+        if !t.trim().is_empty() {
+            return t.trim().to_string();
+        }
+    }
+    fs::read_link("/etc/localtime")
+        .ok()
+        .and_then(|p| zone_from_link(&p.to_string_lossy()))
+        .unwrap_or_else(|| "Etc/UTC".to_string())
+}
+
+pub fn zone_from_link(link: &str) -> Option<String> {
+    link.split_once("zoneinfo/").map(|(_, z)| z.to_string())
+}
+
+/// Crée un dossier (0755) et le donne à un utilisateur.
+pub fn owned_dir(path: &str, uid: u32, gid: u32) -> Result<(), String> {
+    use std::os::unix::fs::DirBuilderExt;
+    fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o755)
+        .create(path)
+        .map_err(|e| format!("cannot create {path}: {e}"))?;
+    std::os::unix::fs::chown(path, Some(uid), Some(gid))
+        .map_err(|e| format!("cannot give {path} to {uid}:{gid}: {e}"))
+}
+
 pub fn user_exists(name: &str) -> bool {
     run("getent", &["passwd", name]).is_ok()
 }
@@ -324,6 +363,20 @@ pub fn user_groups(name: &str) -> Result<Vec<String>, String> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn timezone_from_the_localtime_link() {
+        assert_eq!(
+            zone_from_link("/usr/share/zoneinfo/Europe/Paris").as_deref(),
+            Some("Europe/Paris")
+        );
+        assert_eq!(
+            zone_from_link("../usr/share/zoneinfo/Etc/UTC").as_deref(),
+            Some("Etc/UTC")
+        );
+        assert_eq!(zone_from_link("/etc/foo"), None);
+    }
+
     use super::*;
 
     #[test]

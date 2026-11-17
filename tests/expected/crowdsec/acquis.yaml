@@ -1,0 +1,13 @@
+# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
+# Les connexions SSH, dans le journal du système.
+source: journalctl
+journalctl_filter:
+  - "_SYSTEMD_UNIT=ssh.service"
+labels:
+  type: syslog
+---
+# Le log d'accès de Traefik (JSON).
+filenames:
+  - /var/log/traefik/access.log
+labels:
+  type: traefik

@@ -51,6 +51,45 @@ impl Config {
             .insert(Value::String(key.into()), Value::String(value.into()));
     }
 
+    /// Le sous-domaine et le niveau d'accès d'une app installée (apps: de dotbox.yml).
+    pub fn app(&self, name: &str) -> Option<(String, String)> {
+        let entry = self
+            .map
+            .get("apps")?
+            .as_mapping()?
+            .get(name)?
+            .as_mapping()?;
+        let field = |k: &str| {
+            entry
+                .get(k)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        Some((field("subdomain"), field("access")))
+    }
+
+    pub fn set_app(&mut self, name: &str, subdomain: &str, access: &str) {
+        if !self.map.get("apps").is_some_and(Value::is_mapping) {
+            self.map
+                .insert(Value::String("apps".into()), Value::Mapping(Mapping::new()));
+        }
+        if let Some(Value::Mapping(apps)) = self.map.get_mut("apps") {
+            let mut entry = Mapping::new();
+            entry.insert("subdomain".into(), subdomain.into());
+            entry.insert("access".into(), access.into());
+            apps.insert(name.into(), Value::Mapping(entry));
+        }
+    }
+
+    /// Retire une app de apps:. Rend false si elle n'y était pas.
+    pub fn remove_app(&mut self, name: &str) -> bool {
+        match self.map.get_mut("apps") {
+            Some(Value::Mapping(apps)) => apps.remove(name).is_some(),
+            _ => false,
+        }
+    }
+
     pub fn render(&self) -> Result<String, String> {
         let body = serde_yaml_ng::to_string(&self.map).map_err(|e| e.to_string())?;
         Ok(format!(
@@ -76,6 +115,27 @@ pub fn valid_domain(d: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn apps_are_kept_with_the_rest() {
+        let mut c = Config::parse("domain: example.com\nfoo: bar\n").unwrap();
+        assert!(c.app("prowlarr").is_none());
+        c.set_app("prowlarr", "prowlarr", "two_factor");
+        c.set_app("radarr", "films", "one_factor");
+        let text = c.render().unwrap();
+        let c = Config::parse(&text).unwrap();
+        assert_eq!(c.get("foo").as_deref(), Some("bar"));
+        assert_eq!(
+            c.app("radarr"),
+            Some(("films".to_string(), "one_factor".to_string()))
+        );
+        let mut c = c;
+        assert!(c.remove_app("prowlarr"));
+        assert!(!c.remove_app("prowlarr"));
+        assert!(c.app("prowlarr").is_none());
+        assert!(c.app("radarr").is_some());
+    }
+
     use super::*;
 
     #[test]

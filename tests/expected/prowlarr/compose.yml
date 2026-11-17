@@ -1,0 +1,35 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: prowlarr
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:<version>
+    container_name: prowlarr
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/prowlarr/config:/config
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9696/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.prowlarr.rule: Host(`prowlarr.example.com`)
+      traefik.http.routers.prowlarr.entrypoints: websecure
+      traefik.http.services.prowlarr.loadbalancer.server.port: "9696"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.prowlarr.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

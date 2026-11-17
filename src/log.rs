@@ -1,4 +1,5 @@
-//! Le fichier de log de `dotbox init` (Journal, D37): tout ce que le terminal n'affiche pas.
+//! Le fichier de log de `dotbox init`, `install` et `remove` (Journal, D37): tout ce que le
+//! terminal n'affiche pas.
 //! Un fichier par lancement dans /opt/dotbox/logs/, lisible par root seul. Chaque ligne porte le
 //! temps écoulé depuis le début. Jamais de secret: les appelants n'y écrivent ni mot de passe ni clé.
 
@@ -18,9 +19,10 @@ struct Log {
 
 static LOG: Mutex<Option<Log>> = Mutex::new(None);
 
-/// Nom du fichier pour une date `AAAA-MM-JJ-HHMM`, avec un suffixe si le nom est déjà pris.
-pub fn file_name(stamp: &str, taken: impl Fn(&str) -> bool) -> String {
-    let base = format!("init-{stamp}");
+/// Nom du fichier pour une commande (init, install, remove) et une date `AAAA-MM-JJ-HHMM`,
+/// avec un suffixe si le nom est déjà pris.
+pub fn file_name(kind: &str, stamp: &str, taken: impl Fn(&str) -> bool) -> String {
+    let base = format!("{kind}-{stamp}");
     let mut name = format!("{base}.log");
     let mut n = 2;
     while taken(&name) {
@@ -31,7 +33,7 @@ pub fn file_name(stamp: &str, taken: impl Fn(&str) -> bool) -> String {
 }
 
 /// Ouvre le log de ce lancement. `header` est sa première ligne.
-pub fn open(stamp: &str, header: &str) -> Result<String, String> {
+pub fn open(kind: &str, stamp: &str, header: &str) -> Result<String, String> {
     fs::DirBuilder::new()
         .recursive(true)
         .mode(0o700)
@@ -39,7 +41,7 @@ pub fn open(stamp: &str, header: &str) -> Result<String, String> {
         .map_err(|e| format!("cannot create {DIR}: {e}"))?;
     fs::set_permissions(DIR, fs::Permissions::from_mode(0o700))
         .map_err(|e| format!("cannot set the permissions of {DIR}: {e}"))?;
-    let name = file_name(stamp, |n| std::path::Path::new(DIR).join(n).exists());
+    let name = file_name(kind, stamp, |n| std::path::Path::new(DIR).join(n).exists());
     let path = format!("{DIR}/{name}");
     let mut file = OpenOptions::new()
         .create_new(true)
@@ -99,12 +101,12 @@ mod tests {
     #[test]
     fn one_file_per_run() {
         assert_eq!(
-            file_name("2026-11-16-1402", |_| false),
+            file_name("init", "2026-11-16-1402", |_| false),
             "init-2026-11-16-1402.log"
         );
         let taken = ["init-2026-11-16-1402.log", "init-2026-11-16-1402-2.log"];
         assert_eq!(
-            file_name("2026-11-16-1402", |n| taken.contains(&n)),
+            file_name("init", "2026-11-16-1402", |n| taken.contains(&n)),
             "init-2026-11-16-1402-3.log"
         );
     }

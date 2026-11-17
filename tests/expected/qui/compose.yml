@@ -1,0 +1,29 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: qui
+services:
+  qui:
+    image: ghcr.io/autobrr/qui:<version>
+    container_name: qui
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/qui/config:/config
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.qui.rule: Host(`qui.example.com`)
+      traefik.http.routers.qui.entrypoints: websecure
+      traefik.http.services.qui.loadbalancer.server.port: "7476"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.qui.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true
