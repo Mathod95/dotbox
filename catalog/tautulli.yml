@@ -1,0 +1,17 @@
+# Tautulli: les statistiques et l'historique de Plex: qui regarde quoi, quand et comment.
+# Format: Journal, étape 7 (7.1) et 8.14. Les {{...}} sont remplis par dotbox à l'installation.
+name: tautulli
+description: Plex statistics and history
+min_dotbox: 0.0.4
+image: ghcr.io/tautulli/tautulli:v2.19.1
+port: 8181
+access: two_factor
+# l'image a son propre healthcheck (curl sur /status)
+health: image
+env:
+  # l'image démarre en root, puis fait tourner Tautulli avec cet utilisateur (start.sh)
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config

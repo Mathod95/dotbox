@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr et Vaultwarden",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr and Vaultwarden"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr et Maintainerr",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr and Maintainerr"
       },
       "new": [
         {
@@ -95,6 +95,18 @@
         {
           "fr": "Moteur: des espaces dans le chemin d'un fichier de l'app (`Application Support`)",
           "en": "Engine: spaces in the path of an app file (`Application Support`)"
+        },
+        {
+          "fr": "Catalogue: Tautulli, les statistiques et l'historique de Plex, derrière Authelia",
+          "en": "Catalog: Tautulli, Plex statistics and history, behind Authelia"
+        },
+        {
+          "fr": "Catalogue: autobrr, les nouvelles sorties dès leur annonce sur les trackers, derrière Authelia",
+          "en": "Catalog: autobrr, new releases as soon as trackers announce them, behind Authelia"
+        },
+        {
+          "fr": "Catalogue: Maintainerr, le ménage dans la bibliothèque selon des règles, derrière Authelia",
+          "en": "Catalog: Maintainerr, rule-based library cleanup, behind Authelia"
         }
       ],
       "changed": [

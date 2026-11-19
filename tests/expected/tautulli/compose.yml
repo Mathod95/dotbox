@@ -1,0 +1,29 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: tautulli
+services:
+  tautulli:
+    image: ghcr.io/tautulli/tautulli:<version>
+    container_name: tautulli
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/tautulli/config:/config
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.tautulli.rule: Host(`tautulli.example.com`)
+      traefik.http.routers.tautulli.entrypoints: websecure
+      traefik.http.services.tautulli.loadbalancer.server.port: "8181"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.tautulli.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

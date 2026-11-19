@@ -1,0 +1,86 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Maintainerr<i>●</i>le ménage dans ta bibliothèque, selon des règles que tu fixes.</p>
+<p class="lede" data-l="en">Maintainerr<i>●</i>cleans up your library, following rules you set.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/Maintainerr/Maintainerr" target="_blank" rel="noopener">Code source ↗</a> <a href="https://docs.maintainerr.info" target="_blank" rel="noopener">Doc ↗</a> <a href="https://github.com/Maintainerr/Maintainerr/pkgs/container/maintainerr" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://maintainerr.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres), sans autre connexion.</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/maintainerr/maintainerr:3.32.0</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install maintainerr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Maintainerr</h2>
+  <ul>
+    <li>Tu écris des règles: pas regardé depuis un an, demandé par quelqu'un qui n'a jamais regardé, note trop basse.</li>
+    <li>Les films et les séries qui y répondent vont dans une collection « bientôt supprimé », visible sur ton serveur média.</li>
+    <li>Après le délai choisi, Maintainerr les fait retirer par Radarr ou Sonarr, et prévient Seerr.</li>
+  </ul>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée les dossiers de <code>/opt/maintainerr</code> à ton utilisateur.</li>
+    <li>Elle écrit <code>/opt/maintainerr/compose.yml</code>, démarre Maintainerr derrière Authelia et attend qu'il réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/maintainerr/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/maintainerr/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/maintainerr/data/</code></td><td><code>/opt/data/</code></td><td>Sa base (les règles, les collections) et ses logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <p>Dans le compose: <code>user</code> à ton utilisateur (l'image tourne avec son propre utilisateur, <code>node</code>), aucun port publié, <code>no-new-privileges</code> et un redémarrage automatique. Le healthcheck est celui de l'image.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Ouvre son adresse: Authelia, puis Maintainerr. Dans ses réglages, ajoute ton serveur média (<code>http://plex:32400</code> ou <code>http://jellyfin:8096</code>), Seerr (<code>http://seerr:5055</code>), Radarr et Sonarr, par leur nom de container. Teste une règle avant de la laisser supprimer quoi que ce soit.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/Maintainerr/Maintainerr" target="_blank" rel="noopener">Source code ↗</a> <a href="https://docs.maintainerr.info" target="_blank" rel="noopener">Docs ↗</a> <a href="https://github.com/Maintainerr/Maintainerr/pkgs/container/maintainerr" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://maintainerr.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then a 6-digit code), no other login.</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/maintainerr/maintainerr:3.32.0</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install maintainerr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Maintainerr does</h2>
+  <ul>
+    <li>You write rules: not watched for a year, requested by someone who never watched, rating too low.</li>
+    <li>Movies and shows that match go into a "leaving soon" collection, visible on your media server.</li>
+    <li>After the chosen delay, Maintainerr has Radarr or Sonarr remove them, and tells Seerr.</li>
+  </ul>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates the folders of <code>/opt/maintainerr</code>, owned by your user.</li>
+    <li>It writes <code>/opt/maintainerr/compose.yml</code>, starts Maintainerr behind Authelia and waits for it to answer.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/maintainerr/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/maintainerr/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/maintainerr/data/</code></td><td><code>/opt/data/</code></td><td>Its database (rules, collections) and its logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <p>In the compose: <code>user</code> set to your user (the image runs as its own user, <code>node</code>), no published port, <code>no-new-privileges</code> and an automatic restart. The healthcheck is the image's own.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>Open its address: Authelia, then Maintainerr. In its settings, add your media server (<code>http://plex:32400</code> or <code>http://jellyfin:8096</code>), Seerr (<code>http://seerr:5055</code>), Radarr and Sonarr, by their container name. Test a rule before letting it delete anything.</p>
+</article>

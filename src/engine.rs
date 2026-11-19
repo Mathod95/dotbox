@@ -583,6 +583,22 @@ mod tests {
     }
 
     #[test]
+    fn tautulli_autobrr_maintainerr_composes() {
+        for app in ["tautulli", "autobrr", "maintainerr"] {
+            let m = load(app);
+            let mut c = ctx(Access::TwoFactor);
+            c.subdomain = app.into();
+            let expected = std::fs::read_to_string(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join(format!("tests/expected/{app}/compose.yml")),
+            )
+            .unwrap()
+            .replace("<version>", m.version());
+            assert_eq!(compose(&m, &c), expected, "{app}");
+        }
+    }
+
+    #[test]
     fn jellyfin_network_xml() {
         let m = load("jellyfin");
         let mut c = ctx(Access::App);

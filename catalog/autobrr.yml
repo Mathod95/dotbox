@@ -1,0 +1,16 @@
+# autobrr: attrape les nouvelles sorties sur les canaux d'annonce des trackers (IRC, RSS) et les
+# envoie à qBittorrent, Radarr ou Sonarr.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.17. Les {{...}} sont remplis par dotbox à l'installation.
+name: autobrr
+description: Release grabber for trackers' announce channels
+min_dotbox: 0.0.4
+image: ghcr.io/autobrr/autobrr:v1.91.0
+port: 7474
+access: two_factor
+health: /api/healthz/liveness
+# l'image tourne en root sans lui (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+volumes:
+  - config:/config

@@ -1,0 +1,17 @@
+# Maintainerr: le ménage dans la bibliothèque, selon des règles (pas vu depuis un an, demandé par
+# quelqu'un qui est parti...), avec Plex ou Jellyfin, Seerr, Radarr et Sonarr.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.18. Les {{...}} sont remplis par dotbox à l'installation.
+name: maintainerr
+description: Rule-based library cleanup
+min_dotbox: 0.0.4
+image: ghcr.io/maintainerr/maintainerr:3.32.0
+port: 6246
+access: two_factor
+# l'image a son propre healthcheck (healthcheck.sh)
+health: image
+# l'image tourne avec l'utilisateur node (1000): ici, celui de dotbox.yml (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+volumes:
+  - data:/opt/data

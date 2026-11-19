@@ -566,12 +566,14 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "autobrr: attrape les nouvelles sorties sur les canaux d'annonce des trackers",
       "en": "autobrr: grabs new releases from the trackers' announce channels",
       "journal": [
-        "8.17"
-      ]
+        "8.17",
+        "J187-J188"
+      ],
+      "doc": "autobrr"
     },
     {
       "stage": "apps",
@@ -642,12 +644,14 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Tautulli: les statistiques et l'historique de Plex",
       "en": "Tautulli: Plex statistics and history",
       "journal": [
-        "8.14"
-      ]
+        "8.14",
+        "J187-J188"
+      ],
+      "doc": "tautulli"
     },
     {
       "stage": "apps",
@@ -674,12 +678,14 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Maintainerr: le ménage dans la bibliothèque, selon des règles",
       "en": "Maintainerr: rule-based library cleanup",
       "journal": [
-        "8.18"
-      ]
+        "8.18",
+        "J187-J188"
+      ],
+      "doc": "maintainerr"
     },
     {
       "stage": "apps",
