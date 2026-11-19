@@ -42,6 +42,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "chore(catalog): empreintes du bouncer pare-feu"
+          # [skip ci]: sans lui, ce commit déclenche des runs pull_request qui attendent une
+          # approbation (action_required). La CI est relancée juste après par workflow_dispatch.
+          git commit -am "chore(catalog): empreintes du bouncer pare-feu [skip ci]"
           git push origin "HEAD:${BRANCH}"
           gh workflow run catalog.yml --ref "${BRANCH}"
