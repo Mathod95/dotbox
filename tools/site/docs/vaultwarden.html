@@ -1,0 +1,158 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Vaultwarden<i>●</i>ton gestionnaire de mots de passe, compatible avec les apps et les extensions Bitwarden.</p>
+<p class="lede" data-l="en">Vaultwarden<i>●</i>your password manager, compatible with the Bitwarden apps and extensions.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/dani-garcia/vaultwarden" target="_blank" rel="noopener">Code source ↗</a> <a href="https://github.com/dani-garcia/vaultwarden/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://hub.docker.com/r/vaultwarden/server" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://vaultwarden.example.com</code></td></tr>
+      <tr><td>Accès</td><td>app: la connexion de Vaultwarden, pour ses apps et ses extensions, avec AppSec devant. Sa page d'administration, <code>/admin</code>, derrière Authelia.</td></tr>
+      <tr><td>Image</td><td><code>vaultwarden/server:1.37.5</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install vaultwarden</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Vaultwarden</h2>
+  <ul>
+    <li>Il garde tes mots de passe, tes cartes et tes notes, chiffrés par ton mot de passe principal avant même de quitter ton appareil.</li>
+    <li>Les apps Bitwarden (téléphone, ordinateur) et les extensions des navigateurs s'y connectent: il suffit de leur donner l'adresse de ton serveur.</li>
+    <li>Tu peux partager un coffre avec tes proches, dans une organisation.</li>
+  </ul>
+
+  <h2 id="fr-install">L'installation, pas à pas</h2>
+  <p>Personne ne peut s'inscrire seul: tu t'invites toi-même depuis <code>/admin</code>, qu'Authelia protège.</p>
+  <h3 id="fr-step1">1. Installer</h3>
+  <pre><span class="p">$</span> sudo dotbox install vaultwarden
+<span class="ok">✓</span> [1/1] Vaultwarden   1.37.5, app
+
+  vaultwarden   https://vaultwarden.example.com  app</pre>
+  <ul>
+    <li>Elle crée <code>/opt/vaultwarden/data</code> à ton utilisateur, écrit <code>compose.yml</code> et démarre Vaultwarden.</li>
+    <li>Elle demande à CrowdSec de lire ses logs.</li>
+  </ul>
+  <h3 id="fr-step2">2. T'inviter</h3>
+  <ul>
+    <li>Ouvre <code>https://vaultwarden.example.com/admin</code>. Authelia te demande de te connecter, puis la page d'administration s'ouvre, sans autre mot de passe.</li>
+    <li>Dans Users, invite ton adresse e-mail. Sans serveur d'e-mails réglé, l'invitation ne part pas: elle autorise seulement cette adresse à s'inscrire.</li>
+  </ul>
+  <h3 id="fr-step3">3. Créer ton compte</h3>
+  <ul>
+    <li>Ouvre <code>https://vaultwarden.example.com/#/signup</code> et inscris-toi avec l'adresse invitée.</li>
+    <li>Choisis un mot de passe principal long, que tu n'utilises nulle part ailleurs: il chiffre ton coffre, et personne ne peut le retrouver si tu l'oublies.</li>
+    <li>Active ensuite la double authentification dans ton compte (Paramètres, Sécurité).</li>
+  </ul>
+
+  <h2 id="fr-security">Ce qui le protège</h2>
+  <ul>
+    <li>Ton mot de passe principal et, si tu l'actives, ta double authentification.</li>
+    <li>AppSec, qui bloque les attaques connues avant qu'elles n'arrivent à Vaultwarden (Security).</li>
+    <li>CrowdSec lit ses logs (la collection <code>Dominic-Wagner/vaultwarden</code> du hub) et bannit une IP qui rate des mots de passe ou des codes à 6 chiffres.</li>
+    <li>La page d'administration est derrière Authelia, avec sa double authentification.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/vaultwarden/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/vaultwarden/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/db.sqlite3</code></td><td><code>/data/db.sqlite3</code></td><td>La base: comptes et coffres, chiffrés.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/rsa_key.pem</code></td><td><code>/data/rsa_key.pem</code></td><td>La clé qui signe les connexions.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/attachments/</code></td><td><code>/data/attachments/</code></td><td>Les pièces jointes.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>SIGNUPS_ALLOWED</code></td><td><code>false</code></td><td>Personne ne crée de compte sans invitation.</td></tr>
+      <tr><td><code>INVITATIONS_ALLOWED</code></td><td><code>true</code></td><td>Les invitations restent possibles, depuis <code>/admin</code> ou une organisation.</td></tr>
+      <tr><td><code>DISABLE_ADMIN_TOKEN</code></td><td><code>true</code></td><td>Authelia protège <code>/admin</code>. Vaultwarden prévoit ce réglage pour ce cas: une authentification posée devant.</td></tr>
+      <tr><td><code>DOMAIN</code></td><td><code>https://vaultwarden.example.com</code></td><td>Les liens, les passkeys (WebAuthn) et les pièces jointes en dépendent.</td></tr>
+      <tr><td><code>ROCKET_PORT</code></td><td><code>8080</code></td><td>Sans root, Vaultwarden ne peut pas écouter sur le port 80.</td></tr>
+      <tr><td><code>user</code></td><td>ton utilisateur</td><td>L'image tourne en root sans lui.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Traefik envoie la vraie IP du client dans <code>X-Real-IP</code>, l'en-tête que Vaultwarden lit par défaut, et remplace celui qu'un client enverrait lui-même. Dans le compose aussi: aucun port publié, <code>no-new-privileges</code>, et un redémarrage automatique. Le healthcheck est celui de l'image.</p>
+  <p>Ton coffre est précieux: la sauvegarde de <code>/opt</code>, prévue (Backup), le gardera, chiffré.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/dani-garcia/vaultwarden" target="_blank" rel="noopener">Source code ↗</a> <a href="https://github.com/dani-garcia/vaultwarden/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://hub.docker.com/r/vaultwarden/server" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://vaultwarden.example.com</code></td></tr>
+      <tr><td>Access</td><td>app: Vaultwarden's own login, for its apps and extensions, with AppSec in front. Its admin page, <code>/admin</code>, behind Authelia.</td></tr>
+      <tr><td>Image</td><td><code>vaultwarden/server:1.37.5</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install vaultwarden</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Vaultwarden does</h2>
+  <ul>
+    <li>It keeps your passwords, cards and notes, encrypted with your master password before they even leave your device.</li>
+    <li>The Bitwarden apps (phone, computer) and browser extensions connect to it: just give them your server's address.</li>
+    <li>You can share a vault with family or friends, in an organization.</li>
+  </ul>
+
+  <h2 id="en-install">The install, step by step</h2>
+  <p>Nobody can sign up on their own: you invite yourself from <code>/admin</code>, which Authelia protects.</p>
+  <h3 id="en-step1">1. Install</h3>
+  <pre><span class="p">$</span> sudo dotbox install vaultwarden
+<span class="ok">✓</span> [1/1] Vaultwarden   1.37.5, app
+
+  vaultwarden   https://vaultwarden.example.com  app</pre>
+  <ul>
+    <li>It creates <code>/opt/vaultwarden/data</code>, owned by your user, writes <code>compose.yml</code> and starts Vaultwarden.</li>
+    <li>It asks CrowdSec to read its logs.</li>
+  </ul>
+  <h3 id="en-step2">2. Invite yourself</h3>
+  <ul>
+    <li>Open <code>https://vaultwarden.example.com/admin</code>. Authelia asks you to log in, then the admin page opens, with no other password.</li>
+    <li>In Users, invite your email address. With no mail server set up, the invitation is not sent: it only allows that address to sign up.</li>
+  </ul>
+  <h3 id="en-step3">3. Create your account</h3>
+  <ul>
+    <li>Open <code>https://vaultwarden.example.com/#/signup</code> and sign up with the invited address.</li>
+    <li>Pick a long master password that you use nowhere else: it encrypts your vault, and nobody can recover it if you forget it.</li>
+    <li>Then turn on two-factor authentication in your account (Settings, Security).</li>
+  </ul>
+
+  <h2 id="en-security">What protects it</h2>
+  <ul>
+    <li>Your master password and, if you turn it on, your two-factor authentication.</li>
+    <li>AppSec, which blocks known attacks before they reach Vaultwarden (Security).</li>
+    <li>CrowdSec reads its logs (the hub's <code>Dominic-Wagner/vaultwarden</code> collection) and bans an IP that fails passwords or 6-digit codes.</li>
+    <li>The admin page is behind Authelia, with its two-factor authentication.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/vaultwarden/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/vaultwarden/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/db.sqlite3</code></td><td><code>/data/db.sqlite3</code></td><td>The database: accounts and vaults, encrypted.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/rsa_key.pem</code></td><td><code>/data/rsa_key.pem</code></td><td>The key that signs logins.</td></tr>
+      <tr><td><code>/opt/vaultwarden/data/attachments/</code></td><td><code>/data/attachments/</code></td><td>Attachments.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>SIGNUPS_ALLOWED</code></td><td><code>false</code></td><td>Nobody creates an account without an invitation.</td></tr>
+      <tr><td><code>INVITATIONS_ALLOWED</code></td><td><code>true</code></td><td>Invitations stay possible, from <code>/admin</code> or an organization.</td></tr>
+      <tr><td><code>DISABLE_ADMIN_TOKEN</code></td><td><code>true</code></td><td>Authelia protects <code>/admin</code>. Vaultwarden provides this setting for this case: an authentication layer in front.</td></tr>
+      <tr><td><code>DOMAIN</code></td><td><code>https://vaultwarden.example.com</code></td><td>Links, passkeys (WebAuthn) and attachments depend on it.</td></tr>
+      <tr><td><code>ROCKET_PORT</code></td><td><code>8080</code></td><td>Without root, Vaultwarden cannot listen on port 80.</td></tr>
+      <tr><td><code>user</code></td><td>your user</td><td>Without it, the image runs as root.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Traefik sends the client's real IP in <code>X-Real-IP</code>, the header Vaultwarden reads by default, and replaces the one a client would send itself. In the compose too: no published port, <code>no-new-privileges</code>, and an automatic restart. The healthcheck is the image's own.</p>
+  <p>Your vault is precious: the planned backup of <code>/opt</code> (Backup) will keep it, encrypted.</p>
+</article>

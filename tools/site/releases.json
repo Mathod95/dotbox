@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr et Wizarr",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr and Wizarr"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr, Wizarr et Vaultwarden",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr, Wizarr and Vaultwarden"
       },
       "new": [
         {
@@ -79,6 +79,14 @@
         {
           "fr": "Moteur: l'assistant de premier démarrage demandé à l'app elle-même (`setup: probe`), pour une app dont la base est en SQLite",
           "en": "Engine: the first-run setup asked to the app itself (`setup: probe`), for an app whose database is SQLite"
+        },
+        {
+          "fr": "Catalogue: Vaultwarden, le gestionnaire de mots de passe, inscriptions fermées, `/admin` derrière Authelia, CrowdSec sur les mots de passe et les codes ratés",
+          "en": "Catalog: Vaultwarden, the password manager, sign-ups closed, `/admin` behind Authelia, CrowdSec on failed passwords and codes"
+        },
+        {
+          "fr": "Moteur: des chemins d'une app ouverte à Internet derrière Authelia (`authelia_paths`)",
+          "en": "Engine: paths of an app open to the Internet behind Authelia (`authelia_paths`)"
         }
       ],
       "changed": [

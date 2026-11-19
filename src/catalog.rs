@@ -104,6 +104,9 @@ struct Raw {
     /// CrowdSec lit les logs du container (D72, 10.9)
     #[serde(default)]
     crowdsec: Option<RawWatch>,
+    /// des chemins de l'app derrière Authelia, même au niveau app ou public (/admin)
+    #[serde(default)]
+    authelia_paths: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -223,6 +226,8 @@ pub struct Manifest {
     pub run_as_user: bool,
     pub setup: Option<Setup>,
     pub crowdsec: Option<Watch>,
+    /// des chemins derrière Authelia, en plus du niveau de l'app (/admin de Vaultwarden)
+    pub authelia_paths: Vec<String>,
 }
 
 /// Un dossier du serveur dans /data (les médias et les téléchargements).
@@ -539,6 +544,23 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             })
         }
     };
+    for p in &raw.authelia_paths {
+        if !p.starts_with('/')
+            || p.len() < 2
+            || p.ends_with('/')
+            || p.contains("//")
+            || !p
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || "/-_".contains(c))
+        {
+            return Err(format!(
+                "authelia_paths {p:?}: a path like /admin, lowercase letters, digits, - and _"
+            ));
+        }
+    }
+    if !raw.authelia_paths.is_empty() && raw.access.behind_authelia() {
+        return Err("authelia_paths: only for the levels app and public, the whole app is already behind Authelia".into());
+    }
     Ok(Manifest {
         name,
         description: raw.description,
@@ -556,6 +578,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         run_as_user,
         setup,
         crowdsec,
+        authelia_paths: raw.authelia_paths,
     })
 }
 
@@ -1186,6 +1209,15 @@ mod tests {
     }
 
     #[test]
+    fn vaultwarden() {
+        let m = load(&catalog_dir(), "vaultwarden").unwrap();
+        assert_eq!((m.port, m.access), (8080, Access::App));
+        assert_eq!(m.authelia_paths, ["/admin"]);
+        assert!(m.run_as_user && m.setup.is_none());
+        assert!(m.env.contains(&("SIGNUPS_ALLOWED".into(), "false".into())));
+    }
+
+    #[test]
     fn setup_and_xml_rules() {
         let with = |extra: &str| parse(&format!("{OK}{extra}"));
         let setup = "setup:\n  file: config/system.xml\n  done: <Done>true</Done>\n";
@@ -1234,6 +1266,18 @@ mod tests {
         assert!(with("crowdsec:\n  collection: b\n  type: b\n").is_err());
         assert!(with("crowdsec:\n  collection: a/b c\n  type: b\n").is_err());
         assert!(with("crowdsec:\n  collection: a/b\n  type: \"b\\nc\"\n").is_err());
+        // authelia_paths: des chemins simples, seulement sans Authelia devant toute l'app
+        assert!(with("authelia_paths:\n  - /admin\n").is_ok());
+        assert!(with("authelia_paths:\n  - admin\n").is_err());
+        assert!(with("authelia_paths:\n  - /admin/\n").is_err());
+        assert!(with("authelia_paths:\n  - /a`b\n").is_err());
+        assert!(
+            parse(&format!(
+                "{}authelia_paths:\n  - /admin\n",
+                OK.replace("access: public", "access: two_factor")
+            ))
+            .is_err()
+        );
         // health_tool: curl ou wget, avec un chemin
         assert!(with("health: /ping\nhealth_tool: wget\n").is_ok());
         assert!(with("health: image\nhealth_tool: wget\n").is_err());

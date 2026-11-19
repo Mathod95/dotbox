@@ -694,13 +694,15 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Vaultwarden: le gestionnaire de mots de passe (niveau `app`, après CrowdSec)",
       "en": "Vaultwarden: the password manager (`app` level, after CrowdSec)",
       "journal": [
         "8.13",
-        "D40"
-      ]
+        "D40",
+        "J183-J184"
+      ],
+      "doc": "vaultwarden"
     },
     {
       "stage": "apps",

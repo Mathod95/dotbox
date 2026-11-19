@@ -323,6 +323,21 @@ services:
 ",
             c.access.as_str()
         ));
+        // des chemins derrière Authelia quand même (/admin): un routeur à eux, plus précis,
+        // donc prioritaire pour Traefik
+        for p in &m.authelia_paths {
+            let r = format!("{app}{}", p.replace('/', "-"));
+            out.push_str(&format!(
+                "      # {p}: derrière Authelia, en plus
+      traefik.http.routers.{r}.rule: Host(`{sub}.{domain}`) && PathPrefix(`{p}`)
+      traefik.http.routers.{r}.entrypoints: websecure
+      traefik.http.routers.{r}.service: {app}
+      traefik.http.routers.{r}.middlewares: authelia@docker
+",
+                sub = c.subdomain,
+                domain = c.domain
+            ));
+        }
     }
     out.push_str(
         "
@@ -542,6 +557,19 @@ mod tests {
         let expected =
             include_str!("../tests/expected/wizarr/compose.yml").replace("<version>", m.version());
         assert_eq!(compose(&m, &c), expected);
+    }
+
+    #[test]
+    fn vaultwarden_compose_is_the_expected_one() {
+        let m = load("vaultwarden");
+        let mut c = ctx(Access::App);
+        c.subdomain = "vaultwarden".into();
+        let expected = include_str!("../tests/expected/vaultwarden/compose.yml")
+            .replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+        // derrière Authelia tout entier: pas de routeur de plus
+        c.access = Access::TwoFactor;
+        assert!(!compose(&m, &c).contains("vaultwarden-admin"));
     }
 
     #[test]

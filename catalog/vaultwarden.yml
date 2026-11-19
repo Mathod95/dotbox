@@ -1,0 +1,34 @@
+# Vaultwarden: le gestionnaire de mots de passe, compatible avec les apps et extensions Bitwarden.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.13. Les {{...}} sont remplis par dotbox à l'installation.
+name: vaultwarden
+description: Password manager (Bitwarden compatible)
+min_dotbox: 0.0.4
+image: vaultwarden/server:1.37.5
+# sans root, il ne peut pas écouter sur 80: ROCKET_PORT plus bas
+port: 8080
+# sa propre connexion, pour les apps et les extensions Bitwarden; AppSec devant (10.7)
+access: app
+# l'image a son propre healthcheck (healthcheck.sh, curl sur ROCKET_PORT)
+health: image
+# l'image tourne en root sans lui (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+  ROCKET_PORT: "8080"
+  # son adresse publique: les liens, WebAuthn et les pièces jointes en dépendent
+  DOMAIN: "https://{{host}}"
+  # personne ne s'inscrit seul: tu t'invites, puis tes proches, depuis /admin
+  SIGNUPS_ALLOWED: "false"
+  INVITATIONS_ALLOWED: "true"
+  # /admin est derrière Authelia (authelia_paths): pas de jeton en plus, comme le prévoit
+  # Vaultwarden pour « a separate auth layer in front »
+  DISABLE_ADMIN_TOKEN: "true"
+volumes:
+  - data:/data
+authelia_paths:
+  - /admin
+# Mauvais mot de passe, mauvais code TOTP: CrowdSec lit ses logs et bannit l'IP (D72). Traefik
+# envoie la vraie IP dans X-Real-IP, l'en-tête que Vaultwarden lit par défaut.
+crowdsec:
+  collection: Dominic-Wagner/vaultwarden
+  type: vaultwarden

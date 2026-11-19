@@ -2006,7 +2006,28 @@ sudo_run.py 'ps -o user=,args= …; ls -la /opt/wizarr/database'`,
       does: "Les tests possibles avant l'assistant.",
       effect: "Aucun, lecture seule.",
       result: `route: 000 tant que le certificat du nouveau sous-domaine s'émet (quelques secondes), puis 302 vers https://auth.<domaine>; certificat Let's Encrypt (YR1) pour wizarr.<domaine>
-gunicorn tourne avec <user> (PUID), database.db à <user>, healthy` }
+gunicorn tourne avec <user> (PUID), database.db à <user>, healthy` },
+    { id: "J183", time: "00:13", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.13: dotbox install vaultwarden",
+      cmd: `scp (binaire bcee3cccd77dd1ff…, et le catalogue du PC avec catalog/vaultwarden.yml)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install vaultwarden --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan 8.13 (accord d'avance, D73). Sur le PC avant: fmt, clippy, 96 tests.",
+      effect: "Serveur: /opt/vaultwarden (data/, compose.yml), l'image vaultwarden/server:1.37.5, apps: vaultwarden dans dotbox.yml (niveau app), la collection Dominic-Wagner/vaultwarden et acquis.d/app-vaultwarden.yaml.",
+      undo: "sudo dotbox remove vaultwarden --purge",
+      result: `✓ [1/1] Vaultwarden   1.37.5, app                                       1 min 51 s
+container 1000:1000, healthy; crowdsec -t puis reload
+data/: db.sqlite3 et rsa_key.pem en 644, à <user> (backlog 8.13.1)` },
+    { id: "J184", time: "00:15", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.13: /admin derrière Authelia, la vraie IP, un ban de test",
+      cmd: `curl https://vaultwarden.<domaine>/alive, /, /admin, /admin/users, /.env   (depuis le PC)
+une connexion ratée depuis le PC, avec X-Real-IP et X-Forwarded-For: 203.0.113.99
+6 connexions ratées: docker exec vaultwarden curl -H "X-Real-IP: 198.51.100.7" http://localhost:8080/identity/connect/token
+sudo_run.py 'cscli decisions list -i 198.51.100.7; cscli decisions delete --ip 198.51.100.7'`,
+      does: "Vérifier les deux routeurs (l'app et /admin), qu'un client ne peut pas choisir l'IP que Vaultwarden note, et le scénario de CrowdSec.",
+      effect: "Une connexion ratée depuis le PC (sous le seuil), une décision de test retirée.",
+      result: `/alive 200, / 200, /admin et /admin/users 302 vers https://auth.<domaine>, /.env 403 (AppSec)
+la connexion depuis le PC: Vaultwarden note la vraie IP, pas 203.0.113.99 (Traefik remplace X-Real-IP)
+décision: Dominic-Wagner/vaultwarden-bf, ban, 6 événements, 4 h, sur 198.51.100.7; retirée` }
   ];
 
   var PLAN = [
@@ -2726,7 +2747,17 @@ volumes:
               sections: [ { h: "Ce que ça changerait", l: ["Un middleware Traefik qui retire CF-Connecting-IP avant Wizarr, puis un parseur à Dot Box pour cette ligne.", "Ou proposer à Wizarr de ne croire CF-Connecting-IP que derrière Cloudflare."] } ] }
           ],
           does: "Les invitations vers Jellyfin ou Plex. Niveau public: la page d'invitation doit s'ouvrir sans compte. Après 10.7 et un serveur média." },
-        { id: "8.13", kind: "ecriture", where: "PC → Serveur", title: "Vaultwarden (après AppSec)",
+        { id: "8.13", status: "fait", ref: "J183-J184", kind: "ecriture", where: "PC → Serveur", title: "Vaultwarden (après AppSec)",
+          lede: "Plan du 20 novembre 2026, accordé d'avance (D73). Image officielle 1.37.5, niveau app, avec ton utilisateur (ROCKET_PORT 8080, sans root). Vérifié dans son .env.template: SIGNUPS_ALLOWED=false (personne ne s'inscrit seul), INVITATIONS_ALLOWED, DISABLE_ADMIN_TOKEN prévu pour « a separate auth layer in front ». Le moteur apprend authelia_paths: /admin derrière Authelia, le reste ouvert à ses apps. Pas d'assistant à protéger: on s'invite depuis /admin. CrowdSec avec Dominic-Wagner/vaultwarden. Sa page dans la doc.",
+          links: [
+            { t: "Page Vaultwarden", u: "../vaultwarden/" },
+            { t: "Code source", u: "https://github.com/dani-garcia/vaultwarden" }
+          ],
+          backlog: [
+            { id: "8.13.1", kind: "ecriture", where: "PC (code) → Serveur", title: "Des fichiers secrets lisibles par tous",
+              lede: "/opt/vaultwarden/data est en 755, rsa_key.pem (la clé qui signe les connexions) et db.sqlite3 en 644 (J183). Même chose pour Seerr (8.7.2) et Authelia (8.9.2).",
+              sections: [ { h: "Ce que ça changerait", p: "dotbox passe les dossiers de données des apps en 700, à l'utilisateur: l'app, qui tourne avec lui, les lit toujours, les autres comptes du serveur non. À tester app par app (code-server lit /opt, D67)." } ] }
+          ],
           does: "Le gestionnaire de mots de passe (compatible Bitwarden). Niveau app, à cause des apps mobiles et des extensions. Après 10.7." },
         { id: "8.14", kind: "ecriture", where: "PC → Serveur", title: "Tautulli (après Plex)",
           does: "Les statistiques de Plex. two_factor. Après 8.11." },
@@ -3680,7 +3711,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
