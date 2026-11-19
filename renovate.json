@@ -47,6 +47,12 @@
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?(?:_v\\d+\\.\\d+\\.\\d+)?(?:-r\\d+)?-ls(?<revision>\\d+)$"
     },
     {
+      "description": "Jellyfin: seulement ses versions (12.4, 12.4.1). Il publie aussi unstable, des builds datés (2026111613) et la même image datée (12.4.20261026-211555), que Renovate prendrait pour des versions.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["jellyfin/jellyfin"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?$"
+    },
+    {
       "description": "Tout ce qui touche le catalogue: chore(catalog), jamais fix (pas de nouvelle version de dotbox, D64).",
       "matchFileNames": ["catalog/**"],
       "semanticCommitType": "chore",

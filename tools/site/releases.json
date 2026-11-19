@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma et code-server",
-        "en": "AppSec, qBittorrent, Uptime Kuma and code-server"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server et Jellyfin",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server and Jellyfin"
       },
       "new": [
         {
@@ -39,6 +39,22 @@
         {
           "fr": "Catalogue: le plugin CrowdSec de Traefik dans le core, dans son propre manifest (`catalog/core/crowdsec-plugin.yml`), version et empreinte suivies par Renovate",
           "en": "Catalog: Traefik's CrowdSec plugin in the core, in its own manifest (`catalog/core/crowdsec-plugin.yml`), version and checksum tracked by Renovate"
+        },
+        {
+          "fr": "Catalogue: Jellyfin, le serveur média, avec sa propre connexion pour ses apps, AppSec devant, `/data/media` en lecture seule et la vraie IP des clients",
+          "en": "Catalog: Jellyfin, the media server, with its own login for its apps, AppSec in front, `/data/media` read-only and the clients' real IP"
+        },
+        {
+          "fr": "Moteur: une app ouverte à Internet reste derrière Authelia jusqu'à la fin de son assistant de premier démarrage (`setup:` dans le manifest)",
+          "en": "Engine: an app open to the Internet stays behind Authelia until its first-run setup is done (`setup:` in the manifest)"
+        },
+        {
+          "fr": "Moteur: réglages XML sous une autre racine que `Config`, et une liste d'une valeur (`KnownProxies/string`)",
+          "en": "Engine: XML settings under another root than `Config`, and a one-value list (`KnownProxies/string`)"
+        },
+        {
+          "fr": "Moteur: un volume sur un dossier de `/data` (`/data/media`), préparé à l'utilisateur comme `/data`",
+          "en": "Engine: a volume on a folder of `/data` (`/data/media`), prepared for the user like `/data`"
         }
       ],
       "changed": [

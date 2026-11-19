@@ -1863,7 +1863,41 @@ init relancé: aucune écriture, aucun redémarrage` },
       does: "Le plugin est dans son propre manifest (D70): un serveur en v0.0.3 l'ignore et installe le core comme avant. Avec la doc (propositions #51 à #53), Releases, la Roadmap (AppSec ajouté, CrowdSec et le core du catalogue cochés) et le Journal.",
       effect: "GitHub: main, catalog/core/crowdsec-plugin.yml lisible par dotbox, Renovate suit la version du plugin, le site republié.",
       undo: "git revert du commit, puis git push",
-      result: "poussé sur main" }
+      result: "poussé sur main" },
+    { id: "J170", time: "23:16", status: "fait", where: "Serveur", kind: "lecture",
+      title: "8.6: le serveur avant Jellyfin",
+      cmd: `ls -la /dev/dri; lspci | grep -i "vga|3d|display"; nproc; free -h; df -h / /data; ls -la /data /data/media`,
+      does: "Dans le plan validé (8.6.7): un GPU pour le transcodage matériel? La place pour l'image et une vidéo de test.",
+      effect: "Aucun, lecture seule.",
+      result: `/dev/dri: absent, aucune carte graphique: pas de transcodage matériel sur le serveur de test (backlog 8.6.9)
+2 cœurs, 3,8 Go de RAM, 105 Go libres sur / (et /data)
+/data, /data/media et /data/torrents à <user>, /data/media vide` },
+    { id: "J171", time: "23:17", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.6: dotbox install jellyfin, l'assistant pas encore fait",
+      cmd: `scp (binaire 0.0.4 avec Jellyfin, sha256 5663d7a42beed5aa…, et le catalogue du PC avec catalog/jellyfin.yml)
+sudo_run.py 'cp /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.4-appsec.bak; install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install jellyfin --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan validé (8.6, D71). Sur le PC avant: fmt, clippy, 88 tests, renovate-config-validator, le binaire statique.",
+      effect: "Serveur: /opt/jellyfin (config/, cache/, compose.yml), config/config/network.xml écrit avant le premier démarrage, l'image jellyfin/jellyfin:12.4 (1 min 46 s de téléchargement), apps: jellyfin dans dotbox.yml (niveau app).",
+      undo: "sudo dotbox remove jellyfin --purge, puis sudo install -m 755 /usr/local/bin/dotbox-0.0.4-appsec.bak /usr/local/bin/dotbox",
+      result: `✓ [1/1] Jellyfin      12.4, two_factor until its first-run setup is do… 1 min 56 s
+  jellyfin      https://jellyfin.<domaine>  two_factor for now
+  → Open https://jellyfin.<domaine> and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install jellyfin: it opens to its apps (app).
+log: « check jellyfin: first-run setup not done yet, behind Authelia until then »
+La ligne de l'étape est coupée à 80 colonnes: texte raccourci sur le PC (« two_factor until its setup is done »).` },
+    { id: "J172", time: "23:19", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.6: Jellyfin derrière Authelia, ses réglages, relancé",
+      cmd: `sudo_run.py 'cat /opt/jellyfin/config/config/network.xml; ls -la /opt/jellyfin/config/config; docker inspect jellyfin; docker exec jellyfin touch /data/media/x; docker exec jellyfin curl http://localhost:8096/System/Info/Public; grep les logs de Jellyfin'
+curl https://jellyfin.<domaine>/ ; curl https://jellyfin.<domaine>/Startup/User   (depuis le PC)
+sudo_run.py 'dotbox install jellyfin --catalog /tmp/dotbox-catalog'`,
+      does: "Les tests de 8.6.7 possibles avant l'assistant. La seconde install vérifie qu'une relance ne change rien.",
+      effect: "Aucun: lectures, et une install qui n'a rien changé (le container n'a pas redémarré).",
+      result: `network.xml: <KnownProxies><string><réseau dotbox>/16</string></KnownProxies>, gardé tel quel par Jellyfin, en 600 à <user>
+container: user 1000:1000, healthy, /data/media monté en lecture seule (touch: « Read-only file system »)
+/System/Info/Public: LocalAddress « https://jellyfin.<domaine> » (JELLYFIN_PublishedServerUrl), StartupWizardCompleted false, ServerName = l'identifiant du container (backlog 8.6.10)
+Depuis le PC: / et /Startup/User → 302 vers https://auth.<domaine>, personne ne peut créer le compte admin
+healthy avant la fin du démarrage: /health répond 200 pendant que le reste répond 503 « Jellyfin Server is loading » (environ 20 s de plus, sur 2 cœurs)
+relancé: « check network.xml », « check image », « healthy », rien d'écrit, pas de redémarrage` }
   ];
 
   var PLAN = [
@@ -2323,7 +2357,12 @@ volumes:
                   "5. Fait (J153 à J155): Traefik ne redémarre pas, le socket proxy est recréé en une seconde, HTTPS répond. Sur le serveur, avec l'accord de Mathod95: sudo dotbox init relit le catalogue et met à jour le socket proxy, avec le même binaire v0.0.3. C'est la preuve de D64: une mise à jour du core sans nouvelle version de dotbox.",
                   "6. Les crates Rust et setup-python v7, le lundi: relues par Claude, fusionnées par Mathod95. argon2 0.6 et sha2 0.11 changent leur API, le code devra sans doute suivre."] }
           ],
-          effect: "PC: renovate.json, tools/bouncer_hashes.sh, .github/workflows/catalog.yml et catalog-hashes.yml (nouveaux). GitHub: la branche de la pull request #1, puis main." },
+          effect: "PC: renovate.json, tools/bouncer_hashes.sh, .github/workflows/catalog.yml et catalog-hashes.yml (nouveaux). GitHub: la branche de la pull request #1, puis main.",
+          backlog: [
+            { id: "7.14.1", kind: "ecriture", where: "PC (code) → GitHub", title: "La branche de test dans catalog-hashes.yml",
+              lede: "catalog-hashes.yml tourne encore pour la branche test/catalog-hashes, en plus des branches renovate/ (la condition if du job). Elle a servi au test de J149 et J150 et n'a plus de raison d'être.",
+              sections: [ { h: "Ce que ça changerait", p: "Retirer « || github.head_ref == 'test/catalog-hashes' » de la condition, et le commentaire au-dessus. Sans effet sur Renovate." } ] }
+          ] },
         { id: "7.15", status: "fait", ref: "J138-J143", kind: "ecriture", where: "PC → GitHub → Serveur", title: "Tester: le catalogue sur main, puis init et install sans --catalog",
           does: "Les tests sur le PC, puis catalog/ poussé sur main (avec l'accord de Mathod95: dotbox lit main), puis sur le serveur: dotbox init lit le catalogue (commit et date affichés) et installe le core depuis lui, dotbox install sonarr sans --catalog. Puis la réinstallation complète que prévoit Mathod95, en vrais certificats.",
           effect: "GitHub: catalog/ sur main. Serveur: /opt/dotbox/catalog/." }
@@ -2456,7 +2495,68 @@ volumes:
                 { h: "À trancher", p: "Par Mathod95." }
               ] }
           ] },
-        { id: "8.6", kind: "ecriture", where: "PC → Serveur", title: "Jellyfin (après CrowdSec)",
+        { id: "8.6", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Jellyfin (après CrowdSec)",
+          lede: "Plan détaillé du 19 novembre 2026, le premier du lot 2 après AppSec: Jellyfin, Plex, Seerr, Wizarr, Vaultwarden. Le premier serveur média et la première app au niveau app: sa propre connexion, sans Authelia devant, AppSec seul en protection. Chaque point vient du code de Jellyfin 12.4 et de son Dockerfile (jellyfin-packaging v12.4). Le moteur doit apprendre trois choses: un fichier XML à une autre racine que Config, une liste dans ce XML, et un volume sous /data. Rien n'est codé avant l'accord de Mathod95 et la réponse à Q38 et Q39. Plan validé le 19 novembre 2026 (« Go pour jellyfin »), après la lecture de ce que font Saltbox et QuickBox (N12): Q38 tranchée par D71, Q39 par D72.",
+          links: [
+            { t: "Code source", u: "https://github.com/jellyfin/jellyfin" },
+            { t: "Dockerfile", u: "https://github.com/jellyfin/jellyfin-packaging/blob/master/docker/Dockerfile" },
+            { t: "Image officielle", u: "https://hub.docker.com/r/jellyfin/jellyfin" }
+          ],
+          sections: [
+            { h: "8.6.1 Le manifest: catalog/jellyfin.yml",
+              l: ["Image officielle jellyfin/jellyfin:12.4 (26 octobre 2026). Jellyfin publie aussi 12.4.20261026-211555, la même image datée: on garde 12.4, comme Traefik.",
+                  "Port 8096, niveau app: la connexion de Jellyfin, pour les apps TV et mobiles, avec AppSec devant (10.7).",
+                  "health: image. Le Dockerfile a son healthcheck (curl sur /health), curl est dans l'image.",
+                  "user: \"{{uid}}:{{gid}}\" (7.11). Sans lui, Jellyfin tourne en root. Le Dockerfile met /config et /cache en 777: tout utilisateur convient.",
+                  "Volumes: config:/config (la base, config/ pour les réglages, log/ pour les logs), cache:/cache (les images et les transcodages en cours), /data/media:/data/media:ro.",
+                  "Aucun port publié: la découverte sur le réseau local (7359/udp) et le DLNA ne servent à rien sur un serveur dédié."] },
+            { h: "8.6.2 /data/media en lecture seule",
+              l: ["Jellyfin lit les médias, Radarr et Sonarr les rangent. En lecture seule, Jellyfin ne peut ni effacer un film ni écrire à côté: ses images, ses NFO et ses sous-titres téléchargés vont dans /opt/jellyfin/config.",
+                  "Moteur: un volume sous /data (ici /data/media) prépare aussi /data, /data/torrents et /data/media à l'utilisateur avant le démarrage. Aujourd'hui, seul /data:/data le fait, et Docker créerait /data/media en root si Jellyfin passait avant Radarr."] },
+            { h: "8.6.3 Les proxys de confiance: network.xml",
+              l: ["Sans KnownProxies, Jellyfin ignore X-Forwarded-For (ConfigureForwardHeaders, ApiServiceCollectionExtensions.cs): chaque client a l'IP de Traefik, vu comme sur le réseau local. Les limites de débit pour les clients à distance ne s'appliquent pas, et les logs n'ont pas la vraie IP.",
+                  "KnownProxies accepte un sous-réseau (TryParseToSubnet): {{subnet}}, le réseau dotbox, comme TrustedNetworks pour Radarr.",
+                  "Le fichier: /opt/jellyfin/config/config/network.xml, racine NetworkConfiguration, la liste écrite <KnownProxies><string>…</string></KnownProxies>. Moteur: le format xml accepte root: (Config par défaut) et une clé KnownProxies/string pour un élément dans un autre, comme les sections de l'ini.",
+                  "Écrit avant le premier démarrage: Jellyfin saute alors sa migration de network.xml (CreateNetworkConfiguration: le fichier existe) et complète le reste lui-même."] },
+            { h: "8.6.4 Le premier démarrage (Q38)",
+              l: ["Tant que l'assistant de premier démarrage n'est pas fini, FirstTimeSetupHandler.cs laisse n'importe qui appeler /Startup (créer le compte admin) et d'autres routes, dont celles qui parcourent les dossiers du serveur.",
+                  "Au niveau app, rien ne protège ce moment: AppSec ne bloque que les attaques connues, et le certificat d'une nouvelle adresse est publié dans les journaux de transparence, que des robots surveillent.",
+                  "Tranchée: D71. Le manifest déclare l'assistant (setup: le fichier system.xml et le texte <IsStartupWizardCompleted>true</IsStartupWizardCompleted>). Tant qu'il n'y est pas, dotbox install route Jellyfin derrière Authelia (two_factor), et le dit à la fin: ouvre l'adresse, fais l'assistant, puis relance sudo dotbox install jellyfin, qui passe au niveau app. dotbox.yml garde le niveau voulu (app)."] },
+            { h: "8.6.5 Les mots de passe devinés (Q39)",
+              l: ["Jellyfin ne verrouille aucun compte par défaut: LoginAttemptsBeforeLockout vaut -1, sans limite (UserManager.cs). Sans Authelia devant, un mot de passe peut être essayé sans fin.",
+                  "Le hub de CrowdSec a une collection pour ça, LePresidente/jellyfin: elle lit les logs de Jellyfin et bannit une IP après 5 échecs. Grâce à 8.6.3, ces logs ont la vraie IP.",
+                  "Tranchée: D72. Une sous-étape à part, 10.9, juste après Jellyfin et avant Plex et Vaultwarden. D'ici là, Jellyfin reste sur le serveur de test."] },
+            { h: "8.6.6 Renovate",
+              p: "Jellyfin publie aussi des images unstable et des builds datés (2026111613) que Renovate prendrait pour une version plus haute que 12.4. Une règle limite jellyfin/jellyfin aux versions X.Y et X.Y.Z." },
+            { h: "8.6.7 Tester",
+              l: ["Sur le PC: fmt, clippy, les tests (le compose.yml et le network.xml attendus), le binaire statique.",
+                  "Sur le serveur, avec l'accord de Mathod95 et le catalogue du PC: dotbox install jellyfin. HTTPS, le premier démarrage selon Q38, Jellyfin tourne avec ton utilisateur, /data/media refuse l'écriture dans le container, la vraie IP dans les logs de Jellyfin (masquée dans le Journal), /.env bloqué par AppSec, relancé sans rien changer, l'app repart après un redémarrage de Docker.",
+                  "Une vidéo libre (Big Buck Bunny) dans /data/media/movies, pour la lire dans le navigateur.",
+                  "Le transcodage matériel (/dev/dri) attendra: à vérifier si le serveur de test a un GPU, sinon backlog."] },
+            { h: "8.6.8 La doc",
+              p: "Sa page dans le groupe Apps (D55), une ligne dans Overview (proposition #54), la Roadmap, et la ligne de Releases quand le code est poussé." },
+            { h: "Ajouts après Saltbox et QuickBox (N12)",
+              l: ["L'adresse publique: Saltbox écrit PublishedServerUriBySubnet (external=https://jellyfin.<domaine>:443) pour que Jellyfin donne aux apps sa vraie adresse, pas http://<IP du container>:8096. Plus simple dans Jellyfin 12.4: la variable JELLYFIN_PublishedServerUrl, lue au démarrage pour tous les clients (InitializeOverrides, NetworkManager.cs). Elle va dans le compose, network.xml ne garde que KnownProxies.",
+                  "PublicHttpPort et PublicHttpsPort, que Saltbox met à 80 et 443: rien ne les lit dans Jellyfin 12.4 en dehors de la config. Pas écrits.",
+                  "Moteur: une variable d'environnement peut avoir des minuscules après sa première lettre (JELLYFIN_PublishedServerUrl, comme dans la doc de Jellyfin)."] },
+            { h: "À trancher", p: "Q38: qui fait l'assistant de premier démarrage. Tranchée: D71. Q39: bloquer qui devine les mots de passe. Tranchée: D72." },
+            { h: "Où on en est (19 novembre 2026, 23:30)",
+              l: ["Codé sur le PC: catalog/jellyfin.yml, le moteur (root: et Clé/Enfant en XML, setup:, un volume sous /data, une variable avec des minuscules), renovate.json. 88 tests.",
+                  "Testé sur le serveur (J170 à J172): installé derrière Authelia, network.xml pris par Jellyfin, l'adresse publique, /data/media en lecture seule, ton utilisateur, relancé sans rien changer. Pas de GPU sur le serveur de test (backlog 8.6.9).",
+                  "Reste: l'assistant, fait par Mathod95 dans son navigateur (page Jellyfin, étape 2), puis la seconde install (étape 3) et les tests du niveau app: la vraie IP dans les logs, /.env bloqué par AppSec, une vidéo libre lue, le redémarrage de Docker.",
+                  "La doc: la page Jellyfin (tout le déroulé de l'installation), Jellyfin dans le tableau proposé #50 d'Overview, la proposition #54 (le tableau des images), la Roadmap. Q40 ouverte en écrivant #54."] }
+          ],
+          backlog: [
+            { id: "8.6.9", kind: "ecriture", where: "PC (code) → Serveur", title: "Le transcodage matériel",
+              lede: "Sans GPU, Jellyfin transcode avec le processeur: une ou deux lectures à la fois sur un petit serveur. Saltbox active le GPU (jellyfin_role_docker_gpu_enabled), monte /dev/shm et met le transcodage dans un dossier à part.",
+              sections: [ { h: "Ce que ça changerait", l: ["dotbox regarde si le serveur a /dev/dri (Intel ou AMD) et l'ajoute au compose (devices, et le groupe render pour l'utilisateur).", "NVIDIA demande ses pilotes et le runtime de NVIDIA: hors des prérequis pour l'instant (pas de pilotes NVIDIA).", "D'abord vérifier si le serveur de test a un GPU."] } ] },
+            { id: "8.6.10", kind: "ecriture", where: "PC (code)", title: "Les réglages de system.xml que Saltbox pose",
+              lede: "Après l'assistant, Saltbox écrit dans system.xml le nom du serveur (ServerName), Quick Connect (se connecter sur une TV avec un code), la vue par dossiers (EnableFolderView) et l'accès à distance. Pour l'instant, ce sont les valeurs de Jellyfin.",
+              sections: [ { h: "Ce que ça changerait", p: "À regarder un par un dans le code de Jellyfin 12.4: la valeur par défaut, et si elle gêne." } ] },
+            { id: "8.6.11", kind: "ecriture", where: "PC (code)", title: "Les bibliothèques ajoutées par dotbox",
+              lede: "Dans l'assistant, tu ajoutes toi-même les bibliothèques (Films: /data/media/movies, Séries: /data/media/tv).",
+              sections: [ { h: "Ce que ça changerait", p: "Le câblage (étape 9) pourrait les ajouter par l'API de Jellyfin, comme les dossiers racine de Radarr et Sonarr." } ] }
+          ],
           does: "Le serveur média, au niveau app (sa propre connexion, pour les apps TV et mobiles). Image officielle jellyfin/jellyfin:12.4 (Jellyfin 12.4, 26 octobre 2026), port 8096, healthcheck de l'image (/health), /config et /cache, /data/media en lecture. Elle tourne en root sauf si le compose donne user: (7.11). Après CrowdSec (D40, D56).",
           effect: "PC: catalog/jellyfin.yml. Serveur: /opt/jellyfin, l'image de Jellyfin." },
         { id: "8.7", kind: "ecriture", where: "PC → Serveur", title: "Seerr (après CrowdSec)",
@@ -2496,6 +2596,18 @@ volumes:
           does: "Les statistiques de Jellyfin. two_factor. Après 8.6." },
         { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (après un serveur média)",
           does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11." },
+        { id: "8.17", kind: "ecriture", where: "PC → Serveur", title: "autobrr",
+          does: "Attrape les nouvelles sorties sur les canaux d'annonce des trackers (IRC, RSS) et les envoie à qBittorrent, Radarr ou Sonarr. two_factor. Ajouté au Journal le 19 novembre 2026: il n'était que dans la Roadmap." },
+        { id: "8.18", kind: "ecriture", where: "PC → Serveur", title: "Maintainerr",
+          does: "Le ménage dans la bibliothèque, selon des règles (pas vu depuis un an, demandé par quelqu'un qui est parti...). Il parle à Plex ou Jellyfin, Seerr, Radarr et Sonarr. two_factor. Après un serveur média. Ajouté au Journal le 19 novembre 2026." },
+        { id: "8.19", kind: "ecriture", where: "PC → Serveur", title: "Gitea",
+          does: "L'hébergement de dépôts Git. Un port SSH publié pour git push (D44), en plus du web. Niveau à trancher: app (sa propre connexion, pour git en HTTPS) ou two_factor. Ajouté au Journal le 19 novembre 2026." },
+        { id: "8.20", kind: "ecriture", where: "PC → Serveur", title: "Backstage",
+          does: "À préciser avec Mathod95: plusieurs containers et une base de données, que le moteur ne gère pas encore (un seul container par app). Ajouté au Journal le 19 novembre 2026." },
+        { id: "8.21", kind: "ecriture", where: "PC → Serveur", title: "WireGuard",
+          does: "Un VPN vers le serveur: un port UDP publié et des droits réseau sur le container (NET_ADMIN), que le moteur ne donne pas encore. C'est aussi le chemin choisi pour ne jamais être banni par CrowdSec (D63). Ajouté au Journal le 19 novembre 2026." },
+        { id: "8.22", kind: "ecriture", where: "PC → Serveur", title: "NetBird",
+          does: "Un réseau privé entre tes appareils et le serveur, au-dessus de WireGuard: un port UDP et des droits réseau, comme 8.21. Ajouté au Journal le 19 novembre 2026." },
 
       ] },
     { phase: "9", group: "encours", title: "Le câblage: relier les apps entre elles",
@@ -2713,6 +2825,9 @@ sudo docker info --format '{{.LoggingDriver}} live-restore={{.LiveRestoreEnabled
           ],
           does: "D60: le plugin CrowdSec de Traefik (v1.8.2) et AppSec, le WAF de CrowdSec (source AppSec dans l'agent, règles de virtual patching), sur les seules apps sans Authelia devant (niveaux app et public): leurs requêtes passent par CrowdSec avant d'atteindre l'app, une attaque connue est bloquée dès la première. Avant Jellyfin (8.6) et Seerr (8.7), qui en profiteront les premiers. Le portail d'Authelia aussi (accord de Mathod95): sa page de connexion est ouverte à Internet, et c'est l'app qui permet de tester AppSec tout de suite. Une copie locale du plugin, vérifiée, que Traefik lit sur le disque: son catalogue n'est plus nécessaire au démarrage, une panne ne fait plus tomber la connexion. Sa version et son empreinte vont dans catalog/core/crowdsec.yml (D64), pas dans le binaire: 10.7 vient donc après 7.6, 7.12 et 7.13.",
           effect: "PC: catalog/core/crowdsec.yml, src/catalog.rs, src/crowdsec.rs, src/traefik.rs, src/engine.rs, renovate.json, catalog-hashes.yml. Serveur: /opt/crowdsec/config/acquis.d/, /opt/traefik/plugins-local/, /opt/dotbox/secrets/, les compose.yml de Traefik et CrowdSec." },
+        { id: "10.9", kind: "ecriture", where: "PC (code) → Serveur", title: "Les logs des apps sans Authelia (D72)",
+          does: "Juste après Jellyfin (8.6), avant Plex et Vaultwarden. Le manifest d'une app app ou public dit quels logs lire et quelle collection du hub installer: LePresidente/jellyfin pour Jellyfin (5 échecs de connexion en 20 secondes, ou 5 noms d'utilisateur essayés en une minute). dotbox install ajoute la source à CrowdSec, installe la collection et redémarre CrowdSec. Grâce à KnownProxies (8.6.3), les logs de Jellyfin ont la vraie IP. Test: des connexions ratées depuis une IP de test, bannie puis débannie, jamais la tienne (D63). Plan détaillé à écrire ici avant de coder.",
+          effect: "PC: src/crowdsec.rs, src/apps.rs, catalog/jellyfin.yml. Serveur: une source et une collection de plus dans CrowdSec." },
         { id: "10.8", kind: "ecriture", where: "PC", title: "La doc, Releases et Roadmap",
           note: "Propositions #51 (le tableau « En un coup d'œil »: CrowdSec et AppSec en place), #52 (CrowdSec n'est plus « prévu ») et #53 (la section AppSec telle qu'elle est faite) dans Security, le 19 novembre 2026. Releases (next) et Roadmap à jour.",
           does: "La page Security (D62) mise à jour, une proposition (en encadrés) pour les pages Getting Started qui parlent de CrowdSec (Basics, Installation, Post-installation, Prerequisites pour D59), les lignes de next, la feature cochée. Puis Jellyfin (8.6) et Seerr (8.7).",
@@ -2740,6 +2855,13 @@ sudo nft list ruleset | grep 198.51.100.7
 sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           does: "Bannit une IP de documentation (pas une vraie machine), vérifie qu'elle est bloquée au pare-feu, puis la débannit.",
           effect: "Serveur: aucune trace durable." }
+      ] },
+    { phase: "11", group: "avenir", title: "L'interface web de Dot Box",
+      intro: "Ajoutée au Journal le 19 novembre 2026: l'interface web n'avait qu'une ligne dans la Roadmap. La spécification (Basics, Accessing Apps): Dot Box a sa propre interface web sur dotbox.<domaine>, installée par dotbox init avec le core, derrière Authelia. La CLI passe par la même API. Elle montre le catalogue, l'état des apps, les logs d'installation en direct, et sait importer un compose. Après les apps (D73).",
+      steps: [
+        { id: "11.1", kind: "ecriture", where: "PC", title: "Le plan",
+          does: "Écrire ici le plan détaillé avant de coder: l'API (dans le binaire dotbox, ou un service à part), le front (dans le style Dot Hub de la page d'accueil), son container et sa route dans Traefik, ce que la CLI garde en local, comment l'API pilote Docker sans donner le socket au navigateur. Avec les questions à trancher par Mathod95.",
+          effect: "PC: tools/site/docs/journal.html." }
       ] }
   ];
 
@@ -2967,7 +3089,16 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       reco: "Choix de Mathod95 du 19 novembre 2026: « Go bloquer, et on réétudiera la question plus tard si besoin. » CrowdsecAppsecUnreachableBlock et CrowdsecAppsecFailureBlock à true (le défaut du plugin)." },
     { t: "Un nouveau morceau du core dans un nouveau manifest",
       p: "Mathod95 veut pousser sur main au fil de l'eau et taguer plus tard. Or le binaire publié (v0.0.3) lit catalog/core/traefik.yml, authelia.yml et crowdsec.yml sur main à chaque init: un format qu'il ne connaît pas dans l'un d'eux arrête toute nouvelle installation. Il ignore en revanche les autres fichiers de catalog/core/.",
-      reco: "Le plugin de Traefik va dans son propre manifest, catalog/core/crowdsec-plugin.yml (min_dotbox 0.0.4), et non dans crowdsec.yml. Règle pour la suite: un nouveau morceau du core va dans un nouveau manifest, jamais dans un format qu'une release déjà publiée ne lit pas. On pousse sur main sans attendre le tag." }
+      reco: "Le plugin de Traefik va dans son propre manifest, catalog/core/crowdsec-plugin.yml (min_dotbox 0.0.4), et non dans crowdsec.yml. Règle pour la suite: un nouveau morceau du core va dans un nouveau manifest, jamais dans un format qu'une release déjà publiée ne lit pas. On pousse sur main sans attendre le tag." },
+    { t: "Jellyfin derrière Authelia jusqu'à la fin de son assistant (Q38)",
+      p: "Tant que l'assistant de premier démarrage de Jellyfin n'est pas fini, n'importe qui peut créer le compte admin par son API (FirstTimeSetupHandler.cs). Saltbox démarre Jellyfin ouvert et attend qu'on fasse l'assistant (une pause, puis Entrée), QuickBox ne fait rien (N12).",
+      reco: "Choix de Mathod95 du 19 novembre 2026 (« Go pour jellyfin », l'option A proposée). Le manifest d'une app app ou public peut déclarer son assistant (setup: un fichier et le texte que l'app y écrit à la fin). Tant que le texte n'y est pas, dotbox install la route derrière Authelia (two_factor) et dit quoi faire: ouvrir l'adresse, faire l'assistant, relancer sudo dotbox install <app>, qui passe au niveau voulu. Le même mécanisme servira à Seerr, Wizarr et Vaultwarden." },
+    { t: "CrowdSec lit les logs des apps sans Authelia (Q39)",
+      p: "Jellyfin ne verrouille aucun compte par défaut, et AppSec ne compte pas les échecs de connexion. Ni Saltbox ni QuickBox ne protègent la connexion de Jellyfin (N12).",
+      reco: "Choix de Mathod95 du 19 novembre 2026. Une sous-étape à part (10.9), juste après Jellyfin et avant Plex et Vaultwarden: le manifest dit quels logs lire et quelle collection du hub installer (LePresidente/jellyfin pour Jellyfin), CrowdSec bannit une IP après 5 échecs, au pare-feu et dans Traefik. D'ici là, Jellyfin reste sur le serveur de test." },
+    { t: "Le tag v0.0.4 après les apps manquantes",
+      p: "Jusqu'ici le Journal disait: le tag v0.0.4 à la fin du lot (Uptime Kuma, code-server, J161, J165). Mathod95 a repoussé le tag deux fois: « on posera le tag une fois AppSec, puis Jellyfin, Plex, Seerr, Wizarr et Vaultwarden », puis « On fait toutes les apps manquantes et on push le tag ».",
+      reco: "Choix de Mathod95 du 19 novembre 2026: une app après l'autre, chacune poussée sur main sans tag (D70), puis le tag v0.0.4 quand les apps manquantes sont faites. Une app qui demande une question à trancher (une base de données à côté, des droits réseau) attend sa réponse sans bloquer les autres." },
   ];
 
   var QUESTIONS = [
@@ -3181,6 +3312,29 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Bloquer (le défaut du plugin): sûr, mais Jellyfin, Seerr et le portail d'Authelia répondent 403 tant que CrowdSec est absent.",
           "Laisser passer: les apps restent ouvertes, sans WAF le temps de la panne. Le pare-feu bloque toujours les IP déjà bannies."],
       reco: "Proposé: bloquer. Une panne de CrowdSec reste rare et courte, et c'est le moment qu'un attaquant choisirait. Uptime Kuma (8.8) peut prévenir quand CrowdSec ne répond plus." },
+    { n: 38, done: "D71", t: "Jellyfin: qui fait l'assistant de premier démarrage?",
+      p: "Tant que l'assistant n'est pas fini, l'API de Jellyfin laisse n'importe qui créer le compte admin et parcourir les dossiers du serveur (FirstTimeSetupHandler.cs). Au niveau app, sans Authelia devant, rien ne protège ce moment (8.6.4). Seerr, Wizarr et Vaultwarden ont aussi une première visite ouverte.",
+      l: ["A. Derrière Authelia jusqu'à la fin de l'assistant: dotbox installe Jellyfin au niveau two_factor tant que system.xml ne dit pas IsStartupWizardCompleted. Tu fais l'assistant dans ton navigateur (langue, compte, bibliothèques), puis tu relances sudo dotbox install jellyfin, qui passe au niveau app. Le même mécanisme resservira aux apps suivantes.",
+          "B. dotbox fait l'assistant lui-même, pendant que la route est encore derrière Authelia: le compte admin à ton nom, un mot de passe généré, gardé dans /opt/dotbox/secrets et relu par une commande, comme celui d'Authelia. Puis le niveau app tout de suite. Rien à relancer, mais un mot de passe de plus géré par dotbox, et les bibliothèques à ajouter ensuite dans Jellyfin.",
+          "C. Rien de plus: Jellyfin ouvert dès l'installation, à toi de faire l'assistant tout de suite."],
+      reco: "Proposé: A. Aucune fenêtre ouverte, l'assistant reste le tien (ta langue, tes bibliothèques), et le mécanisme servira à Seerr, Wizarr et Vaultwarden." },
+    { n: 39, done: "D72", t: "Jellyfin: bloquer qui devine les mots de passe?",
+      p: "Jellyfin ne verrouille aucun compte par défaut (LoginAttemptsBeforeLockout à -1, UserManager.cs). Sans Authelia devant, un mot de passe peut être essayé sans fin. AppSec bloque les attaques connues, pas les essais de mots de passe (8.6.5).",
+      l: ["CrowdSec lit les logs de Jellyfin (collection LePresidente/jellyfin du hub) et bannit une IP après 5 échecs, au pare-feu et dans Traefik. Le manifest dit quels logs lire et quelle collection installer: le même mécanisme servira à Vaultwarden et Plex.",
+          "Le verrouillage de Jellyfin (LoginAttemptsBeforeLockout) sur ton compte: le compte se bloque après quelques échecs, mais un attaquant peut alors le bloquer exprès.",
+          "Plus tard: Jellyfin d'abord, la protection ensuite."],
+      reco: "Proposé: la première, dans une sous-étape à part juste après Jellyfin et avant Plex et Vaultwarden, qui en auront besoin aussi. D'ici là, Jellyfin reste sur le serveur de test." },
+    { n: 40, t: "qBittorrent et code-server: l'image officielle plutôt que linuxserver?",
+      p: "D53 dit: l'image officielle quand le projet en publie une et la maintient, sinon linuxserver. Vérifié le 19 novembre 2026 en écrivant la proposition #54: qBittorrent publie qbittorrentofficial/qbittorrent-nox (5.3.0-2, 20 octobre 2026) et Coder publie codercom/code-server (4.145.2-39, 7 novembre 2026). Les deux ont été pris chez linuxserver (8.4, 8.9) sans les comparer.",
+      l: ["Garder linuxserver: les mêmes conventions que Radarr et Sonarr (PUID, PGID, /config), déjà testé. D53 gagne une exception écrite.",
+          "Passer aux images officielles: suivre D53. À vérifier pour chacune: l'utilisateur (PUID ou user:), les dossiers, le healthcheck, le rythme des versions. qBittorrent garde ses réglages INI, code-server sa variable de dossier."],
+      reco: "Proposé: comparer les deux images de chaque app (taille, utilisateur, mises à jour) avant de trancher, après le lot 2." },
+    { n: 41, t: "Docker: fixer sa version?",
+      p: "dotbox init installe Docker depuis son dépôt officiel, à la dernière version du jour (Docker 29.9.3 sur le serveur de test), puis n'y touche plus: pas d'apt full-upgrade (décision du 9 novembre). Les images, Traefik, Authelia et CrowdSec ont une version fixée dans le catalogue (D15, D64), Docker non. Noté le 19 novembre 2026, jamais tranché.",
+      l: ["Garder la dernière du dépôt à l'installation: simple. Deux serveurs installés à des dates différentes n'ont pas le même Docker, et une nouvelle version de Docker peut casser une app sans que le catalogue change.",
+          "Fixer la version dans le catalogue (catalog/core/docker.yml, D70), suivie par Renovate: le même Docker partout, testé avant d'être pris. Mais le numéro des paquets change selon le système (5:29.9.3-1~debian.13~trixie), et dotbox init doit alors savoir faire une mise à jour de Docker.",
+          "Une version minimale seulement: dotbox init refuse un Docker trop vieux, dotbox doctor signale une mise à jour en attente."],
+      reco: "Proposé: la troisième pour l'instant, la deuxième avec dotbox update (Mises à jour), quand le core saura se mettre à jour." },
   ];
 
 
@@ -3284,7 +3438,17 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           "Une clé d'API est un mot de passe entre programmes: tout programme qui pilote Radarr doit la présenter (en-tête X-Api-Key). C'est elle qu'on recopie dans Prowlarr pour qu'il envoie ses indexeurs à Radarr.",
           "Le câblage, c'est ce qu'on fait sinon à la main dans les interfaces: dans Radarr et Sonarr, ajouter qBittorrent comme client de téléchargement (adresse, mot de passe, catégorie) et le dossier racine (/data/media/movies, /data/media/tv), dans Prowlarr, ajouter Radarr et Sonarr (adresse et clé d'API). Saltbox ne le fait pas. Dot Box le proposera par une commande à part (D45, étape 9).",
           "Les apps se parlent sur le réseau dotbox par le nom de leur container (http://radarr:7878, http://qbittorrent:8080), sans passer par Traefik ni Authelia. dotbox, lui, tourne sur le serveur: il les joint à leur adresse sur ce réseau."],
-      refs: "D43, D44, D45, Q29, Q30, étapes 8 et 9" }
+      refs: "D43, D44, D45, Q29, Q30, étapes 8 et 9" },
+    { t: "Jellyfin: ce que font Saltbox et QuickBox",
+      p: "Lu le 19 novembre 2026, avant de coder 8.6: le rôle jellyfin de Saltbox (roles/jellyfin, son rôle crowdsec), l'installeur de QuickBox Lite (installpackage-jellyfin) et la doc de QuickBox Pro (code fermé).",
+      l: ["Saltbox: l'image de hotio (ghcr.io/hotio/jellyfin:release, PUID et PGID), le GPU activé, /dev/shm monté, /tmp en mémoire, un dossier de transcodage à part, les médias en lecture et écriture.",
+          "Saltbox, l'assistant: Jellyfin démarre ouvert, sans Authelia (jellyfin_role_traefik_sso_middleware vide), puis l'installation s'arrête: « Please open …/wizardstart.html. Hit enter after having finished the wizard ». Ensuite il arrête Jellyfin, écrit system.xml et network.xml, et le relance.",
+          "Saltbox, network.xml: KnownProxies à traefik (le nom du container, résolu au démarrage), PublishedServerUriBySubnet à external=https://jellyfin.<domaine>:443, PublicHttpPort et PublicHttpsPort à 80 et 443. system.xml: ServerName, QuickConnectAvailable, EnableFolderView, EnableRemoteAccess, seulement à la première installation.",
+          "Saltbox, CrowdSec: un rôle à part, pas installé par défaut. Il ne lit que les logs du système et de Traefik, et installe crowdsecurity/plex sans lire les logs de Plex. Rien pour Jellyfin.",
+          "QuickBox Lite: pas de Docker, le paquet jellyfin par apt, après un apt-get upgrade de tout le système. nginx sous un chemin (/jellyfin/), network.xml écrit en entier avec KnownProxies vide: Jellyfin ne voit jamais la vraie IP. L'assistant est laissé à l'utilisateur, sans protection.",
+          "QuickBox Pro: qb install jellyfin -u <user>, -d pour un sous-domaine avec certificat. Une instance par utilisateur, ports 8096 et 8920 augmentés pour chacun. L'assistant: un compte admin local, les bibliothèques, la langue, l'accès à distance.",
+          "Ce que Dot Box reprend: l'adresse publique donnée aux apps (par JELLYFIN_PublishedServerUrl), les proxys de confiance (par le sous-réseau dotbox). Ce qu'il fait en plus: l'assistant derrière Authelia (D71), les échecs de connexion lus par CrowdSec (D72), les médias en lecture seule, l'image officielle (D53)."],
+      refs: "8.6, D71, D72" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -3344,20 +3508,20 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
   };
   var QHOME = {
-    "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
-    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36], "9": [30], "10": [3, 11, 31, 32, 33, 37], "sans": [9]
+    "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
+    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "sans": [9]
   };
-  var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11], "10": [1, 2, 3] };
+  var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

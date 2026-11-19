@@ -24,6 +24,7 @@
 
   <h2 id="fr-images">D'où viennent les images</h2>
   <p>Dot Box prend <b>l'image officielle du projet</b>, quand il en publie une et la maintient. Sinon, celle de <b>linuxserver.io</b>. Toujours à une <b>version précise</b>, jamais <code>latest</code>: une mise à jour est un changement voulu et testé, jamais une surprise au redémarrage.</p>
+  <div class="prop-old" data-prop="54">
   <div class="table-scroll"><table>
     <thead><tr><th>Composant</th><th>Image</th><th>Pourquoi</th></tr></thead>
     <tbody>
@@ -32,6 +33,18 @@
       <tr><td>Socket proxy de Traefik</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
     </tbody>
   </table></div>
+  </div>
+  <div class="prop-new" data-prop="54">
+  <div class="table-scroll"><table>
+    <thead><tr><th>Composant</th><th>Image</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td>Traefik, Authelia, CrowdSec, qui, Uptime Kuma, Jellyfin</td><td>officielles</td><td>Les projets publient leur image.</td></tr>
+      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>Le projet Servarr ne publie pas d'image officielle. Son wiki renvoie vers linuxserver et hotio.</td></tr>
+      <tr><td>qBittorrent, code-server</td><td>linuxserver</td><td>Pour les mêmes conventions que Radarr et Sonarr. Leurs projets publient aussi une image officielle: le choix sera revu.</td></tr>
+      <tr><td>Socket proxy de Traefik</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
+    </tbody>
+  </table></div>
+  </div>
   <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
 
   <h2 id="fr-catalog">Les apps du catalogue</h2>
@@ -50,6 +63,7 @@
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
     <tbody>
+      <tr><td><a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a></td><td>Le serveur média</td><td>app</td></tr>
       <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Les indexeurs, pour Radarr et Sonarr</td><td>two_factor</td></tr>
       <tr><td><a href="__DOC_QBITTORRENT__"__DOC_QBITTORRENT_TARGET__>qBittorrent</a></td><td>Le client BitTorrent, pour Radarr et Sonarr</td><td>two_factor</td></tr>
       <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>Une interface web pour qBittorrent</td><td>two_factor</td></tr>
@@ -84,6 +98,7 @@
 
   <h2 id="en-images">Where the images come from</h2>
   <p>Dot Box uses <b>the project's official image</b>, when it publishes and maintains one. Otherwise, the <b>linuxserver.io</b> one. Always at a <b>precise version</b>, never <code>latest</code>: an update is a deliberate, tested change, never a surprise on restart.</p>
+  <div class="prop-old" data-prop="54">
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Image</th><th>Why</th></tr></thead>
     <tbody>
@@ -92,6 +107,18 @@
       <tr><td>Traefik's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
     </tbody>
   </table></div>
+  </div>
+  <div class="prop-new" data-prop="54">
+  <div class="table-scroll"><table>
+    <thead><tr><th>Component</th><th>Image</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Traefik, Authelia, CrowdSec, qui, Uptime Kuma, Jellyfin</td><td>official</td><td>The projects publish their image.</td></tr>
+      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>The Servarr project does not publish an official image. Its wiki points to linuxserver and hotio.</td></tr>
+      <tr><td>qBittorrent, code-server</td><td>linuxserver</td><td>For the same conventions as Radarr and Sonarr. Their projects also publish an official image: the choice will be reviewed.</td></tr>
+      <tr><td>Traefik's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
+    </tbody>
+  </table></div>
+  </div>
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
@@ -110,6 +137,7 @@
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
     <tbody>
+      <tr><td><a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a></td><td>The media server</td><td>app</td></tr>
       <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Indexers, for Radarr and Sonarr</td><td>two_factor</td></tr>
       <tr><td><a href="__DOC_QBITTORRENT__"__DOC_QBITTORRENT_TARGET__>qBittorrent</a></td><td>The BitTorrent client, for Radarr and Sonarr</td><td>two_factor</td></tr>
       <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>A web interface for qBittorrent</td><td>two_factor</td></tr>

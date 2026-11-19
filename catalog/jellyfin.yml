@@ -1,0 +1,35 @@
+# Jellyfin: le serveur média, pour regarder films et séries depuis n'importe quel appareil.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.6. Les {{...}} sont remplis par dotbox à l'installation.
+name: jellyfin
+description: Media server
+min_dotbox: 0.0.4
+image: jellyfin/jellyfin:12.4
+port: 8096
+# sa propre connexion, pour les apps TV et mobiles; AppSec devant (10.7)
+access: app
+# l'image a son propre healthcheck (curl sur /health)
+health: image
+# l'image tourne en root sans lui; son Dockerfile laisse /config et /cache à tous (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+  # l'adresse que Jellyfin donne à ses apps, au lieu de l'IP de son container (ApplicationHost.cs)
+  JELLYFIN_PublishedServerUrl: "https://{{host}}"
+volumes:
+  - config:/config
+  - cache:/cache
+  # Jellyfin lit les médias, Radarr et Sonarr les rangent: il n'y écrit rien (8.6.2)
+  - /data/media:/data/media:ro
+# Traefik est sur le réseau dotbox: Jellyfin croit ses en-têtes X-Forwarded-For et voit la vraie
+# IP des clients (ConfigureForwardHeaders, ApiServiceCollectionExtensions.cs).
+settings:
+  file: config/config/network.xml
+  format: xml
+  root: NetworkConfiguration
+  values:
+    KnownProxies/string: "{{subnet}}"
+# Tant que son assistant n'est pas fini, n'importe qui peut créer le compte admin
+# (FirstTimeSetupHandler.cs): Jellyfin reste derrière Authelia jusque-là (D71).
+setup:
+  file: config/config/system.xml
+  done: <IsStartupWizardCompleted>true</IsStartupWizardCompleted>

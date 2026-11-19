@@ -52,17 +52,30 @@ fn xml_escape(v: &str) -> String {
 
 /// Pose des réglages dans un fichier XML à plat (<Config><Clé>valeur</Clé>...</Config>), en
 /// gardant tout le reste (la clé d'API, par exemple). Sans fichier, il est créé avec ces seuls
-/// réglages: l'app complète le reste au démarrage.
-pub fn merge_xml(existing: Option<&str>, values: &[(String, String)]) -> Result<String, String> {
+/// réglages: l'app complète le reste au démarrage. `root`: l'élément racine (Config pour les
+/// *arr, NetworkConfiguration pour Jellyfin). Une clé « Clé/Enfant » met un seul élément dans
+/// Clé, à la place de son contenu: une liste d'une valeur (<KnownProxies><string>…</string>).
+pub fn merge_xml(
+    existing: Option<&str>,
+    root: &str,
+    values: &[(String, String)],
+) -> Result<String, String> {
+    let end_root = format!("</{root}>");
     let mut text = match existing {
         Some(t) if !t.trim().is_empty() => t.to_string(),
-        _ => "<Config>\n</Config>\n".to_string(),
+        _ => format!("<{root}>\n{end_root}\n"),
     };
-    if !text.contains("</Config>") {
-        return Err("no </Config> in the file: not the expected format".into());
+    if !text.contains(&end_root) {
+        return Err(format!(
+            "no {end_root} in the file: not the expected format"
+        ));
     }
-    for (key, value) in values {
+    for (path, value) in values {
         let v = xml_escape(value);
+        let (key, child) = match path.split_once('/') {
+            Some((k, c)) => (k, Some(c)),
+            None => (path.as_str(), None),
+        };
         let open = format!("<{key}>");
         let close = format!("</{key}>");
         if let Some(i) = text.find(&open) {
@@ -71,16 +84,50 @@ pub fn merge_xml(existing: Option<&str>, values: &[(String, String)]) -> Result<
                 .find(&close)
                 .ok_or(format!("<{key}> without </{key}>"))?
                 + start;
-            text.replace_range(start..end, &v);
+            let inner = match child {
+                None => v,
+                Some(c) => {
+                    let want = format!("<{c}>{v}</{c}>");
+                    // déjà là, même avec d'autres retours à la ligne: on ne touche à rien
+                    let current: String = text[start..end]
+                        .lines()
+                        .map(str::trim)
+                        .collect::<Vec<_>>()
+                        .concat();
+                    if current == want {
+                        continue;
+                    }
+                    let line_start = text[..i].rfind('\n').map(|n| n + 1).unwrap_or(0);
+                    let indent: String = text[line_start..i]
+                        .chars()
+                        .take_while(|c| c.is_whitespace())
+                        .collect();
+                    format!("\n{indent}  {want}\n{indent}")
+                }
+            };
+            text.replace_range(start..end, &inner);
         } else if let Some((i, len)) = [format!("<{key} />"), format!("<{key}/>")]
             .iter()
             .find_map(|e| text.find(e.as_str()).map(|i| (i, e.len())))
         {
-            text.replace_range(i..i + len, &format!("{open}{v}{close}"));
+            let line_start = text[..i].rfind('\n').map(|n| n + 1).unwrap_or(0);
+            let indent: String = text[line_start..i]
+                .chars()
+                .take_while(|c| c.is_whitespace())
+                .collect();
+            let inner = match child {
+                None => v,
+                Some(c) => format!("\n{indent}  <{c}>{v}</{c}>\n{indent}"),
+            };
+            text.replace_range(i..i + len, &format!("{open}{inner}{close}"));
         } else {
-            let at = text.rfind("</Config>").unwrap_or(text.len());
+            let at = text.rfind(&end_root).unwrap_or(text.len());
             let line = if text[..at].ends_with('\n') { "" } else { "\n" };
-            text.insert_str(at, &format!("{line}  {open}{v}{close}\n"));
+            let inner = match child {
+                None => v,
+                Some(c) => format!("\n    <{c}>{v}</{c}>\n  "),
+            };
+            text.insert_str(at, &format!("{line}  {open}{inner}{close}\n"));
         }
     }
     Ok(text)
@@ -324,13 +371,14 @@ mod tests {
         let v = |k: &str, x: &str| (k.to_string(), x.to_string());
         // pas de fichier: seulement nos réglages
         assert_eq!(
-            merge_xml(None, &[v("AuthenticationMethod", "External")]).unwrap(),
+            merge_xml(None, "Config", &[v("AuthenticationMethod", "External")]).unwrap(),
             "<Config>\n  <AuthenticationMethod>External</AuthenticationMethod>\n</Config>\n"
         );
         // un fichier de Radarr: la clé d'API reste, une valeur change, une vide se remplit, une manque
         let radarr = "<Config>\n  <ApiKey>abc123</ApiKey>\n  <AuthenticationMethod>Forms</AuthenticationMethod>\n  <AllowedHosts></AllowedHosts>\n  <Port>7878</Port>\n</Config>";
         let out = merge_xml(
             Some(radarr),
+            "Config",
             &[
                 v("AuthenticationMethod", "External"),
                 v("AllowedHosts", "radarr.example.com,radarr"),
@@ -344,14 +392,24 @@ mod tests {
         );
         // relancé: rien ne change
         assert_eq!(
-            merge_xml(Some(&out), &[v("AuthenticationMethod", "External")]).unwrap(),
+            merge_xml(
+                Some(&out),
+                "Config",
+                &[v("AuthenticationMethod", "External")]
+            )
+            .unwrap(),
             out
         );
         assert_eq!(
-            merge_xml(Some("<Config>\n  <A />\n</Config>"), &[v("A", "x & y")]).unwrap(),
+            merge_xml(
+                Some("<Config>\n  <A />\n</Config>"),
+                "Config",
+                &[v("A", "x & y")]
+            )
+            .unwrap(),
             "<Config>\n  <A>x &amp; y</A>\n</Config>"
         );
-        assert!(merge_xml(Some("<Other/>"), &[v("A", "x")]).is_err());
+        assert!(merge_xml(Some("<Other/>"), "Config", &[v("A", "x")]).is_err());
     }
 
     #[test]
@@ -404,6 +462,51 @@ mod tests {
         );
         // relancé: rien ne change
         assert_eq!(merge_ini(Some(&out), &values).unwrap(), out);
+    }
+
+    #[test]
+    fn jellyfin_compose_is_the_expected_one() {
+        let m = load("jellyfin");
+        let mut c = ctx(Access::App);
+        c.subdomain = "jellyfin".into();
+        let expected = include_str!("../tests/expected/jellyfin/compose.yml")
+            .replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+        // l'assistant pas fini: le même compose, derrière Authelia (D71)
+        c.access = Access::TwoFactor;
+        let pending = compose(&m, &c);
+        assert!(pending.contains("traefik.http.routers.jellyfin.middlewares: authelia@docker"));
+        assert!(!pending.contains("crowdsec@docker"));
+    }
+
+    #[test]
+    fn jellyfin_network_xml() {
+        let m = load("jellyfin");
+        let mut c = ctx(Access::App);
+        c.subdomain = "jellyfin".into();
+        let st = m.settings.unwrap();
+        let values: Vec<(String, String)> = st
+            .values
+            .iter()
+            .map(|(k, v)| (k.clone(), fill(v, &m.name, &c)))
+            .collect();
+        // avant le premier démarrage: seulement les proxys de confiance
+        let out = merge_xml(None, &st.root, &values).unwrap();
+        assert_eq!(out, include_str!("../tests/expected/jellyfin/network.xml"));
+        assert_eq!(merge_xml(Some(&out), &st.root, &values).unwrap(), out);
+        // le fichier réécrit par Jellyfin: rien ne change, même mis en forme autrement
+        let jf = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<NetworkConfiguration xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n  <EnableRemoteAccess>true</EnableRemoteAccess>\n  <KnownProxies>\n    <string>172.18.0.0/16</string>\n  </KnownProxies>\n  <IgnoreVirtualInterfaces>true</IgnoreVirtualInterfaces>\n</NetworkConfiguration>";
+        assert_eq!(merge_xml(Some(jf), &st.root, &values).unwrap(), jf);
+        // une autre liste: remplacée, le reste gardé
+        let other = jf.replace("172.18.0.0/16", "10.0.0.1</string>\n    <string>10.0.0.2");
+        assert_eq!(merge_xml(Some(&other), &st.root, &values).unwrap(), jf);
+        // une liste vide (<KnownProxies />), comme Jellyfin l'écrit
+        let empty = jf.replace(
+            "<KnownProxies>\n    <string>172.18.0.0/16</string>\n  </KnownProxies>",
+            "<KnownProxies />",
+        );
+        assert_eq!(merge_xml(Some(&empty), &st.root, &values).unwrap(), jf);
+        assert!(merge_xml(Some("<Config>\n</Config>"), &st.root, &values).is_err());
     }
 
     #[test]

@@ -1,0 +1,188 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Jellyfin<i>●</i>le serveur média: tes films et tes séries, à regarder depuis n'importe quel appareil.</p>
+<p class="lede" data-l="en">Jellyfin<i>●</i>the media server: your movies and shows, to watch from any device.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/jellyfin/jellyfin" target="_blank" rel="noopener">Code source ↗</a> <a href="https://jellyfin.org" target="_blank" rel="noopener">Site ↗</a> <a href="https://jellyfin.org/docs/" target="_blank" rel="noopener">Doc ↗</a> <a href="https://hub.docker.com/r/jellyfin/jellyfin" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://jellyfin.example.com</code></td></tr>
+      <tr><td>Accès</td><td>app: la connexion de Jellyfin, avec AppSec devant. Derrière Authelia jusqu'à la fin de son assistant de premier démarrage.</td></tr>
+      <tr><td>Image</td><td><code>jellyfin/jellyfin:12.4</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install jellyfin</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Jellyfin</h2>
+  <ul>
+    <li>Il lit les films et les séries que Radarr et Sonarr rangent dans <code>/data/media</code>, et les présente avec leurs affiches, leurs résumés et leurs sous-titres.</li>
+    <li>Tu les regardes dans le navigateur ou dans ses apps: TV, téléphone, tablette, console.</li>
+    <li>Il retient où tu t'es arrêté, sur chaque appareil, et gère plusieurs comptes.</li>
+    <li>Quand un appareil ne lit pas un format, Jellyfin convertit la vidéo à la volée (le transcodage).</li>
+  </ul>
+
+  <h2 id="fr-install">L'installation, pas à pas</h2>
+  <p>Jellyfin a sa propre connexion: ses apps TV et mobiles ne savent pas passer par Authelia. Mais tant que son assistant de premier démarrage n'est pas fini, n'importe qui peut y créer le compte admin. Dot Box le garde donc derrière Authelia jusque-là, et l'installation se fait en trois temps.</p>
+  <h3 id="fr-step1">1. Installer</h3>
+  <pre><span class="p">$</span> sudo dotbox install jellyfin
+<span class="ok">✓</span> [1/1] Jellyfin      12.4, two_factor until its setup is done
+
+  jellyfin      https://jellyfin.example.com  two_factor for now
+
+  → Open https://jellyfin.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install jellyfin: it opens to its apps (app).</pre>
+  <ul>
+    <li>Elle crée <code>/opt/jellyfin/config</code> et <code>/opt/jellyfin/cache</code> à ton utilisateur, et prépare <code>/data/media</code> s'il n'existe pas encore.</li>
+    <li>Elle écrit <code>network.xml</code> avant le premier démarrage (voir plus bas), puis <code>compose.yml</code>.</li>
+    <li>Elle démarre Jellyfin derrière Authelia et attend qu'il réponde. Le premier démarrage prend environ une minute de plus: Jellyfin prépare sa base.</li>
+  </ul>
+  <h3 id="fr-step2">2. Faire l'assistant</h3>
+  <p>Ouvre <code>https://jellyfin.example.com</code>. Authelia te demande de te connecter, puis l'assistant de Jellyfin s'ouvre:</p>
+  <ul>
+    <li>La langue de l'interface.</li>
+    <li>Ton compte Jellyfin: un nom et un mot de passe. C'est le compte admin, et celui que tes apps demanderont. Choisis un mot de passe long: une fois Jellyfin ouvert, ce mot de passe sera la seule barrière.</li>
+    <li>Les bibliothèques: Films sur <code>/data/media/movies</code>, Séries sur <code>/data/media/tv</code>. Tu peux aussi les ajouter plus tard.</li>
+    <li>La langue et le pays des métadonnées (titres, résumés, affiches).</li>
+    <li>L'accès à distance: laisse-le activé, c'est lui qui laisse passer tes apps depuis Internet.</li>
+  </ul>
+  <h3 id="fr-step3">3. Ouvrir Jellyfin à ses apps</h3>
+  <pre><span class="p">$</span> sudo dotbox install jellyfin
+<span class="ok">✓</span> [1/1] Jellyfin      12.4, app
+
+  jellyfin      https://jellyfin.example.com  app</pre>
+  <p>dotbox voit que l'assistant est fini (Jellyfin l'écrit dans <code>config/config/system.xml</code>) et passe Jellyfin au niveau app: plus d'Authelia devant, AppSec reste. Tes apps peuvent maintenant se connecter avec l'adresse <code>https://jellyfin.example.com</code> et ton compte Jellyfin. Tant que tu ne relances pas l'installation, Jellyfin reste derrière Authelia, sans risque.</p>
+
+  <h2 id="fr-security">Ce qui le protège</h2>
+  <ul>
+    <li>Pendant l'assistant: Authelia, avec la double authentification.</li>
+    <li>Ensuite: ton mot de passe Jellyfin, et AppSec, qui bloque les attaques connues avant qu'elles n'arrivent à Jellyfin (Security).</li>
+    <li>Jellyfin ne bloque pas un compte après des mots de passe ratés. Prévu: CrowdSec lira ses logs et bannira une IP après 5 échecs.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/jellyfin/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/jellyfin/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/config/</code></td><td><code>/config/config/</code></td><td>Les réglages: <code>system.xml</code>, <code>network.xml</code>, <code>encoding.xml</code>.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/data/</code></td><td><code>/config/data/</code></td><td>La base: comptes, bibliothèques, ce que tu as vu.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/metadata/</code></td><td><code>/config/metadata/</code></td><td>Les affiches, les images et les sous-titres téléchargés.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/log/</code></td><td><code>/config/log/</code></td><td>Les logs de Jellyfin.</td></tr>
+      <tr><td><code>/opt/jellyfin/cache/</code></td><td><code>/cache/</code></td><td>Le cache: images redimensionnées, transcodages en cours. Peut être vidé.</td></tr>
+      <tr><td><code>/data/media/</code></td><td><code>/data/media/</code></td><td>Tes médias, en lecture seule.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>KnownProxies</code> (<code>network.xml</code>)</td><td>le réseau <code>dotbox</code></td><td>Traefik est sur ce réseau: Jellyfin croit ses en-têtes et voit la vraie IP de chaque client. Sinon, tout le monde aurait l'IP de Traefik et serait vu comme sur le réseau local.</td></tr>
+      <tr><td><code>JELLYFIN_PublishedServerUrl</code></td><td><code>https://jellyfin.example.com</code></td><td>L'adresse que Jellyfin donne à ses apps, au lieu de l'adresse interne de son container.</td></tr>
+      <tr><td><code>/data/media</code></td><td>lecture seule</td><td>Radarr et Sonarr rangent les médias, Jellyfin les lit. Il ne peut ni effacer un film ni écrire à côté: ses images et ses sous-titres vont dans <code>/opt/jellyfin/config</code>.</td></tr>
+      <tr><td><code>user</code></td><td>ton utilisateur</td><td>L'image tourne en root sans lui.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose aussi: aucun port publié, <code>no-new-privileges</code>, et un redémarrage automatique. Le reste est réglé dans Jellyfin, par son tableau de bord.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <ul>
+    <li>Dans une app Jellyfin (TV, téléphone), donne l'adresse <code>https://jellyfin.example.com</code>, puis ton compte.</li>
+    <li>Pour un proche: crée-lui un compte dans le tableau de bord, Utilisateurs.</li>
+    <li>Le transcodage se fait avec le processeur. L'accélération par la carte graphique n'est pas encore réglée par Dot Box.</li>
+  </ul>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/jellyfin/jellyfin" target="_blank" rel="noopener">Source code ↗</a> <a href="https://jellyfin.org" target="_blank" rel="noopener">Website ↗</a> <a href="https://jellyfin.org/docs/" target="_blank" rel="noopener">Docs ↗</a> <a href="https://hub.docker.com/r/jellyfin/jellyfin" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://jellyfin.example.com</code></td></tr>
+      <tr><td>Access</td><td>app: Jellyfin's own login, with AppSec in front. Behind Authelia until its first-run setup is done.</td></tr>
+      <tr><td>Image</td><td><code>jellyfin/jellyfin:12.4</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install jellyfin</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Jellyfin does</h2>
+  <ul>
+    <li>It reads the movies and shows that Radarr and Sonarr put in <code>/data/media</code>, and shows them with their posters, summaries and subtitles.</li>
+    <li>You watch them in the browser or in its apps: TV, phone, tablet, console.</li>
+    <li>It remembers where you stopped, on every device, and handles several accounts.</li>
+    <li>When a device cannot play a format, Jellyfin converts the video on the fly (transcoding).</li>
+  </ul>
+
+  <h2 id="en-install">The install, step by step</h2>
+  <p>Jellyfin has its own login: its TV and mobile apps cannot go through Authelia. But until its first-run setup is done, anyone can create the admin account. So Dot Box keeps it behind Authelia until then, and the install takes three steps.</p>
+  <h3 id="en-step1">1. Install</h3>
+  <pre><span class="p">$</span> sudo dotbox install jellyfin
+<span class="ok">✓</span> [1/1] Jellyfin      12.4, two_factor until its setup is done
+
+  jellyfin      https://jellyfin.example.com  two_factor for now
+
+  → Open https://jellyfin.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install jellyfin: it opens to its apps (app).</pre>
+  <ul>
+    <li>It creates <code>/opt/jellyfin/config</code> and <code>/opt/jellyfin/cache</code>, owned by your user, and prepares <code>/data/media</code> if it does not exist yet.</li>
+    <li>It writes <code>network.xml</code> before the first start (see below), then <code>compose.yml</code>.</li>
+    <li>It starts Jellyfin behind Authelia and waits for it to answer. The first start takes about a minute more: Jellyfin prepares its database.</li>
+  </ul>
+  <h3 id="en-step2">2. Run the setup</h3>
+  <p>Open <code>https://jellyfin.example.com</code>. Authelia asks you to log in, then Jellyfin's setup opens:</p>
+  <ul>
+    <li>The interface language.</li>
+    <li>Your Jellyfin account: a name and a password. It is the admin account, and the one your apps will ask for. Pick a long password: once Jellyfin is open, it will be the only barrier.</li>
+    <li>The libraries: Movies on <code>/data/media/movies</code>, Shows on <code>/data/media/tv</code>. You can also add them later.</li>
+    <li>The metadata language and country (titles, summaries, posters).</li>
+    <li>Remote access: leave it on, it lets your apps in from the Internet.</li>
+  </ul>
+  <h3 id="en-step3">3. Open Jellyfin to its apps</h3>
+  <pre><span class="p">$</span> sudo dotbox install jellyfin
+<span class="ok">✓</span> [1/1] Jellyfin      12.4, app
+
+  jellyfin      https://jellyfin.example.com  app</pre>
+  <p>dotbox sees that the setup is done (Jellyfin writes it in <code>config/config/system.xml</code>) and moves Jellyfin to the app level: no more Authelia in front, AppSec stays. Your apps can now connect with the address <code>https://jellyfin.example.com</code> and your Jellyfin account. Until you run the install again, Jellyfin stays behind Authelia, safely.</p>
+
+  <h2 id="en-security">What protects it</h2>
+  <ul>
+    <li>During the setup: Authelia, with two-factor authentication.</li>
+    <li>Afterwards: your Jellyfin password, and AppSec, which blocks known attacks before they reach Jellyfin (Security).</li>
+    <li>Jellyfin does not lock an account after failed passwords. Planned: CrowdSec will read its logs and ban an IP after 5 failures.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/jellyfin/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/jellyfin/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/config/</code></td><td><code>/config/config/</code></td><td>The settings: <code>system.xml</code>, <code>network.xml</code>, <code>encoding.xml</code>.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/data/</code></td><td><code>/config/data/</code></td><td>The database: accounts, libraries, what you watched.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/metadata/</code></td><td><code>/config/metadata/</code></td><td>Posters, images and downloaded subtitles.</td></tr>
+      <tr><td><code>/opt/jellyfin/config/log/</code></td><td><code>/config/log/</code></td><td>Jellyfin's logs.</td></tr>
+      <tr><td><code>/opt/jellyfin/cache/</code></td><td><code>/cache/</code></td><td>The cache: resized images, running transcodes. Can be emptied.</td></tr>
+      <tr><td><code>/data/media/</code></td><td><code>/data/media/</code></td><td>Your media, read-only.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>KnownProxies</code> (<code>network.xml</code>)</td><td>the <code>dotbox</code> network</td><td>Traefik is on this network: Jellyfin trusts its headers and sees each client's real IP. Otherwise everyone would have Traefik's IP and look like the local network.</td></tr>
+      <tr><td><code>JELLYFIN_PublishedServerUrl</code></td><td><code>https://jellyfin.example.com</code></td><td>The address Jellyfin gives its apps, instead of its container's internal address.</td></tr>
+      <tr><td><code>/data/media</code></td><td>read-only</td><td>Radarr and Sonarr put the media there, Jellyfin reads it. It can neither delete a movie nor write next to it: its images and subtitles go in <code>/opt/jellyfin/config</code>.</td></tr>
+      <tr><td><code>user</code></td><td>your user</td><td>Without it, the image runs as root.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose too: no published port, <code>no-new-privileges</code>, and an automatic restart. Everything else is set in Jellyfin, from its dashboard.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <ul>
+    <li>In a Jellyfin app (TV, phone), enter the address <code>https://jellyfin.example.com</code>, then your account.</li>
+    <li>For family or friends: create an account for them in the dashboard, Users.</li>
+    <li>Transcoding uses the processor. Graphics card acceleration is not set up by Dot Box yet.</li>
+  </ul>
+</article>

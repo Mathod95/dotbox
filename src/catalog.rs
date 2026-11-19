@@ -95,6 +95,27 @@ struct Raw {
     /// l'utilisateur du container, pour les images sans PUID ni PGID (7.11): « {{uid}}:{{gid}} »
     #[serde(default)]
     user: Option<String>,
+    /// l'assistant de premier démarrage: derrière Authelia tant qu'il n'est pas fini (D71)
+    #[serde(default)]
+    setup: Option<RawSetup>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawSetup {
+    file: String,
+    done: String,
+}
+
+/// L'assistant de premier démarrage d'une app ouverte à Internet (niveaux app et public): tant
+/// que `file` ne contient pas `done`, l'app reste derrière Authelia (D71). Sans lui, n'importe
+/// qui pourrait créer le compte admin avant toi (Jellyfin: FirstTimeSetupHandler.cs).
+#[derive(Debug)]
+pub struct Setup {
+    /// chemin sous /opt/<app> (« config/config/system.xml »)
+    pub file: String,
+    /// le texte que l'app écrit quand l'assistant est fini
+    pub done: String,
 }
 
 #[derive(Deserialize)]
@@ -102,6 +123,9 @@ struct Raw {
 struct RawSettings {
     file: String,
     format: String,
+    /// format xml: l'élément racine du fichier, Config par défaut
+    #[serde(default)]
+    root: Option<String>,
     values: serde_yaml_ng::Mapping,
 }
 
@@ -112,9 +136,13 @@ pub struct Settings {
     /// chemin sous /opt/<app> (« config/config.xml »)
     pub file: String,
     /// « xml »: des éléments directement sous la racine (<Config><Clé>valeur</Clé></Config>).
+    /// « Clé/Enfant »: un seul élément dans Clé (<KnownProxies><string>valeur</string></KnownProxies>,
+    /// une liste d'une valeur pour Jellyfin).
     /// « ini »: un fichier de Qt (qBittorrent.conf), la clé « Section/Clé/Sous-clé » va dans
     /// [Section] en « Clé\Sous-clé ».
     pub format: String,
+    /// format xml: l'élément racine (« Config », « NetworkConfiguration »)
+    pub root: String,
     /// dans l'ordre du fichier
     pub values: Vec<(String, String)>,
 }
@@ -153,12 +181,18 @@ pub struct Manifest {
     pub ports: Vec<Port>,
     /// le container tourne avec l'utilisateur de dotbox.yml (user: dans le compose)
     pub run_as_user: bool,
+    pub setup: Option<Setup>,
+}
+
+/// Un dossier du serveur dans /data (les médias et les téléchargements).
+pub fn in_data(host: &str) -> bool {
+    host == "/data" || host.starts_with("/data/")
 }
 
 impl Manifest {
-    /// L'app monte /data (médias et téléchargements).
+    /// L'app monte /data ou un dossier dedans (/data/media pour Jellyfin).
     pub fn uses_data(&self) -> bool {
-        self.volumes.iter().any(|v| v.host == "/data")
+        self.volumes.iter().any(|v| in_data(&v.host))
     }
 
     /// La version de l'image (« 3.0.2.5780-ls169 »).
@@ -275,12 +309,13 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
     let mut env = Vec::new();
     for (k, v) in &raw.env {
         let key = k.as_str().ok_or("env: every name must be text")?;
-        if key.is_empty()
-            || !key
-                .chars()
-                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+        // une majuscule d'abord, puis des lettres, des chiffres et _ (JELLYFIN_PublishedServerUrl)
+        if !key.starts_with(|c: char| c.is_ascii_uppercase())
+            || !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
         {
-            return Err(format!("env {key:?}: uppercase letters, digits and _"));
+            return Err(format!(
+                "env {key:?}: an uppercase letter first, then letters, digits and _"
+            ));
         }
         let value = match v {
             serde_yaml_ng::Value::String(s) => s.clone(),
@@ -339,20 +374,31 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                 "ini" => true,
                 other => return Err(format!("settings: format {other:?}, xml or ini")),
             };
+            let word = |w: &str| {
+                w.starts_with(|c: char| c.is_ascii_alphabetic())
+                    && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+            };
+            let root = match (&st.root, ini) {
+                (None, _) => "Config".to_string(),
+                (Some(r), false) if word(r) => r.clone(),
+                (Some(r), false) => {
+                    return Err(format!("settings: root {r:?}, letters, digits and _"));
+                }
+                (Some(_), true) => return Err("settings: root is only for the format xml".into()),
+            };
             let mut values = Vec::new();
             for (k, v) in &st.values {
                 let key = k.as_str().ok_or("settings: every name must be text")?;
-                let word = |w: &str| {
-                    w.starts_with(|c: char| c.is_ascii_alphabetic())
-                        && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-                };
                 if ini && !(key.contains('/') && key.split('/').all(word)) {
                     return Err(format!(
                         "settings {key:?}: Section/Key, letters, digits and _ (format ini)"
                     ));
                 }
-                if !ini && !word(key) {
-                    return Err(format!("settings {key:?}: letters, digits and _"));
+                let parts: Vec<&str> = key.split('/').collect();
+                if !ini && !(parts.len() <= 2 && parts.iter().all(|w| word(w))) {
+                    return Err(format!(
+                        "settings {key:?}: Key or Key/Child, letters, digits and _ (format xml)"
+                    ));
                 }
                 let value = v
                     .as_str()
@@ -364,7 +410,32 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             Some(Settings {
                 file: st.file,
                 format: st.format,
+                root,
                 values,
+            })
+        }
+    };
+    let setup = match raw.setup {
+        None => None,
+        Some(s) => {
+            if !settings_file(&s.file) {
+                return Err(format!(
+                    "setup: file {:?} must be under /opt/{name}, like config/system.xml",
+                    s.file
+                ));
+            }
+            if s.done.trim().is_empty() {
+                return Err("setup: done, the text the app writes once its setup is done".into());
+            }
+            if raw.access.behind_authelia() {
+                return Err(
+                    "setup: only for the levels app and public, Authelia already protects the others"
+                        .into(),
+                );
+            }
+            Some(Setup {
+                file: s.file,
+                done: s.done,
             })
         }
     };
@@ -382,6 +453,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         settings,
         ports,
         run_as_user,
+        setup,
     })
 }
 
@@ -878,7 +950,9 @@ mod tests {
         assert!(with(&format!("{ini}    WebUI/Port: \"8080\"\n")).is_ok());
         assert!(with(&format!("{ini}    Port: \"8080\"\n")).is_err());
         assert!(with(&format!("{ini}    WebUI//Port: \"8080\"\n")).is_err());
-        assert!(with(&format!("{st}    WebUI/Port: \"8080\"\n")).is_err());
+        // xml: Clé/Enfant est un élément dans un autre (Jellyfin), pas une section
+        assert!(with(&format!("{st}    WebUI/Port: \"8080\"\n")).is_ok());
+        assert!(with(&format!("{st}    A/B/C: \"8080\"\n")).is_err());
         assert!(with("settings:\n  file: Config/../x\n  format: ini\n  values: {}\n").is_err());
         // ports: pas du web (D44)
         assert_eq!(
@@ -939,6 +1013,81 @@ mod tests {
                 .iter()
                 .any(|(k, v)| k == "WebUI/AuthSubnetWhitelist" && v == "{{subnet}}")
         );
+    }
+
+    #[test]
+    fn jellyfin() {
+        let m = load(&catalog_dir(), "jellyfin").unwrap();
+        assert_eq!(m.port, 8096);
+        assert_eq!(m.access, Access::App);
+        assert!(m.run_as_user);
+        // seulement /data/media, en lecture seule: dotbox prépare quand même /data
+        assert!(m.uses_data());
+        assert!(
+            m.volumes
+                .iter()
+                .any(|v| v.host == "/data/media" && v.read_only)
+        );
+        assert!(m.data.is_empty());
+        let st = m.settings.unwrap();
+        assert_eq!(
+            (st.format.as_str(), st.root.as_str()),
+            ("xml", "NetworkConfiguration")
+        );
+        assert_eq!(
+            st.values,
+            [("KnownProxies/string".to_string(), "{{subnet}}".to_string())]
+        );
+        let setup = m.setup.unwrap();
+        assert_eq!(setup.file, "config/config/system.xml");
+        assert!(setup.done.contains("IsStartupWizardCompleted"));
+    }
+
+    #[test]
+    fn setup_and_xml_rules() {
+        let with = |extra: &str| parse(&format!("{OK}{extra}"));
+        let setup = "setup:\n  file: config/system.xml\n  done: <Done>true</Done>\n";
+        assert!(with(setup).unwrap().setup.is_some());
+        assert!(with("setup:\n  file: ../system.xml\n  done: x\n").is_err());
+        assert!(with("setup:\n  file: config/system.xml\n  done: \" \"\n").is_err());
+        // derrière Authelia, l'assistant est déjà protégé
+        let tf = parse(&format!(
+            "{}{setup}",
+            OK.replace("access: public", "access: two_factor")
+        ));
+        assert!(
+            tf.unwrap_err()
+                .contains("only for the levels app and public")
+        );
+        // xml: une racine au choix, Clé ou Clé/Enfant, pas plus profond
+        let st = "settings:\n  file: config/network.xml\n  format: xml\n";
+        let ok = with(&format!(
+            "{st}  root: NetworkConfiguration\n  values:\n    KnownProxies/string: x\n"
+        ))
+        .unwrap();
+        assert_eq!(ok.settings.unwrap().root, "NetworkConfiguration");
+        assert_eq!(
+            with(&format!("{st}  values:\n    A: x\n"))
+                .unwrap()
+                .settings
+                .unwrap()
+                .root,
+            "Config"
+        );
+        assert!(with(&format!("{st}  values:\n    A/B/C: x\n")).is_err());
+        assert!(with(&format!("{st}  root: <x>\n  values:\n    A: x\n")).is_err());
+        assert!(
+            with(
+                "settings:\n  file: config/x.ini\n  format: ini\n  root: X\n  values:\n    S/K: x\n"
+            )
+            .is_err()
+        );
+        // env: une majuscule d'abord, comme JELLYFIN_PublishedServerUrl
+        assert!(with("env:\n  JELLYFIN_PublishedServerUrl: x\n").is_ok());
+        assert!(with("env:\n  _A: x\n").is_err());
+        // un dossier sous /data, au même chemin
+        assert!(with("volumes:\n  - /data/media:/data/media:ro\n").is_ok());
+        assert!(with("volumes:\n  - /data/media:/media\n").is_err());
     }
 
     /// Un manifest pour un dotbox plus récent: le message le dit, même s'il a des champs que ce

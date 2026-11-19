@@ -568,7 +568,10 @@
       "domain": "catalog",
       "status": "planned",
       "fr": "autobrr: attrape les nouvelles sorties sur les canaux d'annonce des trackers",
-      "en": "autobrr: grabs new releases from the trackers' announce channels"
+      "en": "autobrr: grabs new releases from the trackers' announce channels",
+      "journal": [
+        "8.17"
+      ]
     },
     {
       "stage": "apps",
@@ -584,13 +587,38 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Jellyfin: le serveur média (niveau `app`, après CrowdSec)",
       "en": "Jellyfin: the media server (`app` level, after CrowdSec)",
+      "doc": "jellyfin",
       "journal": [
         "8.6",
         "D40",
-        "D56"
+        "D56",
+        "J170-J172"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "engine",
+      "status": "progress",
+      "fr": "Moteur: une app ouverte à Internet reste derrière Authelia jusqu'à la fin de son assistant de premier démarrage",
+      "en": "Engine: an app open to the Internet stays behind Authelia until its first-run setup is done",
+      "doc": "jellyfin",
+      "journal": [
+        "8.6",
+        "D71"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "access",
+      "status": "planned",
+      "fr": "Core: CrowdSec lit les logs des apps sans Authelia et bannit qui devine les mots de passe",
+      "en": "Core: CrowdSec reads the logs of apps without Authelia and bans password guessers",
+      "journal": [
+        "10.9",
+        "D72"
       ]
     },
     {
@@ -600,6 +628,7 @@
       "fr": "Plex: le serveur média (niveau `app`, après CrowdSec)",
       "en": "Plex: the media server (`app` level, after CrowdSec)",
       "journal": [
+        "8.11",
         "D40"
       ]
     },
@@ -608,28 +637,50 @@
       "domain": "catalog",
       "status": "planned",
       "fr": "Tautulli: les statistiques et l'historique de Plex",
-      "en": "Tautulli: Plex statistics and history"
+      "en": "Tautulli: Plex statistics and history",
+      "journal": [
+        "8.14"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Jellystat: les statistiques et l'historique de Jellyfin",
+      "en": "Jellystat: Jellyfin statistics and history",
+      "journal": [
+        "8.15"
+      ]
     },
     {
       "stage": "apps",
       "domain": "catalog",
       "status": "planned",
       "fr": "Tracearr: le suivi des lectures du serveur média (base de données à côté, à vérifier)",
-      "en": "Tracearr: media server playback tracking (database alongside, to check)"
+      "en": "Tracearr: media server playback tracking (database alongside, to check)",
+      "journal": [
+        "8.16"
+      ]
     },
     {
       "stage": "apps",
       "domain": "catalog",
       "status": "planned",
       "fr": "Maintainerr: le ménage dans la bibliothèque, selon des règles",
-      "en": "Maintainerr: rule-based library cleanup"
+      "en": "Maintainerr: rule-based library cleanup",
+      "journal": [
+        "8.18"
+      ]
     },
     {
       "stage": "apps",
       "domain": "catalog",
       "status": "planned",
       "fr": "Wizarr: les invitations au serveur média, par lien",
-      "en": "Wizarr: media server invitations, by link"
+      "en": "Wizarr: media server invitations, by link",
+      "journal": [
+        "8.12"
+      ]
     },
     {
       "stage": "apps",
@@ -638,6 +689,7 @@
       "fr": "Vaultwarden: le gestionnaire de mots de passe (niveau `app`, après CrowdSec)",
       "en": "Vaultwarden: the password manager (`app` level, after CrowdSec)",
       "journal": [
+        "8.13",
         "D40"
       ]
     },
@@ -648,6 +700,7 @@
       "fr": "Gitea: l'hébergement de dépôts Git (un port SSH publié pour `git push`)",
       "en": "Gitea: Git repository hosting (an SSH port published for `git push`)",
       "journal": [
+        "8.19",
         "D44"
       ]
     },
@@ -682,7 +735,10 @@
       "domain": "catalog",
       "status": "planned",
       "fr": "Backstage: à préciser (plusieurs containers et une base de données, que le moteur ne gère pas encore)",
-      "en": "Backstage: to be clarified (several containers and a database, not yet handled by the engine)"
+      "en": "Backstage: to be clarified (several containers and a database, not yet handled by the engine)",
+      "journal": [
+        "8.20"
+      ]
     },
     {
       "stage": "apps",
@@ -691,6 +747,7 @@
       "fr": "WireGuard: un VPN vers le serveur (port UDP publié, droits réseau sur le container)",
       "en": "WireGuard: a VPN to the server (published UDP port, network privileges on the container)",
       "journal": [
+        "8.21",
         "D44"
       ]
     },
@@ -701,7 +758,19 @@
       "fr": "NetBird: un réseau privé entre tes appareils et le serveur (port UDP, droits réseau)",
       "en": "NetBird: a private network between your devices and the server (UDP port, network privileges)",
       "journal": [
+        "8.22",
         "D44"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Portainer: voir et piloter les containers (plus tard)",
+      "en": "Portainer: see and manage the containers (later)",
+      "journal": [
+        "8.10",
+        "D68"
       ]
     },
     {
@@ -709,7 +778,10 @@
       "domain": "web",
       "status": "planned",
       "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose",
-      "en": "Web interface: catalog, status, live install logs, compose import"
+      "en": "Web interface: catalog, status, live install logs, compose import",
+      "journal": [
+        "11.1"
+      ]
     },
     {
       "stage": "backup",
@@ -876,9 +948,9 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "progress",
-      "fr": "Catalogue: Renovate ouvre une pull request par nouvelle version d'image, regroupées une fois par semaine, et lit les versions linuxserver (`5.27.0.10274-ls283`)",
-      "en": "Catalog: Renovate opens a pull request per new image version, grouped once a week, and reads linuxserver versions (`5.27.0.10274-ls283`)",
+      "status": "done",
+      "fr": "Catalogue: Renovate ouvre une pull request par nouvelle version d'image, dès qu'elle sort, et lit les versions linuxserver (`5.27.0.10274-ls283`)",
+      "en": "Catalog: Renovate opens a pull request per new image version, as soon as it is out, and reads linuxserver versions (`5.27.0.10274-ls283`)",
       "doc": "renovate",
       "journal": [
         "7.14",
@@ -889,14 +961,25 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "progress",
-      "fr": "Catalogue: CI des pull requests, qui valide le manifest, démarre le container et attend qu'il tourne",
-      "en": "Catalog: pull request CI that validates the manifest, starts the container and waits for it to run",
+      "status": "done",
+      "fr": "Catalogue: CI des pull requests, qui valide les manifests, vérifie que chaque image existe et les empreintes des fichiers du core",
+      "en": "Catalog: pull request CI that validates the manifests, checks that each image exists and the hashes of the core files",
       "doc": "renovate",
       "journal": [
         "7.14",
         "D64",
         "D65"
+      ]
+    },
+    {
+      "stage": "updates",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: la CI démarre aussi le container d'une app mise à jour et attend qu'il tourne",
+      "en": "Catalog: the CI also starts the container of an updated app and waits for it to run",
+      "doc": "renovate",
+      "journal": [
+        "7.14"
       ]
     },
     {

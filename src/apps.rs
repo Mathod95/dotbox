@@ -195,26 +195,38 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
     })();
     finish(result)?;
     eprintln!();
-    for (app, address, access) in ready {
+    for r in &ready {
+        let access = if r.setup_pending {
+            "two_factor for now".to_string()
+        } else {
+            r.access.clone()
+        };
         eprintln!(
             "  {:<13} {}  {}",
-            app,
-            console::style(address).underlined(),
+            r.app,
+            console::style(&r.address).underlined(),
             console::style(access).dim()
         );
     }
     eprintln!();
+    for r in ready.iter().filter(|r| r.setup_pending) {
+        eprintln!(
+            "  {} Open {} and finish its first-run setup (Authelia asks you to log in first).",
+            console::style("→").cyan(),
+            r.address
+        );
+        eprintln!(
+            "    Then run sudo dotbox install {}: it opens to its apps ({}).",
+            r.app, r.access
+        );
+        eprintln!();
+    }
     Ok(())
 }
 
 /// Installe une app (ou la remet d'aplomb si elle l'est déjà). Rend son nom, son adresse et
 /// son niveau d'accès.
-fn install_one(
-    dir: &Path,
-    app: &str,
-    domain: &str,
-    user: &str,
-) -> Result<(String, String, String), String> {
+fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready, String> {
     ui::step(&title(app), "from the catalog");
     let m = catalog::load(dir, app)?;
     say(
@@ -242,12 +254,28 @@ fn install_one(
     if catalog::RESERVED.contains(&sub.as_str()) {
         return Err(format!("the subdomain {sub} is taken by the core"));
     }
+    // ouverte à Internet, mais son assistant de premier démarrage n'est pas fini: derrière
+    // Authelia en attendant, pour que personne ne crée le compte admin avant toi (D71)
+    let setup_pending = !access.behind_authelia()
+        && m.setup.as_ref().is_some_and(|st| {
+            let path = format!("{}/{}", engine::dir(app), st.file);
+            !std::fs::read_to_string(path).is_ok_and(|t| t.contains(&st.done))
+        });
+    let route = if setup_pending {
+        say(
+            "check",
+            &format!("{app}: first-run setup not done yet, behind Authelia until then"),
+        );
+        Access::TwoFactor
+    } else {
+        access
+    };
 
     let (uid, gid) = system::user_ids(user)?;
     let ctx = Ctx {
         domain: domain.to_string(),
         subdomain: sub.clone(),
-        access,
+        access: route,
         uid,
         gid,
         tz: system::timezone(),
@@ -255,7 +283,7 @@ fn install_one(
     };
     for v in &m.volumes {
         // /data: ses dossiers et la vérification des hardlinks, plus bas
-        if v.host != "/data" && !Path::new(&v.host).exists() {
+        if !catalog::in_data(&v.host) && !Path::new(&v.host).exists() {
             system::owned_dir(&v.host, uid, gid)?;
             say("create", &format!("{} (owned by {user})", v.host));
         }
@@ -286,12 +314,30 @@ fn install_one(
     }
     let state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
     say("check", &format!("{app} {state} ({})", m.image));
-    ui::done(&format!("{}, {}", m.version(), access.as_str()));
-    Ok((
-        app.to_string(),
-        format!("https://{sub}.{domain}"),
-        access.as_str().to_string(),
-    ))
+    if setup_pending {
+        ui::done(&format!(
+            "{}, two_factor until its setup is done",
+            m.version()
+        ));
+    } else {
+        ui::done(&format!("{}, {}", m.version(), access.as_str()));
+    }
+    Ok(Ready {
+        app: app.to_string(),
+        address: format!("https://{sub}.{domain}"),
+        access: access.as_str().to_string(),
+        setup_pending,
+    })
+}
+
+/// Une app installée, pour le résumé de la fin.
+struct Ready {
+    app: String,
+    address: String,
+    /// le niveau voulu (dotbox.yml ou le manifest)
+    access: String,
+    /// derrière Authelia tant que son assistant de premier démarrage n'est pas fini (D71)
+    setup_pending: bool,
 }
 
 /// Le container tourne (avec ou sans healthcheck).
@@ -367,7 +413,7 @@ fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Resul
     let keys: Vec<&str> = values.iter().map(|(k, _)| k.as_str()).collect();
     let merge = |old: Option<&str>| {
         match st.format.as_str() {
-            "xml" => engine::merge_xml(old, &values),
+            "xml" => engine::merge_xml(old, &st.root, &values),
             "ini" => engine::merge_ini(old, &values),
             other => Err(format!("format {other} not supported")),
         }
