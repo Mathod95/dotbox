@@ -12,12 +12,7 @@
   <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
   <p>Chaque manifest fixe une version d'image (<code>lscr.io/linuxserver/radarr:5.26.2</code>), jamais <code>latest</code>: ce qui tourne est toujours connu. <code>update</code> passe à la version la plus récente, recrée le container et attend qu'il soit <i><b>Running</b></i> avant de passer à l'app suivante. Une app qui ne redémarre pas arrête la série.</p>
-  <div class="prop-old" data-prop="48">
-    <p>Les nouvelles versions viennent du catalogue, le repo <code>Mathod95/dotbox-catalog</code>: Renovate y propose chaque nouvelle image, la CI la teste, puis une version du catalogue est publiée. Dot Box le rafraîchit à chaque <code>dotbox diff</code> ou <code>dotbox update</code>, sans changer de binaire.</p>
-  </div>
-  <div class="prop-new" data-prop="48">
-    <p>Les nouvelles versions viennent du catalogue, le dossier <code>catalog/</code> du repo <code>Mathod95/dotbox</code>: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> y propose chaque nouvelle version, la CI la teste, puis elle est fusionnée sur <code>main</code>. Dot Box relit le catalogue à chaque <code>dotbox diff</code> ou <code>dotbox update</code>, sans changer de binaire.</p>
-  </div>
+  <p>Les nouvelles versions viennent du catalogue, le dossier <code>catalog/</code> du repo <code>Mathod95/dotbox</code>: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> y propose chaque nouvelle version, la CI la teste, puis elle est fusionnée sur <code>main</code>. Dot Box relit le catalogue à chaque <code>dotbox diff</code> ou <code>dotbox update</code>, sans changer de binaire.</p>
 
   <h2 id="fr-rollback">Revenir en arrière</h2>
   <pre><span class="p">$</span> dotbox update radarr --rollback</pre>
@@ -45,12 +40,7 @@
   <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
   <p>Each manifest pins an image version (<code>lscr.io/linuxserver/radarr:5.26.2</code>), never <code>latest</code>, so what runs is always known. <code>update</code> moves to the newest version, recreates the container and waits for it to be <i><b>Running</b></i> before moving to the next app. An app that fails to restart stops the run.</p>
-  <div class="prop-old" data-prop="48">
-    <p>New versions come from the catalog, the <code>Mathod95/dotbox-catalog</code> repository: Renovate proposes each new image there, CI tests it, then a catalog version is published. Dot Box refreshes it on every <code>dotbox diff</code> or <code>dotbox update</code>, without changing its binary.</p>
-  </div>
-  <div class="prop-new" data-prop="48">
-    <p>New versions come from the catalog, the <code>catalog/</code> folder of the <code>Mathod95/dotbox</code> repository: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> proposes each new version there, CI tests it, then it is merged into <code>main</code>. Dot Box reads the catalog again on every <code>dotbox diff</code> or <code>dotbox update</code>, without changing its binary.</p>
-  </div>
+  <p>New versions come from the catalog, the <code>catalog/</code> folder of the <code>Mathod95/dotbox</code> repository: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> proposes each new version there, CI tests it, then it is merged into <code>main</code>. Dot Box reads the catalog again on every <code>dotbox diff</code> or <code>dotbox update</code>, without changing its binary.</p>
 
   <h2 id="en-rollback">Roll back</h2>
   <pre><span class="p">$</span> dotbox update radarr --rollback</pre>

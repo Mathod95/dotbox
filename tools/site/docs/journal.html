@@ -1633,7 +1633,55 @@ git commit (test: catalog-hashes.yml, bouncer v0.0.36); git push origin HEAD:tes
       does: "Le test de catalog-hashes.yml (7.14, point 3). Une version plus ancienne du bouncer, pour qu'il y ait des empreintes à recalculer. Cette branche ne doit jamais être fusionnée.",
       effect: "GitHub: une branche test/catalog-hashes. main n'a pas changé.",
       undo: "git push origin --delete test/catalog-hashes",
-      result: "poussée, en attente de la pull request de Mathod95" }
+      result: "poussée, en attente de la pull request de Mathod95" },
+    { id: "J148", time: "18:45", status: "fait", where: "PC", kind: "ecriture",
+      title: "7.14: un jeton GitHub pour Claude, et gh",
+      cmd: `~/.config/dotbox-test/github-token (mode 600), gh 2.105.0 dans ~/.local/bin (empreinte de l'archive vérifiée)
+gh api user/repos (seulement les repos privés); gh api -i repos/Mathod95/dotbox/pulls/1 (date d'expiration)`,
+      does: "Mathod95: « Tu peux faire tout ce qui concerne le repo GitHub toi-même? » Avec la seule clé de déploiement, Claude ne peut ni ouvrir, ni fusionner, ni fermer une pull request. Mathod95 crée un jeton à grain fin, limité à Mathod95/dotbox (Contents, Pull requests et Issues en écriture, Actions en lecture), expirant le 17 février 2027. Lu par gh à chaque commande (GH_TOKEN), jamais écrit dans sa configuration. Le jeton a été collé dans le chat. Mathod95 le garde tel quel, sans le régénérer.",
+      effect: "PC: ~/.config/dotbox-test/github-token, ~/.local/bin/gh.",
+      undo: "Révoquer le jeton sur GitHub, supprimer le fichier",
+      result: "aucun repo privé visible en dehors de Mathod95/dotbox, expiration 2027-02-17" },
+    { id: "J149", time: "18:48", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: le test de catalog-hashes.yml, pull request #2",
+      cmd: `gh pr create --head test/catalog-hashes --title "test: catalog-hashes.yml (ne pas fusionner)"`,
+      does: "Le point 3 de 7.14. Sur d628fe7 (bouncer revenu à v0.0.36, version seule): la CI échoue sur le bouncer, catalog-hashes.yml réécrit les quatre lignes et pousse deb9bda, puis relance la CI par workflow_dispatch, qui passe. Imprévu: le commit du bot déclenche aussi deux runs pull_request bloqués en action_required (en attente d'une approbation), qui ne démarrent jamais mais restent sur la pull request.",
+      effect: "GitHub: pull request #2, un commit du bot dans la branche de test.",
+      result: `d628fe7  Catalog          pull_request       failure   (le bouncer, attendu)
+d628fe7  Catalog hashes   pull_request       success   (commit deb9bda)
+deb9bda  Catalog          workflow_dispatch  success   (3 jobs)
+deb9bda  Catalog, Catalog hashes  pull_request  action_required
+empreintes de v0.0.36: f86e4b72… (archive) et 7c53e7d4… (binaire), les mêmes que l'essai sur le PC` },
+    { id: "J150", time: "18:50", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: [skip ci] sur le commit des empreintes, puis le test refait",
+      cmd: `catalog-hashes.yml: git commit -am "chore(catalog): empreintes du bouncer pare-feu [skip ci]"
+git commit (ci: …); git push (baa727f)
+git push --force-with-lease origin d628fe7:refs/heads/test/catalog-hashes
+gh pr close 2 --delete-branch`,
+      does: "[skip ci] empêche les déclenchements pull_request et push de ce commit, pas workflow_dispatch: la CI est toujours relancée. La branche de test remise à d628fe7 pour tout rejouer, puis la pull request #2 fermée sans fusion, avec un commentaire, et la branche supprimée.",
+      effect: "GitHub: main (baa727f). Pull request #2 fermée, branche test/catalog-hashes supprimée.",
+      result: `b797aaf  chore(catalog): empreintes du bouncer pare-feu [skip ci]
+b797aaf  Catalog  workflow_dispatch  success: fmt, clippy et tests, Les images existent, Le bouncer et ses empreintes
+plus aucun run en action_required` },
+    { id: "J151", time: "18:52", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: la pull request #1 fusionnée, Renovate actif",
+      cmd: `gh pr merge 1 --squash --subject "chore: Renovate lit le catalogue, les crates Rust et les actions GitHub"
+rm renovate.json (la copie locale, identique); git pull --ff-only`,
+      does: "Point 4 de 7.14. Mathod95 a donné le jeton pour que Claude fasse lui-même ce qui touche au repo. Le renovate.json fusionné est celui de J145, vu dans l'aperçu de la pull request.",
+      effect: "GitHub: main (f40b2cb), Renovate commence ses pull requests.",
+      undo: "git revert f40b2cb (Renovate repasse en accueil)",
+      result: "fusionnée (f40b2cb)" },
+    { id: "J152", time: "18:58", status: "fait", where: "GitHub", kind: "lecture",
+      title: "7.14: la première pull request de Renovate, fusionnée seule",
+      cmd: `gh pr view 3; gh api repos/Mathod95/dotbox/commits/<head>/check-runs; git pull --ff-only`,
+      does: "Point 4 de 7.14. Cinq minutes après la fusion de #1, Renovate ouvre la pull request #3 (le socket proxy, un correctif) et l'issue #4 « Dependency Dashboard ». La CI du catalogue passe, Renovate fusionne seul, sans personne.",
+      effect: "GitHub: main (e6d99de), catalog/core/traefik.yml: socket-proxy 3.4.8-r0-ls107. Les serveurs l'auront à leur prochaine lecture du catalogue.",
+      result: `#3  chore(catalog): update lscr.io/linuxserver/socket-proxy docker tag to v3.4.8-r0-ls107
+    ouverte 18:57:57, fusionnée 18:58:41 par app/renovate (e6d99de)
+    Le bouncer et ses empreintes  success   18:58:11
+    Les images existent           success   18:58:13
+    fmt, clippy et tests          success   18:58:33
+#4  Dependency Dashboard` }
   ];
 
   var PLAN = [
@@ -2086,9 +2134,9 @@ volumes:
                   "Renovate lancé à blanc (--platform=local --dry-run) sur un clone jetable: les 9 lignes du catalogue sont lues, la règle linuxserver s'applique aux 4 images de linuxserver, CrowdSec reste en -debian. Une mise à jour déjà en attente: le socket proxy, 3.4.7-r0-ls106 vers 3.4.8-r0-ls107, un correctif. Côté crates: argon2 0.6.0 et sha2 0.11 dans une seule pull request « crates Rust ». Sans jeton GitHub, les actions et le bouncer n'ont pas pu être cherchés, Renovate hébergé en a un."] },
             { h: "Pour boucler (19 novembre 2026)",
               l: ["1. Les workflows sur main (J144) et renovate.json dans la pull request #1 (J145): fait. L'aperçu de Renovate annonce les 3 pull requests attendues.",
-                  "2. La page Renovate de la doc, et les propositions #48 (Update) et #49 (Sandbox), qui parlaient encore d'un repo Mathod95/dotbox-catalog (J146).",
-                  "3. Le test de catalog-hashes.yml, sans attendre une vraie release du bouncer: une branche test/catalog-hashes où la version du bouncer revient à v0.0.36, comme le ferait Renovate (J147). Mathod95 ouvre la pull request. Attendu: la CI échoue sur le bouncer, catalog-hashes.yml ajoute un commit avec les quatre lignes, relance la CI, qui passe. Puis la pull request est fermée sans fusion et la branche supprimée.",
-                  "4. Mathod95 fusionne la pull request #1. Renovate ouvre alors la pull request du socket proxy (3.4.8-r0-ls107). Attendu: la CI passe et Renovate la fusionne seul. Le tableau de bord (une issue « Dependency Dashboard ») apparaît.",
+                  "2. Fait (J146). La page Renovate de la doc, et les propositions #48 (Update) et #49 (Sandbox), qui parlaient encore d'un repo Mathod95/dotbox-catalog (J146).",
+                  "3. Fait (J149, J150). Le test de catalog-hashes.yml, sans attendre une vraie release du bouncer: une branche test/catalog-hashes où la version du bouncer revient à v0.0.36, comme le ferait Renovate (J147). Mathod95 ouvre la pull request. Attendu: la CI échoue sur le bouncer, catalog-hashes.yml ajoute un commit avec les quatre lignes, relance la CI, qui passe. Puis la pull request est fermée sans fusion et la branche supprimée.",
+                  "4. Fait (J151, J152): #1 fusionnée par Claude avec le jeton de Mathod95, puis #3 (le socket proxy) fusionnée seule par Renovate après la CI. Mathod95 fusionne la pull request #1. Renovate ouvre alors la pull request du socket proxy (3.4.8-r0-ls107). Attendu: la CI passe et Renovate la fusionne seul. Le tableau de bord (une issue « Dependency Dashboard ») apparaît.",
                   "5. Sur le serveur, avec l'accord de Mathod95: sudo dotbox init relit le catalogue et met à jour le socket proxy, avec le même binaire v0.0.3. C'est la preuve de D64: une mise à jour du core sans nouvelle version de dotbox.",
                   "6. Les crates Rust et setup-python v7, le lundi: relues par Claude, fusionnées par Mathod95. argon2 0.6 et sha2 0.11 changent leur API, le code devra sans doute suivre."] }
           ],
@@ -2962,7 +3010,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "4": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 68],
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147],
+    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };
