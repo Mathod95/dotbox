@@ -2062,7 +2062,29 @@ tous healthy; Tautulli.py tourne avec <user> (PUID), autobrr et Maintainerr en 1
       cmd: `curl https://tautulli.<domaine>/, https://autobrr.<domaine>/, https://maintainerr.<domaine>/   (depuis le PC)`,
       does: "Les routes.",
       effect: "Aucun, lecture seule.",
-      result: `les trois: 302 vers https://auth.<domaine>` }
+      result: `les trois: 302 vers https://auth.<domaine>` },
+    { id: "J189", time: "00:31", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.21: dotbox install wg-easy",
+      cmd: `ls /dev/dri; lsmod | grep wireguard; grep CONFIG_WIREGUARD /boot/config-*; ip -6 addr; ss -Huln   (lectures avant)
+scp (binaire e980ab4549785e8b…, et le catalogue du PC avec catalog/wg-easy.yml)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install wg-easy --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan 8.21 (D75, accord d'avance D73). Sur le PC avant: fmt, clippy, 100 tests.",
+      effect: "Serveur: le module wireguard chargé, /etc/modules-load.d/dotbox-wg-easy.conf, /opt/wg-easy, l'image ghcr.io/wg-easy/wg-easy:15.5.0, le port 51820/udp publié, apps: wg-easy dans dotbox.yml (two_factor).",
+      undo: "sudo dotbox remove wg-easy --purge (retire aussi le fichier de modules-load.d)",
+      result: `avant: CONFIG_WIREGUARD=m, module pas chargé, pas d'IPv6 globale, 51820/udp libre
+[0.1s] write /etc/modules-load.d/dotbox-wg-easy.conf; [0.4s] check kernel module wireguard loaded; check port 51820/udp free
+✓ [1/1] Wg-easy       15.5.0, two_factor     1 min 30 s
+container: healthy, CapAdd [CAP_NET_ADMIN] seulement, sysctls ip_forward et src_valid_mark à 1
+wg show: interface wg0, listening port 51820; ss: 51820/udp ouvert` },
+    { id: "J190", time: "00:33", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.21: wg-easy derrière Authelia, le pare-feu",
+      cmd: `curl https://wg-easy.<domaine>/   (depuis le PC)
+sudo_run.py 'iptables -S DOCKER-USER; docker exec wg-easy iptables -t nat -S POSTROUTING'`,
+      does: "La route, et ce que le VPN laisse passer.",
+      effect: "Aucun, lecture seule.",
+      result: `route: 302 vers https://auth.<domaine>
+DOCKER-USER saute à CROWDSEC_CHAIN: les IP bannies n'atteignent pas 51820/udp
+wg-easy: MASQUERADE du réseau du VPN par eth0, le réseau dotbox: un appareil du VPN atteint aussi les apps (backlog 8.21.1)` }
   ];
 
   var PLAN = [
@@ -2827,7 +2849,14 @@ volumes:
           does: "L'hébergement de dépôts Git. Un port SSH publié pour git push (D44), en plus du web. Niveau à trancher: app (sa propre connexion, pour git en HTTPS) ou two_factor. Ajouté au Journal le 19 novembre 2026." },
         { id: "8.20", kind: "ecriture", where: "PC → Serveur", title: "Backstage (plus tard, D74, D76)",
           does: "À préciser avec Mathod95: plusieurs containers et une base de données, que le moteur ne gère pas encore (un seul container par app). Ajouté au Journal le 19 novembre 2026." },
-        { id: "8.21", kind: "ecriture", where: "PC → Serveur", title: "WireGuard, par wg-easy (D75)",
+        { id: "8.21", status: "fait", ref: "J189-J190", kind: "ecriture", where: "PC → Serveur", title: "WireGuard, par wg-easy (D75)",
+          lede: "Fait le 20 novembre 2026 (D73, D75): image officielle wg-easy 15.5.0, interface web two_factor, port 51820 en UDP. L'exemple de wg-easy donne NET_ADMIN et SYS_MODULE au container. SYS_MODULE charge des modules dans le noyau, l'équivalent de root sur le serveur: dotbox charge lui-même le module wireguard et ne donne que NET_ADMIN. Le moteur apprend cap_add, sysctls et kernel_modules, chacun limité à une liste fermée. DISABLE_IPV6: le réseau dotbox n'a pas d'IPv6. Sa page dans la doc.",
+          links: [ { t: "Page wg-easy", u: "../wg-easy/" } ],
+          backlog: [
+            { id: "8.21.1", kind: "ecriture", where: "PC (code) → Serveur", title: "Les appareils du VPN atteignent les apps sans Authelia",
+              lede: "wg-easy fait sortir le trafic des appareils par le réseau dotbox (MASQUERADE par eth0, J190). Un appareil du VPN joint donc http://radarr:7878 directement, et Radarr croit le réseau dotbox (AuthenticationMethod External): sans Authelia. Ce sont tes appareils, mais un téléphone perdu y aurait accès.",
+              sections: [ { h: "Ce que ça changerait", l: ["Une règle dans wg-easy (ses hooks PostUp) qui refuse le réseau dotbox, sauf le serveur lui-même (SSH).", "Ou wg-easy sur un réseau à lui, Traefik le joignant par un second réseau."] } ] }
+          ],
           does: "Un VPN vers le serveur: un port UDP publié et des droits réseau sur le container (NET_ADMIN), que le moteur ne donne pas encore. C'est aussi le chemin choisi pour ne jamais être banni par CrowdSec (D63). Ajouté au Journal le 19 novembre 2026." },
         { id: "8.22", kind: "ecriture", where: "PC → Serveur", title: "NetBird (plus tard, D75)",
           does: "Un réseau privé entre tes appareils et le serveur, au-dessus de WireGuard: un port UDP et des droits réseau, comme 8.21. Ajouté au Journal le 19 novembre 2026." },
@@ -3765,7 +3794,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.

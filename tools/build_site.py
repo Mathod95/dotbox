@@ -65,6 +65,7 @@ DOCS = [
     {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "group": "Apps"},
     {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "group": "Apps"},
     {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "group": "Apps"},
+    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "group": "Apps"},
     {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "group": "Apps"},
     {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "group": "Apps"},
     {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "group": "Apps"},

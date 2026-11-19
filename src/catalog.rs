@@ -107,7 +107,22 @@ struct Raw {
     /// des chemins de l'app derrière Authelia, même au niveau app ou public (/admin)
     #[serde(default)]
     authelia_paths: Vec<String>,
+    /// des droits du noyau pour le container: NET_ADMIN seulement (un VPN, D75)
+    #[serde(default)]
+    cap_add: Vec<String>,
+    /// des réglages réseau du noyau, dans le container seulement (le transfert IPv4 d'un VPN)
+    #[serde(default)]
+    sysctls: serde_yaml_ng::Mapping,
+    /// des modules du noyau que dotbox charge sur le serveur (wireguard), au lieu de donner
+    /// SYS_MODULE au container
+    #[serde(default)]
+    kernel_modules: Vec<String>,
 }
+
+/// Ce qu'un manifest peut demander au noyau: une liste fermée, chaque entrée vérifiée.
+const CAPS: &[&str] = &["NET_ADMIN"];
+const SYSCTLS: &[&str] = &["net.ipv4.ip_forward", "net.ipv4.conf.all.src_valid_mark"];
+const MODULES: &[&str] = &["wireguard"];
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -228,6 +243,10 @@ pub struct Manifest {
     pub crowdsec: Option<Watch>,
     /// des chemins derrière Authelia, en plus du niveau de l'app (/admin de Vaultwarden)
     pub authelia_paths: Vec<String>,
+    pub cap_add: Vec<String>,
+    /// dans l'ordre du fichier
+    pub sysctls: Vec<(String, String)>,
+    pub kernel_modules: Vec<String>,
 }
 
 /// Un dossier du serveur dans /data (les médias et les téléchargements).
@@ -558,6 +577,28 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             ));
         }
     }
+    for c in &raw.cap_add {
+        if !CAPS.contains(&c.as_str()) {
+            return Err(format!("cap_add {c:?}: only {}", CAPS.join(", ")));
+        }
+    }
+    let mut sysctls = Vec::new();
+    for (k, v) in &raw.sysctls {
+        let key = k.as_str().ok_or("sysctls: every name must be text")?;
+        if !SYSCTLS.contains(&key) {
+            return Err(format!("sysctls {key:?}: only {}", SYSCTLS.join(", ")));
+        }
+        let value = v
+            .as_str()
+            .filter(|v| *v == "0" || *v == "1")
+            .ok_or(format!("sysctls {key}: \"0\" or \"1\""))?;
+        sysctls.push((key.to_string(), value.to_string()));
+    }
+    for m in &raw.kernel_modules {
+        if !MODULES.contains(&m.as_str()) {
+            return Err(format!("kernel_modules {m:?}: only {}", MODULES.join(", ")));
+        }
+    }
     if !raw.authelia_paths.is_empty() && raw.access.behind_authelia() {
         return Err("authelia_paths: only for the levels app and public, the whole app is already behind Authelia".into());
     }
@@ -579,6 +620,9 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         setup,
         crowdsec,
         authelia_paths: raw.authelia_paths,
+        cap_add: raw.cap_add,
+        sysctls,
+        kernel_modules: raw.kernel_modules,
     })
 }
 
@@ -1237,6 +1281,16 @@ mod tests {
     }
 
     #[test]
+    fn wg_easy() {
+        let m = load(&catalog_dir(), "wg-easy").unwrap();
+        assert_eq!((m.port, m.access), (51821, Access::TwoFactor));
+        assert_eq!(m.cap_add, ["NET_ADMIN"]);
+        assert_eq!(m.kernel_modules, ["wireguard"]);
+        assert_eq!(m.sysctls.len(), 2);
+        assert_eq!(m.ports.len(), 1);
+    }
+
+    #[test]
     fn setup_and_xml_rules() {
         let with = |extra: &str| parse(&format!("{OK}{extra}"));
         let setup = "setup:\n  file: config/system.xml\n  done: <Done>true</Done>\n";
@@ -1302,6 +1356,15 @@ mod tests {
             ))
             .is_err()
         );
+        // cap_add, sysctls, kernel_modules: des listes fermées
+        assert!(with("cap_add:\n  - NET_ADMIN\n").is_ok());
+        assert!(with("cap_add:\n  - SYS_MODULE\n").is_err());
+        assert!(with("cap_add:\n  - SYS_ADMIN\n").is_err());
+        assert!(with("sysctls:\n  net.ipv4.ip_forward: \"1\"\n").is_ok());
+        assert!(with("sysctls:\n  net.ipv4.ip_forward: \"2\"\n").is_err());
+        assert!(with("sysctls:\n  kernel.panic: \"1\"\n").is_err());
+        assert!(with("kernel_modules:\n  - wireguard\n").is_ok());
+        assert!(with("kernel_modules:\n  - overlay\n").is_err());
         // health_tool: curl ou wget, avec un chemin
         assert!(with("health: /ping\nhealth_tool: wget\n").is_ok());
         assert!(with("health: image\nhealth_tool: wget\n").is_err());

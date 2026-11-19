@@ -1,0 +1,29 @@
+# wg-easy: un VPN WireGuard vers le serveur, avec une interface web pour ajouter tes appareils.
+# Format: Journal, étape 7 (7.1, 7.8) et 8.21 (D75). Les {{...}} sont remplis par dotbox.
+name: wg-easy
+description: WireGuard VPN with a web interface
+min_dotbox: 0.0.4
+image: ghcr.io/wg-easy/wg-easy:15.5.0
+# l'interface web, derrière Authelia; le VPN passe par le port UDP publié plus bas
+port: 51821
+access: two_factor
+# l'image a son propre healthcheck (wg show)
+health: image
+env:
+  TZ: "{{tz}}"
+  # le réseau dotbox n'a pas d'IPv6
+  DISABLE_IPV6: "true"
+volumes:
+  - config:/etc/wireguard
+# le VPN lui-même: pas du web (D44)
+ports:
+  - 51820/udp
+# créer l'interface wg0 et ses règles de pare-feu, dans le container seulement
+cap_add:
+  - NET_ADMIN
+sysctls:
+  net.ipv4.ip_forward: "1"
+  net.ipv4.conf.all.src_valid_mark: "1"
+# chargé par dotbox sur le serveur: le container n'a pas SYS_MODULE, qui lui donnerait le noyau
+kernel_modules:
+  - wireguard

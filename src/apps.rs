@@ -288,6 +288,7 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
     if m.uses_data() {
         prepare_data(&m, uid, gid, user)?;
     }
+    load_modules(&m)?;
     let settings_changed = write_settings(&m, &ctx, uid, gid)?;
     if !m.ports.is_empty() && !running(&traefik::container_state(app)) {
         check_ports(&m)?;
@@ -359,6 +360,28 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         access: access.as_str().to_string(),
         setup_pending,
     })
+}
+
+/// Les modules du noyau que l'app demande (wireguard): chargés maintenant, et à chaque démarrage
+/// du serveur (/etc/modules-load.d/dotbox-<app>.conf). Le container n'a pas SYS_MODULE.
+fn load_modules(m: &catalog::Manifest) -> Result<(), String> {
+    if m.kernel_modules.is_empty() {
+        return Ok(());
+    }
+    let conf = format!("/etc/modules-load.d/dotbox-{}.conf", m.name);
+    let text = format!(
+        "# Écrit par dotbox install {}: les modules du noyau dont il a besoin.\n{}\n",
+        m.name,
+        m.kernel_modules.join("\n")
+    );
+    if system::write_if_changed(&conf, &text, 0o644)? {
+        say("write", &conf);
+    }
+    for module in &m.kernel_modules {
+        system::run("modprobe", &[module.as_str()])?;
+        say("check", &format!("kernel module {module} loaded"));
+    }
+    Ok(())
 }
 
 /// L'assistant de premier démarrage est-il fini? None: on ne peut pas encore le savoir (l'app
@@ -567,6 +590,12 @@ fn remove_steps(app: &str, purge: bool) -> Result<(), String> {
         say("delete", &path);
     }
     crate::crowdsec::unwatch_app(app)?;
+    // le module reste chargé jusqu'au prochain démarrage du serveur: il ne gêne rien
+    let modules = format!("/etc/modules-load.d/dotbox-{app}.conf");
+    if Path::new(&modules).exists() {
+        std::fs::remove_file(&modules).map_err(|e| format!("cannot delete {modules}: {e}"))?;
+        say("delete", &modules);
+    }
     if cfg.remove_app(app) {
         system::write_if_changed(config::PATH, &cfg.render()?, 0o644)?;
         say("write", &format!("{} (apps: without {app})", config::PATH));

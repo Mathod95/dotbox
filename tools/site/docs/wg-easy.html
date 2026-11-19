@@ -1,0 +1,114 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">wg-easy<i>●</i>un VPN WireGuard vers ton serveur, avec une interface web pour ajouter tes appareils.</p>
+<p class="lede" data-l="en">wg-easy<i>●</i>a WireGuard VPN to your server, with a web interface to add your devices.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/wg-easy/wg-easy" target="_blank" rel="noopener">Code source ↗</a> <a href="https://wg-easy.github.io/wg-easy/" target="_blank" rel="noopener">Doc ↗</a> <a href="https://github.com/wg-easy/wg-easy/pkgs/container/wg-easy" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://wg-easy.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres), puis le compte de wg-easy</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/wg-easy/wg-easy:15.5.0</code></td></tr>
+      <tr><td>Port publié</td><td><code>51820</code> en UDP, le VPN</td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install wg-easy</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait wg-easy</h2>
+  <ul>
+    <li>Il fait tourner WireGuard, un VPN rapide et simple, sur ton serveur.</li>
+    <li>Son interface web ajoute un appareil en un clic: un QR code pour ton téléphone, un fichier pour ton ordinateur.</li>
+    <li>Un appareil connecté passe par ton serveur: il atteint Internet, ton serveur lui-même (SSH compris), et les apps du réseau <code>dotbox</code>.</li>
+  </ul>
+  <p>C'est aussi le chemin prévu pour ne jamais être banni par CrowdSec: les connexions qui arrivent par le VPN ne passent pas par Internet.</p>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle charge le module <code>wireguard</code> du noyau, et l'ajoute à <code>/etc/modules-load.d/dotbox-wg-easy.conf</code> pour les prochains démarrages du serveur. Le container n'a donc pas besoin de <code>SYS_MODULE</code>, qui lui donnerait la main sur le noyau.</li>
+    <li>Elle vérifie que le port 51820 est libre en UDP, crée <code>/opt/wg-easy/config</code>, écrit <code>compose.yml</code> et démarre wg-easy.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/wg-easy/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/wg-easy/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/wg-easy/config/</code></td><td><code>/etc/wireguard/</code></td><td>Sa base: les clés du serveur et de chaque appareil, et son compte.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>cap_add</code></td><td><code>NET_ADMIN</code></td><td>Créer l'interface <code>wg0</code> et ses règles de pare-feu, dans le container seulement. Le moteur n'accepte que ce droit-là.</td></tr>
+      <tr><td><code>sysctls</code></td><td><code>net.ipv4.ip_forward</code>, <code>net.ipv4.conf.all.src_valid_mark</code></td><td>Faire passer le trafic des appareils, dans le container seulement.</td></tr>
+      <tr><td><code>DISABLE_IPV6</code></td><td><code>true</code></td><td>Le réseau <code>dotbox</code> n'a pas d'IPv6.</td></tr>
+      <tr><td><code>ports</code></td><td><code>51820/udp</code></td><td>Le VPN lui-même. CrowdSec bloque déjà les IP bannies sur ce port.</td></tr>
+    </tbody>
+  </table></div>
+  <p>wg-easy tourne en root dans son container: WireGuard le demande. Dans le compose aussi: <code>no-new-privileges</code> et un redémarrage automatique. Le healthcheck est celui de l'image.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <ul>
+    <li>Ouvre son adresse: Authelia, puis wg-easy te demande de créer son compte et l'adresse de ton serveur. Donne <code>example.com</code> (ton domaine) et le port <code>51820</code>.</li>
+    <li>Ajoute un appareil, puis scanne le QR code avec l'app WireGuard de ton téléphone, ou télécharge le fichier pour ton ordinateur.</li>
+  </ul>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/wg-easy/wg-easy" target="_blank" rel="noopener">Source code ↗</a> <a href="https://wg-easy.github.io/wg-easy/" target="_blank" rel="noopener">Docs ↗</a> <a href="https://github.com/wg-easy/wg-easy/pkgs/container/wg-easy" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://wg-easy.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then a 6-digit code), then wg-easy's account</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/wg-easy/wg-easy:15.5.0</code></td></tr>
+      <tr><td>Published port</td><td><code>51820</code> over UDP, the VPN</td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install wg-easy</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What wg-easy does</h2>
+  <ul>
+    <li>It runs WireGuard, a fast and simple VPN, on your server.</li>
+    <li>Its web interface adds a device in one click: a QR code for your phone, a file for your computer.</li>
+    <li>A connected device goes through your server: it reaches the Internet, your server itself (SSH included), and the apps of the <code>dotbox</code> network.</li>
+  </ul>
+  <p>It is also the planned way to never get banned by CrowdSec: connections that come through the VPN do not go through the Internet.</p>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It loads the kernel's <code>wireguard</code> module, and adds it to <code>/etc/modules-load.d/dotbox-wg-easy.conf</code> for the server's next boots. So the container does not need <code>SYS_MODULE</code>, which would hand it the kernel.</li>
+    <li>It checks that port 51820 is free over UDP, creates <code>/opt/wg-easy/config</code>, writes <code>compose.yml</code> and starts wg-easy.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/wg-easy/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/wg-easy/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/wg-easy/config/</code></td><td><code>/etc/wireguard/</code></td><td>Its database: the keys of the server and of each device, and its account.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>cap_add</code></td><td><code>NET_ADMIN</code></td><td>Create the <code>wg0</code> interface and its firewall rules, inside the container only. The engine accepts no other right.</td></tr>
+      <tr><td><code>sysctls</code></td><td><code>net.ipv4.ip_forward</code>, <code>net.ipv4.conf.all.src_valid_mark</code></td><td>Route the devices' traffic, inside the container only.</td></tr>
+      <tr><td><code>DISABLE_IPV6</code></td><td><code>true</code></td><td>The <code>dotbox</code> network has no IPv6.</td></tr>
+      <tr><td><code>ports</code></td><td><code>51820/udp</code></td><td>The VPN itself. CrowdSec already blocks banned IPs on this port.</td></tr>
+    </tbody>
+  </table></div>
+  <p>wg-easy runs as root in its container: WireGuard requires it. In the compose too: <code>no-new-privileges</code> and an automatic restart. The healthcheck is the image's own.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <ul>
+    <li>Open its address: Authelia, then wg-easy asks you to create its account and your server's address. Give <code>example.com</code> (your domain) and port <code>51820</code>.</li>
+    <li>Add a device, then scan the QR code with the WireGuard app on your phone, or download the file for your computer.</li>
+  </ul>
+</article>

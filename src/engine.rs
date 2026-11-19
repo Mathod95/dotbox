@@ -264,6 +264,18 @@ services:
             ));
         }
     }
+    if !m.cap_add.is_empty() {
+        out.push_str("    # des droits réseau du noyau, pour un VPN (D75)\n    cap_add:\n");
+        for c in &m.cap_add {
+            out.push_str(&format!("      - {c}\n"));
+        }
+    }
+    if !m.sysctls.is_empty() {
+        out.push_str("    sysctls:\n");
+        for (k, v) in &m.sysctls {
+            out.push_str(&format!("      {k}: \"{v}\"\n"));
+        }
+    }
     if !m.env.is_empty() {
         out.push_str("    environment:\n");
         for (k, v) in &m.env {
@@ -584,7 +596,7 @@ mod tests {
 
     #[test]
     fn tautulli_autobrr_maintainerr_composes() {
-        for app in ["tautulli", "autobrr", "maintainerr"] {
+        for app in ["tautulli", "autobrr", "maintainerr", "wg-easy"] {
             let m = load(app);
             let mut c = ctx(Access::TwoFactor);
             c.subdomain = app.into();

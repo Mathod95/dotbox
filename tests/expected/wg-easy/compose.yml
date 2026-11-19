@@ -1,0 +1,37 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: wg-easy
+services:
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy:<version>
+    container_name: wg-easy
+    restart: unless-stopped
+    networks:
+      - dotbox
+    # pas du web (D44): publiés sur le serveur, au même numéro
+    ports:
+      - "51820:51820/udp"
+    # des droits réseau du noyau, pour un VPN (D75)
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+    environment:
+      TZ: 'Europe/Paris'
+      DISABLE_IPV6: 'true'
+    volumes:
+      - /opt/wg-easy/config:/etc/wireguard
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.wg-easy.rule: Host(`wg-easy.example.com`)
+      traefik.http.routers.wg-easy.entrypoints: websecure
+      traefik.http.services.wg-easy.loadbalancer.server.port: "51821"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.wg-easy.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr et Maintainerr",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr and Maintainerr"
+        "fr": "AppSec, CrowdSec sur les connexions des apps, et 12 apps",
+        "en": "AppSec, CrowdSec on app logins, and 12 apps"
       },
       "new": [
         {
@@ -107,6 +107,14 @@
         {
           "fr": "Catalogue: Maintainerr, le ménage dans la bibliothèque selon des règles, derrière Authelia",
           "en": "Catalog: Maintainerr, rule-based library cleanup, behind Authelia"
+        },
+        {
+          "fr": "Catalogue: wg-easy, un VPN WireGuard vers le serveur, interface web derrière Authelia, port 51820 en UDP",
+          "en": "Catalog: wg-easy, a WireGuard VPN to the server, web interface behind Authelia, port 51820 over UDP"
+        },
+        {
+          "fr": "Moteur: `cap_add` (`NET_ADMIN` seulement), `sysctls` (le transfert IPv4) et `kernel_modules` (`wireguard`, chargé par dotbox sur le serveur au lieu de donner `SYS_MODULE` au container)",
+          "en": "Engine: `cap_add` (`NET_ADMIN` only), `sysctls` (IPv4 forwarding) and `kernel_modules` (`wireguard`, loaded by dotbox on the server instead of giving `SYS_MODULE` to the container)"
         }
       ],
       "changed": [

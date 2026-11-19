@@ -765,14 +765,16 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "WireGuard: un VPN vers le serveur (port UDP publié, droits réseau sur le container)",
       "en": "WireGuard: a VPN to the server (published UDP port, network privileges on the container)",
       "journal": [
         "8.21",
         "D44",
-        "D75"
-      ]
+        "D75",
+        "J189-J190"
+      ],
+      "doc": "wg-easy"
     },
     {
       "stage": "apps",
