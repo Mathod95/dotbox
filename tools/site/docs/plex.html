@@ -1,0 +1,158 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Plex<i>●</i>le serveur média: tes films et tes séries, à regarder depuis n'importe quel appareil, avec les apps Plex.</p>
+<p class="lede" data-l="en">Plex<i>●</i>the media server: your movies and shows, to watch from any device, with the Plex apps.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://www.plex.tv" target="_blank" rel="noopener">Site ↗</a> <a href="https://support.plex.tv" target="_blank" rel="noopener">Doc ↗</a> <a href="https://github.com/plexinc/pms-docker" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://plex.example.com</code></td></tr>
+      <tr><td>Accès</td><td>app: la connexion par ton compte Plex (plex.tv), avec AppSec devant. Derrière Authelia jusqu'à ce que ton compte réclame le serveur.</td></tr>
+      <tr><td>Image</td><td><code>plexinc/pms-docker:1.43.5.11079-b3b13e506</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install plex</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Plex</h2>
+  <ul>
+    <li>Il lit les films et les séries que Radarr et Sonarr rangent dans <code>/data/media</code>, et les présente avec leurs affiches et leurs résumés.</li>
+    <li>Tu les regardes dans ses apps (TV, téléphone, console) ou sur <code>app.plex.tv</code>. Les comptes passent par plex.tv: tu partages ton serveur avec un proche par son compte Plex.</li>
+    <li>Quand un appareil ne lit pas un format, Plex convertit la vidéo à la volée.</li>
+  </ul>
+  <p>Jellyfin et Plex font le même travail: Dot Box n'en préfère aucun. Tu peux installer l'un, l'autre, ou les deux.</p>
+
+  <h2 id="fr-install">L'installation, pas à pas</h2>
+  <p>Un serveur Plex neuf appartient au premier compte Plex qui le réclame. Plex reste donc derrière Authelia jusque-là.</p>
+  <h3 id="fr-step1">1. Installer</h3>
+  <pre><span class="p">$</span> sudo dotbox install plex
+<span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, two_factor until set up
+
+  plex          https://plex.example.com  two_factor for now
+
+  → Open https://plex.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install plex again: Authelia steps aside (app).</pre>
+  <ul>
+    <li>Elle crée <code>/opt/plex/config</code> et <code>/opt/plex/transcode</code> à ton utilisateur, et prépare <code>/data/media</code> s'il n'existe pas encore.</li>
+    <li>Elle démarre Plex derrière Authelia. Au premier démarrage, l'image écrit l'adresse que Plex annonce à ses apps: <code>https://plex.example.com:443</code>.</li>
+  </ul>
+  <h3 id="fr-step2">2. Réclamer le serveur</h3>
+  <ul>
+    <li>Ouvre <code>https://plex.example.com/web</code>. Authelia te demande de te connecter, puis Plex te demande ton compte Plex.</li>
+    <li>Plex propose de réclamer ce serveur: il devient le tien. Donne-lui un nom.</li>
+    <li>Ajoute les bibliothèques: Films sur <code>/data/media/movies</code>, Séries sur <code>/data/media/tv</code>.</li>
+  </ul>
+  <h3 id="fr-step3">3. Ouvrir Plex à ses apps</h3>
+  <pre><span class="p">$</span> sudo dotbox install plex
+<span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, app
+
+  plex          https://plex.example.com  app</pre>
+  <p>dotbox voit que le serveur est réclamé (Plex écrit son jeton, <code>PlexOnlineToken</code>, dans <code>Preferences.xml</code>) et passe Plex au niveau app: plus d'Authelia devant, AppSec reste. Tes apps Plex trouvent ton serveur par ton compte.</p>
+
+  <h2 id="fr-security">Ce qui le protège</h2>
+  <ul>
+    <li>Pendant la réclamation: Authelia, avec la double authentification.</li>
+    <li>Ensuite: les comptes Plex, vérifiés par plex.tv, et AppSec, qui bloque les attaques connues (Security).</li>
+    <li>Les mots de passe se tapent sur plex.tv, pas sur ton serveur: CrowdSec n'a rien à lire ici.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/plex/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/plex/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/plex/config/Library/Application Support/Plex Media Server/</code></td><td><code>/config/Library/…</code></td><td>Les réglages (<code>Preferences.xml</code>), la base, les images, les logs.</td></tr>
+      <tr><td><code>/opt/plex/transcode/</code></td><td><code>/transcode/</code></td><td>Les transcodages en cours. Peut être vidé.</td></tr>
+      <tr><td><code>/data/media/</code></td><td><code>/data/media/</code></td><td>Tes médias, en lecture seule.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>ADVERTISE_IP</code></td><td><code>https://plex.example.com:443</code></td><td>L'adresse que Plex annonce à ses apps (<code>customConnections</code>): par Traefik, en HTTPS. Aucun port de Plex n'est publié.</td></tr>
+      <tr><td><code>PLEX_UID</code>, <code>PLEX_GID</code></td><td>ton utilisateur</td><td>L'image démarre en root, puis fait tourner Plex avec cet utilisateur.</td></tr>
+      <tr><td><code>/data/media</code></td><td>lecture seule</td><td>Plex lit les médias, il ne peut ni les effacer ni écrire à côté.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose aussi: <code>no-new-privileges</code> et un redémarrage automatique. Le healthcheck est celui de l'image. Le transcodage se fait avec le processeur: l'accélération par la carte graphique n'est pas encore réglée par Dot Box.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://www.plex.tv" target="_blank" rel="noopener">Website ↗</a> <a href="https://support.plex.tv" target="_blank" rel="noopener">Docs ↗</a> <a href="https://github.com/plexinc/pms-docker" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://plex.example.com</code></td></tr>
+      <tr><td>Access</td><td>app: login with your Plex account (plex.tv), with AppSec in front. Behind Authelia until your account claims the server.</td></tr>
+      <tr><td>Image</td><td><code>plexinc/pms-docker:1.43.5.11079-b3b13e506</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install plex</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Plex does</h2>
+  <ul>
+    <li>It reads the movies and shows that Radarr and Sonarr put in <code>/data/media</code>, and shows them with their posters and summaries.</li>
+    <li>You watch them in its apps (TV, phone, console) or on <code>app.plex.tv</code>. Accounts go through plex.tv: you share your server with someone through their Plex account.</li>
+    <li>When a device cannot play a format, Plex converts the video on the fly.</li>
+  </ul>
+  <p>Jellyfin and Plex do the same job: Dot Box prefers neither. You can install one, the other, or both.</p>
+
+  <h2 id="en-install">The install, step by step</h2>
+  <p>A new Plex server belongs to the first Plex account that claims it. So Plex stays behind Authelia until then.</p>
+  <h3 id="en-step1">1. Install</h3>
+  <pre><span class="p">$</span> sudo dotbox install plex
+<span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, two_factor until set up
+
+  plex          https://plex.example.com  two_factor for now
+
+  → Open https://plex.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install plex again: Authelia steps aside (app).</pre>
+  <ul>
+    <li>It creates <code>/opt/plex/config</code> and <code>/opt/plex/transcode</code>, owned by your user, and prepares <code>/data/media</code> if it does not exist yet.</li>
+    <li>It starts Plex behind Authelia. On the first start, the image writes the address Plex advertises to its apps: <code>https://plex.example.com:443</code>.</li>
+  </ul>
+  <h3 id="en-step2">2. Claim the server</h3>
+  <ul>
+    <li>Open <code>https://plex.example.com/web</code>. Authelia asks you to log in, then Plex asks for your Plex account.</li>
+    <li>Plex offers to claim this server: it becomes yours. Give it a name.</li>
+    <li>Add the libraries: Movies on <code>/data/media/movies</code>, Shows on <code>/data/media/tv</code>.</li>
+  </ul>
+  <h3 id="en-step3">3. Open Plex to its apps</h3>
+  <pre><span class="p">$</span> sudo dotbox install plex
+<span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, app
+
+  plex          https://plex.example.com  app</pre>
+  <p>dotbox sees that the server is claimed (Plex writes its token, <code>PlexOnlineToken</code>, in <code>Preferences.xml</code>) and moves Plex to the app level: no more Authelia in front, AppSec stays. Your Plex apps find your server through your account.</p>
+
+  <h2 id="en-security">What protects it</h2>
+  <ul>
+    <li>During the claim: Authelia, with two-factor authentication.</li>
+    <li>Afterwards: Plex accounts, checked by plex.tv, and AppSec, which blocks known attacks (Security).</li>
+    <li>Passwords are typed on plex.tv, not on your server: CrowdSec has nothing to read here.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/plex/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/plex/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/plex/config/Library/Application Support/Plex Media Server/</code></td><td><code>/config/Library/…</code></td><td>The settings (<code>Preferences.xml</code>), the database, images, logs.</td></tr>
+      <tr><td><code>/opt/plex/transcode/</code></td><td><code>/transcode/</code></td><td>Running transcodes. Can be emptied.</td></tr>
+      <tr><td><code>/data/media/</code></td><td><code>/data/media/</code></td><td>Your media, read-only.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>ADVERTISE_IP</code></td><td><code>https://plex.example.com:443</code></td><td>The address Plex advertises to its apps (<code>customConnections</code>): through Traefik, over HTTPS. No Plex port is published.</td></tr>
+      <tr><td><code>PLEX_UID</code>, <code>PLEX_GID</code></td><td>your user</td><td>The image starts as root, then runs Plex as this user.</td></tr>
+      <tr><td><code>/data/media</code></td><td>read-only</td><td>Plex reads the media, it can neither delete it nor write next to it.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose too: <code>no-new-privileges</code> and an automatic restart. The healthcheck is the image's own. Transcoding uses the processor: graphics card acceleration is not set up by Dot Box yet.</p>
+</article>

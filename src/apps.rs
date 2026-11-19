@@ -349,10 +349,7 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         crate::crowdsec::watch_app(app, &w.collection, &w.kind)?;
     }
     if setup_pending {
-        ui::done(&format!(
-            "{}, two_factor until its setup is done",
-            m.version()
-        ));
+        ui::done(&format!("{}, two_factor until set up", m.version()));
     } else {
         ui::done(&format!("{}, {}", m.version(), access.as_str()));
     }

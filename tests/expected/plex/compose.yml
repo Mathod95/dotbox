@@ -1,0 +1,32 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: plex
+services:
+  plex:
+    image: plexinc/pms-docker:<version>
+    container_name: plex
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PLEX_UID: '1000'
+      PLEX_GID: '1000'
+      TZ: 'Europe/Paris'
+      ADVERTISE_IP: 'https://plex.example.com:443'
+    volumes:
+      - /opt/plex/config:/config
+      - /opt/plex/transcode:/transcode
+      - /data/media:/data/media:ro
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.plex.rule: Host(`plex.example.com`)
+      traefik.http.routers.plex.entrypoints: websecure
+      traefik.http.services.plex.loadbalancer.server.port: "32400"
+      # app: AppSec, le WAF de CrowdSec, bloque les attaques connues
+      traefik.http.routers.plex.middlewares: crowdsec@docker
+
+networks:
+  dotbox:
+    external: true

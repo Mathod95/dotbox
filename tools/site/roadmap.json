@@ -628,13 +628,16 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Plex: le serveur média (niveau `app`, après CrowdSec)",
       "en": "Plex: the media server (`app` level, after CrowdSec)",
       "journal": [
         "8.11",
-        "D40"
-      ]
+        "D40",
+        "J185-J186",
+        "D71"
+      ],
+      "doc": "plex"
     },
     {
       "stage": "apps",

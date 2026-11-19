@@ -573,6 +573,16 @@ mod tests {
     }
 
     #[test]
+    fn plex_compose_is_the_expected_one() {
+        let m = load("plex");
+        let mut c = ctx(Access::App);
+        c.subdomain = "plex".into();
+        let expected =
+            include_str!("../tests/expected/plex/compose.yml").replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+    }
+
+    #[test]
     fn jellyfin_network_xml() {
         let m = load("jellyfin");
         let mut c = ctx(Access::App);

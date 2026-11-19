@@ -61,6 +61,7 @@ DOCS = [
     {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "group": "Apps"},
     {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "group": "Apps"},
     {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "group": "Apps"},
+    {"slug": "plex", "name": "Plex", "dots": "PLEX", "group": "Apps"},
     {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "group": "Apps"},
     {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "group": "Apps"},
     {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "group": "Apps"},

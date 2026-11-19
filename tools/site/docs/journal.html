@@ -2027,7 +2027,24 @@ sudo_run.py 'cscli decisions list -i 198.51.100.7; cscli decisions delete --ip 1
       effect: "Une connexion ratée depuis le PC (sous le seuil), une décision de test retirée.",
       result: `/alive 200, / 200, /admin et /admin/users 302 vers https://auth.<domaine>, /.env 403 (AppSec)
 la connexion depuis le PC: Vaultwarden note la vraie IP, pas 203.0.113.99 (Traefik remplace X-Real-IP)
-décision: Dominic-Wagner/vaultwarden-bf, ban, 6 événements, 4 h, sur 198.51.100.7; retirée` }
+décision: Dominic-Wagner/vaultwarden-bf, ban, 6 événements, 4 h, sur 198.51.100.7; retirée` },
+    { id: "J185", time: "00:19", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.11: dotbox install plex, pas encore réclamé",
+      cmd: `scp (binaire e10575604418b327…, et le catalogue du PC avec catalog/plex.yml)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install plex --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan 8.11 (accord d'avance, D73). Sur le PC avant: fmt, clippy, 98 tests, renovate-config-validator.",
+      effect: "Serveur: /opt/plex (config/, transcode/, compose.yml), l'image plexinc/pms-docker:1.43.5.11079-b3b13e506, apps: plex dans dotbox.yml (niveau app).",
+      undo: "sudo dotbox remove plex --purge",
+      result: `✓ [1/1] Plex          1.43.5.11079-b3b13e506, two_factor until its set…   53 s
+La ligne de l'étape coupée par le numéro de version: texte raccourci sur le PC (« two_factor until set up »)
+Preferences.xml: customConnections="https://plex.<domaine>:443" (ADVERTISE_IP), pas de PlexOnlineToken, en 600 à <user>
+/identity: claimed="0"; Plex Media Server tourne avec <user>, healthy` },
+    { id: "J186", time: "00:21", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.11: Plex derrière Authelia",
+      cmd: `curl https://plex.<domaine>/web/index.html; curl https://plex.<domaine>/identity   (depuis le PC)`,
+      does: "La route avant la réclamation.",
+      effect: "Aucun, lecture seule.",
+      result: `/web/index.html et /identity: 302 vers https://auth.<domaine>` }
   ];
 
   var PLAN = [
@@ -2733,7 +2750,20 @@ volumes:
         { id: "8.10", kind: "ecriture", where: "PC → Serveur", title: "Portainer (plus tard, D68)",
           does: "Une interface pour voir et piloter les containers. Image officielle portainer/portainer-ce:2.45.4 (18 novembre 2026). Pour piloter Docker, il lui faut le socket Docker en écriture: c'est l'équivalent de root sur le serveur, alors que Traefik n'a qu'un proxy en lecture seule. Il peut aussi créer et modifier des containers que dotbox ne connaît pas. À trancher: Q35.",
           effect: "PC: catalog/portainer.yml. Serveur: /opt/portainer, l'image de Portainer, le socket Docker monté." },
-        { id: "8.11", kind: "ecriture", where: "PC → Serveur", title: "Plex (après AppSec)",
+        { id: "8.11", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Plex (après AppSec)",
+          lede: "Plan du 20 novembre 2026, accordé d'avance (D73). Image officielle plexinc/pms-docker 1.43.5.11079-b3b13e506 (D53; Saltbox prend aussi celle-ci, en latest), niveau app, PLEX_UID et PLEX_GID, ADVERTISE_IP par Traefik en HTTPS, /data/media en lecture seule, aucun port publié (comme Saltbox par défaut). Vérifié dans le script de premier démarrage de l'image (40-plex-first-run). Derrière Authelia jusqu'à la réclamation (PlexOnlineToken dans Preferences.xml, D71). Pas de CrowdSec: les mots de passe se tapent sur plex.tv. Renovate: une règle pour ses tags. Sa page dans la doc. Testé (J185, J186). Reste: la réclamation par Mathod95, puis la seconde install.",
+          links: [
+            { t: "Page Plex", u: "../plex/" },
+            { t: "Image officielle", u: "https://github.com/plexinc/pms-docker" }
+          ],
+          backlog: [
+            { id: "8.11.1", kind: "lecture", where: "Navigateur de Mathod95", title: "La réclamation par le navigateur, à vérifier",
+              lede: "Plex laisse réclamer un serveur neuf depuis le réseau local. Les requêtes arrivent par Traefik, depuis le réseau dotbox, que Plex prend pour son réseau local: la réclamation devrait marcher derrière Authelia. Pas encore essayé.",
+              sections: [ { h: "Si ça ne marche pas", p: "Saltbox réclame le serveur par l'API de plex.tv (claim_server.yml). Dot Box pourrait demander un code sur https://plex.tv/claim (valable 4 minutes) et le passer à PLEX_CLAIM, lu au premier démarrage du container." } ] },
+            { id: "8.11.2", kind: "ecriture", where: "PC (code)", title: "Tous les clients vus comme locaux",
+              lede: "Plex ne lit pas X-Forwarded-For: chaque client a l'IP de Traefik, du réseau local. Les limites de qualité pour les clients à distance ne s'appliquent pas, et ses statistiques ne montrent pas les vraies IP. Saltbox a le même comportement.",
+              sections: [ { h: "Ce que ça changerait", p: "À étudier: le réglage LanNetworks de Plex, sans casser la réclamation." } ] }
+          ],
           does: "Le second serveur média, au même niveau que Jellyfin. Niveau app, comme Jellyfin. Après 10.7." },
         { id: "8.12", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Wizarr (après AppSec)",
           lede: "Plan du 20 novembre 2026, accordé d'avance (D73). Image officielle v2026.10.1, niveau public, PUID et PGID, healthcheck de l'image, TRUST_PROXY_HEADERS. Vérifié dans le code de Wizarr: sans compte admin, toutes les pages renvoient vers /setup (app/middleware.py), et la base est en SQLite. Le moteur apprend donc à demander à l'app si son assistant est fini (setup: probe). Sa page dans la doc. Testé (J181, J182). Reste: l'assistant, fait par Mathod95, puis la seconde install.",
@@ -3711,7 +3741,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.

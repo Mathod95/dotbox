@@ -637,7 +637,11 @@ fn relative_path(p: &str, file: bool) -> bool {
 /// Le fichier de réglages sous /opt/<app>: comme relative_path, avec les majuscules, puisque
 /// c'est l'app qui le nomme (config/qBittorrent/qBittorrent.conf).
 fn settings_file(p: &str) -> bool {
-    relative_path(&p.to_ascii_lowercase(), true)
+    // des espaces aussi (Plex: « Application Support/Plex Media Server »): dotbox ouvre ces
+    // fichiers lui-même, jamais par un shell
+    p.split('/')
+        .all(|seg| !seg.starts_with(' ') && !seg.ends_with(' '))
+        && relative_path(&p.to_ascii_lowercase().replace(' ', "_"), true)
 }
 
 /// Ce binaire peut-il installer ce manifest?
@@ -1218,6 +1222,21 @@ mod tests {
     }
 
     #[test]
+    fn plex() {
+        let m = load(&catalog_dir(), "plex").unwrap();
+        assert_eq!((m.port, m.access), (32400, Access::App));
+        assert!(
+            m.volumes
+                .iter()
+                .any(|v| v.host == "/data/media" && v.read_only)
+        );
+        assert!(
+            matches!(m.setup, Some(Setup::File { ref done, .. }) if done == "PlexOnlineToken=\"")
+        );
+        assert!(m.crowdsec.is_none());
+    }
+
+    #[test]
     fn setup_and_xml_rules() {
         let with = |extra: &str| parse(&format!("{OK}{extra}"));
         let setup = "setup:\n  file: config/system.xml\n  done: <Done>true</Done>\n";
@@ -1229,6 +1248,11 @@ mod tests {
         assert!(with("setup:\n  probe: x\n  pending: /setup\n").is_err());
         assert!(with("setup:\n  file: config/s.xml\n  probe: /\n  pending: /setup\n").is_err());
         assert!(with("setup:\n  probe: /\n").is_err());
+        // des espaces dans le chemin (Plex), mais pas au bord d'un dossier
+        assert!(
+            with("setup:\n  file: config/Plex Media Server/Preferences.xml\n  done: x\n").is_ok()
+        );
+        assert!(with("setup:\n  file: config/ x/p.xml\n  done: x\n").is_err());
         // derrière Authelia, l'assistant est déjà protégé
         let tf = parse(&format!(
             "{}{setup}",

@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr, Wizarr et Vaultwarden",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr, Wizarr and Vaultwarden"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr et Vaultwarden",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Plex, Seerr, Wizarr and Vaultwarden"
       },
       "new": [
         {
@@ -87,6 +87,14 @@
         {
           "fr": "Moteur: des chemins d'une app ouverte à Internet derrière Authelia (`authelia_paths`)",
           "en": "Engine: paths of an app open to the Internet behind Authelia (`authelia_paths`)"
+        },
+        {
+          "fr": "Catalogue: Plex, le serveur média, image officielle, `/data/media` en lecture seule, son adresse publique annoncée par Traefik, derrière Authelia jusqu'à ce qu'un compte Plex le réclame",
+          "en": "Catalog: Plex, the media server, official image, `/data/media` read-only, its public address advertised through Traefik, behind Authelia until a Plex account claims it"
+        },
+        {
+          "fr": "Moteur: des espaces dans le chemin d'un fichier de l'app (`Application Support`)",
+          "en": "Engine: spaces in the path of an app file (`Application Support`)"
         }
       ],
       "changed": [

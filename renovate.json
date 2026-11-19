@@ -53,6 +53,12 @@
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?$"
     },
     {
+      "description": "Plex: version et build, puis le commit (1.43.5.11079-b3b13e506). Le suffixe change à chaque version: sans cette règle, Renovate le prendrait pour une variante et ne proposerait rien.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["plexinc/pms-docker"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-[0-9a-f]+$"
+    },
+    {
       "description": "Tout ce qui touche le catalogue: chore(catalog), jamais fix (pas de nouvelle version de dotbox, D64).",
       "matchFileNames": ["catalog/**"],
       "semanticCommitType": "chore",

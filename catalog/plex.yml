@@ -1,0 +1,29 @@
+# Plex: le serveur média, pour regarder films et séries depuis n'importe quel appareil.
+# Format: Journal, étape 7 (7.1) et 8.11. Les {{...}} sont remplis par dotbox à l'installation.
+name: plex
+description: Media server
+min_dotbox: 0.0.4
+image: plexinc/pms-docker:1.43.5.11079-b3b13e506
+port: 32400
+# la connexion par le compte Plex (plex.tv), pour ses apps; AppSec devant (10.7)
+access: app
+# l'image a son propre healthcheck (curl sur /identity)
+health: image
+env:
+  # l'image démarre en root, puis fait tourner Plex avec cet utilisateur
+  PLEX_UID: "{{uid}}"
+  PLEX_GID: "{{gid}}"
+  TZ: "{{tz}}"
+  # l'adresse que Plex annonce à ses apps (customConnections): par Traefik, en HTTPS
+  ADVERTISE_IP: "https://{{host}}:443"
+volumes:
+  - config:/config
+  - transcode:/transcode
+  # Plex lit les médias, Radarr et Sonarr les rangent: il n'y écrit rien
+  - /data/media:/data/media:ro
+# Tant que le serveur n'est pas réclamé par un compte Plex, n'importe qui pourrait le faire
+# (D71). Plex écrit son jeton dans Preferences.xml une fois réclamé. Pas de CrowdSec: les
+# connexions passent par plex.tv, pas par ce serveur.
+setup:
+  file: config/Library/Application Support/Plex Media Server/Preferences.xml
+  done: PlexOnlineToken="
