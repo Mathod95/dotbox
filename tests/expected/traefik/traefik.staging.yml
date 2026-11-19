@@ -41,6 +41,13 @@ providers:
     exposedByDefault: false
     network: dotbox
 
+# Le plugin CrowdSec, pour AppSec (10.7): une copie locale vérifiée par dotbox, dans
+# /plugins-local, jamais téléchargée par Traefik.
+experimental:
+  localPlugins:
+    crowdsec:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+
 certificatesResolvers:
   letsencrypt:
     acme:

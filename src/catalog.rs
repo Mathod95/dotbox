@@ -517,9 +517,14 @@ pub struct CoreFile {
     pub version: String,
     pub url: String,
     pub sha256: String,
-    /// chemin du binaire dans l'archive
-    pub binary: String,
-    pub binary_sha256: String,
+    /// le binaire à garder, son chemin dans l'archive et son empreinte (le bouncer pare-feu)
+    #[serde(default)]
+    pub binary: Option<String>,
+    #[serde(default)]
+    pub binary_sha256: Option<String>,
+    /// ou le dossier de l'archive à garder tel quel (le plugin de Traefik, 10.7)
+    #[serde(default)]
+    pub dir: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -527,6 +532,7 @@ pub struct CoreFile {
 struct RawCore {
     name: String,
     min_dotbox: String,
+    #[serde(default)]
     images: serde_yaml_ng::Mapping,
     #[serde(default)]
     files: std::collections::BTreeMap<String, CoreFile>,
@@ -589,14 +595,14 @@ pub fn parse_core(text: &str) -> Result<Core, String> {
         check_image(image)?;
         images.push((key.to_string(), image.to_string()));
     }
-    if images.is_empty() {
-        return Err("images: at least one".into());
+    if images.is_empty() && raw.files.is_empty() {
+        return Err("images or files: at least one".into());
     }
     for (key, f) in &raw.files {
         if !f.url.starts_with("https://") {
             return Err(format!("files {key}: the url must be https"));
         }
-        if !is_sha256(&f.sha256) || !is_sha256(&f.binary_sha256) {
+        if !is_sha256(&f.sha256) || f.binary_sha256.as_deref().is_some_and(|h| !is_sha256(h)) {
             return Err(format!(
                 "files {key}: sha256 values are 64 lowercase hex digits"
             ));
@@ -607,11 +613,17 @@ pub fn parse_core(text: &str) -> Result<Core, String> {
                 f.version
             ));
         }
-        if f.binary.is_empty()
-            || f.binary.starts_with('/')
-            || f.binary.split('/').any(|p| p.is_empty() || p == "..")
-        {
-            return Err(format!("files {key}: binary is a path inside the archive"));
+        let inside = |p: &str| {
+            !p.is_empty() && !p.starts_with('/') && p.split('/').all(|s| !s.is_empty() && s != "..")
+        };
+        match (&f.binary, &f.binary_sha256, &f.dir) {
+            (Some(b), Some(_), None) if inside(b) => {}
+            (None, None, Some(d)) if inside(d) => {}
+            _ => {
+                return Err(format!(
+                    "files {key}: either binary and binary_sha256 (paths inside the archive), or dir"
+                ));
+            }
         }
     }
     Ok(Core {
@@ -632,6 +644,19 @@ pub fn load_core(dir: &Path, name: &str) -> Result<Core, String> {
         ),
         _ => format!("cannot read {}: {e}", path.display()),
     })?;
+    let current = env!("CARGO_PKG_VERSION");
+    // min_dotbox d'abord, comme pour les apps (load)
+    if let Some(min) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&text)
+        .ok()
+        .and_then(|v| v.get("min_dotbox")?.as_str().map(str::to_string))
+    {
+        if parse_version(&min).is_some() && !supported(&min, current) {
+            return Err(format!(
+                "{} needs Dot Box {min} or newer, this is {current}: install a newer Dot Box first",
+                path.display()
+            ));
+        }
+    }
     let c = parse_core(&text).map_err(|e| format!("{}: {e}", path.display()))?;
     if c.name != name {
         return Err(format!(
@@ -640,7 +665,6 @@ pub fn load_core(dir: &Path, name: &str) -> Result<Core, String> {
             c.name
         ));
     }
-    let current = env!("CARGO_PKG_VERSION");
     if !supported(&c.min_dotbox, current) {
         return Err(format!(
             "{} needs Dot Box {} or newer, this is {current}: install a newer Dot Box first",
@@ -710,7 +734,7 @@ mod tests {
 
     #[test]
     fn every_core_manifest_is_valid() {
-        for name in ["traefik", "authelia", "crowdsec"] {
+        for name in ["traefik", "authelia", "crowdsec", "crowdsec-plugin"] {
             load_core(&catalog_dir(), name).unwrap_or_else(|e| panic!("{e}"));
         }
         let t = load_core(&catalog_dir(), "traefik").unwrap();
@@ -720,6 +744,18 @@ mod tests {
         let c = load_core(&catalog_dir(), "crowdsec").unwrap();
         let b = c.file("firewall-bouncer").unwrap();
         assert!(b.url.contains(&format!("/download/{}/", b.version)));
+        let p = load_core(&catalog_dir(), "crowdsec-plugin").unwrap();
+        let p = p.file("traefik-plugin").unwrap();
+        assert_eq!(
+            p.dir.as_deref(),
+            Some(
+                format!(
+                    "crowdsec-bouncer-traefik-plugin-{}",
+                    p.version.trim_start_matches('v')
+                )
+                .as_str()
+            )
+        );
         assert!(app_names(&catalog_dir()).contains(&"radarr".to_string()));
         assert!(!app_names(&catalog_dir()).contains(&"core".to_string()));
     }
@@ -731,6 +767,14 @@ mod tests {
         assert!(parse_core(&ok.replace("a/b:1.0", "a/b:latest")).is_err());
         assert!(parse_core(&ok.replace("a/b:1.0", "a/b")).is_err());
         assert!(parse_core("name: x\nmin_dotbox: 0.0.3\nimages: {}\n").is_err());
+        // un dossier de l'archive au lieu d'un binaire (le plugin de Traefik), sans image
+        let plugin = format!(
+            "name: p\nmin_dotbox: 0.0.4\nfiles:\n  p:\n    version: v1\n    url: https://x/v1.tar.gz\n    sha256: {}\n    dir: p-1\n",
+            "a".repeat(64)
+        );
+        assert!(parse_core(&plugin).is_ok());
+        assert!(parse_core(&plugin.replace("dir: p-1", "dir: ../p")).is_err());
+        assert!(parse_core(&plugin.replace("    dir: p-1\n", "")).is_err());
         let f = |url: &str, sha: &str| {
             format!(
                 "{ok}files:\n  b:\n    version: v1\n    url: {url}\n    sha256: {sha}\n    binary: d/b\n    binary_sha256: {}\n",

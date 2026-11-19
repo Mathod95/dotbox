@@ -11,3 +11,11 @@ filenames:
   - /var/log/traefik/access.log
 labels:
   type: traefik
+---
+# AppSec: le plugin de Traefik soumet ici les requêtes (crowdsec:7422, réseau dotbox seulement).
+source: appsec
+listen_addr: 0.0.0.0:7422
+appsec_configs:
+  - crowdsecurity/appsec-default
+labels:
+  type: appsec

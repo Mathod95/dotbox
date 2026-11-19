@@ -157,6 +157,16 @@ fn steps(args: &Args) -> Result<(), String> {
     };
     let (traefik_core, authelia_core, crowdsec_core) =
         (load("traefik")?, load("authelia")?, load("crowdsec")?);
+    // le plugin de Traefik, dans son propre manifest (D70): sans image, une archive
+    let plugin_core = catalog::load_core(&dir, "crowdsec-plugin")?;
+    let plugin = plugin_core.file("traefik-plugin")?;
+    say(
+        "check",
+        &format!(
+            "core/crowdsec-plugin.yml: traefik-plugin {}",
+            plugin.version
+        ),
+    );
     let bouncer_version = crowdsec_core.file("firewall-bouncer")?.version.clone();
     let apps = catalog::app_names(&dir).len();
     ui::done(&format!("{from}, {apps} apps"));
@@ -220,7 +230,7 @@ fn steps(args: &Args) -> Result<(), String> {
     if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
         say("write", config::PATH);
     }
-    traefik::setup(&domain, &ca, &traefik_core)?;
+    traefik::setup(&domain, &ca, &traefik_core, plugin)?;
     let traefik_image = traefik_core.image("traefik")?;
     let certs = if ca == "letsencrypt-staging" {
         "staging certs"
@@ -240,7 +250,7 @@ fn steps(args: &Args) -> Result<(), String> {
     crowdsec::setup(&crowdsec_core)?;
     let crowdsec_version = crowdsec::version(crowdsec_core.image("crowdsec")?);
     ui::done(&format!(
-        "{crowdsec_version}, SSH and Traefik watched, bouncer {bouncer_version}"
+        "{crowdsec_version}, SSH, Traefik and AppSec, bouncer {bouncer_version}"
     ));
 
     // la carte de fin (D26, D32, D37)

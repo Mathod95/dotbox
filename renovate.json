@@ -24,11 +24,19 @@
     },
     {
       "customType": "regex",
-      "description": "Le bouncer pare-feu de CrowdSec: sa version (l'adresse, le chemin du binaire et les empreintes suivent, par catalog-hashes.yml)",
+      "description": "Le bouncer pare-feu de CrowdSec: sa version (l'adresse, le chemin du binaire et les empreintes suivent, par catalog-hashes.yml et tools/core_hashes.sh)",
       "managerFilePatterns": ["/^catalog/core/crowdsec\\.ya?ml$/"],
       "matchStrings": ["firewall-bouncer:\\s*\\n\\s+version:\\s*(?<currentValue>v\\S+)"],
       "depNameTemplate": "crowdsecurity/cs-firewall-bouncer",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Le plugin CrowdSec de Traefik: sa version (l'adresse, le dossier et l'empreinte suivent, par catalog-hashes.yml)",
+      "managerFilePatterns": ["/^catalog/core/crowdsec-plugin\\.ya?ml$/"],
+      "matchStrings": ["traefik-plugin:\\s*\\n\\s+version:\\s*(?<currentValue>v\\S+)"],
+      "depNameTemplate": "maxlerebourg/crowdsec-bouncer-traefik-plugin",
+      "datasourceTemplate": "github-tags"
     }
   ],
   "packageRules": [

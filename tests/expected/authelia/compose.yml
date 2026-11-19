@@ -24,6 +24,8 @@ services:
       traefik.http.routers.authelia.rule: Host(`auth.example.com`)
       traefik.http.routers.authelia.entrypoints: websecure
       traefik.http.services.authelia.loadbalancer.server.port: "9091"
+      # sa page de connexion est ouverte à Internet: AppSec devant (10.7, D60)
+      traefik.http.routers.authelia.middlewares: crowdsec@docker
       # Le middleware qu'une app ajoute à son routeur pour être protégée (authelia@docker)
       traefik.http.middlewares.authelia.forwardauth.address: http://authelia:9091/api/authz/forward-auth
       traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true"

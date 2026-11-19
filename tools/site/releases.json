@@ -4,10 +4,14 @@
     {
       "version": "next",
       "title": {
-        "fr": "qBittorrent, Uptime Kuma et code-server",
-        "en": "qBittorrent, Uptime Kuma and code-server"
+        "fr": "AppSec, qBittorrent, Uptime Kuma et code-server",
+        "en": "AppSec, qBittorrent, Uptime Kuma and code-server"
       },
       "new": [
+        {
+          "fr": "Core: AppSec, le pare-feu web de CrowdSec, devant les apps sans Authelia et la page de connexion d'Authelia, par le plugin CrowdSec de Traefik, gardé en copie vérifiée sur le serveur",
+          "en": "Core: AppSec, CrowdSec's web application firewall, in front of apps without Authelia and Authelia's login page, through Traefik's CrowdSec plugin, kept as a verified copy on the server"
+        },
         {
           "fr": "Catalogue: qBittorrent, le client BitTorrent, avec son port des pairs 56881 publié en TCP et UDP, sans mot de passe pour le réseau `dotbox` comme Radarr et Sonarr",
           "en": "Catalog: qBittorrent, the BitTorrent client, with its peer port 56881 published in TCP and UDP, no password for the `dotbox` network like Radarr and Sonarr"
@@ -31,6 +35,10 @@
         {
           "fr": "Moteur: un manifest peut lancer le container avec l'utilisateur de `dotbox.yml` (`user:`), pour les images sans `PUID` ni `PGID`",
           "en": "Engine: a manifest can run the container as the `dotbox.yml` user (`user:`), for images without `PUID` or `PGID`"
+        },
+        {
+          "fr": "Catalogue: le plugin CrowdSec de Traefik dans le core, dans son propre manifest (`catalog/core/crowdsec-plugin.yml`), version et empreinte suivies par Renovate",
+          "en": "Catalog: Traefik's CrowdSec plugin in the core, in its own manifest (`catalog/core/crowdsec-plugin.yml`), version and checksum tracked by Renovate"
         }
       ],
       "changed": [

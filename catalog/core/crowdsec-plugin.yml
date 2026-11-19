@@ -1,0 +1,13 @@
+# Le plugin CrowdSec de Traefik, pour AppSec, le WAF de CrowdSec (Journal, 10.7, D60).
+# Le core (D64), dans son propre manifest (D70): dotbox init en garde une copie vérifiée, que
+# Traefik lit sur le disque au lieu de la télécharger à chaque démarrage.
+name: crowdsec-plugin
+min_dotbox: 0.0.4
+files:
+  # La source du tag sur GitHub: le projet ne publie pas d'archive. L'adresse, l'empreinte et le
+  # dossier suivent la version (tools/core_hashes.sh, catalog-hashes.yml).
+  traefik-plugin:
+    version: v1.8.2
+    url: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/archive/refs/tags/v1.8.2.tar.gz
+    sha256: 8553b722bcd15f0c08bbf5aa1485660686b32033469b1f7c262b02358f3538cf
+    dir: crowdsec-bouncer-traefik-plugin-1.8.2

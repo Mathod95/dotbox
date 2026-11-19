@@ -223,6 +223,14 @@ services:
 ",
             c.access.as_str()
         ));
+    } else {
+        // sans Authelia devant, ouverte à Internet: AppSec, le WAF de CrowdSec (10.7, D60)
+        out.push_str(&format!(
+            "      # {}: AppSec, le WAF de CrowdSec, bloque les attaques connues
+      traefik.http.routers.{app}.middlewares: crowdsec@docker
+",
+            c.access.as_str()
+        ));
     }
     out.push_str(
         "
@@ -447,7 +455,10 @@ mod tests {
         let m = prowlarr();
         for a in [Access::App, Access::Public] {
             assert!(!compose(&m, &ctx(a)).contains("authelia@docker"));
+            // ouverte à Internet: AppSec devant (10.7)
+            assert!(compose(&m, &ctx(a)).contains("middlewares: crowdsec@docker"));
         }
+        assert!(!compose(&m, &ctx(Access::TwoFactor)).contains("crowdsec@docker"));
         assert!(compose(&m, &ctx(Access::OneFactor)).contains("authelia@docker"));
     }
 

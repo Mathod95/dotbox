@@ -1815,6 +1815,54 @@ Uptime Kuma n'a pas encore de base (kuma.db): elle est créée à la première v
       does: "Comme convenu avec Mathod95 pour qBittorrent (J161): un commit par app sur main, le tag v0.0.4 à la fin du lot, avec son accord.",
       effect: "GitHub: main, catalog/uptime-kuma.yml et catalog/code-server.yml lisibles par dotbox, Renovate suit leurs images, le site republié.",
       undo: "git revert du commit, puis git push",
+      result: "poussé sur main" },
+    { id: "J166", time: "21:00", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "10.7: dotbox init avec AppSec",
+      cmd: `scp (binaire 0.0.4 avec AppSec, sha256 152410bd7e131b45…, et le catalogue du PC avec catalog/core/crowdsec-plugin.yml)
+sudo_run.py 'cp /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.4-sans-appsec.bak; install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox init --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan validé (10.7, D69, D70). Sur le PC avant: fmt, clippy, 84 tests, tools/core_hashes.sh --check, actionlint, renovate-config-validator.",
+      effect: "Serveur: /opt/traefik/plugins-local/ (le plugin v1.8.2, archive vérifiée), le secret crowdsec_bouncer_traefik, les compose.yml de Traefik, d'Authelia et de CrowdSec réécrits, la config statique de Traefik, la source AppSec de CrowdSec. Les trois containers recréés.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.4-sans-appsec.bak /usr/local/bin/dotbox, puis sudo dotbox init --catalog (le catalogue sans le plugin)",
+      result: `✓ [5/7] Traefik       v3.7.19, socket proxy, Let's Encrypt certs         9.8 s
+✓ [6/7] Authelia      4.39.28, account <user>                            8.5 s
+✓ [7/7] CrowdSec      v1.8.2, SSH, Traefik and AppSec, bouncer v0.0.38    23 s
+Traefik: « Loading plugins... crowdsec », « Plugins loaded »
+CrowdSec: « Appsec listening on …:7422 », appsec-default, generic-rules, virtual-patching enabled
+bouncers: firewall et traefik, validated
+Pendant la recréation d'Authelia (20:00:57): « middleware authelia@docker does not exist » pour les routeurs protégés, aucune erreur ensuite, les 5 apps two_factor renvoient vers Authelia (302)` },
+    { id: "J167", time: "21:03", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "10.7: AppSec à l'essai, sans se bannir",
+      cmd: `curl https://auth.<domaine>/crowdsec-test-NtktlJHV4TfBSK3wvlhiOBnl; curl https://auth.<domaine>/   (depuis le PC)
+docker exec prowlarr curl --resolve auth.<domaine>:443:<IP de Traefik> https://auth.<domaine>/.env; … /
+cscli alerts list; cscli decisions list (comparées aux IP des essais sans les afficher)`,
+      does: "10.7.5: la règle de test du hub depuis le PC (alerte sans bannissement), une vraie règle (/.env) depuis un container, adresse privée.",
+      effect: "Aucun (trois alertes, aucune décision).",
+      result: `PC, /crowdsec-test-…            200  alerte 247 crowdsecurity/appsec-generic-test, aucune décision
+                                     alerte 248 crowdsecurity/http-generic-test (le log de Traefik), aucune décision
+PC, page normale                 200
+container, /.env                 403  alerte 249 crowdsecurity/vpatch-env-access, aucune décision (adresse privée)
+container, page normale          200
+décisions actives: 5, toutes d'autres IP (http-probing, http-sensitive-files), aucune pour le PC ni le container` },
+    { id: "J168", time: "21:04", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "10.7: CrowdSec arrêté (D69), Traefik redémarré, init relancé",
+      cmd: `sudo_run.py 'docker stop crowdsec; wget https://auth.<domaine>/ https://prowlarr.<domaine>/; docker start crowdsec; docker restart traefik
+dotbox init --catalog /tmp/dotbox-catalog'
+sudo_run.py 'docker stop crowdsec; docker start crowdsec; (le portail toutes les 5 s)'`,
+      does: "D69: CrowdSec absent, les requêtes passées par AppSec sont refusées. Puis: le plugin se rétablit-il seul? Et Traefik recharge-t-il le plugin depuis le disque?",
+      effect: "Serveur: CrowdSec arrêté deux fois quelques secondes, Traefik redémarré une fois.",
+      result: `CrowdSec arrêté: portail 403, prowlarr (two_factor) 302 (pas touché)
+CrowdSec redémarré, sans toucher à Traefik:
+  +0 à +23 s  portail 403   crowdsec starting, plugin: « appsecQuery:unreachable … connection refused »
+  +28 s       portail 200   crowdsec healthy, AppSec à l'écoute: le plugin se rétablit seul
+Le healthcheck de CrowdSec (cscli lapi status) passe avant qu'AppSec écoute: backlog 10.7.7
+Traefik redémarré: « Plugins loaded » depuis le disque, portail 200
+init relancé: aucune écriture, aucun redémarrage` },
+    { id: "J169", time: "21:12", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "10.7: AppSec sur main, sans tag (D70)",
+      cmd: `git commit (feat: AppSec, le plugin CrowdSec de Traefik); git push`,
+      does: "Le plugin est dans son propre manifest (D70): un serveur en v0.0.3 l'ignore et installe le core comme avant. Avec la doc (propositions #51 à #53), Releases, la Roadmap (AppSec ajouté, CrowdSec et le core du catalogue cochés) et le Journal.",
+      effect: "GitHub: main, catalog/core/crowdsec-plugin.yml lisible par dotbox, Renovate suit la version du plugin, le site republié.",
+      undo: "git revert du commit, puis git push",
       result: "poussé sur main" }
   ];
 
@@ -2620,10 +2668,53 @@ sudo docker info --format '{{.LoggingDriver}} live-restore={{.LiveRestoreEnabled
           ],
           does: "Le binaire sur le serveur, puis sudo dotbox init. Vérifier: cscli metrics (les connexions SSH et le log de Traefik sont bien lus), cscli explain sur des lignes d'exemple (un mot de passe SSH raté, un scan de pages) pour voir ce qui serait détecté, puis un bannissement d'une IP de documentation (198.51.100.7, aucune vraie machine): elle doit apparaître dans l'ipset et les chaînes INPUT et DOCKER-USER, puis disparaître une fois débannie. Aucune attaque simulée depuis le PC: l'IP de Mathod95 serait bannie (Q33). Enfin, un redémarrage de Docker et du serveur: CrowdSec et le bouncer reviennent seuls, les apps restent joignables.",
           effect: "Serveur: /opt/crowdsec, /usr/local/bin/crowdsec-firewall-bouncer, un service systemd, des règles iptables et un ipset." },
-        { id: "10.7", kind: "ecriture", where: "PC (code) → Serveur", title: "Le plugin de Traefik avec AppSec",
+        { id: "10.7", status: "fait", ref: "J166-J168", kind: "ecriture", where: "PC (code) → Serveur", title: "Le plugin de Traefik avec AppSec",
+          lede: "Plan détaillé du 19 novembre 2026 (« GO » de Mathod95 pour le deuxième lot: AppSec, puis Jellyfin, Plex, Seerr, Wizarr et Vaultwarden). Lu: le README du plugin v1.8.2 (14 novembre 2026), les collections, la config et les scénarios AppSec du hub de CrowdSec. Rien n'est codé avant l'accord de Mathod95 et la réponse à Q37. Plan validé le 19 novembre 2026 (« Go »), Q37 tranchée: bloquer (D69). 10.7.6 remplacé par D70.",
+          links: [
+            { t: "Plugin CrowdSec pour Traefik", u: "https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin" },
+            { t: "AppSec, doc de CrowdSec", u: "https://doc.crowdsec.net/docs/next/appsec/intro/" }
+          ],
+          sections: [
+            { h: "10.7.1 CrowdSec: le composant AppSec",
+              l: ["Deux collections du hub en plus: crowdsecurity/appsec-virtual-patching (une règle par faille connue, CVE par CVE) et crowdsecurity/appsec-generic-rules (des attaques génériques), dans COLLECTIONS.",
+                  "Une source AppSec dans /opt/crowdsec/config/acquis.d/: crowdsecurity/appsec-default, à l'écoute sur le port 7422 dans le réseau dotbox seulement, jamais publié.",
+                  "Une seconde clé de bouncer, pour Traefik (bouncer « traefik »), à côté de celle du pare-feu: tirée par dotbox, gardée dans /opt/dotbox/secrets/, enregistrée par l'image au démarrage comme la première."] },
+            { h: "10.7.2 Traefik: le plugin, en copie locale",
+              l: ["Le plugin n'est pas téléchargé par Traefik au démarrage: dotbox prend l'archive du tag v1.8.2 sur GitHub, vérifie son empreinte (écrite dans catalog/core/crowdsec.yml, D64) et la range dans /opt/traefik/plugins-local/, monté en lecture seule. Traefik le déclare en plugin local (experimental.localPlugins).",
+                  "Le format des fichiers du core s'étend: aujourd'hui une archive dont on garde un binaire (le bouncer), demain aussi une archive dont on garde un dossier (le plugin).",
+                  "Le middleware crowdsec@docker, déclaré par les labels du container Traefik (comme authelia@docker): mode appsec (pas de vérification des IP bannies, le pare-feu le fait déjà, c'est le mode prévu pour ça), AppSec sur crowdsec:7422, la clé lue dans un fichier monté (crowdsecAppsecKeyFile), jamais écrite dans la config.",
+                  "Traefik voit directement l'adresse des visiteurs (pas de CDN devant): aucun en-tête X-Forwarded-For à croire."] },
+            { h: "10.7.3 Le moteur: qui passe par AppSec",
+              l: ["Les routeurs des apps app et public reçoivent crowdsec@docker. Les apps two_factor et one_factor gardent seulement Authelia (D60).",
+                  "Le portail d'Authelia (auth.<domaine>) aussi: sa page de connexion est ouverte à Internet (accord de Mathod95, déjà dans ce plan).",
+                  "Changer le niveau d'une app dans dotbox.yml ajoute ou retire le middleware au prochain install."] },
+            { h: "10.7.4 Renovate",
+              p: "La version du plugin suit les tags GitHub du projet. catalog-hashes.yml calcule l'empreinte de la nouvelle archive, comme pour le bouncer." },
+            { h: "10.7.5 Tester sans se bannir",
+              l: ["Une requête sur /crowdsec-test-NtktlJHV4TfBSK3wvlhiOBnl, la règle de test du hub: une alerte, jamais de bannissement (remediation: false). Faisable depuis le PC de Mathod95.",
+                  "Une requête bloquée (/.env, la règle vpatch-env-access): 403 dès la première. Le bannissement demande deux règles différentes en moins d'une minute (appsec-vpatch, crowdsec-appsec-inband). Testée depuis un container du réseau dotbox: adresse privée, sur la liste blanche de CrowdSec.",
+                  "cscli alerts list et cscli decisions list après chaque essai: l'alerte attendue, aucune décision.",
+                  "La connexion à Authelia dans le navigateur, puis une app two_factor: rien ne change pour Mathod95.",
+                  "Traefik et CrowdSec redémarrés: le plugin se recharge depuis le disque, sans Internet."] },
+            { h: "10.7.6 L'ordre de publication (remplacé par D70: le plugin dans son propre manifest, push sans attendre le tag)",
+              l: ["Le plugin s'ajoute à catalog/core/crowdsec.yml dans un format que le binaire v0.0.3 ne lit pas. Or install.sh installe la dernière release (v0.0.3), et dotbox init lit le catalogue sur main: si ce manifest arrive sur main avant la release, toute nouvelle installation s'arrête à l'étape Catalog.",
+                  "Proposé: tout 10.7 sur une branche, testé sur le serveur avec --catalog. Puis, avec l'accord de Mathod95, le code sur main et le tag v0.0.4 d'abord (la CI publie le binaire), et seulement ensuite le manifest du core sur main. Le tag ne peut donc pas attendre la fin du lot.",
+                  "Au passage: load_core vérifiera min_dotbox avant le reste, comme load le fait déjà pour les apps (J161), pour que le message dise qu'il faut un dotbox plus récent."] },
+            { h: "À trancher", p: "Q37: si CrowdSec ne répond pas, Traefik bloque ou laisse passer? Tranchée: bloquer (D69)." },
+            { h: "Fait (19 novembre 2026)",
+              l: ["Codé sur le PC: catalog/core/crowdsec-plugin.yml (D70), le format des fichiers du core (dir à la place d'un binaire, sans image), load_core qui lit min_dotbox d'abord, src/crowdsec.rs, src/traefik.rs, src/authelia.rs, src/engine.rs, src/init.rs, tools/core_hashes.sh (ex bouncer_hashes.sh), renovate.json, les deux workflows.",
+                  "Testé sur le serveur avec le catalogue du PC (J166 à J168): le plugin chargé depuis le disque, AppSec bloque /.env (403), la règle de test donne une alerte sans bannissement, D69 vérifiée, le plugin se rétablit seul quand CrowdSec revient.",
+                  "Reste: la doc (10.8, propositions #51 à #53 dans Security), le push sur main sans tag (D70)."] }
+          ],
+          backlog: [
+            { id: "10.7.7", kind: "ecriture", where: "PC (code)", title: "Le healthcheck de CrowdSec ne regarde pas AppSec",
+              lede: "cscli lapi status passe environ 25 s avant qu'AppSec écoute sur 7422 (J168). dotbox init déclare CrowdSec prêt alors que le portail d'Authelia répond encore 403.",
+              sections: [ { h: "Ce que ça changerait", p: "Le healthcheck vérifie aussi le port 7422 (bash et /dev/tcp, présents dans l'image debian). init attend alors qu'AppSec réponde, et la fenêtre de D69 se voit dans la sortie." } ] }
+          ],
           does: "D60: le plugin CrowdSec de Traefik (v1.8.2) et AppSec, le WAF de CrowdSec (source AppSec dans l'agent, règles de virtual patching), sur les seules apps sans Authelia devant (niveaux app et public): leurs requêtes passent par CrowdSec avant d'atteindre l'app, une attaque connue est bloquée dès la première. Avant Jellyfin (8.6) et Seerr (8.7), qui en profiteront les premiers. Le portail d'Authelia aussi (accord de Mathod95): sa page de connexion est ouverte à Internet, et c'est l'app qui permet de tester AppSec tout de suite. Une copie locale du plugin, vérifiée, que Traefik lit sur le disque: son catalogue n'est plus nécessaire au démarrage, une panne ne fait plus tomber la connexion. Sa version et son empreinte vont dans catalog/core/crowdsec.yml (D64), pas dans le binaire: 10.7 vient donc après 7.6, 7.12 et 7.13.",
-          effect: "Serveur: /opt/traefik/config/." },
+          effect: "PC: catalog/core/crowdsec.yml, src/catalog.rs, src/crowdsec.rs, src/traefik.rs, src/engine.rs, renovate.json, catalog-hashes.yml. Serveur: /opt/crowdsec/config/acquis.d/, /opt/traefik/plugins-local/, /opt/dotbox/secrets/, les compose.yml de Traefik et CrowdSec." },
         { id: "10.8", kind: "ecriture", where: "PC", title: "La doc, Releases et Roadmap",
+          note: "Propositions #51 (le tableau « En un coup d'œil »: CrowdSec et AppSec en place), #52 (CrowdSec n'est plus « prévu ») et #53 (la section AppSec telle qu'elle est faite) dans Security, le 19 novembre 2026. Releases (next) et Roadmap à jour.",
           does: "La page Security (D62) mise à jour, une proposition (en encadrés) pour les pages Getting Started qui parlent de CrowdSec (Basics, Installation, Post-installation, Prerequisites pour D59), les lignes de next, la feature cochée. Puis Jellyfin (8.6) et Seerr (8.7).",
           effect: "PC: pages Getting Started, tools/site/releases.json, tools/site/roadmap.json." }
       ] },
@@ -2871,7 +2962,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       reco: "Choix de Mathod95 du 19 novembre 2026 (« Parfait »): son dossier /config, et /opt au même chemin, pour modifier les compose.override.yml et les config/ des apps. /opt/dotbox reste illisible (root seulement), /data n'est pas monté." },
     { t: "Portainer plus tard (Q35)",
       p: "En lecture seule, Portainer ne peut ni arrêter ni redémarrer un container. Le socket proxy de linuxserver sait autoriser seulement démarrer, arrêter et redémarrer, et refuser le reste (créer un container, monter un dossier, ouvrir un terminal): un proxy à lui, séparé de celui de Traefik.",
-      reco: "Choix de Mathod95 du 19 novembre 2026: « On fera Portainer plus tard. » Quand il viendra, c'est la piste: son propre proxy, avec démarrer, arrêter et redémarrer, à tester avec Portainer." }
+      reco: "Choix de Mathod95 du 19 novembre 2026: « On fera Portainer plus tard. » Quand il viendra, c'est la piste: son propre proxy, avec démarrer, arrêter et redémarrer, à tester avec Portainer." },
+    { t: "AppSec bloque quand CrowdSec ne répond pas (Q37)",
+      reco: "Choix de Mathod95 du 19 novembre 2026: « Go bloquer, et on réétudiera la question plus tard si besoin. » CrowdsecAppsecUnreachableBlock et CrowdsecAppsecFailureBlock à true (le défaut du plugin)." },
+    { t: "Un nouveau morceau du core dans un nouveau manifest",
+      p: "Mathod95 veut pousser sur main au fil de l'eau et taguer plus tard. Or le binaire publié (v0.0.3) lit catalog/core/traefik.yml, authelia.yml et crowdsec.yml sur main à chaque init: un format qu'il ne connaît pas dans l'un d'eux arrête toute nouvelle installation. Il ignore en revanche les autres fichiers de catalog/core/.",
+      reco: "Le plugin de Traefik va dans son propre manifest, catalog/core/crowdsec-plugin.yml (min_dotbox 0.0.4), et non dans crowdsec.yml. Règle pour la suite: un nouveau morceau du core va dans un nouveau manifest, jamais dans un format qu'une release déjà publiée ne lit pas. On pousse sur main sans attendre le tag." }
   ];
 
   var QUESTIONS = [
@@ -3080,6 +3176,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           "/opt en plus, au même chemin: les compose.override.yml et les config/ des apps, modifiables. /opt/dotbox reste illisible (root seulement), comme /opt/dotbox/secrets.",
           "/opt et /data: les médias aussi."],
       reco: "Proposé: la deuxième. C'est ce qui le rend utile (modifier un compose.override.yml, lire une config), sans les secrets de dotbox ni les médias." },
+    { n: 37, done: "D69", t: "AppSec: si CrowdSec ne répond pas, Traefik bloque ou laisse passer?",
+      p: "Le plugin interroge CrowdSec pour chaque requête vers une app app ou public et vers le portail d'Authelia. CrowdSec redémarre quelques secondes à chaque dotbox init qui change sa config, et peut tomber. Le plugin a deux réglages: CrowdsecAppsecUnreachableBlock (CrowdSec injoignable) et CrowdsecAppsecFailureBlock (réponse inattendue), tous deux à « bloquer » par défaut.",
+      l: ["Bloquer (le défaut du plugin): sûr, mais Jellyfin, Seerr et le portail d'Authelia répondent 403 tant que CrowdSec est absent.",
+          "Laisser passer: les apps restent ouvertes, sans WAF le temps de la panne. Le pare-feu bloque toujours les IP déjà bannies."],
+      reco: "Proposé: bloquer. Une panne de CrowdSec reste rare et courte, et c'est le moment qu'un attaquant choisirait. Uptime Kuma (8.8) peut prévenir quand CrowdSec ne répond plus." },
   ];
 
 
@@ -3244,17 +3345,17 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165],
-    "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
+    "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
-    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36], "9": [30], "10": [3, 11, 31, 32, 33], "sans": [9]
+    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36], "9": [30], "10": [3, 11, 31, 32, 33, 37], "sans": [9]
   };
   var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11], "10": [1, 2, 3] };
   var placed = {};

@@ -17,6 +17,10 @@ services:
     volumes:
       - /opt/traefik/config:/etc/traefik
       - /opt/traefik/logs:/logs
+      - /opt/traefik/plugins-local:/plugins-local:ro
+    # La clé du plugin CrowdSec pour AppSec: lue dans ce fichier, jamais écrite dans la config.
+    secrets:
+      - crowdsec_appsec_key
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -31,6 +35,16 @@ services:
       traefik.http.routers.dashboard.entrypoints: websecure
       traefik.http.routers.dashboard.service: api@internal
       traefik.http.routers.dashboard.middlewares: authelia@docker
+      # AppSec (10.7, D60): le WAF de CrowdSec, pour les apps sans Authelia devant et le portail
+      # d'Authelia. Mode appsec: les IP bannies, le pare-feu les bloque déjà. CrowdSec injoignable
+      # ou réponse inattendue: la requête est bloquée (D69).
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.enabled: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecMode: appsec
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecEnabled: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecHost: crowdsec:7422
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecKeyFile: /run/secrets/crowdsec_appsec_key
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecFailureBlock: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecUnreachableBlock: "true"
 
   # Seul à tenir le socket Docker, en lecture: Traefik ne peut que lire les containers (Journal, D20).
   socket-proxy:
@@ -49,6 +63,10 @@ services:
       - socket
     security_opt:
       - no-new-privileges:true
+
+secrets:
+  crowdsec_appsec_key:
+    file: /opt/dotbox/secrets/crowdsec_bouncer_traefik
 
 networks:
   dotbox:

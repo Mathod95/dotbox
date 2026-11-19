@@ -2,10 +2,13 @@
 //! sous-domaine en HTTP-01, redirection de HTTP vers HTTPS, seuls les containers marqués
 //! traefik.enable=true sont routés. Traefik lit Docker à travers un socket proxy en lecture seule
 //! (D20, recommandé par la doc de Traefik). Relancé, il ne refait que ce qui manque.
+//!
+//! Le plugin CrowdSec (10.7, D60): une copie locale, vérifiée par dotbox, que Traefik lit sur le
+//! disque. Il déclare le middleware crowdsec@docker, qui soumet chaque requête à AppSec.
 
-use crate::catalog::Core;
+use crate::catalog::{Core, CoreFile};
 use crate::out::say;
-use crate::{docker, system};
+use crate::{crowdsec, docker, secrets, system};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
@@ -16,6 +19,12 @@ const COMPOSE: &str = "/opt/traefik/compose.yml";
 const STATIC: &str = "/opt/traefik/config/traefik.yml";
 const LOGS: &str = "/opt/traefik/logs";
 const LOGROTATE: &str = "/etc/logrotate.d/dotbox-traefik";
+/// Les plugins locaux, montés en lecture seule sur /plugins-local (le dossier de travail de
+/// Traefik dans son image): <PLUGINS>/src/<module>.
+const PLUGINS: &str = "/opt/traefik/plugins-local";
+const PLUGIN_MODULE: &str = "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin";
+/// La version installée du plugin et l'empreinte de son archive, pour ne pas le refaire.
+const PLUGIN_STAMP: &str = "/opt/traefik/plugins-local/.dotbox";
 
 const LE: &str = "https://acme-v02.api.letsencrypt.org/directory";
 const LE_STAGING: &str = "https://acme-staging-v02.api.letsencrypt.org/directory";
@@ -43,6 +52,10 @@ services:
     volumes:
       - /opt/traefik/config:/etc/traefik
       - /opt/traefik/logs:/logs
+      - /opt/traefik/plugins-local:/plugins-local:ro
+    # La clé du plugin CrowdSec pour AppSec: lue dans ce fichier, jamais écrite dans la config.
+    secrets:
+      - crowdsec_appsec_key
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -57,6 +70,16 @@ services:
       traefik.http.routers.dashboard.entrypoints: websecure
       traefik.http.routers.dashboard.service: api@internal
       traefik.http.routers.dashboard.middlewares: authelia@docker
+      # AppSec (10.7, D60): le WAF de CrowdSec, pour les apps sans Authelia devant et le portail
+      # d'Authelia. Mode appsec: les IP bannies, le pare-feu les bloque déjà. CrowdSec injoignable
+      # ou réponse inattendue: la requête est bloquée (D69).
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.enabled: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecMode: appsec
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecEnabled: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecHost: crowdsec:7422
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecKeyFile: /run/secrets/crowdsec_appsec_key
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecFailureBlock: "true"
+      traefik.http.middlewares.crowdsec.plugin.crowdsec.crowdsecAppsecUnreachableBlock: "true"
 
   # Seul à tenir le socket Docker, en lecture: Traefik ne peut que lire les containers (Journal, D20).
   socket-proxy:
@@ -76,12 +99,17 @@ services:
     security_opt:
       - no-new-privileges:true
 
+secrets:
+  crowdsec_appsec_key:
+    file: {key}
+
 networks:
   dotbox:
     external: true
   socket:
     internal: true
-"#
+"#,
+        key = secrets::path(crowdsec::TRAEFIK_SECRET)
     )
 }
 
@@ -136,6 +164,13 @@ providers:
     exposedByDefault: false
     network: dotbox
 
+# Le plugin CrowdSec, pour AppSec (10.7): une copie locale vérifiée par dotbox, dans
+# /plugins-local, jamais téléchargée par Traefik.
+experimental:
+  localPlugins:
+    crowdsec:
+      moduleName: {PLUGIN_MODULE}
+
 certificatesResolvers:
   letsencrypt:
     acme:
@@ -170,6 +205,60 @@ pub fn parse_ipv4s(text: &str) -> Vec<IpAddr> {
             f.next()?.split('/').next()?.parse().ok()
         })
         .collect()
+}
+
+/// Le plugin CrowdSec dans /opt/traefik/plugins-local/src/<module>: l'archive du catalogue,
+/// téléchargée, vérifiée, puis son dossier mis en place. Rend true s'il a changé.
+fn install_plugin(f: &CoreFile) -> Result<bool, String> {
+    let dir = f
+        .dir
+        .as_deref()
+        .ok_or("the Traefik plugin needs dir in the catalog")?;
+    let target = format!("{PLUGINS}/src/{PLUGIN_MODULE}");
+    let stamp = format!("{} {}\n", f.version, f.sha256);
+    if std::fs::read_to_string(PLUGIN_STAMP).is_ok_and(|s| s == stamp)
+        && std::path::Path::new(&format!("{target}/go.mod")).exists()
+    {
+        say("check", &format!("{target} ({})", f.version));
+        return Ok(false);
+    }
+    let tmp = system::run("mktemp", &["-d"])?;
+    let result = (|| {
+        let tgz = format!("{tmp}/plugin.tgz");
+        say(
+            "download",
+            &format!("crowdsec-bouncer-traefik-plugin {} from GitHub", f.version),
+        );
+        system::run("wget", &["-q", "-O", &tgz, &f.url])?;
+        match crowdsec::sha256(&tgz) {
+            Some(h) if h == f.sha256 => say("verify", "sha256 ok"),
+            other => {
+                return Err(format!(
+                    "the Traefik plugin archive does not have the expected sha256 ({}): not installed",
+                    other.unwrap_or_default()
+                ));
+            }
+        }
+        system::run("tar", &["-xzf", &tgz, "-C", &tmp])?;
+        let src = format!("{tmp}/{dir}");
+        if !std::path::Path::new(&format!("{src}/go.mod")).exists() {
+            return Err(format!("the Traefik plugin archive has no {dir}/go.mod"));
+        }
+        let parent = std::path::Path::new(&target)
+            .parent()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        system::run("mkdir", &["-p", &parent])?;
+        system::run("rm", &["-rf", &target])?;
+        system::run("mv", &[&src, &target])?;
+        system::run("chmod", &["-R", "go-w,a+rX", PLUGINS])?;
+        std::fs::write(PLUGIN_STAMP, &stamp)
+            .map_err(|e| format!("cannot write {PLUGIN_STAMP}: {e}"))?;
+        say("install", &format!("{target} ({})", f.version));
+        Ok(true)
+    })();
+    let _ = system::run("rm", &["-rf", &tmp]);
+    result
 }
 
 /// Ports en écoute, depuis `ss -Htln` (4e colonne: adresse:port).
@@ -271,9 +360,17 @@ pub fn container_state(name: &str) -> String {
     .unwrap_or_default()
 }
 
-pub fn setup(domain: &str, ca: &str, core: &Core) -> Result<(), String> {
+pub fn setup(domain: &str, ca: &str, core: &Core, plugin: &CoreFile) -> Result<(), String> {
     let image = core.image("traefik")?;
     let proxy_image = core.image("socket-proxy")?;
+    // la clé du plugin doit exister avant que Docker la monte (sinon il crée un dossier à sa place)
+    if secrets::ensure(crowdsec::TRAEFIK_SECRET)? {
+        say(
+            "create",
+            &format!("secret {}", secrets::path(crowdsec::TRAEFIK_SECRET)),
+        );
+    }
+    let plugin_changed = install_plugin(plugin)?;
     let compose_changed =
         system::write_if_changed(COMPOSE, &compose(domain, image, proxy_image), 0o644)?;
     if compose_changed {
@@ -297,8 +394,8 @@ pub fn setup(domain: &str, ca: &str, core: &Core) -> Result<(), String> {
             &["compose", "-f", COMPOSE, "up", "-d", "--quiet-pull"],
         )?;
         say("start", "traefik and socket-proxy");
-    } else if static_changed {
-        // la configuration statique n'est relue qu'au démarrage
+    } else if static_changed || plugin_changed {
+        // la configuration statique et les plugins ne sont lus qu'au démarrage
         system::run("docker", &["restart", "traefik"])?;
         say("restart", "traefik (new configuration)");
     }

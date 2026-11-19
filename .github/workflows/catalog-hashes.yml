@@ -1,12 +1,14 @@
 name: Catalog hashes
 
-# Renovate change la version du bouncer pare-feu dans catalog/core/crowdsec.yml, mais il ne sait
-# pas calculer ses empreintes (Journal, 7.14). Ce workflow les calcule, les ajoute dans la branche
-# de la pull request, puis relance la CI du catalogue sur ce nouveau commit.
+# Renovate change la version du bouncer pare-feu (catalog/core/crowdsec.yml) ou du plugin de
+# Traefik (catalog/core/crowdsec-plugin.yml), mais il ne sait pas calculer leurs empreintes
+# (Journal, 7.14 et 10.7). Ce workflow les calcule (tools/core_hashes.sh), les ajoute dans la
+# branche de la pull request, puis relance la CI du catalogue sur ce nouveau commit.
 on:
   pull_request:
     paths:
       - "catalog/core/crowdsec.yml"
+      - "catalog/core/crowdsec-plugin.yml"
 
 permissions:
   contents: write
@@ -26,10 +28,10 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Les empreintes du bouncer
+      - name: Les empreintes du bouncer et du plugin
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: tools/bouncer_hashes.sh
+        run: tools/core_hashes.sh
 
       - name: Commit dans la branche de Renovate, puis la CI relancée
         env:
@@ -44,6 +46,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # [skip ci]: sans lui, ce commit déclenche des runs pull_request qui attendent une
           # approbation (action_required). La CI est relancée juste après par workflow_dispatch.
-          git commit -am "chore(catalog): empreintes du bouncer pare-feu [skip ci]"
+          git commit -am "chore(catalog): empreintes du core [skip ci]"
           git push origin "HEAD:${BRANCH}"
           gh workflow run catalog.yml --ref "${BRANCH}"

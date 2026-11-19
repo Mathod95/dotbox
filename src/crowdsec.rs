@@ -9,6 +9,11 @@
 //! GitHub, son empreinte vérifiée, en service systemd. Mode iptables (iptables-nft, comme Docker),
 //! chaînes INPUT (SSH) et DOCKER-USER (Traefik et les ports des apps): une IP bannie n'atteint
 //! plus rien. Il ne bloque rien d'autre: ce n'est pas un pare-feu du système (D59).
+//!
+//! AppSec, le WAF de CrowdSec (10.7, D60): l'agent écoute aussi sur crowdsec:7422, dans le réseau
+//! dotbox seulement. Le plugin de Traefik (traefik.rs) lui soumet chaque requête vers une app
+//! sans Authelia devant et vers le portail d'Authelia, et bloque celles qui sont des attaques
+//! connues.
 
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -18,7 +23,7 @@ use crate::out::say;
 use crate::{docker, secrets, system, traefik};
 
 /// Ce que l'agent surveille et sait détecter (le Hub de CrowdSec).
-const COLLECTIONS: &str = "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors";
+const COLLECTIONS: &str = "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules";
 
 const DIR: &str = "/opt/crowdsec";
 const COMPOSE: &str = "/opt/crowdsec/compose.yml";
@@ -35,6 +40,9 @@ const BOUNCER_UNIT: &str = "/etc/systemd/system/crowdsec-firewall-bouncer.servic
 const BOUNCER_SERVICE: &str = "crowdsec-firewall-bouncer";
 /// La clé du bouncer: dans /opt/dotbox/secrets, passée à l'agent en secret Docker.
 const BOUNCER_SECRET: &str = "crowdsec_bouncer_firewall";
+/// La clé du plugin de Traefik (bouncer « traefik »), pour AppSec: créée par traefik::setup,
+/// qui la monte dans son container, et enregistrée par l'agent comme la première.
+pub const TRAEFIK_SECRET: &str = "crowdsec_bouncer_traefik";
 /// Les ensembles d'IP bannies que le bouncer crée (sa configuration par défaut). Il leur ajoute
 /// un suffixe par origine des décisions (crowdsec-blacklists-0...).
 const SET_V4: &str = "crowdsec-blacklists";
@@ -66,9 +74,10 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       # Le log d'accès de Traefik.
       - /opt/traefik/logs:/var/log/traefik:ro
-    # La clé du bouncer pare-feu: l'image l'enregistre au démarrage (bouncer « firewall »).
+    # Les clés des bouncers: l'image les enregistre au démarrage (« firewall » et « traefik »).
     secrets:
       - bouncer_key_firewall
+      - bouncer_key_traefik
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -81,12 +90,15 @@ services:
 secrets:
   bouncer_key_firewall:
     file: {secret}
+  bouncer_key_traefik:
+    file: {traefik_secret}
 
 networks:
   dotbox:
     external: true
 "#,
-        secret = secrets::path(BOUNCER_SECRET)
+        secret = secrets::path(BOUNCER_SECRET),
+        traefik_secret = secrets::path(TRAEFIK_SECRET)
     )
 }
 
@@ -104,6 +116,14 @@ filenames:
   - /var/log/traefik/access.log
 labels:
   type: traefik
+---
+# AppSec: le plugin de Traefik soumet ici les requêtes (crowdsec:7422, réseau dotbox seulement).
+source: appsec
+listen_addr: 0.0.0.0:7422
+appsec_configs:
+  - crowdsecurity/appsec-default
+labels:
+  type: appsec
 "#;
 
 /// La configuration du bouncer: celle de sa release, en mode iptables, avec DOCKER-USER.
@@ -166,7 +186,7 @@ WantedBy=multi-user.target
     )
 }
 
-fn sha256(path: &str) -> Option<String> {
+pub fn sha256(path: &str) -> Option<String> {
     system::run("sha256sum", &[path])
         .ok()
         .and_then(|s| s.split_whitespace().next().map(String::from))
@@ -176,7 +196,15 @@ fn sha256(path: &str) -> Option<String> {
 /// binaire dit, sans le lancer, que le bon est déjà installé.
 fn install_bouncer_binary(f: &CoreFile) -> Result<bool, String> {
     let version = &f.version;
-    if sha256(BOUNCER_BIN).as_deref() == Some(f.binary_sha256.as_str()) {
+    let (binary, binary_sha256) = match (&f.binary, &f.binary_sha256) {
+        (Some(b), Some(h)) => (b, h),
+        _ => {
+            return Err(
+                "the firewall bouncer needs binary and binary_sha256 in the catalog".into(),
+            );
+        }
+    };
+    if sha256(BOUNCER_BIN).as_deref() == Some(binary_sha256.as_str()) {
         say("check", &format!("{BOUNCER_BIN} ({version})"));
         return Ok(false);
     }
@@ -198,8 +226,8 @@ fn install_bouncer_binary(f: &CoreFile) -> Result<bool, String> {
             }
         }
         system::run("tar", &["-xzf", &tgz, "-C", &tmp])?;
-        let bin = format!("{tmp}/{}", f.binary);
-        if sha256(&bin).as_deref() != Some(f.binary_sha256.as_str()) {
+        let bin = format!("{tmp}/{binary}");
+        if sha256(&bin).as_deref() != Some(binary_sha256.as_str()) {
             return Err(
                 "the bouncer binary does not have the expected sha256: not installed".into(),
             );
@@ -261,11 +289,10 @@ pub fn setup(core: &Core) -> Result<(), String> {
     let image = core.image("crowdsec")?;
     let bouncer = core.file("firewall-bouncer")?;
     // l'agent
-    if secrets::ensure(BOUNCER_SECRET)? {
-        say(
-            "create",
-            &format!("secret {}", secrets::path(BOUNCER_SECRET)),
-        );
+    for name in [BOUNCER_SECRET, TRAEFIK_SECRET] {
+        if secrets::ensure(name)? {
+            say("create", &format!("secret {}", secrets::path(name)));
+        }
     }
     for d in [DIR, CONFIG, DATA, &format!("{CONFIG}/acquis.d")] {
         std::fs::create_dir_all(d).map_err(|e| format!("cannot create {d}: {e}"))?;
@@ -278,7 +305,7 @@ pub fn setup(core: &Core) -> Result<(), String> {
     if acquis_changed {
         say(
             "write",
-            &format!("{ACQUIS} (SSH in journald, Traefik access log)"),
+            &format!("{ACQUIS} (SSH in journald, Traefik access log, AppSec)"),
         );
     }
     let state = traefik::container_state("crowdsec");

@@ -321,7 +321,7 @@
     {
       "stage": "core",
       "domain": "core",
-      "status": "planned",
+      "status": "done",
       "fr": "Core: CrowdSec installé par `dotbox init`, surveille SSH et Traefik et bloque les attaques",
       "en": "Core: CrowdSec installed by `dotbox init`, watches SSH and Traefik and blocks attacks",
       "doc": "installation",
@@ -332,7 +332,23 @@
         "Q12",
         "Q31-Q33",
         "D56",
-        "D57"
+        "D57",
+        "J123-J133"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "core",
+      "status": "done",
+      "fr": "Core: AppSec, le pare-feu web de CrowdSec, devant les apps sans Authelia et la page de connexion d'Authelia",
+      "en": "Core: AppSec, CrowdSec's web application firewall, in front of apps without Authelia and Authelia's login page",
+      "doc": "security",
+      "journal": [
+        "10.7",
+        "D60",
+        "D69",
+        "D70",
+        "J166-J168"
       ]
     },
     {
@@ -817,12 +833,14 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "progress",
+      "status": "done",
       "fr": "Catalogue: le core (Traefik, Authelia, CrowdSec, le bouncer et le plugin) dans `catalog/core/`, mis à jour sans nouvelle version de `dotbox`",
       "en": "Catalog: the core (Traefik, Authelia, CrowdSec, the bouncer and the plugin) in `catalog/core/`, updated without a new `dotbox` release",
       "journal": [
         "D64",
-        "7.12"
+        "7.12",
+        "D70",
+        "J166"
       ]
     },
     {

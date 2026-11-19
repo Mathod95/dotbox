@@ -12,7 +12,7 @@ services:
       # L'API locale, pour le bouncer pare-feu du système: sur 127.0.0.1, jamais sur Internet.
       - "127.0.0.1:8080:8080"
     environment:
-      COLLECTIONS: "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules"
     volumes:
       - /opt/crowdsec/config:/etc/crowdsec
       - /opt/crowdsec/data:/var/lib/crowdsec/data
@@ -21,9 +21,10 @@ services:
       - /etc/machine-id:/etc/machine-id:ro
       # Le log d'accès de Traefik.
       - /opt/traefik/logs:/var/log/traefik:ro
-    # La clé du bouncer pare-feu: l'image l'enregistre au démarrage (bouncer « firewall »).
+    # Les clés des bouncers: l'image les enregistre au démarrage (« firewall » et « traefik »).
     secrets:
       - bouncer_key_firewall
+      - bouncer_key_traefik
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -36,6 +37,8 @@ services:
 secrets:
   bouncer_key_firewall:
     file: /opt/dotbox/secrets/crowdsec_bouncer_firewall
+  bouncer_key_traefik:
+    file: /opt/dotbox/secrets/crowdsec_bouncer_traefik
 
 networks:
   dotbox:

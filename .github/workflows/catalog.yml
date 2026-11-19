@@ -12,7 +12,7 @@ on:
       - "tests/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "tools/bouncer_hashes.sh"
+      - "tools/core_hashes.sh"
       - ".github/workflows/**"
   workflow_dispatch:
 
@@ -62,13 +62,13 @@ jobs:
           done
           exit "$status"
 
-  bouncer:
-    name: Le bouncer et ses empreintes
+  core-files:
+    name: Les fichiers du core et leurs empreintes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Adresse, chemin du binaire et empreintes
+      - name: Le bouncer et le plugin de Traefik, adresses et empreintes
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: tools/bouncer_hashes.sh --check
+        run: tools/core_hashes.sh --check
