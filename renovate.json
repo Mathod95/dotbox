@@ -1,6 +1,70 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "description": "Renovate pour Dot Box: le catalogue (Journal, D64 et 7.14), les crates Rust et les actions GitHub (D65).",
+  "extends": ["config:recommended"],
+  "ignorePaths": ["tests/**"],
+  "timezone": "Europe/Paris",
+  "prHourlyLimit": 2,
+  "semanticCommits": "enabled",
+  "gitIgnoredAuthors": ["41898282+github-actions[bot]@users.noreply.github.com"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Les apps du catalogue: la ligne image:",
+      "managerFilePatterns": ["/^catalog/[^/]+\\.ya?ml$/"],
+      "matchStrings": ["(?m)^image:\\s*(?<depName>[^:\\s]+):(?<currentValue>\\S+)\\s*$"],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Le core: les lignes sous images:",
+      "managerFilePatterns": ["/^catalog/core/[^/]+\\.ya?ml$/"],
+      "matchStrings": ["(?m)^  [a-z0-9-]+:\\s*(?<depName>[^:\\s]+):(?<currentValue>\\S+)\\s*$"],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Le bouncer pare-feu de CrowdSec: sa version (l'adresse, le chemin du binaire et les empreintes suivent, par catalog-hashes.yml)",
+      "managerFilePatterns": ["/^catalog/core/crowdsec\\.ya?ml$/"],
+      "matchStrings": ["firewall-bouncer:\\s*\\n\\s+version:\\s*(?<currentValue>v\\S+)"],
+      "depNameTemplate": "crowdsecurity/cs-firewall-bouncer",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Les images de linuxserver: la version de l'app, puis le build de linuxserver (lsNNN). Un nouveau build compte comme un correctif.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/^lscr\\.io/linuxserver//"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?(?:-r\\d+)?-ls(?<revision>\\d+)$"
+    },
+    {
+      "description": "Tout ce qui touche le catalogue: chore(catalog), jamais fix (pas de nouvelle version de dotbox, D64).",
+      "matchFileNames": ["catalog/**"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "catalog"
+    },
+    {
+      "description": "Les correctifs du catalogue fusionnent seuls quand la CI passe. Le reste attend Mathod95.",
+      "matchFileNames": ["catalog/**"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Les crates Rust: une pull request par semaine, sans fusion automatique (D65).",
+      "matchManagers": ["cargo"],
+      "groupName": "crates Rust",
+      "schedule": ["before 6am on monday"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "description": "Les actions GitHub: une pull request par semaine, sans fusion automatique (D65).",
+      "matchManagers": ["github-actions"],
+      "groupName": "actions GitHub",
+      "schedule": ["before 6am on monday"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    }
   ]
 }
