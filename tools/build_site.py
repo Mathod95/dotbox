@@ -55,6 +55,7 @@ DOCS = [
     {"slug": "apps", "name": "Overview", "dots": "APPS", "group": "Apps"},
     {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "group": "Apps"},
     {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "group": "Apps"},
+    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "group": "Apps"},
     {"slug": "qui", "name": "qui", "dots": "QUI", "group": "Apps"},
     {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},

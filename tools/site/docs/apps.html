@@ -35,6 +35,7 @@
   <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
 
   <h2 id="fr-catalog">Les apps du catalogue</h2>
+  <div class="prop-old" data-prop="50">
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
     <tbody>
@@ -44,6 +45,19 @@
       <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>Les séries</td><td>two_factor</td></tr>
     </tbody>
   </table></div>
+  </div>
+  <div class="prop-new" data-prop="50">
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
+    <tbody>
+      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Les indexeurs, pour Radarr et Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QBITTORRENT__"__DOC_QBITTORRENT_TARGET__>qBittorrent</a></td><td>Le client BitTorrent, pour Radarr et Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>Une interface web pour qBittorrent</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Les films</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>Les séries</td><td>two_factor</td></tr>
+    </tbody>
+  </table></div>
+  </div>
   <p>Une app a sa page quand elle entre dans le catalogue. Celles qui viendront ensuite sont dans la <a href="__ROADMAP__">Roadmap</a>.</p>
 </article>
 
@@ -79,6 +93,7 @@
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
+  <div class="prop-old" data-prop="50">
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
     <tbody>
@@ -88,5 +103,18 @@
       <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>TV shows</td><td>two_factor</td></tr>
     </tbody>
   </table></div>
+  </div>
+  <div class="prop-new" data-prop="50">
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
+    <tbody>
+      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Indexers, for Radarr and Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QBITTORRENT__"__DOC_QBITTORRENT_TARGET__>qBittorrent</a></td><td>The BitTorrent client, for Radarr and Sonarr</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>A web interface for qBittorrent</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Movies</td><td>two_factor</td></tr>
+      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>TV shows</td><td>two_factor</td></tr>
+    </tbody>
+  </table></div>
+  </div>
   <p>An app gets its page when it joins the catalog. Those coming next are in the <a href="__ROADMAP__">Roadmap</a>.</p>
 </article>

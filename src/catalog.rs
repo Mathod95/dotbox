@@ -1,5 +1,5 @@
 //! Le catalogue (Journal, D41): un manifest YAML par app, dans catalog/<app>.yml à la racine du
-//! repo. Pour l'instant lu dans un dossier local (--catalog), bientôt sur GitHub (7.6).
+//! repo, lu sur GitHub (7.6, github.rs) ou dans un dossier local (--catalog).
 //!
 //! Un manifest décrit l'app: son image à une version fixe, son port interne, son niveau d'accès,
 //! ses variables et ses volumes. dotbox en fait /opt/<app>/compose.yml (engine.rs).
@@ -89,6 +89,9 @@ struct Raw {
     data: Vec<String>,
     #[serde(default)]
     settings: Option<RawSettings>,
+    /// ports publiés, seulement ce qui n'est pas du web (D44): « 56881/tcp »
+    #[serde(default)]
+    ports: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -105,7 +108,9 @@ struct RawSettings {
 pub struct Settings {
     /// chemin sous /opt/<app> (« config/config.xml »)
     pub file: String,
-    /// « xml »: des éléments directement sous la racine (<Config><Clé>valeur</Clé></Config>)
+    /// « xml »: des éléments directement sous la racine (<Config><Clé>valeur</Clé></Config>).
+    /// « ini »: un fichier de Qt (qBittorrent.conf), la clé « Section/Clé/Sous-clé » va dans
+    /// [Section] en « Clé\Sous-clé ».
     pub format: String,
     /// dans l'ordre du fichier
     pub values: Vec<(String, String)>,
@@ -117,6 +122,14 @@ pub struct Volume {
     pub host: String,
     pub container: String,
     pub read_only: bool,
+}
+
+/// Un port publié sur le serveur, le même numéro dans le container (D44).
+#[derive(Debug, PartialEq, Eq)]
+pub struct Port {
+    pub number: u16,
+    /// « tcp » ou « udp »
+    pub proto: String,
 }
 
 /// Un manifest vérifié.
@@ -134,6 +147,7 @@ pub struct Manifest {
     pub volumes: Vec<Volume>,
     pub data: Vec<String>,
     pub settings: Option<Settings>,
+    pub ports: Vec<Port>,
 }
 
 impl Manifest {
@@ -285,27 +299,46 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             ));
         }
     }
+    let mut ports: Vec<Port> = Vec::new();
+    for spec in &raw.ports {
+        let p = port(spec)?;
+        if p.number == raw.port || p.number == 80 || p.number == 443 {
+            return Err(format!(
+                "ports {spec:?}: only ports that are not web, the web goes through Traefik (D44)"
+            ));
+        }
+        if ports.contains(&p) {
+            return Err(format!("ports {spec:?}: listed twice"));
+        }
+        ports.push(p);
+    }
     let settings = match raw.settings {
         None => None,
         Some(st) => {
-            if !relative_path(&st.file, true) {
+            if !settings_file(&st.file) {
                 return Err(format!(
                     "settings: file {:?} must be under /opt/{name}, like config/config.xml",
                     st.file
                 ));
             }
-            if st.format != "xml" {
-                return Err(format!(
-                    "settings: format {:?}, only xml for now",
-                    st.format
-                ));
-            }
+            let ini = match st.format.as_str() {
+                "xml" => false,
+                "ini" => true,
+                other => return Err(format!("settings: format {other:?}, xml or ini")),
+            };
             let mut values = Vec::new();
             for (k, v) in &st.values {
                 let key = k.as_str().ok_or("settings: every name must be text")?;
-                if !key.starts_with(|c: char| c.is_ascii_alphabetic())
-                    || !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-                {
+                let word = |w: &str| {
+                    w.starts_with(|c: char| c.is_ascii_alphabetic())
+                        && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                };
+                if ini && !(key.contains('/') && key.split('/').all(word)) {
+                    return Err(format!(
+                        "settings {key:?}: Section/Key, letters, digits and _ (format ini)"
+                    ));
+                }
+                if !ini && !word(key) {
                     return Err(format!("settings {key:?}: letters, digits and _"));
                 }
                 let value = v
@@ -334,6 +367,21 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         volumes,
         data: raw.data,
         settings,
+        ports,
+    })
+}
+
+/// « 56881/tcp » ou « 56881/udp ».
+fn port(spec: &str) -> Result<Port, String> {
+    let bad = || format!("ports {spec:?}: expected a port and its protocol, like 56881/tcp");
+    let (n, proto) = spec.split_once('/').ok_or_else(bad)?;
+    let number: u16 = n.parse().map_err(|_| bad())?;
+    if number == 0 || !(proto == "tcp" || proto == "udp") {
+        return Err(bad());
+    }
+    Ok(Port {
+        number,
+        proto: proto.to_string(),
     })
 }
 
@@ -375,6 +423,12 @@ fn relative_path(p: &str, file: bool) -> bool {
         })
 }
 
+/// Le fichier de réglages sous /opt/<app>: comme relative_path, avec les majuscules, puisque
+/// c'est l'app qui le nomme (config/qBittorrent/qBittorrent.conf).
+fn settings_file(p: &str) -> bool {
+    relative_path(&p.to_ascii_lowercase(), true)
+}
+
 /// Ce binaire peut-il installer ce manifest?
 pub fn supported(min: &str, current: &str) -> bool {
     match (parse_version(min), parse_version(current)) {
@@ -411,6 +465,19 @@ pub fn load(dir: &Path, app: &str) -> Result<Manifest, String> {
         }
         _ => format!("cannot read {}: {e}", path.display()),
     })?;
+    // min_dotbox d'abord: un manifest plus récent peut avoir des champs que ce binaire ne
+    // connaît pas, le message doit dire qu'il faut un dotbox plus récent
+    let current = env!("CARGO_PKG_VERSION");
+    if let Some(min) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&text)
+        .ok()
+        .and_then(|v| v.get("min_dotbox")?.as_str().map(str::to_string))
+    {
+        if parse_version(&min).is_some() && !supported(&min, current) {
+            return Err(format!(
+                "{app} needs Dot Box {min} or newer, this is {current}: install a newer Dot Box first"
+            ));
+        }
+    }
     let m = parse(&text).map_err(|e| format!("{}: {e}", path.display()))?;
     if m.name != app {
         return Err(format!(
@@ -419,7 +486,6 @@ pub fn load(dir: &Path, app: &str) -> Result<Manifest, String> {
             m.name
         ));
     }
-    let current = env!("CARGO_PKG_VERSION");
     if !supported(&m.min_dotbox, current) {
         return Err(format!(
             "{app} needs Dot Box {} or newer, this is {current}: install a newer Dot Box first",
@@ -747,7 +813,81 @@ mod tests {
         assert!(with(&format!("{st}    A: \"{{{{home}}}}\"\n")).is_err());
         assert!(with(&format!("{st}    <A>: x\n")).is_err());
         assert!(with("settings:\n  file: ../x.xml\n  format: xml\n  values: {}\n").is_err());
-        assert!(with("settings:\n  file: config/x.ini\n  format: ini\n  values: {}\n").is_err());
+        assert!(with("settings:\n  file: config/x.ini\n  format: toml\n  values: {}\n").is_err());
+        // ini: Section/Clé, le fichier peut avoir des majuscules (c'est l'app qui le nomme)
+        let ini =
+            "settings:\n  file: config/qBittorrent/qBittorrent.conf\n  format: ini\n  values:\n";
+        assert!(with(&format!("{ini}    WebUI/Port: \"8080\"\n")).is_ok());
+        assert!(with(&format!("{ini}    Port: \"8080\"\n")).is_err());
+        assert!(with(&format!("{ini}    WebUI//Port: \"8080\"\n")).is_err());
+        assert!(with(&format!("{st}    WebUI/Port: \"8080\"\n")).is_err());
+        assert!(with("settings:\n  file: Config/../x\n  format: ini\n  values: {}\n").is_err());
+        // ports: pas du web (D44)
+        assert_eq!(
+            with("ports:\n  - 56881/tcp\n  - 56881/udp\n")
+                .unwrap()
+                .ports,
+            [
+                Port {
+                    number: 56881,
+                    proto: "tcp".into()
+                },
+                Port {
+                    number: 56881,
+                    proto: "udp".into()
+                }
+            ]
+        );
+        assert!(
+            with("ports:\n  - 80/tcp\n")
+                .unwrap_err()
+                .contains("not web")
+        );
+        assert!(with("ports:\n  - 443/tcp\n").is_err());
+        assert!(
+            with("ports:\n  - 56881\n")
+                .unwrap_err()
+                .contains("56881/tcp")
+        );
+        assert!(with("ports:\n  - 56881/sctp\n").is_err());
+        assert!(with("ports:\n  - 0/tcp\n").is_err());
+        assert!(
+            with("ports:\n  - 56881/tcp\n  - 56881/tcp\n")
+                .unwrap_err()
+                .contains("twice")
+        );
+    }
+
+    #[test]
+    fn qbittorrent() {
+        let m = load(&catalog_dir(), "qbittorrent").unwrap();
+        assert_eq!(m.port, 8080);
+        assert!(m.uses_data());
+        assert_eq!(m.data, ["torrents"]);
+        assert_eq!(m.ports.len(), 2);
+        let st = m.settings.unwrap();
+        assert_eq!(st.format, "ini");
+        assert!(
+            st.values
+                .iter()
+                .any(|(k, v)| k == "WebUI/AuthSubnetWhitelist" && v == "{{subnet}}")
+        );
+    }
+
+    /// Un manifest pour un dotbox plus récent: le message le dit, même s'il a des champs que ce
+    /// binaire ne connaît pas.
+    #[test]
+    fn a_newer_manifest_says_so() {
+        let dir = std::env::temp_dir().join(format!("dotbox-newer-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("demo.yml"),
+            OK.replace("min_dotbox: 0.0.3", "min_dotbox: 99.0.0") + "future: 1\n",
+        )
+        .unwrap();
+        let e = load(&dir, "demo").unwrap_err();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert!(e.contains("needs Dot Box 99.0.0"), "{e}");
     }
 
     #[test]

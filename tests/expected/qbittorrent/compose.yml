@@ -1,0 +1,40 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: qbittorrent
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:<version>
+    container_name: qbittorrent
+    restart: unless-stopped
+    networks:
+      - dotbox
+    # pas du web (D44): publiés sur le serveur, au même numéro
+    ports:
+      - "56881:56881/tcp"
+      - "56881:56881/udp"
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/qbittorrent/config:/config
+      - /data:/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.qbittorrent.rule: Host(`qbittorrent.example.com`)
+      traefik.http.routers.qbittorrent.entrypoints: websecure
+      traefik.http.services.qbittorrent.loadbalancer.server.port: "8080"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.qbittorrent.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

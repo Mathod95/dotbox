@@ -264,6 +264,9 @@ fn install_one(
         prepare_data(&m, uid, gid, user)?;
     }
     let settings_changed = write_settings(&m, &ctx, uid, gid)?;
+    if !m.ports.is_empty() && !running(&traefik::container_state(app)) {
+        check_ports(&m)?;
+    }
     let path = engine::compose_path(app);
     let changed = system::write_if_changed(&path, &engine::compose(&m, &ctx), 0o644)?;
     if changed {
@@ -275,14 +278,11 @@ fn install_one(
     }
 
     docker::pull(&m.image)?;
+    // de nouveaux réglages: write_settings a arrêté l'app, elle repart ici et les relit
     let state = traefik::container_state(app);
-    if changed || !(state == "running" || state == "healthy") {
+    if changed || settings_changed || !running(&state) {
         compose(app, &["up", "-d", "--quiet-pull"])?;
         say("start", app);
-    } else if settings_changed {
-        // l'app ne relit ses réglages qu'au démarrage
-        system::run("docker", &["restart", app])?;
-        say("restart", &format!("{app} (new settings)"));
     }
     let state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
     say("check", &format!("{app} {state} ({})", m.image));
@@ -292,6 +292,28 @@ fn install_one(
         format!("https://{sub}.{domain}"),
         access.as_str().to_string(),
     ))
+}
+
+/// Le container tourne (avec ou sans healthcheck).
+fn running(state: &str) -> bool {
+    matches!(state, "running" | "healthy" | "starting" | "unhealthy")
+}
+
+/// Les ports que l'app publie (D44) sont libres sur le serveur, avant son premier démarrage.
+fn check_ports(m: &catalog::Manifest) -> Result<(), String> {
+    let tcp = traefik::parse_listening_ports(&system::run("ss", &["-Htln"])?);
+    let udp = traefik::parse_listening_ports(&system::run("ss", &["-Huln"])?);
+    for p in &m.ports {
+        let busy = if p.proto == "tcp" { &tcp } else { &udp };
+        if busy.contains(&p.number) {
+            return Err(format!(
+                "port {}/{} is already used on this server: {} publishes it (D44), free it first",
+                p.number, p.proto, m.name
+            ));
+        }
+        say("check", &format!("port {}/{} free", p.number, p.proto));
+    }
+    Ok(())
 }
 
 /// /data, /data/torrents, /data/media et les dossiers que l'app demande, à l'utilisateur. torrents/
@@ -343,15 +365,27 @@ fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Resul
         .map(|(k, v)| (k.clone(), engine::fill(v, &m.name, ctx)))
         .collect();
     let keys: Vec<&str> = values.iter().map(|(k, _)| k.as_str()).collect();
-    let old = std::fs::read_to_string(&path).ok();
-    let new = match st.format.as_str() {
-        "xml" => engine::merge_xml(old.as_deref(), &values),
-        other => Err(format!("format {other} not supported")),
-    }
-    .map_err(|e| format!("{path}: {e}"))?;
+    let merge = |old: Option<&str>| {
+        match st.format.as_str() {
+            "xml" => engine::merge_xml(old, &values),
+            "ini" => engine::merge_ini(old, &values),
+            other => Err(format!("format {other} not supported")),
+        }
+        .map_err(|e| format!("{path}: {e}"))
+    };
+    let mut old = std::fs::read_to_string(&path).ok();
+    let mut new = merge(old.as_deref())?;
     if old.as_deref() == Some(new.as_str()) {
         say("check", &format!("{path} ({})", keys.join(", ")));
         return Ok(false);
+    }
+    // une app qui tourne réécrit parfois son fichier en s'arrêtant (qBittorrent): elle s'arrête
+    // d'abord, dotbox relit le fichier puis écrit, et elle repart ensuite (install_one)
+    if running(&traefik::container_state(&m.name)) {
+        system::run("docker", &["stop", &m.name])?;
+        say("stop", &format!("{} (new settings)", m.name));
+        old = std::fs::read_to_string(&path).ok();
+        new = merge(old.as_deref())?;
     }
     std::fs::write(&path, &new).map_err(|e| format!("cannot write {path}: {e}"))?;
     if old.is_none() {

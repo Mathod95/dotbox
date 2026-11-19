@@ -86,6 +86,66 @@ pub fn merge_xml(existing: Option<&str>, values: &[(String, String)]) -> Result<
     Ok(text)
 }
 
+/// Une valeur comme Qt l'écrit dans un fichier INI: \\ et \" échappés, et entre guillemets si
+/// elle contient ; , = ou des espaces au bord, que Qt lirait autrement (; ouvre un commentaire,
+/// , sépare une liste).
+fn ini_value(v: &str) -> String {
+    let escaped = v.replace('\\', "\\\\").replace('"', "\\\"");
+    if v.contains([';', ',', '=', '"']) || v.starts_with(' ') || v.ends_with(' ') {
+        format!("\"{escaped}\"")
+    } else {
+        escaped
+    }
+}
+
+/// Pose des réglages dans un fichier INI de Qt (qBittorrent.conf), en gardant tout le reste. La
+/// clé « WebUI/Port » va dans [WebUI] en « Port », « BitTorrent/Session/Port » dans [BitTorrent]
+/// en « Session\Port ». Une section qui manque est ajoutée à la fin, une clé qui manque à la fin
+/// de sa section. Sans fichier, il est créé avec ces seuls réglages.
+pub fn merge_ini(existing: Option<&str>, values: &[(String, String)]) -> Result<String, String> {
+    let mut lines: Vec<String> = existing.unwrap_or("").lines().map(str::to_string).collect();
+    for (path, value) in values {
+        let (section, rest) = path
+            .split_once('/')
+            .ok_or(format!("{path}: expected Section/Key"))?;
+        let key = rest.replace('/', "\\");
+        let line = format!("{key}={}", ini_value(value));
+        let header = format!("[{section}]");
+        match lines.iter().position(|l| l.trim() == header) {
+            Some(h) => {
+                let end = lines[h + 1..]
+                    .iter()
+                    .position(|l| l.trim_start().starts_with('['))
+                    .map_or(lines.len(), |i| h + 1 + i);
+                let found = (h + 1..end).find(|&i| {
+                    lines[i]
+                        .split_once('=')
+                        .is_some_and(|(k, _)| k.trim() == key)
+                });
+                match found {
+                    Some(i) => lines[i] = line,
+                    None => {
+                        // après la dernière ligne non vide de la section
+                        let at = (h + 1..end)
+                            .rev()
+                            .find(|&i| !lines[i].trim().is_empty())
+                            .map_or(h + 1, |i| i + 1);
+                        lines.insert(at, line);
+                    }
+                }
+            }
+            None => {
+                if lines.last().is_some_and(|l| !l.trim().is_empty()) {
+                    lines.push(String::new());
+                }
+                lines.push(header);
+                lines.push(line);
+            }
+        }
+    }
+    Ok(lines.join("\n") + "\n")
+}
+
 pub fn compose(m: &Manifest, c: &Ctx) -> String {
     let app = &m.name;
     let mut out = format!(
@@ -102,6 +162,18 @@ services:
 ",
         image = m.image
     );
+    if !m.ports.is_empty() {
+        out.push_str(
+            "    # pas du web (D44): publiés sur le serveur, au même numéro\n    ports:\n",
+        );
+        for p in &m.ports {
+            out.push_str(&format!(
+                "      - \"{n}:{n}/{proto}\"\n",
+                n = p.number,
+                proto = p.proto
+            ));
+        }
+    }
     if !m.env.is_empty() {
         out.push_str("    environment:\n");
         for (k, v) in &m.env {
@@ -268,6 +340,66 @@ mod tests {
             "<Config>\n  <A>x &amp; y</A>\n</Config>"
         );
         assert!(merge_xml(Some("<Other/>"), &[v("A", "x")]).is_err());
+    }
+
+    #[test]
+    fn qbittorrent_compose_publishes_its_peer_port() {
+        let m = load("qbittorrent");
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "qbittorrent".into();
+        let expected = include_str!("../tests/expected/qbittorrent/compose.yml")
+            .replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+    }
+
+    /// Le qBittorrent.conf écrit avant le premier démarrage.
+    #[test]
+    fn qbittorrent_settings_are_the_expected_ones() {
+        let m = load("qbittorrent");
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "qbittorrent".into();
+        let values: Vec<(String, String)> = m
+            .settings
+            .unwrap()
+            .values
+            .iter()
+            .map(|(k, v)| (k.clone(), fill(v, &m.name, &c)))
+            .collect();
+        let out = merge_ini(None, &values).unwrap();
+        assert_eq!(
+            out,
+            include_str!("../tests/expected/qbittorrent/qBittorrent.conf")
+        );
+        // relancé: rien ne change
+        assert_eq!(merge_ini(Some(&out), &values).unwrap(), out);
+    }
+
+    #[test]
+    fn ini_settings_keep_the_rest() {
+        let v = |k: &str, x: &str| (k.to_string(), x.to_string());
+        // un fichier de qBittorrent: les autres clés et sections restent, une valeur change,
+        // une clé manque dans sa section, une section manque
+        let conf = "[BitTorrent]\nSession\\Port=6881\nSession\\QueueingSystemEnabled=true\n\n[Meta]\nMigrationVersion=12\n";
+        let out = merge_ini(
+            Some(conf),
+            &[
+                v("BitTorrent/Session/Port", "56881"),
+                v("BitTorrent/Session/DefaultSavePath", "/data/torrents"),
+                v("WebUI/Port", "8080"),
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            out,
+            "[BitTorrent]\nSession\\Port=56881\nSession\\QueueingSystemEnabled=true\nSession\\DefaultSavePath=/data/torrents\n\n[Meta]\nMigrationVersion=12\n\n[WebUI]\nPort=8080\n"
+        );
+        // comme Qt: entre guillemets avec ; , ou =, \\ et \" échappés
+        assert_eq!(ini_value("a;b"), "\"a;b\"");
+        assert_eq!(ini_value("a,b"), "\"a,b\"");
+        assert_eq!(ini_value("a\\b"), "a\\\\b");
+        assert_eq!(ini_value("say \"hi\""), "\"say \\\"hi\\\"\"");
+        assert_eq!(ini_value("172.18.0.0/16"), "172.18.0.0/16");
+        assert!(merge_ini(None, &[v("Port", "1")]).is_err());
     }
 
     fn prowlarr() -> Manifest {

@@ -2,6 +2,44 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "next",
+      "title": {
+        "fr": "qBittorrent",
+        "en": "qBittorrent"
+      },
+      "new": [
+        {
+          "fr": "Catalogue: qBittorrent, le client BitTorrent, avec son port des pairs 56881 publié en TCP et UDP, sans mot de passe pour le réseau `dotbox` comme Radarr et Sonarr",
+          "en": "Catalog: qBittorrent, the BitTorrent client, with its peer port 56881 published in TCP and UDP, no password for the `dotbox` network like Radarr and Sonarr"
+        },
+        {
+          "fr": "Moteur: un manifest peut publier les ports qui ne sont pas du web (`ports:`), vérifiés libres avant le premier démarrage",
+          "en": "Engine: a manifest can publish ports that are not web (`ports:`), checked free before the first start"
+        },
+        {
+          "fr": "Moteur: écrit les réglages d'une app dans un fichier INI de Qt (`format: ini`, `qBittorrent.conf`), sans toucher au reste",
+          "en": "Engine: writes an app's settings into a Qt INI file (`format: ini`, `qBittorrent.conf`), leaving the rest untouched"
+        }
+      ],
+      "changed": [
+        {
+          "fr": "Moteur: une app dont les réglages changent est arrêtée avant que `dotbox` les écrive, puis redémarrée (qBittorrent réécrit son fichier en s'arrêtant)",
+          "en": "Engine: an app whose settings change is stopped before `dotbox` writes them, then started again (qBittorrent rewrites its file when it stops)"
+        },
+        {
+          "fr": "CLI: `dotbox install` dit qu'il faut une version plus récente de Dot Box quand un manifest le demande, même s'il a des champs que le binaire ne connaît pas",
+          "en": "CLI: `dotbox install` says a newer Dot Box is needed when a manifest asks for it, even if it has fields the binary does not know"
+        }
+      ],
+      "fixed": [
+        {
+          "fr": "Catalogue: `/opt/dotbox/catalog/` en 755 et ses fichiers en 644, quel que soit l'umask de celui qui lance `dotbox`",
+          "en": "Catalog: `/opt/dotbox/catalog/` in 755 and its files in 644, whatever the umask of whoever runs `dotbox`"
+        }
+      ],
+      "removed": []
+    },
+    {
       "version": "v0.0.3",
       "date": "2026-11-17",
       "tagged": true,

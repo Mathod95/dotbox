@@ -1,0 +1,136 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">qBittorrent<i>●</i>le client BitTorrent qui télécharge ce que Radarr et Sonarr lui envoient.</p>
+<p class="lede" data-l="en">qBittorrent<i>●</i>the BitTorrent client that downloads what Radarr and Sonarr send it.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/qbittorrent/qBittorrent" target="_blank" rel="noopener">Code source ↗</a> <a href="https://www.qbittorrent.org" target="_blank" rel="noopener">Site ↗</a> <a href="https://github.com/qbittorrent/qBittorrent/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-qbittorrent" target="_blank" rel="noopener">Image linuxserver ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://qbittorrent.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487</code></td></tr>
+      <tr><td>Port publié</td><td><code>56881</code> en TCP et UDP, le port des pairs</td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install qbittorrent</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait qBittorrent</h2>
+  <ul>
+    <li>Radarr et Sonarr lui envoient les torrents qu'ils ont choisis.</li>
+    <li>Il les télécharge dans <code>/data/torrents</code>, depuis les autres pairs, et les partage en retour.</li>
+    <li>Une fois un téléchargement fini, Radarr ou Sonarr le range dans <code>/data/media</code> par hardlink: qBittorrent continue de le partager depuis <code>/data/torrents</code>, sans copie.</li>
+    <li>Son interface web montre les téléchargements en cours. <a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a> en est une autre, plus rapide.</li>
+  </ul>
+  <p>Dans le tag de l'image, <code>5.3.0</code> est la version de qBittorrent, <code>v2.1.2</code> celle de libtorrent, la bibliothèque qui fait le BitTorrent, et <code>ls487</code> le numéro de reconstruction de linuxserver.</p>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/qbittorrent/config</code>, puis <code>/data</code>, <code>/data/torrents</code> et <code>/data/media</code>, à ton utilisateur, et vérifie que <code>torrents/</code> et <code>media/</code> sont sur le même disque.</li>
+    <li>Elle vérifie que le port 56881 est libre sur le serveur, en TCP et en UDP.</li>
+    <li>Elle écrit ses réglages dans <code>qBittorrent.conf</code> avant le premier démarrage (plus bas). L'image de linuxserver ne pose alors pas sa propre configuration par défaut.</li>
+    <li>Elle écrit <code>/opt/qbittorrent/compose.yml</code>, démarre qBittorrent et attend qu'il réponde.</li>
+  </ul>
+  <p>Relancée, l'installation ne refait que ce qui manque. Si un réglage de Dot Box a changé, qBittorrent est d'abord arrêté, parce qu'il réécrit son fichier en s'arrêtant, puis redémarré.</p>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/qbittorrent/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/qbittorrent/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/qBittorrent.conf</code></td><td><code>/config/qBittorrent/qBittorrent.conf</code></td><td>Tous les réglages, ceux de Dot Box et ceux faits dans l'interface.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/BT_backup/</code></td><td><code>/config/qBittorrent/BT_backup/</code></td><td>La liste des torrents et où ils en sont.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/logs/</code></td><td><code>/config/qBittorrent/logs/</code></td><td>Les logs.</td></tr>
+      <tr><td><code>/data/torrents</code></td><td><code>/data/torrents</code></td><td>Les téléchargements.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Les réglages que Dot Box ajoute</h2>
+  <p>Dans <code>qBittorrent.conf</code>, chacun vérifié dans le code de qBittorrent 5.3.0. Les autres réglages restent à toi, dans l'interface.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>Session\Port</code></td><td><code>56881</code></td><td>Le port des pairs, le seul que Dot Box publie pour une app: les autres pairs s'y connectent pour échanger.</td></tr>
+      <tr><td><code>Session\DefaultSavePath</code></td><td><code>/data/torrents</code></td><td>Là où Radarr et Sonarr viennent chercher les fichiers finis.</td></tr>
+      <tr><td><code>Session\TempPathEnabled</code></td><td><code>false</code></td><td>Pas de dossier temporaire à part: un fichier ne change pas de place à la fin, le hardlink se fait sur place.</td></tr>
+      <tr><td><code>PortForwardingEnabled</code></td><td><code>false</code></td><td>UPnP et NAT-PMP ne servent à rien dans Docker: le port est déjà publié.</td></tr>
+      <tr><td><code>LegalNotice\Accepted</code></td><td><code>true</code></td><td>L'avertissement de qBittorrent, que tu partages ce que tu télécharges, accepté pour qu'il démarre sans terminal.</td></tr>
+      <tr><td><code>AuthSubnetWhitelist</code></td><td>le réseau <code>dotbox</code></td><td>Pas de mot de passe pour ce réseau, comme Radarr et Sonarr: Authelia vérifie déjà qui se connecte depuis Internet, et Radarr et Sonarr s'y relient sans mot de passe.</td></tr>
+      <tr><td><code>ReverseProxySupportEnabled</code></td><td><code>false</code></td><td>qBittorrent voit l'adresse de Traefik, dans le réseau <code>dotbox</code>, et non celle de ton navigateur, qui ne serait jamais dans la liste.</td></tr>
+      <tr><td><code>HostHeaderValidation</code>, <code>ServerDomains</code></td><td><code>true</code>, <code>qbittorrent.example.com;qbittorrent;localhost</code></td><td>qBittorrent refuse les autres noms d'hôte: l'adresse de l'app, le nom du container pour les autres apps, et <code>localhost</code> pour son healthcheck.</td></tr>
+      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Gardée, contrairement à Saltbox: une page d'un autre site ne peut pas piloter qBittorrent à travers ton navigateur.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose: le port 56881 publié en TCP et UDP, aucun port web, <code>/data</code> au même chemin que sur le serveur (pour les hardlinks), <code>PUID</code> et <code>PGID</code> de ton utilisateur, <code>no-new-privileges</code>, et un redémarrage automatique. Le bouncer de CrowdSec bloque aussi les IP bannies sur le port 56881.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Ouvre son adresse: Authelia te demande de te connecter, puis qBittorrent s'ouvre sans autre mot de passe. Il ne connaît encore ni Radarr, ni Sonarr. Dans Radarr et Sonarr, ajoute-le comme client de téléchargement (Settings, Download Clients): hôte <code>qbittorrent</code>, port <code>8080</code>, sans nom d'utilisateur ni mot de passe, une catégorie par app (<code>radarr</code>, <code>sonarr</code>).</p>
+  <p>Si ton hébergeur a un pare-feu devant le serveur, ouvre-y le port 56881 en TCP et UDP: sans lui, qBittorrent télécharge, mais moins vite.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/qbittorrent/qBittorrent" target="_blank" rel="noopener">Source code ↗</a> <a href="https://www.qbittorrent.org" target="_blank" rel="noopener">Website ↗</a> <a href="https://github.com/qbittorrent/qBittorrent/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://github.com/linuxserver/docker-qbittorrent" target="_blank" rel="noopener">linuxserver image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://qbittorrent.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then a 6-digit code)</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487</code></td></tr>
+      <tr><td>Published port</td><td><code>56881</code> in TCP and UDP, the peer port</td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install qbittorrent</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What qBittorrent does</h2>
+  <ul>
+    <li>Radarr and Sonarr send it the torrents they picked.</li>
+    <li>It downloads them into <code>/data/torrents</code>, from other peers, and shares them back.</li>
+    <li>Once a download is done, Radarr or Sonarr files it into <code>/data/media</code> with a hardlink: qBittorrent keeps sharing it from <code>/data/torrents</code>, with no copy.</li>
+    <li>Its web interface shows the downloads in progress. <a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a> is another one, faster.</li>
+  </ul>
+  <p>In the image tag, <code>5.3.0</code> is the qBittorrent version, <code>v2.1.2</code> the libtorrent one, the library that does the BitTorrent work, and <code>ls487</code> the linuxserver rebuild number.</p>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/qbittorrent/config</code>, then <code>/data</code>, <code>/data/torrents</code> and <code>/data/media</code>, owned by your user, and checks that <code>torrents/</code> and <code>media/</code> are on the same disk.</li>
+    <li>It checks that port 56881 is free on the server, in TCP and UDP.</li>
+    <li>It writes its settings into <code>qBittorrent.conf</code> before the first start (below). The linuxserver image then does not lay down its own default configuration.</li>
+    <li>It writes <code>/opt/qbittorrent/compose.yml</code>, starts qBittorrent and waits for it to answer.</li>
+  </ul>
+  <p>Run again, the install only does what is missing. If a Dot Box setting changed, qBittorrent is stopped first, because it rewrites its file when it stops, then started again.</p>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/qbittorrent/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/qbittorrent/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/qBittorrent.conf</code></td><td><code>/config/qBittorrent/qBittorrent.conf</code></td><td>All the settings, Dot Box's and those made in the interface.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/BT_backup/</code></td><td><code>/config/qBittorrent/BT_backup/</code></td><td>The list of torrents and their progress.</td></tr>
+      <tr><td><code>/opt/qbittorrent/config/qBittorrent/logs/</code></td><td><code>/config/qBittorrent/logs/</code></td><td>The logs.</td></tr>
+      <tr><td><code>/data/torrents</code></td><td><code>/data/torrents</code></td><td>The downloads.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">The settings Dot Box adds</h2>
+  <p>In <code>qBittorrent.conf</code>, each checked in the qBittorrent 5.3.0 code. The other settings are yours, in the interface.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>Session\Port</code></td><td><code>56881</code></td><td>The peer port, the only one Dot Box publishes for an app: other peers connect to it to exchange data.</td></tr>
+      <tr><td><code>Session\DefaultSavePath</code></td><td><code>/data/torrents</code></td><td>Where Radarr and Sonarr pick up finished files.</td></tr>
+      <tr><td><code>Session\TempPathEnabled</code></td><td><code>false</code></td><td>No separate temporary folder: a file does not move at the end, the hardlink is made in place.</td></tr>
+      <tr><td><code>PortForwardingEnabled</code></td><td><code>false</code></td><td>UPnP and NAT-PMP are useless in Docker: the port is already published.</td></tr>
+      <tr><td><code>LegalNotice\Accepted</code></td><td><code>true</code></td><td>qBittorrent's notice, that you share what you download, accepted so it starts without a terminal.</td></tr>
+      <tr><td><code>AuthSubnetWhitelist</code></td><td>the <code>dotbox</code> network</td><td>No password for this network, like Radarr and Sonarr: Authelia already checks who connects from the Internet, and Radarr and Sonarr connect to it with no password.</td></tr>
+      <tr><td><code>ReverseProxySupportEnabled</code></td><td><code>false</code></td><td>qBittorrent sees Traefik's address, in the <code>dotbox</code> network, not your browser's, which would never be in the list.</td></tr>
+      <tr><td><code>HostHeaderValidation</code>, <code>ServerDomains</code></td><td><code>true</code>, <code>qbittorrent.example.com;qbittorrent;localhost</code></td><td>qBittorrent refuses other host names: the app's address, the container name for the other apps, and <code>localhost</code> for its healthcheck.</td></tr>
+      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Kept, unlike Saltbox: a page from another site cannot drive qBittorrent through your browser.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose: port 56881 published in TCP and UDP, no web port, <code>/data</code> at the same path as on the server (for hardlinks), your user's <code>PUID</code> and <code>PGID</code>, <code>no-new-privileges</code>, and an automatic restart. The CrowdSec bouncer also blocks banned IPs on port 56881.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>Open its address: Authelia asks you to log in, then qBittorrent opens with no other password. It does not know Radarr or Sonarr yet. In Radarr and Sonarr, add it as a download client (Settings, Download Clients): host <code>qbittorrent</code>, port <code>8080</code>, no username or password, one category per app (<code>radarr</code>, <code>sonarr</code>).</p>
+  <p>If your host has a firewall in front of the server, open port 56881 there in TCP and UDP: without it, qBittorrent still downloads, but slower.</p>
+</article>

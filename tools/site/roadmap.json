@@ -428,13 +428,15 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "planned",
+      "status": "done",
       "fr": "Moteur: un manifest peut publier un port qui n'est pas du web, en TCP ou UDP (le port des pairs de qBittorrent), jamais un port web",
       "en": "Engine: a manifest may publish a port that is not web, TCP or UDP (qBittorrent's peer port), never a web port",
       "journal": [
         "D44",
         "7.8",
-        "8.4"
+        "8.4",
+        "D66",
+        "J156-J160"
       ]
     },
     {
@@ -521,14 +523,17 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "qBittorrent: le client de téléchargement, port des pairs publié en TCP et UDP",
       "en": "qBittorrent: the download client, peer port published over TCP and UDP",
       "journal": [
         "8.4",
         "D44",
-        "Q29"
-      ]
+        "Q29",
+        "D66",
+        "J156-J160"
+      ],
+      "doc": "qbittorrent"
     },
     {
       "stage": "apps",

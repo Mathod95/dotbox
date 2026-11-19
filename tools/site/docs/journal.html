@@ -1711,7 +1711,69 @@ prowlarr, authelia, crowdsec: inchangés` },
 prowlarr  HTTP/1.1 302 Found   (vers Authelia)
 traefik   HTTP/1.1 302 Found   (vers Authelia)
 Traefik, 18:01:53-54 UTC: 3 erreurs du fournisseur docker (unexpected EOF, socket-proxy introuvable) pendant la recréation du proxy
-socket-proxy, 18:01:54.89: les requêtes de Traefik repassent (200)` }
+socket-proxy, 18:01:54.89: les requêtes de Traefik repassent (200)` },
+    { id: "J156", time: "19:27", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.4: le binaire 0.0.4 et le catalogue local sur le serveur",
+      cmd: `scp target/x86_64-unknown-linux-musl/release/dotbox dotbox-test:/tmp/dotbox-0.0.4; scp -r catalog/* dotbox-test:/tmp/dotbox-catalog/
+sudo_run.py 'cp /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.3.bak; install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox'`,
+      does: "Le test de 8.4 (8.4.6), dans le plan validé par Mathod95. Le catalogue sur GitHub n'a pas encore qbittorrent.yml: le catalogue du PC, lu avec --catalog. Le binaire 0.0.3 gardé à côté pour revenir en arrière. Sur le PC avant: fmt, clippy, 82 tests, binaire statique.",
+      effect: "Serveur: /usr/local/bin/dotbox en 0.0.4, /usr/local/bin/dotbox-0.0.3.bak, /tmp/dotbox-catalog/.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.3.bak /usr/local/bin/dotbox",
+      result: `dotbox 0.0.4, sha256 3534d1c7bd1ffb0c… (le même que sur le PC)
+port 56881 libre (ss)` },
+    { id: "J157", time: "19:28", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.4: dotbox install qbittorrent",
+      cmd: `sudo_run.py 'dotbox install qbittorrent --catalog /tmp/dotbox-catalog'`,
+      does: "Le premier essai des ports publiés et des réglages INI. dotbox écrit qBittorrent.conf avant le premier démarrage: l'image de linuxserver ne copie alors pas sa config par défaut.",
+      effect: "Serveur: /opt/qbittorrent (compose.yml, config/), /data/torrents, l'image de qBittorrent, le port 56881 publié en TCP et UDP.",
+      undo: "sudo dotbox remove qbittorrent --purge",
+      result: `✓ [1/1] Qbittorrent   5.3.0_v2.1.2-ls487, two_factor   25 s
+qbittorrent  Up 12 seconds (healthy)  0.0.0.0:56881->56881/tcp, 0.0.0.0:56881->56881/udp (et [::])
+/data/torrents  drwxr-xr-x <user> <user>
+qBittorrent.conf réécrit par qBittorrent à sa façon (clés triées, les siennes ajoutées), celles de dotbox toutes là:
+  [WebUI] AuthSubnetWhitelist=<réseau dotbox>/16, AuthSubnetWhitelistEnabled=true, ReverseProxySupportEnabled=false,
+          HostHeaderValidation=true, ServerDomains="qbittorrent.<domaine>;qbittorrent;localhost", CSRFProtection=true
+  [BitTorrent] Session\\Port=56881, Session\\DefaultSavePath=/data/torrents   [LegalNotice] Accepted=true   [Meta] MigrationVersion=12
+Logs: l'image affiche un mot de passe temporaire pour admin, inutile ici (D66: pas de connexion depuis le réseau dotbox).` },
+    { id: "J158", time: "19:31", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.4: l'accès à qBittorrent, test par test",
+      cmd: `sudo_run.py 'wget https://qbittorrent.<domaine>/; docker exec prowlarr curl http://qbittorrent:8080/api/v2/app/version
+docker exec traefik wget --header "Host: qbittorrent.<domaine>" http://qbittorrent:8080/api/v2/app/version
+docker exec prowlarr curl -H "Host: evil.example" …; curl -X POST -H "Sec-Fetch-Site: cross-site|same-origin" …
+docker exec qbittorrent curl http://localhost:8080/api/v2/app/version'`,
+      does: "D66 et les protections gardées (8.4.3), vérifiés un par un. Radarr n'est plus sur le serveur depuis le formatage: les tests passent par le container de Prowlarr.",
+      effect: "Aucun.",
+      result: `Internet, HTTPS                          302, vers Authelia
+réseau dotbox, nom du container          v5.3.0 (sans connexion)
+réseau dotbox, adresse publique          v5.3.0 (comme Traefik la transmet)
+Host inconnu (evil.example)              401 (HostHeaderValidation)
+POST, Sec-Fetch-Site: cross-site         401 (CSRF)
+POST, Sec-Fetch-Site: same-origin        200
+localhost dans le container              403 (pas dans la liste)` },
+    { id: "J159", time: "19:32", status: "fait", where: "PC", kind: "lecture",
+      title: "8.4: les ports vus depuis Internet",
+      cmd: `bash -c '</dev/tcp/<IP>/56881'; … 8080; … 6881   (depuis le PC)`,
+      does: "Le port des pairs doit être joignable depuis Internet, le port de l'interface jamais.",
+      effect: "Aucun.",
+      result: `56881/tcp  ouvert
+8080/tcp   fermé
+6881/tcp   fermé` },
+    { id: "J160", time: "19:33", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.4: relancé, puis redémarré",
+      cmd: `sudo_run.py 'dotbox install qbittorrent --catalog /tmp/dotbox-catalog; docker restart qbittorrent'`,
+      does: "Relancé, install ne doit rien changer, même après que qBittorrent a réécrit son fichier. Puis l'app doit repartir seule.",
+      effect: "Serveur: qBittorrent redémarré une fois.",
+      result: `✓ [1/1] Qbittorrent   5.3.0_v2.1.2-ls487, two_factor   0.5 s
+check  qBittorrent.conf (les 12 réglages)   pas d'écriture, pas d'arrêt
+après docker restart: Up 40 seconds (healthy), les réglages de dotbox intacts` },
+    { id: "J161", time: "19:52", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "8.4: qBittorrent sur main, sans tag",
+      cmd: `git commit src/github.rs (fix: droits fixes du catalogue, J143)
+git commit (feat: qBittorrent, ports publiés et réglages INI); git push`,
+      does: "Accordé par Mathod95 (« Oui go »): pousser sans tag, une app après l'autre, et le tag v0.0.4 à la fin du lot (Uptime Kuma, code-server). Un serveur en v0.0.3 voit qbittorrent.yml sans pouvoir l'installer (unknown field ports), init et les autres apps ne changent pas. Le test de Mathod95 dans le navigateur reste à faire.",
+      effect: "GitHub: main, catalog/qbittorrent.yml lisible par dotbox, Renovate suit l'image de qBittorrent, le site republié (page qBittorrent, proposition #50, Releases next).",
+      undo: "git revert des deux commits, puis git push",
+      result: "poussé sur main" }
   ];
 
   var PLAN = [
@@ -2237,7 +2299,50 @@ volumes:
             { t: "Page Sonarr", u: "../sonarr/" },
             { t: "Code source", u: "https://github.com/Sonarr/Sonarr" }
           ] },
-        { id: "8.4", kind: "ecriture", where: "PC → Serveur", title: "qBittorrent",
+        { id: "8.4", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "qBittorrent",
+          lede: "Plan détaillé du 19 novembre 2026, le premier du lot que Mathod95 a choisi: qBittorrent, puis les apps derrière Authelia (8.8 à 8.10), puis AppSec et les apps sans Authelia. Le client torrent: sans lui, Radarr et Sonarr ne téléchargent rien. Le moteur doit apprendre deux choses: publier un port (7.8, D44) et écrire un fichier de réglages de type INI. Rien n'est codé avant l'accord de Mathod95 et la réponse à Q29. Plan validé le 19 novembre 2026 (« Go »), Q29 tranchée: pas de mot de passe (D66).",
+          links: [
+            { t: "Code source", u: "https://github.com/qbittorrent/qBittorrent" },
+            { t: "Image linuxserver", u: "https://github.com/linuxserver/docker-qbittorrent" }
+          ],
+          sections: [
+            { h: "8.4.1 Le manifest: catalog/qbittorrent.yml",
+              l: ["Image lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487 (8 novembre 2026): qBittorrent 5.3.0, libtorrent 2.1.2, build 487 de linuxserver.",
+                  "Interface web sur le port 8080, derrière Authelia (two_factor). /config et /data, data: torrents (le dossier /data/torrents créé à l'utilisateur).",
+                  "health: un chemin qui répond sans connexion, à trouver dans le code de qBittorrent 5.3.0 (la page de connexion, sans doute)."] },
+            { h: "8.4.2 Le moteur: les ports publiés (7.8, D44)",
+              l: ["Un champ ports: dans le manifest, par exemple 56881/tcp et 56881/udp: seulement des ports qui ne sont pas du web, jamais le port de l'interface.",
+                  "Le compose.yml les publie. install vérifie avant qu'ils sont libres sur le serveur (ss), et s'arrête avec un message clair sinon.",
+                  "Les instances en plus (le prochain port libre jusqu'à 56901, comme Saltbox) viendront avec --as: une seule instance pour l'instant.",
+                  "Le bouncer CrowdSec protège déjà ce port (chaîne DOCKER-USER, 10.3)."] },
+            { h: "8.4.3 Le moteur: les réglages au format INI",
+              l: ["qBittorrent.conf est un fichier de Qt: des sections ([Preferences], [BitTorrent], [LegalNotice]) et des clés avec des barres obliques inverses (WebUI\\Port). Un format ini à côté de xml: dotbox écrit seulement ses clés, dans leur section, et garde le reste.",
+                  "Les réglages, comme Saltbox (N11), chacun vérifié dans le code de qBittorrent 5.3.0 avant d'être écrit: le port des pairs (Session\\Port), le dossier /data/torrents, l'avertissement légal accepté, l'interface derrière Traefik (ReverseProxySupportEnabled, TrustedReverseProxiesList sur le réseau dotbox).",
+                  "Saltbox coupe HostHeaderValidation et CSRFProtection. Proposé: les garder si possible, avec ServerDomains réglé sur l'adresse de l'app, à vérifier dans le code et dans le navigateur."] },
+            { h: "8.4.4 Le mot de passe de l'interface (Q29, tranchée: D66)",
+              p: "D66: pas de mot de passe. Le réseau dotbox dans la liste d'adresses sans connexion (AuthSubnetWhitelistEnabled, AuthSubnetWhitelist), ReverseProxySupportEnabled coupé. Ce qui suit était l'option A ou B, gardé pour mémoire.",
+              l: ["Selon la réponse à Q29: le nom de l'utilisateur et un mot de passe écrits dans qBittorrent.conf, hachés comme qBittorrent le fait (PBKDF2-SHA512, 100 000 tours, sel de 16 octets).",
+                  "Un nouveau type de valeur dans settings:, rempli par dotbox, pour qu'aucun mot de passe n'apparaisse dans le manifest.",
+                  "Radarr et Sonarr s'en serviront au câblage (étape 9)."] },
+            { h: "8.4.5 Renovate",
+              p: "Le tag de qBittorrent contient la version de libtorrent (_v2.1.2): la règle linuxserver de renovate.json ne le lit pas. Elle l'accepte en plus, la mise à jour de qBittorrent ou de libtorrent est lue comme les autres." },
+            { h: "8.4.6 Tester",
+              l: ["Sur le PC: fmt, clippy, les tests (le compose.yml et le qBittorrent.conf attendus), le binaire statique.",
+                  "Sur le serveur, avec l'accord de Mathod95: dotbox install qbittorrent avec le nouveau binaire. HTTPS, Authelia puis la connexion de qBittorrent dans le navigateur, le port 56881 joignable depuis Internet en TCP, aucun autre port publié, l'app repart après un redémarrage de Docker."] },
+            { h: "8.4.7 La doc",
+              p: "Sa page dans le groupe Apps (D55), une ligne dans Overview, la Roadmap, et la ligne de Releases quand le code est poussé." },
+            { h: "À trancher", p: "Q29: le mot de passe de l'interface. Tranchée: D66." },
+            { h: "Où on en est (19 novembre 2026, 19:40)",
+              l: ["8.4.1 à 8.4.5: codés sur le PC (catalog/qbittorrent.yml, src/catalog.rs, src/engine.rs, src/apps.rs, renovate.json), 82 tests, version 0.0.4.",
+                  "8.4.6: testé sur le serveur avec le catalogue du PC (J156 à J160). Reste le test de Mathod95 dans le navigateur: Authelia, puis qBittorrent sans mot de passe, et un réglage changé dans l'interface (le CSRF en vrai).",
+                  "8.4.7: la page qBittorrent écrite, la proposition #50 dans Overview, Releases (next) et la Roadmap.",
+                  "Ensuite, avec l'accord de Mathod95: le commit et le push (feat), puis le tag v0.0.4. Sans lui, un serveur en v0.0.3 voit qbittorrent.yml dans le catalogue sans pouvoir l'installer."] }
+          ],
+          backlog: [
+            { id: "8.4.8", kind: "ecriture", where: "PC (code)", title: "« Qbittorrent » sur la ligne de l'étape",
+              lede: "dotbox install met une majuscule à la première lettre du nom de l'app: « Qbittorrent ». Le bon nom est qBittorrent.",
+              sections: [ { h: "Ce que ça changerait", p: "Un champ title: facultatif dans le manifest (« qBittorrent »), utilisé sur la ligne de l'étape et dans les résumés." } ] }
+          ],
           does: "catalog/qbittorrent.yml: image linuxserver, dernière version stable fixée, interface web derrière Authelia (two_factor), port des pairs 56881 publié en TCP et UDP (D44, 7.8), /data. Avant le premier démarrage, dotbox écrit sa configuration, comme Saltbox (N11): le port des pairs, le dossier de téléchargement /data/torrents, l'interface derrière Traefik (reverse proxy de confiance), l'avertissement légal accepté, et le mot de passe de l'interface selon Q29. Test sur le serveur: HTTPS, Authelia puis le mot de passe de qBittorrent, le port 56881 joignable depuis Internet, aucun autre port publié.",
           effect: "PC: catalog/qbittorrent.yml, src/apps.rs. Serveur: /opt/qbittorrent, l'image de qBittorrent, le port 56881 ouvert." },
         { id: "8.5", status: "fait", ref: "J120-J122", kind: "ecriture", where: "PC → Serveur", title: "qui",
@@ -2266,6 +2371,27 @@ volumes:
         { id: "8.7", kind: "ecriture", where: "PC → Serveur", title: "Seerr (après CrowdSec)",
           does: "Les demandes de films et de séries, connexion par le compte Jellyfin ou Plex (niveau app). Image officielle ghcr.io/seerr-team/seerr:v3.5.2 (12 novembre 2026), port 5055, configuration dans /app/config. Elle tourne avec l'utilisateur node (uid 1000) et n'a ni healthcheck ni curl: user: (7.11), et un healthcheck avec wget à prévoir. Après CrowdSec (D40, D56).",
           effect: "PC: catalog/seerr.yml. Serveur: /opt/seerr, l'image de Seerr." },
+        { id: "8.8", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Uptime Kuma",
+          does: "Surveille que les apps et les sites répondent, et prévient quand l'un tombe. Image officielle louislam/uptime-kuma:2.5.12 (17 novembre 2026), port 3001, /app/data, two_factor, healthcheck de l'image. Comme qui, elle a sa propre connexion: son compte est créé à la première visite, derrière Authelia, donc seulement par Mathod95. À vérifier: si l'image accepte un autre utilisateur que root (user:, 7.11).",
+          effect: "PC: catalog/uptime-kuma.yml. Serveur: /opt/uptime-kuma, l'image d'Uptime Kuma." },
+        { id: "8.9", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "code-server",
+          does: "VS Code dans le navigateur, pour lire et modifier des fichiers du serveur. Image linuxserver lscr.io/linuxserver/code-server:4.145.2-ls377 (15 novembre 2026), port 8443, health /healthz, two_factor. Sans mot de passe à lui (PASSWORD vide): Authelia protège seul, comme AuthenticationMethod External pour Radarr. Sans sudo dans le container. Ce qu'il voit du serveur: Q36, tranchée (D67): /config et /opt.",
+          effect: "PC: catalog/code-server.yml. Serveur: /opt/code-server, l'image de code-server." },
+        { id: "8.10", kind: "ecriture", where: "PC → Serveur", title: "Portainer (plus tard, D68)",
+          does: "Une interface pour voir et piloter les containers. Image officielle portainer/portainer-ce:2.45.4 (18 novembre 2026). Pour piloter Docker, il lui faut le socket Docker en écriture: c'est l'équivalent de root sur le serveur, alors que Traefik n'a qu'un proxy en lecture seule. Il peut aussi créer et modifier des containers que dotbox ne connaît pas. À trancher: Q35.",
+          effect: "PC: catalog/portainer.yml. Serveur: /opt/portainer, l'image de Portainer, le socket Docker monté." },
+        { id: "8.11", kind: "ecriture", where: "PC → Serveur", title: "Plex (après AppSec)",
+          does: "Le second serveur média, au même niveau que Jellyfin. Niveau app, comme Jellyfin. Après 10.7." },
+        { id: "8.12", kind: "ecriture", where: "PC → Serveur", title: "Wizarr (après AppSec)",
+          does: "Les invitations vers Jellyfin ou Plex. Niveau public: la page d'invitation doit s'ouvrir sans compte. Après 10.7 et un serveur média." },
+        { id: "8.13", kind: "ecriture", where: "PC → Serveur", title: "Vaultwarden (après AppSec)",
+          does: "Le gestionnaire de mots de passe (compatible Bitwarden). Niveau app, à cause des apps mobiles et des extensions. Après 10.7." },
+        { id: "8.14", kind: "ecriture", where: "PC → Serveur", title: "Tautulli (après Plex)",
+          does: "Les statistiques de Plex. two_factor. Après 8.11." },
+        { id: "8.15", kind: "ecriture", where: "PC → Serveur", title: "Jellystat (après Jellyfin)",
+          does: "Les statistiques de Jellyfin. two_factor. Après 8.6." },
+        { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (après un serveur média)",
+          does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11." },
 
       ] },
     { phase: "9", group: "encours", title: "Le câblage: relier les apps entre elles",
@@ -2681,7 +2807,15 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       reco: "Choix de Mathod95 du 17 novembre 2026: dotbox init lit le catalogue sur GitHub dès le début (7.6, 7.13), le core y entre comme les apps (catalog/core/: Traefik, Authelia, CrowdSec, le bouncer et le plugin, 7.12), et dotbox install se sert du catalogue déjà lu. Le binaire garde comment installer, plus quelles versions: une mise à jour du core ou d'une app ne demande jamais de nouvelle version de dotbox. Garde-fous: min_dotbox, les correctifs seuls fusionnés automatiquement, la CI sur chaque pull request, l'empreinte des binaires reprise de GitHub par la CI (7.14). Ce chantier passe avant 10.7, et avant la réinstallation complète du serveur. D43 (le catalogue sur GitHub après les apps) est dépassée: Prowlarr, Radarr, Sonarr et qui sont faits, et le format a tenu." },
     { t: "Renovate suit aussi les crates Rust et les actions GitHub (Q34)",
       p: "Mathod95: « Je te laisse trancher Q34, je ne vois pas trop ce que ça va changer. Au pire on pourra regarder ça plus tard. »",
-      reco: "Tranché par Claude: oui, regroupées, une pull request par semaine pour les crates Rust (« crates Rust ») et une pour les actions GitHub (« actions GitHub »), le lundi avant 6 h, sans fusion automatique, en chore(deps). Rien ne change dans le binaire sans que Mathod95 ait fusionné. À revoir quand on veut: une règle de renovate.json." }
+      reco: "Tranché par Claude: oui, regroupées, une pull request par semaine pour les crates Rust (« crates Rust ») et une pour les actions GitHub (« actions GitHub »), le lundi avant 6 h, sans fusion automatique, en chore(deps). Rien ne change dans le binaire sans que Mathod95 ait fusionné. À revoir quand on veut: une règle de renovate.json." },
+    { t: "qBittorrent sans mot de passe, comme Radarr et Sonarr (Q29)",
+      p: "Mathod95: « Il peut pas être retiré? Comme on fait pour Radarr et Sonarr? » Avec AuthenticationMethod External, Radarr et Sonarr s'ouvrent déjà sans connexion pour tout container du réseau dotbox, clé d'API comprise: l'option C, écartée au départ, est en fait la même chose pour qBittorrent.",
+      reco: "Choix de Mathod95 du 19 novembre 2026: pas de mot de passe dans qBittorrent. Sa liste d'adresses sans connexion (AuthSubnetWhitelist) contient le réseau dotbox, et ReverseProxySupportEnabled est coupé, pour que qBittorrent voie l'adresse de Traefik et non celle du navigateur. Authelia protège l'entrée depuis Internet. À vérifier dans le code de qBittorrent 5.3.0 avant d'écrire, et que Radarr accepte un qBittorrent sans mot de passe (câblage, étape 9)." },
+    { t: "code-server voit /opt (Q36)",
+      reco: "Choix de Mathod95 du 19 novembre 2026 (« Parfait »): son dossier /config, et /opt au même chemin, pour modifier les compose.override.yml et les config/ des apps. /opt/dotbox reste illisible (root seulement), /data n'est pas monté." },
+    { t: "Portainer plus tard (Q35)",
+      p: "En lecture seule, Portainer ne peut ni arrêter ni redémarrer un container. Le socket proxy de linuxserver sait autoriser seulement démarrer, arrêter et redémarrer, et refuser le reste (créer un container, monter un dossier, ouvrir un terminal): un proxy à lui, séparé de celui de Traefik.",
+      reco: "Choix de Mathod95 du 19 novembre 2026: « On fera Portainer plus tard. » Quand il viendra, c'est la piste: son propre proxy, avec démarrer, arrêter et redémarrer, à tester avec Portainer." }
   ];
 
   var QUESTIONS = [
@@ -2842,7 +2976,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { n: 28, done: "D42", t: "dotbox remove: garder les données de l'app par défaut?",
       p: "La page CLI dit aujourd'hui: dotbox remove <app> supprime l'app et /opt/<app>, --keep-data garde /opt/<app>. Une faute de frappe ou un oubli d'option efface alors la configuration de l'app (pour Prowlarr: ses indexeurs, ses clés d'API).",
       reco: "Inverser: remove arrête l'app, retire son routage et son entrée dans dotbox.yml, et garde /opt/<app>/config. --purge supprime aussi /opt/<app>, après une confirmation. Une nouvelle installation de la même app reprend alors sa configuration. Si c'est validé, la page CLI changera par une proposition." },
-    { n: 29, t: "qBittorrent: comment Radarr et Sonarr s'y connectent, et son mot de passe?",
+    { n: 29, done: "D66", t: "qBittorrent: comment Radarr et Sonarr s'y connectent, et son mot de passe?",
       p: "L'interface web de qBittorrent a son propre mot de passe (l'image linuxserver en tire un au hasard au premier démarrage et l'écrit dans ses logs). Radarr et Sonarr doivent s'y connecter pour envoyer les téléchargements. Deux façons: leur donner ce mot de passe, ou dire à qBittorrent de ne pas en demander aux apps du réseau dotbox (liste blanche d'adresses, réglage de qBittorrent).",
       l: ["Ce que fait Saltbox (rôle qbittorrent, lu le 16 novembre 2026): au premier démarrage, il écrit dans qBittorrent.conf le nom de l'utilisateur Saltbox et son mot de passe Saltbox (haché en PBKDF2), le même que pour ses autres apps. Pas de liste blanche. Il règle aussi le port des pairs, l'interface derrière un reverse proxy (TrustedReverseProxiesList, HostHeaderValidation et CSRFProtection désactivés), et accepte l'avertissement légal.",
         "A. Comme Saltbox: le nom de l'utilisateur et son mot de passe Authelia, que dotbox garde déjà pour root. Un seul mot de passe à retenir. S'il change dans Authelia, qBittorrent garde l'ancien.",
@@ -2878,6 +3012,18 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           "Oui, une pull request par mise à jour, comme Renovate le fait par défaut.",
           "Non: Renovate ne s'occupe que du catalogue, les crates et les actions à la main."],
       reco: "Proposé: la première. Les crates et les actions restent à jour sans bruit, et rien ne change dans le binaire sans que Mathod95 l'ait fusionné." },
+    { n: 35, done: "D68", t: "Portainer: lui donner le socket Docker?",
+      p: "Portainer pilote Docker par son socket, en écriture: celui qui ouvre Portainer peut lancer un container avec tout le disque du serveur monté, c'est l'équivalent de root. Il est derrière Authelia (two_factor), et a sa propre connexion en plus. Il peut aussi créer, arrêter ou modifier des containers sans que dotbox le sache: le compose.yml d'une app et ce qui tourne ne correspondraient plus.",
+      l: ["Le mettre au catalogue, socket en écriture, derrière Authelia, avec un avertissement dans sa page.",
+          "Le mettre au catalogue en lecture seule (par le socket proxy, comme Traefik): il montre les containers, leurs logs et leurs ressources, mais ne pilote rien.",
+          "Pas de Portainer: l'interface web de Dot Box montrera l'état des apps, et docker reste là pour le reste."],
+      reco: "Proposé: la deuxième. Voir les containers, les logs et les ressources est le besoin courant, sans donner root au navigateur. Le pilotage reste à dotbox." },
+    { n: 36, done: "D67", t: "code-server: que voit-il du serveur?",
+      p: "code-server ouvre VS Code et un terminal dans le container, avec l'utilisateur de dotbox.yml (PUID). Il ne voit que les dossiers qu'on lui monte.",
+      l: ["Seulement son dossier /config: un espace de travail à part, sans accès aux apps.",
+          "/opt en plus, au même chemin: les compose.override.yml et les config/ des apps, modifiables. /opt/dotbox reste illisible (root seulement), comme /opt/dotbox/secrets.",
+          "/opt et /data: les médias aussi."],
+      reco: "Proposé: la deuxième. C'est ce qui le rend utile (modifier un compose.override.yml, lire une config), sans les secrets de dotbox ni les médias." },
   ];
 
 
@@ -3041,18 +3187,18 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63], "sans": [12]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
-    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29], "9": [30], "10": [3, 11, 31, 32, 33], "sans": [9]
+    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36], "9": [30], "10": [3, 11, 31, 32, 33], "sans": [9]
   };
   var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11], "10": [1, 2, 3] };
   var placed = {};

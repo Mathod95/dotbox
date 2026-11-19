@@ -1,0 +1,46 @@
+# qBittorrent: le client BitTorrent, qui télécharge dans /data/torrents.
+# Format: Journal, étape 7 (7.1, 7.8) et 8.4. Les {{...}} sont remplis par dotbox à l'installation.
+name: qbittorrent
+description: BitTorrent client
+min_dotbox: 0.0.4
+image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487
+port: 8080
+access: two_factor
+# sans session, / rend la page de connexion (200): localhost est dans ServerDomains, plus bas
+health: /
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - config:/config
+  - /data:/data
+data:
+  - torrents
+# le port des pairs, en TCP et UDP: pas du web, publié (D44)
+ports:
+  - 56881/tcp
+  - 56881/udp
+# Écrits avant le premier démarrage, l'image de linuxserver ne copie alors pas sa config par
+# défaut. Chaque clé vérifiée dans le code de qBittorrent 5.3.0 (Journal, 8.4).
+settings:
+  file: config/qBittorrent/qBittorrent.conf
+  format: ini
+  values:
+    LegalNotice/Accepted: "true"
+    BitTorrent/Session/Port: "56881"
+    BitTorrent/Session/DefaultSavePath: /data/torrents
+    BitTorrent/Session/TempPathEnabled: "false"
+    # UPnP et NAT-PMP ne servent à rien dans Docker: le port est publié par dotbox
+    Network/PortForwardingEnabled: "false"
+    WebUI/Port: "8080"
+    # Sans mot de passe pour le réseau dotbox, comme Radarr (D66): Authelia protège l'entrée.
+    # Sans le support du reverse proxy, qBittorrent voit l'adresse de Traefik, dans ce réseau.
+    WebUI/AuthSubnetWhitelistEnabled: "true"
+    WebUI/AuthSubnetWhitelist: "{{subnet}}"
+    WebUI/ReverseProxySupportEnabled: "false"
+    # les protections gardées: les noms acceptés (l'adresse de l'app, son container, et
+    # localhost pour le healthcheck), et le CSRF, qui passe par Sec-Fetch-Site en HTTPS
+    WebUI/HostHeaderValidation: "true"
+    WebUI/ServerDomains: "{{host}};{{app}};localhost"
+    WebUI/CSRFProtection: "true"
