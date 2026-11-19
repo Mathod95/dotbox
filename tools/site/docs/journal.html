@@ -1987,7 +1987,26 @@ sudo_run.py 'docker exec crowdsec cscli decisions list -i 198.51.100.7; cscli de
       result: `route: 302 vers https://auth.<domaine>
 Seerr: « Failed sign-in attempt using invalid Seerr password {"ip":"198.51.100.7",…} »: la vraie IP grâce à trustProxy
 décision: LePresidente/jellyseerr-bf, ban, 6 événements, 4 h; retirée
-acquisition docker:seerr: 6 lignes lues, 6 parsées; CrowdSec healthy après le rechargement` }
+acquisition docker:seerr: 6 lignes lues, 6 parsées; CrowdSec healthy après le rechargement` },
+    { id: "J181", time: "00:08", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.12: dotbox install wizarr, l'assistant pas encore fait",
+      cmd: `scp (binaire 67720aaf856680ce…, et le catalogue du PC avec catalog/wizarr.yml)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install wizarr --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan 8.12 (accord d'avance, D73). Sur le PC avant: fmt, clippy, 94 tests.",
+      effect: "Serveur: /opt/wizarr (database/, compose.yml), l'image ghcr.io/wizarrrr/wizarr:v2026.10.1, apps: wizarr dans dotbox.yml (niveau public).",
+      undo: "sudo dotbox remove wizarr --purge",
+      result: `✓ [1/1] Wizarr        v2026.10.1, two_factor until its setup is done    1 min 14 s
+[ 0.1s] check wizarr: first-run setup not done yet, behind Authelia until then
+[73.6s] $ docker exec wizarr curl -s -o /dev/null -w %{redirect_url} http://localhost:5690/ → http://localhost:5690/setup/
+« it opens to its apps (public) »: message reformulé sur le PC (« Authelia steps aside »)` },
+    { id: "J182", time: "00:10", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.12: Wizarr derrière Authelia, avec ton utilisateur",
+      cmd: `curl https://wizarr.<domaine>/   (depuis le PC, jusqu'au certificat)
+sudo_run.py 'ps -o user=,args= …; ls -la /opt/wizarr/database'`,
+      does: "Les tests possibles avant l'assistant.",
+      effect: "Aucun, lecture seule.",
+      result: `route: 000 tant que le certificat du nouveau sous-domaine s'émet (quelques secondes), puis 302 vers https://auth.<domaine>; certificat Let's Encrypt (YR1) pour wizarr.<domaine>
+gunicorn tourne avec <user> (PUID), database.db à <user>, healthy` }
   ];
 
   var PLAN = [
@@ -2695,7 +2714,17 @@ volumes:
           effect: "PC: catalog/portainer.yml. Serveur: /opt/portainer, l'image de Portainer, le socket Docker monté." },
         { id: "8.11", kind: "ecriture", where: "PC → Serveur", title: "Plex (après AppSec)",
           does: "Le second serveur média, au même niveau que Jellyfin. Niveau app, comme Jellyfin. Après 10.7." },
-        { id: "8.12", kind: "ecriture", where: "PC → Serveur", title: "Wizarr (après AppSec)",
+        { id: "8.12", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Wizarr (après AppSec)",
+          lede: "Plan du 20 novembre 2026, accordé d'avance (D73). Image officielle v2026.10.1, niveau public, PUID et PGID, healthcheck de l'image, TRUST_PROXY_HEADERS. Vérifié dans le code de Wizarr: sans compte admin, toutes les pages renvoient vers /setup (app/middleware.py), et la base est en SQLite. Le moteur apprend donc à demander à l'app si son assistant est fini (setup: probe). Sa page dans la doc. Testé (J181, J182). Reste: l'assistant, fait par Mathod95, puis la seconde install.",
+          links: [
+            { t: "Page Wizarr", u: "../wizarr/" },
+            { t: "Code source", u: "https://github.com/wizarrrr/wizarr" }
+          ],
+          backlog: [
+            { id: "8.12.1", kind: "ecriture", where: "PC (code) → Serveur", title: "Les échecs de connexion de Wizarr, sans CrowdSec",
+              lede: "Wizarr écrit « AUTH FAIL: Failed login for user … from <IP> », mais prend l'IP dans CF-Connecting-IP, puis X-Forwarded-For, des en-têtes qu'un client peut envoyer lui-même (app/blueprints/auth/routes.py). Le hub n'a pas de collection pour Wizarr.",
+              sections: [ { h: "Ce que ça changerait", l: ["Un middleware Traefik qui retire CF-Connecting-IP avant Wizarr, puis un parseur à Dot Box pour cette ligne.", "Ou proposer à Wizarr de ne croire CF-Connecting-IP que derrière Cloudflare."] } ] }
+          ],
           does: "Les invitations vers Jellyfin ou Plex. Niveau public: la page d'invitation doit s'ouvrir sans compte. Après 10.7 et un serveur média." },
         { id: "8.13", kind: "ecriture", where: "PC → Serveur", title: "Vaultwarden (après AppSec)",
           does: "Le gestionnaire de mots de passe (compatible Bitwarden). Niveau app, à cause des apps mobiles et des extensions. Après 10.7." },
@@ -3651,7 +3680,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.

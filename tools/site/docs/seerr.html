@@ -31,7 +31,7 @@
   seerr         https://seerr.example.com  two_factor for now
 
   → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install seerr: it opens to its apps (app).</pre>
+    Then run sudo dotbox install seerr again: Authelia steps aside (app).</pre>
   <ul>
     <li>Elle crée <code>/opt/seerr/config</code> à ton utilisateur, écrit <code>compose.yml</code> et démarre Seerr derrière Authelia.</li>
     <li>Seerr crée <code>settings.json</code> à son premier démarrage. dotbox attend qu'il existe, y active la confiance dans Traefik (voir plus bas), puis relance Seerr.</li>
@@ -110,7 +110,7 @@
   seerr         https://seerr.example.com  two_factor for now
 
   → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install seerr: it opens to its apps (app).</pre>
+    Then run sudo dotbox install seerr again: Authelia steps aside (app).</pre>
   <ul>
     <li>It creates <code>/opt/seerr/config</code>, owned by your user, writes <code>compose.yml</code> and starts Seerr behind Authelia.</li>
     <li>Seerr creates <code>settings.json</code> on its first start. dotbox waits for it, turns on trust in Traefik (see below), then restarts Seerr.</li>

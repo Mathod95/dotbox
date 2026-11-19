@@ -62,6 +62,7 @@ DOCS = [
     {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "group": "Apps"},
     {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "group": "Apps"},
     {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "group": "Apps"},
+    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},

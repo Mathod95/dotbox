@@ -681,12 +681,15 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Wizarr: les invitations au serveur média, par lien",
       "en": "Wizarr: media server invitations, by link",
       "journal": [
-        "8.12"
-      ]
+        "8.12",
+        "J181-J182",
+        "D71"
+      ],
+      "doc": "wizarr"
     },
     {
       "stage": "apps",

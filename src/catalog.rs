@@ -126,19 +126,26 @@ pub struct Watch {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawSetup {
-    file: String,
-    done: String,
+    #[serde(default)]
+    file: Option<String>,
+    #[serde(default)]
+    done: Option<String>,
+    #[serde(default)]
+    probe: Option<String>,
+    #[serde(default)]
+    pending: Option<String>,
 }
 
 /// L'assistant de premier démarrage d'une app ouverte à Internet (niveaux app et public): tant
-/// que `file` ne contient pas `done`, l'app reste derrière Authelia (D71). Sans lui, n'importe
-/// qui pourrait créer le compte admin avant toi (Jellyfin: FirstTimeSetupHandler.cs).
-#[derive(Debug)]
-pub struct Setup {
-    /// chemin sous /opt/<app> (« config/config/system.xml »)
-    pub file: String,
-    /// le texte que l'app écrit quand l'assistant est fini
-    pub done: String,
+/// qu'il n'est pas fini, l'app reste derrière Authelia (D71). Sans lui, n'importe qui pourrait
+/// créer le compte admin avant toi (Jellyfin: FirstTimeSetupHandler.cs).
+#[derive(Debug, PartialEq, Eq)]
+pub enum Setup {
+    /// fini quand `file` (sous /opt/<app>) contient `done` (Jellyfin, Seerr)
+    File { file: String, done: String },
+    /// fini quand la page `probe` ne renvoie plus vers une adresse qui contient `pending`,
+    /// demandé à l'app elle-même avec curl (Wizarr: sa base est en SQLite)
+    Probe { probe: String, pending: String },
 }
 
 #[derive(Deserialize)]
@@ -467,25 +474,39 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
     let setup = match raw.setup {
         None => None,
         Some(s) => {
-            if !settings_file(&s.file) {
-                return Err(format!(
-                    "setup: file {:?} must be under /opt/{name}, like config/system.xml",
-                    s.file
-                ));
-            }
-            if s.done.trim().is_empty() {
-                return Err("setup: done, the text the app writes once its setup is done".into());
-            }
             if raw.access.behind_authelia() {
                 return Err(
                     "setup: only for the levels app and public, Authelia already protects the others"
                         .into(),
                 );
             }
-            Some(Setup {
-                file: s.file,
-                done: s.done,
-            })
+            match (s.file, s.done, s.probe, s.pending) {
+                (Some(file), Some(done), None, None) => {
+                    if !settings_file(&file) {
+                        return Err(format!(
+                            "setup: file {file:?} must be under /opt/{name}, like config/system.xml"
+                        ));
+                    }
+                    if done.trim().is_empty() {
+                        return Err(
+                            "setup: done, the text the app writes once its setup is done".into(),
+                        );
+                    }
+                    Some(Setup::File { file, done })
+                }
+                (None, None, Some(probe), Some(pending)) => {
+                    if !probe.starts_with('/') || pending.trim().is_empty() {
+                        return Err("setup: probe, a path like /, and pending, a part of the address it redirects to while the setup is not done, like /setup".into());
+                    }
+                    if health_wget {
+                        return Err("setup: probe uses curl, not with health_tool: wget".into());
+                    }
+                    Some(Setup::Probe { probe, pending })
+                }
+                _ => {
+                    return Err("setup: either file and done, or probe and pending".into());
+                }
+            }
         }
     };
     let crowdsec = match raw.crowdsec {
@@ -1124,9 +1145,13 @@ mod tests {
             (w.collection.as_str(), w.kind.as_str()),
             ("LePresidente/jellyfin", "jellyfin")
         );
-        let setup = m.setup.unwrap();
-        assert_eq!(setup.file, "config/config/system.xml");
-        assert!(setup.done.contains("IsStartupWizardCompleted"));
+        assert_eq!(
+            m.setup.unwrap(),
+            Setup::File {
+                file: "config/config/system.xml".into(),
+                done: "<IsStartupWizardCompleted>true</IsStartupWizardCompleted>".into()
+            }
+        );
     }
 
     #[test]
@@ -1141,7 +1166,23 @@ mod tests {
             st.values,
             [("network/trustProxy".to_string(), "true".to_string())]
         );
-        assert_eq!(m.setup.unwrap().done, "\"initialized\": true");
+        assert!(
+            matches!(m.setup.unwrap(), Setup::File { done, .. } if done == "\"initialized\": true")
+        );
+    }
+
+    #[test]
+    fn wizarr() {
+        let m = load(&catalog_dir(), "wizarr").unwrap();
+        assert_eq!((m.port, m.access), (5690, Access::Public));
+        assert_eq!(
+            m.setup.unwrap(),
+            Setup::Probe {
+                probe: "/".into(),
+                pending: "/setup".into()
+            }
+        );
+        assert!(m.crowdsec.is_none());
     }
 
     #[test]
@@ -1151,6 +1192,11 @@ mod tests {
         assert!(with(setup).unwrap().setup.is_some());
         assert!(with("setup:\n  file: ../system.xml\n  done: x\n").is_err());
         assert!(with("setup:\n  file: config/system.xml\n  done: \" \"\n").is_err());
+        // ou en demandant à l'app (Wizarr)
+        assert!(with("setup:\n  probe: /\n  pending: /setup\n").is_ok());
+        assert!(with("setup:\n  probe: x\n  pending: /setup\n").is_err());
+        assert!(with("setup:\n  file: config/s.xml\n  probe: /\n  pending: /setup\n").is_err());
+        assert!(with("setup:\n  probe: /\n").is_err());
         // derrière Authelia, l'assistant est déjà protégé
         let tf = parse(&format!(
             "{}{setup}",

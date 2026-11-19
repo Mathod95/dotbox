@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin et Seerr",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin and Seerr"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr et Wizarr",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin, Seerr and Wizarr"
       },
       "new": [
         {
@@ -71,6 +71,14 @@
         {
           "fr": "Moteur: un healthcheck avec `wget`, pour les images sans `curl` (`health_tool`)",
           "en": "Engine: a healthcheck with `wget`, for images without `curl` (`health_tool`)"
+        },
+        {
+          "fr": "Catalogue: Wizarr, les invitations au serveur média, page d'invitation publique, derrière Authelia jusqu'à la création du compte admin",
+          "en": "Catalog: Wizarr, media server invitations, public invitation page, behind Authelia until the admin account exists"
+        },
+        {
+          "fr": "Moteur: l'assistant de premier démarrage demandé à l'app elle-même (`setup: probe`), pour une app dont la base est en SQLite",
+          "en": "Engine: the first-run setup asked to the app itself (`setup: probe`), for an app whose database is SQLite"
         }
       ],
       "changed": [

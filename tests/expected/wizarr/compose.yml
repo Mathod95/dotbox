@@ -1,0 +1,30 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: wizarr
+services:
+  wizarr:
+    image: ghcr.io/wizarrrr/wizarr:<version>
+    container_name: wizarr
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+      TRUST_PROXY_HEADERS: 'true'
+    volumes:
+      - /opt/wizarr/database:/data/database
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.wizarr.rule: Host(`wizarr.example.com`)
+      traefik.http.routers.wizarr.entrypoints: websecure
+      traefik.http.services.wizarr.loadbalancer.server.port: "5690"
+      # public: AppSec, le WAF de CrowdSec, bloque les attaques connues
+      traefik.http.routers.wizarr.middlewares: crowdsec@docker
+
+networks:
+  dotbox:
+    external: true

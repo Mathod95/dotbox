@@ -216,7 +216,7 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
             r.address
         );
         eprintln!(
-            "    Then run sudo dotbox install {}: it opens to its apps ({}).",
+            "    Then run sudo dotbox install {} again: Authelia steps aside ({}).",
             r.app, r.access
         );
         eprintln!();
@@ -256,11 +256,8 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
     }
     // ouverte à Internet, mais son assistant de premier démarrage n'est pas fini: derrière
     // Authelia en attendant, pour que personne ne crée le compte admin avant toi (D71)
-    let setup_pending = !access.behind_authelia()
-        && m.setup.as_ref().is_some_and(|st| {
-            let path = format!("{}/{}", engine::dir(app), st.file);
-            !std::fs::read_to_string(path).is_ok_and(|t| t.contains(&st.done))
-        });
+    let mut setup_pending =
+        !access.behind_authelia() && m.setup.is_some() && setup_done(&m) != Some(true);
     let route = if setup_pending {
         say(
             "check",
@@ -272,7 +269,7 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
     };
 
     let (uid, gid) = system::user_ids(user)?;
-    let ctx = Ctx {
+    let mut ctx = Ctx {
         domain: domain.to_string(),
         subdomain: sub.clone(),
         access: route,
@@ -330,6 +327,22 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
             state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
         }
     }
+    // l'assistant demandé à l'app (Wizarr): elle ne pouvait pas répondre avant de démarrer.
+    // Déjà fait (une réinstallation): elle passe tout de suite au niveau voulu.
+    if setup_pending
+        && matches!(m.setup, Some(catalog::Setup::Probe { .. }))
+        && setup_done(&m) == Some(true)
+    {
+        setup_pending = false;
+        ctx.access = access;
+        say("check", &format!("{app}: first-run setup already done"));
+        if system::write_if_changed(&path, &engine::compose(&m, &ctx), 0o644)? {
+            say("write", &path);
+            compose(app, &["up", "-d", "--quiet-pull"])?;
+            say("start", app);
+            state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
+        }
+    }
     say("check", &format!("{app} {state} ({})", m.image));
     // CrowdSec lit ses logs et bannit qui devine les mots de passe (D72)
     if let Some(w) = &m.crowdsec {
@@ -349,6 +362,39 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         access: access.as_str().to_string(),
         setup_pending,
     })
+}
+
+/// L'assistant de premier démarrage est-il fini? None: on ne peut pas encore le savoir (l'app
+/// ne tourne pas, pour un assistant demandé à l'app).
+fn setup_done(m: &catalog::Manifest) -> Option<bool> {
+    match m.setup.as_ref()? {
+        catalog::Setup::File { file, done } => {
+            let path = format!("{}/{}", engine::dir(&m.name), file);
+            Some(std::fs::read_to_string(path).is_ok_and(|t| t.contains(done.as_str())))
+        }
+        catalog::Setup::Probe { probe, pending } => {
+            if !running(&traefik::container_state(&m.name)) {
+                return None;
+            }
+            let url = format!("http://localhost:{}{probe}", m.port);
+            let to = system::run(
+                "docker",
+                &[
+                    "exec",
+                    &m.name,
+                    "curl",
+                    "-s",
+                    "-o",
+                    "/dev/null",
+                    "-w",
+                    "%{redirect_url}",
+                    &url,
+                ],
+            )
+            .ok()?;
+            Some(!to.contains(pending.as_str()))
+        }
+    }
 }
 
 /// Une app installée, pour le résumé de la fin.

@@ -1,0 +1,26 @@
+# Wizarr: les invitations à ton serveur média, par un lien, avec un guide pour bien démarrer.
+# Format: Journal, étape 7 (7.1) et 8.12. Les {{...}} sont remplis par dotbox à l'installation.
+name: wizarr
+description: Media server invitations
+min_dotbox: 0.0.4
+image: ghcr.io/wizarrrr/wizarr:v2026.10.1
+port: 5690
+# la page d'invitation s'ouvre sans compte; AppSec devant (10.7)
+access: public
+# l'image a son propre healthcheck (curl sur /health)
+health: image
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+  # derrière Traefik: les adresses et les redirections en https (ProxyFix, un seul proxy)
+  TRUST_PROXY_HEADERS: "true"
+volumes:
+  - database:/data/database
+# Sa base est en SQLite: tant qu'aucun compte admin n'existe, toutes les pages renvoient vers
+# /setup (app/middleware.py). dotbox le demande à Wizarr; derrière Authelia jusque-là (D71).
+# Pas de CrowdSec: Wizarr prend l'IP des échecs dans CF-Connecting-IP, qu'un client peut envoyer
+# lui-même (backlog 8.12.1).
+setup:
+  probe: /
+  pending: /setup
