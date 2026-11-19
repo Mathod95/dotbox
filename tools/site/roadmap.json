@@ -576,13 +576,15 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Seerr: les demandes de films et de séries, pour toi et tes proches",
       "en": "Seerr: movie and TV requests, for you and your family",
       "journal": [
         "8.7",
-        "D56"
-      ]
+        "D56",
+        "J179-J180"
+      ],
+      "doc": "seerr"
     },
     {
       "stage": "apps",
@@ -651,7 +653,8 @@
       "fr": "Jellystat: les statistiques et l'historique de Jellyfin",
       "en": "Jellystat: Jellyfin statistics and history",
       "journal": [
-        "8.15"
+        "8.15",
+        "D74"
       ]
     },
     {
@@ -661,7 +664,8 @@
       "fr": "Tracearr: le suivi des lectures du serveur média (base de données à côté, à vérifier)",
       "en": "Tracearr: media server playback tracking (database alongside, to check)",
       "journal": [
-        "8.16"
+        "8.16",
+        "D74"
       ]
     },
     {
@@ -703,7 +707,8 @@
       "en": "Gitea: Git repository hosting (an SSH port published for `git push`)",
       "journal": [
         "8.19",
-        "D44"
+        "D44",
+        "D77"
       ]
     },
     {
@@ -739,7 +744,8 @@
       "fr": "Backstage: à préciser (plusieurs containers et une base de données, que le moteur ne gère pas encore)",
       "en": "Backstage: to be clarified (several containers and a database, not yet handled by the engine)",
       "journal": [
-        "8.20"
+        "8.20",
+        "D76"
       ]
     },
     {
@@ -750,7 +756,8 @@
       "en": "WireGuard: a VPN to the server (published UDP port, network privileges on the container)",
       "journal": [
         "8.21",
-        "D44"
+        "D44",
+        "D75"
       ]
     },
     {
@@ -761,7 +768,8 @@
       "en": "NetBird: a private network between your devices and the server (UDP port, network privileges)",
       "journal": [
         "8.22",
-        "D44"
+        "D44",
+        "D75"
       ]
     },
     {

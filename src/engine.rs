@@ -43,6 +43,45 @@ pub fn fill(value: &str, app: &str, c: &Ctx) -> String {
         .replace("{{subnet}}", &c.subnet)
 }
 
+/// Pose des réglages dans un fichier JSON (settings.json de Seerr), en gardant le reste et
+/// l'ordre des clés. « a/b/c »: la clé c de l'objet b de l'objet a, créés s'ils manquent.
+/// « true » et « false » deviennent des booléens. Rien ne change si les valeurs y sont déjà:
+/// le texte de l'app est rendu tel quel.
+pub fn merge_json(existing: Option<&str>, values: &[(String, String)]) -> Result<String, String> {
+    use serde_json::Value;
+    let text = existing.unwrap_or("{}");
+    let mut doc: Value = serde_json::from_str(text).map_err(|e| format!("not valid JSON: {e}"))?;
+    let before = doc.clone();
+    for (path, value) in values {
+        let v = match value.as_str() {
+            "true" => Value::Bool(true),
+            "false" => Value::Bool(false),
+            s => Value::String(s.to_string()),
+        };
+        let (parents, last) = match path.rsplit_once('/') {
+            Some((p, l)) => (p.split('/').collect::<Vec<_>>(), l),
+            None => (Vec::new(), path.as_str()),
+        };
+        let mut node = &mut doc;
+        for part in parents {
+            node = node
+                .as_object_mut()
+                .ok_or(format!("{path}: {part} is not inside an object"))?
+                .entry(part.to_string())
+                .or_insert_with(|| Value::Object(Default::default()));
+        }
+        node.as_object_mut()
+            .ok_or(format!("{path}: {last} is not inside an object"))?
+            .insert(last.to_string(), v);
+    }
+    if doc == before && existing.is_some() {
+        return Ok(text.to_string());
+    }
+    serde_json::to_string_pretty(&doc)
+        .map(|s| s + "\n")
+        .map_err(|e| e.to_string())
+}
+
 /// Ce que XML ne laisse pas écrire tel quel dans un texte (comme Radarr l'écrit lui-même).
 fn xml_escape(v: &str) -> String {
     v.replace('&', "&amp;")
@@ -241,9 +280,15 @@ services:
     out.push_str("    security_opt:\n      - no-new-privileges:true\n");
     // health: image, l'image a déjà son healthcheck: on n'en ajoute pas
     if let Some(path) = m.health.as_ref().filter(|h| h.as_str() != "image") {
+        // wget pour les images sans curl (celui de busybox, sur Alpine)
+        let tool = if m.health_wget {
+            "\"wget\", \"-q\", \"--spider\""
+        } else {
+            "\"curl\", \"-fsS\""
+        };
         out.push_str(&format!(
             "    healthcheck:
-      test: [\"CMD\", \"curl\", \"-fsS\", \"http://localhost:{port}{path}\"]
+      test: [\"CMD\", {tool}, \"http://localhost:{port}{path}\"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -480,6 +525,16 @@ mod tests {
     }
 
     #[test]
+    fn seerr_compose_is_the_expected_one() {
+        let m = load("seerr");
+        let mut c = ctx(Access::App);
+        c.subdomain = "seerr".into();
+        let expected =
+            include_str!("../tests/expected/seerr/compose.yml").replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+    }
+
+    #[test]
     fn jellyfin_network_xml() {
         let m = load("jellyfin");
         let mut c = ctx(Access::App);
@@ -507,6 +562,31 @@ mod tests {
         );
         assert_eq!(merge_xml(Some(&empty), &st.root, &values).unwrap(), jf);
         assert!(merge_xml(Some("<Config>\n</Config>"), &st.root, &values).is_err());
+    }
+
+    #[test]
+    fn json_settings_keep_the_rest() {
+        let v = |k: &str, x: &str| (k.to_string(), x.to_string());
+        // un settings.json de Seerr (une espace d'indentation): l'ordre et le reste gardés
+        let seerr = "{\n \"clientId\": \"abc\",\n \"network\": {\n  \"csrfProtection\": false,\n  \"trustProxy\": false\n },\n \"public\": {\n  \"initialized\": false\n }\n}";
+        let out = merge_json(Some(seerr), &[v("network/trustProxy", "true")]).unwrap();
+        let doc: serde_json::Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(doc["network"]["trustProxy"], true);
+        assert_eq!(doc["network"]["csrfProtection"], false);
+        assert_eq!(doc["clientId"], "abc");
+        let keys: Vec<&String> = doc.as_object().unwrap().keys().collect();
+        assert_eq!(keys, ["clientId", "network", "public"]);
+        // déjà réglé: le texte de l'app, tel quel
+        let set = seerr.replace("\"trustProxy\": false", "\"trustProxy\": true");
+        assert_eq!(
+            merge_json(Some(&set), &[v("network/trustProxy", "true")]).unwrap(),
+            set
+        );
+        // un objet qui manque est créé, du texte reste du texte
+        let out = merge_json(Some("{}"), &[v("a/b", "x")]).unwrap();
+        assert_eq!(out, "{\n  \"a\": {\n    \"b\": \"x\"\n  }\n}\n");
+        assert!(merge_json(Some("{\"a\": 1}"), &[v("a/b", "x")]).is_err());
+        assert!(merge_json(Some("pas du json"), &[v("a", "x")]).is_err());
     }
 
     #[test]

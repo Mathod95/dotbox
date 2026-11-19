@@ -80,6 +80,9 @@ struct Raw {
     access: Access,
     #[serde(default)]
     health: Option<String>,
+    /// l'outil du healthcheck: curl (par défaut) ou wget, pour les images sans curl (Seerr)
+    #[serde(default)]
+    health_tool: Option<String>,
     #[serde(default)]
     env: serde_yaml_ng::Mapping,
     #[serde(default)]
@@ -146,6 +149,9 @@ struct RawSettings {
     /// format xml: l'élément racine du fichier, Config par défaut
     #[serde(default)]
     root: Option<String>,
+    /// le fichier est créé par l'app à son premier démarrage, jamais par dotbox (Seerr)
+    #[serde(default)]
+    created_by_app: bool,
     values: serde_yaml_ng::Mapping,
 }
 
@@ -160,9 +166,14 @@ pub struct Settings {
     /// une liste d'une valeur pour Jellyfin).
     /// « ini »: un fichier de Qt (qBittorrent.conf), la clé « Section/Clé/Sous-clé » va dans
     /// [Section] en « Clé\Sous-clé ».
+    /// « json »: « a/b/c » est la clé c de l'objet b de l'objet a. true et false sont des
+    /// booléens, le reste du texte.
     pub format: String,
     /// format xml: l'élément racine (« Config », « NetworkConfiguration »)
     pub root: String,
+    /// l'app crée le fichier au premier démarrage: dotbox attend qu'il existe, y pose ses
+    /// réglages, puis relance l'app (ses migrations refusent un fichier incomplet)
+    pub created_by_app: bool,
     /// dans l'ordre du fichier
     pub values: Vec<(String, String)>,
 }
@@ -193,6 +204,8 @@ pub struct Manifest {
     pub port: u16,
     pub access: Access,
     pub health: Option<String>,
+    /// wget au lieu de curl pour le healthcheck
+    pub health_wget: bool,
     /// dans l'ordre du fichier
     pub env: Vec<(String, String)>,
     pub volumes: Vec<Volume>,
@@ -327,6 +340,14 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             return Err(format!("health {h:?}: a path like /ping, or image"));
         }
     }
+    let health_wget = match raw.health_tool.as_deref() {
+        None | Some("curl") => false,
+        Some("wget") => true,
+        Some(t) => return Err(format!("health_tool {t:?}: curl or wget")),
+    };
+    if health_wget && !raw.health.as_ref().is_some_and(|h| h.starts_with('/')) {
+        return Err("health_tool: only with a health path, like /ping".into());
+    }
     let mut env = Vec::new();
     for (k, v) in &raw.env {
         let key = k.as_str().ok_or("env: every name must be text")?;
@@ -390,16 +411,17 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                     st.file
                 ));
             }
-            let ini = match st.format.as_str() {
-                "xml" => false,
-                "ini" => true,
-                other => return Err(format!("settings: format {other:?}, xml or ini")),
+            let (ini, json) = match st.format.as_str() {
+                "xml" => (false, false),
+                "ini" => (true, false),
+                "json" => (false, true),
+                other => return Err(format!("settings: format {other:?}, xml, ini or json")),
             };
             let word = |w: &str| {
                 w.starts_with(|c: char| c.is_ascii_alphabetic())
                     && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
             };
-            let root = match (&st.root, ini) {
+            let root = match (&st.root, ini || json) {
                 (None, _) => "Config".to_string(),
                 (Some(r), false) if word(r) => r.clone(),
                 (Some(r), false) => {
@@ -416,7 +438,12 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                     ));
                 }
                 let parts: Vec<&str> = key.split('/').collect();
-                if !ini && !(parts.len() <= 2 && parts.iter().all(|w| word(w))) {
+                if json && !parts.iter().all(|w| word(w)) {
+                    return Err(format!(
+                        "settings {key:?}: a/b/c, letters, digits and _ (format json)"
+                    ));
+                }
+                if !ini && !json && !(parts.len() <= 2 && parts.iter().all(|w| word(w))) {
                     return Err(format!(
                         "settings {key:?}: Key or Key/Child, letters, digits and _ (format xml)"
                     ));
@@ -432,6 +459,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                 file: st.file,
                 format: st.format,
                 root,
+                created_by_app: st.created_by_app,
                 values,
             })
         }
@@ -498,6 +526,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         port: raw.port,
         access: raw.access,
         health: raw.health,
+        health_wget,
         env,
         volumes,
         data: raw.data,
@@ -1101,6 +1130,21 @@ mod tests {
     }
 
     #[test]
+    fn seerr() {
+        let m = load(&catalog_dir(), "seerr").unwrap();
+        assert_eq!((m.port, m.access), (5055, Access::App));
+        assert!(m.health_wget && m.run_as_user);
+        let st = m.settings.unwrap();
+        assert!(st.created_by_app);
+        assert_eq!(st.format, "json");
+        assert_eq!(
+            st.values,
+            [("network/trustProxy".to_string(), "true".to_string())]
+        );
+        assert_eq!(m.setup.unwrap().done, "\"initialized\": true");
+    }
+
+    #[test]
     fn setup_and_xml_rules() {
         let with = |extra: &str| parse(&format!("{OK}{extra}"));
         let setup = "setup:\n  file: config/system.xml\n  done: <Done>true</Done>\n";
@@ -1144,6 +1188,14 @@ mod tests {
         assert!(with("crowdsec:\n  collection: b\n  type: b\n").is_err());
         assert!(with("crowdsec:\n  collection: a/b c\n  type: b\n").is_err());
         assert!(with("crowdsec:\n  collection: a/b\n  type: \"b\\nc\"\n").is_err());
+        // health_tool: curl ou wget, avec un chemin
+        assert!(with("health: /ping\nhealth_tool: wget\n").is_ok());
+        assert!(with("health: image\nhealth_tool: wget\n").is_err());
+        assert!(with("health: /ping\nhealth_tool: nc\n").is_err());
+        // json: a/b/c
+        let js = "settings:\n  file: config/settings.json\n  format: json\n  created_by_app: true\n  values:\n";
+        assert!(with(&format!("{js}    a/b/c: x\n")).is_ok());
+        assert!(with(&format!("{js}    a//c: x\n")).is_err());
         // env: une majuscule d'abord, comme JELLYFIN_PublishedServerUrl
         assert!(with("env:\n  JELLYFIN_PublishedServerUrl: x\n").is_ok());
         assert!(with("env:\n  _A: x\n").is_err());

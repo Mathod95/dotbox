@@ -1,0 +1,34 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: seerr
+services:
+  seerr:
+    image: ghcr.io/seerr-team/seerr:<version>
+    container_name: seerr
+    restart: unless-stopped
+    networks:
+      - dotbox
+    user: "1000:1000"
+    environment:
+      TZ: 'Europe/Paris'
+    volumes:
+      - /opt/seerr/config:/app/config
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5055/api/v1/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.seerr.rule: Host(`seerr.example.com`)
+      traefik.http.routers.seerr.entrypoints: websecure
+      traefik.http.services.seerr.loadbalancer.server.port: "5055"
+      # app: AppSec, le WAF de CrowdSec, bloque les attaques connues
+      traefik.http.routers.seerr.middlewares: crowdsec@docker
+
+networks:
+  dotbox:
+    external: true

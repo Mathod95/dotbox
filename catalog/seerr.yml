@@ -1,0 +1,36 @@
+# Seerr: les demandes de films et de séries, pour toi et tes proches, envoyées à Radarr et Sonarr.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.7. Les {{...}} sont remplis par dotbox à l'installation.
+name: seerr
+description: Media requests
+min_dotbox: 0.0.4
+image: ghcr.io/seerr-team/seerr:v3.5.2
+port: 5055
+# la connexion par le compte Jellyfin ou Plex, pour tes proches; AppSec devant (10.7)
+access: app
+# l'image n'a ni healthcheck ni curl: wget de busybox, sur sa page d'état publique
+health: /api/v1/status
+health_tool: wget
+# l'image tourne avec l'utilisateur node (1000): ici, celui de dotbox.yml (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+volumes:
+  - config:/app/config
+# Seerr croit X-Forwarded-For (express trust proxy): ses logs ont la vraie IP, pour CrowdSec.
+# Traefik remplace celui qu'envoie un client. Seerr crée settings.json au premier démarrage, et
+# ses migrations refusent un fichier incomplet: dotbox attend qu'il existe (created_by_app).
+settings:
+  file: config/settings.json
+  format: json
+  created_by_app: true
+  values:
+    network/trustProxy: "true"
+# Tant que son assistant n'est pas fini, n'importe qui peut le faire (D71).
+setup:
+  file: config/settings.json
+  done: '"initialized": true'
+# Les connexions ratées avec un mot de passe Seerr (D72). Celles avec un compte Jellyfin ont
+# changé de message dans Seerr 3.5, la collection ne les lit pas encore (backlog 8.7.1).
+crowdsec:
+  collection: LePresidente/jellyseerr
+  type: jellyseerr

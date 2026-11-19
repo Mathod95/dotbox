@@ -1,0 +1,162 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Seerr<i>●</i>les demandes de films et de séries, pour toi et tes proches, envoyées à Radarr et Sonarr.</p>
+<p class="lede" data-l="en">Seerr<i>●</i>movie and show requests, for you and your family or friends, sent to Radarr and Sonarr.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/seerr-team/seerr" target="_blank" rel="noopener">Code source ↗</a> <a href="https://docs.seerr.dev" target="_blank" rel="noopener">Doc ↗</a> <a href="https://github.com/seerr-team/seerr/pkgs/container/seerr" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://seerr.example.com</code></td></tr>
+      <tr><td>Accès</td><td>app: la connexion de Seerr, par ton compte Jellyfin ou Plex, avec AppSec devant. Derrière Authelia jusqu'à la fin de son assistant de premier démarrage.</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/seerr-team/seerr:v3.5.2</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install seerr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Seerr</h2>
+  <ul>
+    <li>Tes proches se connectent avec leur compte Jellyfin ou Plex, cherchent un film ou une série et le demandent.</li>
+    <li>Seerr envoie la demande à Radarr ou Sonarr, qui le trouvent et le font télécharger.</li>
+    <li>Il montre ce qui est déjà disponible sur ton serveur média, et prévient quand une demande l'est devenue.</li>
+    <li>Tu fixes des limites par personne, et tu peux valider chaque demande avant qu'elle parte.</li>
+  </ul>
+
+  <h2 id="fr-install">L'installation, pas à pas</h2>
+  <p>Comme <a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a>: tant que son assistant n'est pas fini, n'importe qui pourrait le faire à ta place. Seerr reste donc derrière Authelia jusque-là. Installe d'abord ton serveur média: l'assistant de Seerr s'y connecte.</p>
+  <h3 id="fr-step1">1. Installer</h3>
+  <pre><span class="p">$</span> sudo dotbox install seerr
+<span class="ok">✓</span> [1/1] Seerr         v3.5.2, two_factor until its setup is done
+
+  seerr         https://seerr.example.com  two_factor for now
+
+  → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install seerr: it opens to its apps (app).</pre>
+  <ul>
+    <li>Elle crée <code>/opt/seerr/config</code> à ton utilisateur, écrit <code>compose.yml</code> et démarre Seerr derrière Authelia.</li>
+    <li>Seerr crée <code>settings.json</code> à son premier démarrage. dotbox attend qu'il existe, y active la confiance dans Traefik (voir plus bas), puis relance Seerr.</li>
+    <li>Elle demande à CrowdSec de lire les logs de Seerr.</li>
+  </ul>
+  <h3 id="fr-step2">2. Faire l'assistant</h3>
+  <p>Ouvre <code>https://seerr.example.com</code>. Authelia te demande de te connecter, puis l'assistant de Seerr s'ouvre:</p>
+  <ul>
+    <li>Ton serveur média. Pour Jellyfin, l'adresse <code>http://jellyfin:8096</code>: Seerr le joint directement, par le réseau <code>dotbox</code>. Puis ton compte Jellyfin: il devient le compte admin de Seerr.</li>
+    <li>Les bibliothèques à suivre.</li>
+    <li>Radarr et Sonarr: <code>http://radarr:7878</code> et <code>http://sonarr:8989</code>, avec leur clé d'API (dans leurs réglages, Général). Tu peux aussi les ajouter plus tard.</li>
+  </ul>
+  <h3 id="fr-step3">3. Ouvrir Seerr à tes proches</h3>
+  <pre><span class="p">$</span> sudo dotbox install seerr
+<span class="ok">✓</span> [1/1] Seerr         v3.5.2, app
+
+  seerr         https://seerr.example.com  app</pre>
+  <p>dotbox voit que l'assistant est fini (<code>"initialized": true</code> dans <code>settings.json</code>) et passe Seerr au niveau app: plus d'Authelia devant, AppSec reste. Tes proches s'y connectent avec leur compte Jellyfin ou Plex.</p>
+
+  <h2 id="fr-security">Ce qui le protège</h2>
+  <ul>
+    <li>Pendant l'assistant: Authelia, avec la double authentification.</li>
+    <li>Ensuite: les comptes de ton serveur média, et AppSec, qui bloque les attaques connues (Security).</li>
+    <li>CrowdSec lit ses logs (la collection <code>LePresidente/jellyseerr</code> du hub) et bannit une IP qui rate des connexions avec un mot de passe Seerr. Les échecs avec un compte Jellyfin ont changé de message dans Seerr 3.5: la collection ne les reconnaît pas encore.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/seerr/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/seerr/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/seerr/config/settings.json</code></td><td><code>/app/config/settings.json</code></td><td>Les réglages, dont la clé d'API de Seerr.</td></tr>
+      <tr><td><code>/opt/seerr/config/db/</code></td><td><code>/app/config/db/</code></td><td>La base: utilisateurs et demandes.</td></tr>
+      <tr><td><code>/opt/seerr/config/logs/</code></td><td><code>/app/config/logs/</code></td><td>Les logs de Seerr.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>network.trustProxy</code> (<code>settings.json</code>)</td><td><code>true</code></td><td>Seerr croit l'en-tête <code>X-Forwarded-For</code> de Traefik et voit la vraie IP de chaque client: c'est elle que CrowdSec lit. Traefik remplace cet en-tête quand un client l'envoie lui-même.</td></tr>
+      <tr><td><code>user</code></td><td>ton utilisateur</td><td>L'image tourne avec son propre utilisateur (<code>node</code>).</td></tr>
+      <tr><td>healthcheck</td><td><code>wget</code> sur <code>/api/v1/status</code></td><td>L'image n'en a pas, et n'a pas <code>curl</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose aussi: aucun port publié, <code>no-new-privileges</code>, et un redémarrage automatique. Le reste se règle dans Seerr.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/seerr-team/seerr" target="_blank" rel="noopener">Source code ↗</a> <a href="https://docs.seerr.dev" target="_blank" rel="noopener">Docs ↗</a> <a href="https://github.com/seerr-team/seerr/pkgs/container/seerr" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://seerr.example.com</code></td></tr>
+      <tr><td>Access</td><td>app: Seerr's login, with your Jellyfin or Plex account, and AppSec in front. Behind Authelia until its first-run setup is done.</td></tr>
+      <tr><td>Image</td><td><code>ghcr.io/seerr-team/seerr:v3.5.2</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install seerr</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Seerr does</h2>
+  <ul>
+    <li>Your family and friends log in with their Jellyfin or Plex account, search for a movie or a show and request it.</li>
+    <li>Seerr sends the request to Radarr or Sonarr, which find it and get it downloaded.</li>
+    <li>It shows what is already available on your media server, and tells people when a request has become available.</li>
+    <li>You set limits per person, and can approve each request before it goes out.</li>
+  </ul>
+
+  <h2 id="en-install">The install, step by step</h2>
+  <p>Like <a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a>: until its setup is done, anyone could do it in your place. So Seerr stays behind Authelia until then. Install your media server first: Seerr's setup connects to it.</p>
+  <h3 id="en-step1">1. Install</h3>
+  <pre><span class="p">$</span> sudo dotbox install seerr
+<span class="ok">✓</span> [1/1] Seerr         v3.5.2, two_factor until its setup is done
+
+  seerr         https://seerr.example.com  two_factor for now
+
+  → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
+    Then run sudo dotbox install seerr: it opens to its apps (app).</pre>
+  <ul>
+    <li>It creates <code>/opt/seerr/config</code>, owned by your user, writes <code>compose.yml</code> and starts Seerr behind Authelia.</li>
+    <li>Seerr creates <code>settings.json</code> on its first start. dotbox waits for it, turns on trust in Traefik (see below), then restarts Seerr.</li>
+    <li>It asks CrowdSec to read Seerr's logs.</li>
+  </ul>
+  <h3 id="en-step2">2. Run the setup</h3>
+  <p>Open <code>https://seerr.example.com</code>. Authelia asks you to log in, then Seerr's setup opens:</p>
+  <ul>
+    <li>Your media server. For Jellyfin, the address <code>http://jellyfin:8096</code>: Seerr reaches it directly, over the <code>dotbox</code> network. Then your Jellyfin account: it becomes Seerr's admin account.</li>
+    <li>The libraries to follow.</li>
+    <li>Radarr and Sonarr: <code>http://radarr:7878</code> and <code>http://sonarr:8989</code>, with their API key (in their settings, General). You can also add them later.</li>
+  </ul>
+  <h3 id="en-step3">3. Open Seerr to your family and friends</h3>
+  <pre><span class="p">$</span> sudo dotbox install seerr
+<span class="ok">✓</span> [1/1] Seerr         v3.5.2, app
+
+  seerr         https://seerr.example.com  app</pre>
+  <p>dotbox sees that the setup is done (<code>"initialized": true</code> in <code>settings.json</code>) and moves Seerr to the app level: no more Authelia in front, AppSec stays. Your family and friends log in with their Jellyfin or Plex account.</p>
+
+  <h2 id="en-security">What protects it</h2>
+  <ul>
+    <li>During the setup: Authelia, with two-factor authentication.</li>
+    <li>Afterwards: your media server's accounts, and AppSec, which blocks known attacks (Security).</li>
+    <li>CrowdSec reads its logs (the hub's <code>LePresidente/jellyseerr</code> collection) and bans an IP that fails logins with a Seerr password. Failures with a Jellyfin account changed message in Seerr 3.5: the collection does not recognize them yet.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/seerr/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/seerr/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/seerr/config/settings.json</code></td><td><code>/app/config/settings.json</code></td><td>The settings, including Seerr's API key.</td></tr>
+      <tr><td><code>/opt/seerr/config/db/</code></td><td><code>/app/config/db/</code></td><td>The database: users and requests.</td></tr>
+      <tr><td><code>/opt/seerr/config/logs/</code></td><td><code>/app/config/logs/</code></td><td>Seerr's logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>network.trustProxy</code> (<code>settings.json</code>)</td><td><code>true</code></td><td>Seerr trusts Traefik's <code>X-Forwarded-For</code> header and sees each client's real IP: that is the one CrowdSec reads. Traefik replaces this header when a client sends it itself.</td></tr>
+      <tr><td><code>user</code></td><td>your user</td><td>The image runs as its own user (<code>node</code>).</td></tr>
+      <tr><td>healthcheck</td><td><code>wget</code> on <code>/api/v1/status</code></td><td>The image has none, and has no <code>curl</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose too: no published port, <code>no-new-privileges</code>, and an automatic restart. Everything else is set in Seerr.</p>
+</article>

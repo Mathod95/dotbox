@@ -1961,7 +1961,33 @@ sudo_run.py 'ipset list crowdsec-blacklists-0; docker exec crowdsec cscli decisi
 [ 1.2s] check crowdsec collection LePresidente/jellyfin; write app-jellyfin.yaml; [14.6s] check crowdsec -t; reload
 acquisition docker:jellyfin: 12 lignes lues, 6 parsées
 décision: LePresidente/jellyfin-bf, ban, 6 événements, 4 h, sur 198.51.100.7
-pare-feu: 198.51.100.7 dans crowdsec-blacklists-0, puis retiré avec la décision; 9 autres bans, tous de vrais attaquants` }
+pare-feu: 198.51.100.7 dans crowdsec-blacklists-0, puis retiré avec la décision; 9 autres bans, tous de vrais attaquants` },
+    { id: "J179", time: "00:01", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.7: dotbox install seerr, l'assistant pas encore fait",
+      cmd: `scp (binaire d100d36dec8856dc…, et le catalogue du PC avec catalog/seerr.yml)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install seerr --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan 8.7 (accord d'avance, D73). Sur le PC avant: fmt, clippy, 92 tests.",
+      effect: "Serveur: /opt/seerr (config/, compose.yml), l'image ghcr.io/seerr-team/seerr:v3.5.2, apps: seerr dans dotbox.yml (niveau app), la collection LePresidente/jellyseerr et acquis.d/app-seerr.yaml.",
+      undo: "sudo dotbox remove seerr --purge",
+      result: `✓ [1/1] Seerr         v3.5.2, two_factor until its setup is done        2 min 28 s
+[  0.1s] check  /opt/seerr/config/settings.json: written by seerr at its first start
+[ 67.5s] start  seerr
+[ 96.4s] stop   seerr (new settings); write settings.json (network/trustProxy)
+[ 97.7s] start  seerr; [121.2s] healthy
+[123.0s] install crowdsec collection LePresidente/jellyseerr; write app-seerr.yaml; [137.3s] crowdsec -t; reload
+settings.json: "trustProxy": true, "initialized": false; container 1000:1000, healthy
+settings.json en 644 (créé par Seerr), avec la clé d'API et les secrets de session: backlog 8.7.2` },
+    { id: "J180", time: "00:03", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.7: Seerr derrière Authelia, un ban de test",
+      cmd: `curl https://seerr.<domaine>/   (depuis le PC)
+6 connexions ratées: docker exec seerr wget --header "X-Forwarded-For: 198.51.100.7" --post-data … http://localhost:5055/api/v1/auth/local
+sudo_run.py 'docker exec crowdsec cscli decisions list -i 198.51.100.7; cscli decisions delete --ip 198.51.100.7'`,
+      does: "Les tests possibles avant l'assistant.",
+      effect: "Une décision de test, retirée tout de suite.",
+      result: `route: 302 vers https://auth.<domaine>
+Seerr: « Failed sign-in attempt using invalid Seerr password {"ip":"198.51.100.7",…} »: la vraie IP grâce à trustProxy
+décision: LePresidente/jellyseerr-bf, ban, 6 événements, 4 h; retirée
+acquisition docker:seerr: 6 lignes lues, 6 parsées; CrowdSec healthy après le rechargement` }
   ];
 
   var PLAN = [
@@ -2623,7 +2649,26 @@ volumes:
           ],
           does: "Le serveur média, au niveau app (sa propre connexion, pour les apps TV et mobiles). Image officielle jellyfin/jellyfin:12.4 (Jellyfin 12.4, 26 octobre 2026), port 8096, healthcheck de l'image (/health), /config et /cache, /data/media en lecture. Elle tourne en root sauf si le compose donne user: (7.11). Après CrowdSec (D40, D56).",
           effect: "PC: catalog/jellyfin.yml. Serveur: /opt/jellyfin, l'image de Jellyfin." },
-        { id: "8.7", kind: "ecriture", where: "PC → Serveur", title: "Seerr (après CrowdSec)",
+        { id: "8.7", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Seerr (après CrowdSec)",
+          lede: "Plan du 20 novembre 2026, accordé d'avance (D73). Image officielle v3.5.2, niveau app (le compte Jellyfin ou Plex), derrière Authelia jusqu'à la fin de son assistant (D71), CrowdSec sur ses connexions ratées (D72). Vérifié dans le code de Seerr 3.5.2: settings.json écrit par JSON.stringify(…, ' '), la confiance dans le proxy dans network.trustProxy, des migrations qui arrêtent Seerr si un champ manque. Sa page dans la doc. Testé (J179, J180). Reste: l'assistant, fait par Mathod95, puis la seconde install.",
+          links: [
+            { t: "Page Seerr", u: "../seerr/" },
+            { t: "Code source", u: "https://github.com/seerr-team/seerr" }
+          ],
+          sections: [
+            { h: "Ce que le moteur a appris",
+              l: ["Des réglages au format json (a/b/c, true et false en booléens), qui gardent le reste et l'ordre des clés.",
+                  "created_by_app: dotbox ne crée jamais ce fichier. Il attend que l'app l'écrive à son premier démarrage, y pose ses réglages, puis la relance.",
+                  "health_tool: wget, pour un healthcheck dans une image sans curl."] }
+          ],
+          backlog: [
+            { id: "8.7.1", kind: "ecriture", where: "PC (code) → Serveur", title: "Les échecs avec un compte Jellyfin, invisibles pour CrowdSec",
+              lede: "Seerr 3.5 écrit « Failed sign-in attempt from user with incorrect Jellyfin credentials ». Le parseur du hub (LePresidente/jellyseerr-logs) attend encore « Failed login attempt from user with incorrect … credentials »: il ne lit que les échecs avec un mot de passe Seerr.",
+              sections: [ { h: "Ce que ça changerait", l: ["Proposer la correction au hub de CrowdSec (le parseur est public).", "Ou un parseur à Dot Box, dans le catalogue, installé à côté de la collection."] } ] },
+            { id: "8.7.2", kind: "ecriture", where: "PC (code) → Serveur", title: "settings.json lisible par tous",
+              lede: "Seerr crée settings.json en 644, avec sa clé d'API, le secret des sessions et la clé privée des notifications (J179). /opt/seerr/config est en 755.",
+              sections: [ { h: "Ce que ça changerait", p: "dotbox passe /opt/seerr/config en 700 (Seerr tourne avec l'utilisateur, qui reste propriétaire). Le même réglage vaudrait pour les autres dossiers config/ (8.9.2)." } ] }
+          ],
           does: "Les demandes de films et de séries, connexion par le compte Jellyfin ou Plex (niveau app). Image officielle ghcr.io/seerr-team/seerr:v3.5.2 (12 novembre 2026), port 5055, configuration dans /app/config. Elle tourne avec l'utilisateur node (uid 1000) et n'a ni healthcheck ni curl: user: (7.11), et un healthcheck avec wget à prévoir. Après CrowdSec (D40, D56).",
           effect: "PC: catalog/seerr.yml. Serveur: /opt/seerr, l'image de Seerr." },
         { id: "8.8", status: "fait", ref: "J162-J164", kind: "ecriture", where: "PC → Serveur", title: "Uptime Kuma",
@@ -2656,21 +2701,21 @@ volumes:
           does: "Le gestionnaire de mots de passe (compatible Bitwarden). Niveau app, à cause des apps mobiles et des extensions. Après 10.7." },
         { id: "8.14", kind: "ecriture", where: "PC → Serveur", title: "Tautulli (après Plex)",
           does: "Les statistiques de Plex. two_factor. Après 8.11." },
-        { id: "8.15", kind: "ecriture", where: "PC → Serveur", title: "Jellystat (après Jellyfin)",
+        { id: "8.15", kind: "ecriture", where: "PC → Serveur", title: "Jellystat (plus tard, D74)",
           does: "Les statistiques de Jellyfin. two_factor. Après 8.6." },
-        { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (après un serveur média)",
+        { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (plus tard, D74)",
           does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11." },
         { id: "8.17", kind: "ecriture", where: "PC → Serveur", title: "autobrr",
           does: "Attrape les nouvelles sorties sur les canaux d'annonce des trackers (IRC, RSS) et les envoie à qBittorrent, Radarr ou Sonarr. two_factor. Ajouté au Journal le 19 novembre 2026: il n'était que dans la Roadmap." },
         { id: "8.18", kind: "ecriture", where: "PC → Serveur", title: "Maintainerr",
           does: "Le ménage dans la bibliothèque, selon des règles (pas vu depuis un an, demandé par quelqu'un qui est parti...). Il parle à Plex ou Jellyfin, Seerr, Radarr et Sonarr. two_factor. Après un serveur média. Ajouté au Journal le 19 novembre 2026." },
-        { id: "8.19", kind: "ecriture", where: "PC → Serveur", title: "Gitea",
+        { id: "8.19", kind: "ecriture", where: "PC → Serveur", title: "Gitea (plus tard, D77)",
           does: "L'hébergement de dépôts Git. Un port SSH publié pour git push (D44), en plus du web. Niveau à trancher: app (sa propre connexion, pour git en HTTPS) ou two_factor. Ajouté au Journal le 19 novembre 2026." },
-        { id: "8.20", kind: "ecriture", where: "PC → Serveur", title: "Backstage",
+        { id: "8.20", kind: "ecriture", where: "PC → Serveur", title: "Backstage (plus tard, D74, D76)",
           does: "À préciser avec Mathod95: plusieurs containers et une base de données, que le moteur ne gère pas encore (un seul container par app). Ajouté au Journal le 19 novembre 2026." },
-        { id: "8.21", kind: "ecriture", where: "PC → Serveur", title: "WireGuard",
+        { id: "8.21", kind: "ecriture", where: "PC → Serveur", title: "WireGuard, par wg-easy (D75)",
           does: "Un VPN vers le serveur: un port UDP publié et des droits réseau sur le container (NET_ADMIN), que le moteur ne donne pas encore. C'est aussi le chemin choisi pour ne jamais être banni par CrowdSec (D63). Ajouté au Journal le 19 novembre 2026." },
-        { id: "8.22", kind: "ecriture", where: "PC → Serveur", title: "NetBird",
+        { id: "8.22", kind: "ecriture", where: "PC → Serveur", title: "NetBird (plus tard, D75)",
           does: "Un réseau privé entre tes appareils et le serveur, au-dessus de WireGuard: un port UDP et des droits réseau, comme 8.21. Ajouté au Journal le 19 novembre 2026." },
 
       ] },
@@ -3185,6 +3230,18 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Le tag v0.0.4 après les apps manquantes",
       p: "Jusqu'ici le Journal disait: le tag v0.0.4 à la fin du lot (Uptime Kuma, code-server, J161, J165). Mathod95 a repoussé le tag deux fois: « on posera le tag une fois AppSec, puis Jellyfin, Plex, Seerr, Wizarr et Vaultwarden », puis « On fait toutes les apps manquantes et on push le tag ».",
       reco: "Choix de Mathod95 du 19 novembre 2026: une app après l'autre, chacune poussée sur main sans tag (D70), puis le tag v0.0.4 quand les apps manquantes sont faites. Une app qui demande une question à trancher (une base de données à côté, des droits réseau) attend sa réponse sans bloquer les autres." },
+    { t: "Les apps avec une base de données: plus tard",
+      p: "Jellystat, Tracearr et Backstage ont besoin d'une base PostgreSQL à côté de l'app. Le moteur ne gère qu'un container par app.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: plus tard. Ces apps restent dans la Roadmap, hors du tag v0.0.4." },
+    { t: "WireGuard seul, par wg-easy",
+      p: "WireGuard et NetBird demandent des droits réseau sur le container (NET_ADMIN, /dev/net/tun) et un port UDP publié. NetBird auto-hébergé est lourd: plusieurs services et un fournisseur OIDC.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: WireGuard par wg-easy (image officielle, interface web derrière Authelia, port UDP publié), le moteur donne NET_ADMIN seulement aux apps qui le déclarent. NetBird plus tard." },
+    { t: "Backstage plus tard",
+      p: "Backstage n'a pas d'image prête à lancer: chacun construit la sienne à partir de son propre code.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: plus tard, il reste dans la Roadmap." },
+    { t: "Gitea plus tard",
+      p: "Question posée: le niveau d'accès de Gitea (app, pour git en HTTPS, ou two_factor), avec un port SSH publié pour git push.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: plus tard, Gitea reste dans la Roadmap." },
   ];
 
   var QUESTIONS = [
@@ -3594,14 +3651,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],

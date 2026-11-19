@@ -312,7 +312,24 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         compose(app, &["up", "-d", "--quiet-pull"])?;
         say("start", app);
     }
-    let state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
+    let mut state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
+    // un fichier de réglages que l'app crée elle-même (Seerr): il existe maintenant, dotbox y
+    // pose ses réglages (write_settings arrête l'app), puis la relance
+    if let Some(st) = m.settings.as_ref().filter(|st| st.created_by_app) {
+        let path = format!("{}/{}", engine::dir(app), st.file);
+        let start = Instant::now();
+        while !Path::new(&path).exists() {
+            if start.elapsed() > Duration::from_secs(60) {
+                return Err(format!("{app} did not create {path}"));
+            }
+            std::thread::sleep(Duration::from_secs(2));
+        }
+        if write_settings(&m, &ctx, uid, gid)? {
+            compose(app, &["up", "-d", "--quiet-pull"])?;
+            say("start", app);
+            state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
+        }
+    }
     say("check", &format!("{app} {state} ({})", m.image));
     // CrowdSec lit ses logs et bannit qui devine les mots de passe (D72)
     if let Some(w) = &m.crowdsec {
@@ -415,10 +432,19 @@ fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Resul
         .map(|(k, v)| (k.clone(), engine::fill(v, &m.name, ctx)))
         .collect();
     let keys: Vec<&str> = values.iter().map(|(k, _)| k.as_str()).collect();
+    // l'app crée ce fichier à son premier démarrage: dotbox attend qu'il existe (install_one)
+    if st.created_by_app && !Path::new(&path).exists() {
+        say(
+            "check",
+            &format!("{path}: written by {} at its first start", m.name),
+        );
+        return Ok(false);
+    }
     let merge = |old: Option<&str>| {
         match st.format.as_str() {
             "xml" => engine::merge_xml(old, &st.root, &values),
             "ini" => engine::merge_ini(old, &values),
+            "json" => engine::merge_json(old, &values),
             other => Err(format!("format {other} not supported")),
         }
         .map_err(|e| format!("{path}: {e}"))

@@ -4,8 +4,8 @@
     {
       "version": "next",
       "title": {
-        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server et Jellyfin",
-        "en": "AppSec, qBittorrent, Uptime Kuma, code-server and Jellyfin"
+        "fr": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin et Seerr",
+        "en": "AppSec, qBittorrent, Uptime Kuma, code-server, Jellyfin and Seerr"
       },
       "new": [
         {
@@ -59,6 +59,18 @@
         {
           "fr": "Core: CrowdSec lit les logs des apps sans Authelia (`crowdsec:` dans le manifest), par son propre socket proxy en lecture seule, et bannit qui devine leurs mots de passe (Jellyfin: 5 échecs)",
           "en": "Core: CrowdSec reads the logs of apps without Authelia (`crowdsec:` in the manifest), through its own read-only socket proxy, and bans password guessers (Jellyfin: 5 failures)"
+        },
+        {
+          "fr": "Catalogue: Seerr, les demandes de films et de séries, connexion par le compte Jellyfin ou Plex, derrière Authelia jusqu'à la fin de son assistant, CrowdSec sur ses connexions ratées",
+          "en": "Catalog: Seerr, movie and show requests, login with the Jellyfin or Plex account, behind Authelia until its setup is done, CrowdSec on its failed logins"
+        },
+        {
+          "fr": "Moteur: réglages au format JSON (`a/b/c`), et dans un fichier que l'app crée elle-même au premier démarrage (`created_by_app`)",
+          "en": "Engine: settings in JSON (`a/b/c`), and in a file the app creates itself on its first start (`created_by_app`)"
+        },
+        {
+          "fr": "Moteur: un healthcheck avec `wget`, pour les images sans `curl` (`health_tool`)",
+          "en": "Engine: a healthcheck with `wget`, for images without `curl` (`health_tool`)"
         }
       ],
       "changed": [
