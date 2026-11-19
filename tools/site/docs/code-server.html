@@ -1,0 +1,120 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">code-server<i>●</i>VS Code dans le navigateur, pour lire et modifier les fichiers de tes apps.</p>
+<p class="lede" data-l="en">code-server<i>●</i>VS Code in the browser, to read and edit your apps' files.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/coder/code-server" target="_blank" rel="noopener">Code source ↗</a> <a href="https://coder.com/docs/code-server" target="_blank" rel="noopener">Doc ↗</a> <a href="https://github.com/linuxserver/docker-code-server" target="_blank" rel="noopener">Image linuxserver ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://code-server.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres), sans autre connexion</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/code-server:4.145.2-ls377</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install code-server</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait code-server</h2>
+  <ul>
+    <li>Il ouvre VS Code dans ton navigateur: l'explorateur de fichiers, l'éditeur, la recherche, les extensions.</li>
+    <li>Il s'ouvre sur <code>/opt</code>: le <code>compose.override.yml</code> et le dossier <code>config/</code> de chaque app.</li>
+    <li>Son terminal tourne dans le container, avec ton utilisateur, sans sudo.</li>
+  </ul>
+
+  <h2 id="fr-access">Ce qu'il peut voir</h2>
+  <p>code-server tourne avec ton utilisateur et ne voit que ce qui lui est monté: son dossier, et <code>/opt</code> au même chemin que sur le serveur. Il lit et modifie les fichiers des apps, qui sont à toi. Il ne lit pas ce qui reste à root:</p>
+  <ul>
+    <li><code>/opt/dotbox</code>: <code>dotbox.yml</code>, les secrets et les logs.</li>
+    <li>Les certificats de Traefik et les comptes d'Authelia.</li>
+  </ul>
+  <p><code>/data</code> n'est pas monté: tes médias et tes téléchargements restent hors de sa portée.</p>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/code-server/config</code> à ton utilisateur.</li>
+    <li>Elle écrit <code>/opt/code-server/compose.yml</code>, démarre code-server et attend qu'il réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/code-server/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/code-server/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/code-server/config/data/</code></td><td><code>/config/data/</code></td><td>Les réglages de VS Code et l'état des fenêtres.</td></tr>
+      <tr><td><code>/opt/code-server/config/extensions/</code></td><td><code>/config/extensions/</code></td><td>Les extensions installées.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><code>PASSWORD</code></td><td>absent</td><td>Pas de mot de passe à code-server: Authelia vérifie déjà qui se connecte, avec la double authentification.</td></tr>
+      <tr><td><code>SUDO_PASSWORD</code></td><td>absent</td><td>Pas de sudo dans le container. <code>no-new-privileges</code> l'empêche de toute façon.</td></tr>
+      <tr><td><code>DEFAULT_WORKSPACE</code></td><td><code>/opt</code></td><td>L'explorateur s'ouvre sur les dossiers des apps.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dans le compose: <code>/opt</code> au même chemin, aucun port publié, <code>PUID</code> et <code>PGID</code> de ton utilisateur, <code>no-new-privileges</code>, et un redémarrage automatique.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Ouvre son adresse: Authelia te demande de te connecter, puis VS Code s'ouvre sur <code>/opt</code>. Après avoir modifié un <code>compose.override.yml</code>, applique-le sur le serveur avec <code>cd /opt/&lt;app&gt; &amp;&amp; docker compose up -d</code>: Docker Compose lit les deux fichiers.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/coder/code-server" target="_blank" rel="noopener">Source code ↗</a> <a href="https://coder.com/docs/code-server" target="_blank" rel="noopener">Docs ↗</a> <a href="https://github.com/linuxserver/docker-code-server" target="_blank" rel="noopener">linuxserver image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://code-server.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then a 6-digit code), no other login</td></tr>
+      <tr><td>Image</td><td><code>lscr.io/linuxserver/code-server:4.145.2-ls377</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install code-server</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What code-server does</h2>
+  <ul>
+    <li>It opens VS Code in your browser: the file explorer, the editor, search, extensions.</li>
+    <li>It opens on <code>/opt</code>: each app's <code>compose.override.yml</code> and <code>config/</code> folder.</li>
+    <li>Its terminal runs in the container, as your user, without sudo.</li>
+  </ul>
+
+  <h2 id="en-access">What it can see</h2>
+  <p>code-server runs as your user and only sees what is mounted into it: its own folder, and <code>/opt</code> at the same path as on the server. It reads and edits the apps' files, which are yours. It does not read what stays root's:</p>
+  <ul>
+    <li><code>/opt/dotbox</code>: <code>dotbox.yml</code>, the secrets and the logs.</li>
+    <li>Traefik's certificates and Authelia's accounts.</li>
+  </ul>
+  <p><code>/data</code> is not mounted: your media and downloads stay out of its reach.</p>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/code-server/config</code>, owned by your user.</li>
+    <li>It writes <code>/opt/code-server/compose.yml</code>, starts code-server and waits for it to answer.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/code-server/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/code-server/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/code-server/config/data/</code></td><td><code>/config/data/</code></td><td>VS Code settings and window state.</td></tr>
+      <tr><td><code>/opt/code-server/config/extensions/</code></td><td><code>/config/extensions/</code></td><td>Installed extensions.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>PASSWORD</code></td><td>unset</td><td>No code-server password: Authelia already checks who connects, with two-factor authentication.</td></tr>
+      <tr><td><code>SUDO_PASSWORD</code></td><td>unset</td><td>No sudo in the container. <code>no-new-privileges</code> prevents it anyway.</td></tr>
+      <tr><td><code>DEFAULT_WORKSPACE</code></td><td><code>/opt</code></td><td>The explorer opens on the apps' folders.</td></tr>
+    </tbody>
+  </table></div>
+  <p>In the compose: <code>/opt</code> at the same path, no published port, your user's <code>PUID</code> and <code>PGID</code>, <code>no-new-privileges</code>, and an automatic restart.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>Open its address: Authelia asks you to log in, then VS Code opens on <code>/opt</code>. After editing a <code>compose.override.yml</code>, apply it on the server with <code>cd /opt/&lt;app&gt; &amp;&amp; docker compose up -d</code>: Docker Compose reads both files.</p>
+</article>

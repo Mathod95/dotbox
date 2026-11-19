@@ -1,0 +1,21 @@
+# code-server: VS Code dans le navigateur, pour lire et modifier les fichiers des apps.
+# Format: Journal, étape 7 (7.1) et 8.9. Les {{...}} sont remplis par dotbox à l'installation.
+name: code-server
+description: VS Code in the browser
+min_dotbox: 0.0.4
+image: lscr.io/linuxserver/code-server:4.145.2-ls377
+port: 8443
+access: two_factor
+health: /healthz
+# Sans PASSWORD ni HASHED_PASSWORD: pas de connexion à lui, Authelia protège seul. Sans
+# SUDO_PASSWORD: pas de sudo dans le container.
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+  DEFAULT_WORKSPACE: /opt
+# /opt au même chemin (D67): les compose.override.yml et les config/ des apps. /opt/dotbox
+# reste à root seul, /data n'est pas monté.
+volumes:
+  - config:/config
+  - /opt:/opt

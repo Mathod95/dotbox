@@ -162,6 +162,10 @@ services:
 ",
         image = m.image
     );
+    if m.run_as_user {
+        // l'image ne connaît pas PUID et PGID: le container tourne avec l'utilisateur (7.11)
+        out.push_str(&format!("    user: \"{}:{}\"\n", c.uid, c.gid));
+    }
     if !m.ports.is_empty() {
         out.push_str(
             "    # pas du web (D44): publiés sur le serveur, au même numéro\n    ports:\n",
@@ -348,6 +352,26 @@ mod tests {
         let mut c = ctx(Access::TwoFactor);
         c.subdomain = "qbittorrent".into();
         let expected = include_str!("../tests/expected/qbittorrent/compose.yml")
+            .replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+    }
+
+    #[test]
+    fn uptime_kuma_runs_as_the_user() {
+        let m = load("uptime-kuma");
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "uptime-kuma".into();
+        let expected = include_str!("../tests/expected/uptime-kuma/compose.yml")
+            .replace("<version>", m.version());
+        assert_eq!(compose(&m, &c), expected);
+    }
+
+    #[test]
+    fn code_server_sees_opt() {
+        let m = load("code-server");
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "code-server".into();
+        let expected = include_str!("../tests/expected/code-server/compose.yml")
             .replace("<version>", m.version());
         assert_eq!(compose(&m, &c), expected);
     }

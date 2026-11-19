@@ -1,0 +1,17 @@
+# Uptime Kuma: surveille que les apps et les sites répondent, et prévient quand l'un tombe.
+# Format: Journal, étape 7 (7.1, 7.11) et 8.8. Les {{...}} sont remplis par dotbox à l'installation.
+name: uptime-kuma
+description: Uptime monitoring
+min_dotbox: 0.0.4
+# la variante sans root (rootless) et sans Chromium ni MariaDB embarquée (slim)
+image: louislam/uptime-kuma:2.5.12-slim-rootless
+port: 3001
+access: two_factor
+# l'image a son propre healthcheck (extra/healthcheck)
+health: image
+# l'image ne connaît pas PUID et PGID: elle tourne avec l'utilisateur de dotbox.yml (7.11)
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+volumes:
+  - data:/app/data

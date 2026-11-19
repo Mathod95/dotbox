@@ -638,9 +638,28 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "code-server: un éditeur et un terminal dans le navigateur, toujours en `two_factor`",
-      "en": "code-server: an editor and a terminal in the browser, always `two_factor`"
+      "en": "code-server: an editor and a terminal in the browser, always `two_factor`",
+      "doc": "code-server",
+      "journal": [
+        "8.9",
+        "D67",
+        "J162-J164"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "done",
+      "fr": "Uptime Kuma: surveille que les apps et les sites répondent, sans root, en `two_factor`",
+      "en": "Uptime Kuma: checks that apps and sites answer, without root, in `two_factor`",
+      "doc": "uptime-kuma",
+      "journal": [
+        "8.8",
+        "7.11",
+        "J162-J164"
+      ]
     },
     {
       "stage": "apps",

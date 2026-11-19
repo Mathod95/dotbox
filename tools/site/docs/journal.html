@@ -1766,13 +1766,55 @@ localhost dans le container              403 (pas dans la liste)` },
       result: `✓ [1/1] Qbittorrent   5.3.0_v2.1.2-ls487, two_factor   0.5 s
 check  qBittorrent.conf (les 12 réglages)   pas d'écriture, pas d'arrêt
 après docker restart: Up 40 seconds (healthy), les réglages de dotbox intacts` },
-    { id: "J161", time: "19:52", status: "fait", where: "PC → GitHub", kind: "ecriture",
+    { id: "J161", time: "20:08", status: "fait", where: "PC → GitHub", kind: "ecriture",
       title: "8.4: qBittorrent sur main, sans tag",
       cmd: `git commit src/github.rs (fix: droits fixes du catalogue, J143)
 git commit (feat: qBittorrent, ports publiés et réglages INI); git push`,
       does: "Accordé par Mathod95 (« Oui go »): pousser sans tag, une app après l'autre, et le tag v0.0.4 à la fin du lot (Uptime Kuma, code-server). Un serveur en v0.0.3 voit qbittorrent.yml sans pouvoir l'installer (unknown field ports), init et les autres apps ne changent pas. Le test de Mathod95 dans le navigateur reste à faire.",
       effect: "GitHub: main, catalog/qbittorrent.yml lisible par dotbox, Renovate suit l'image de qBittorrent, le site republié (page qBittorrent, proposition #50, Releases next).",
       undo: "git revert des deux commits, puis git push",
+      result: "poussé sur main" },
+    { id: "J162", time: "20:11", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.8 et 8.9: dotbox install uptime-kuma code-server",
+      cmd: `scp (binaire 0.0.4, sha256 7c5c78b0d0f7cdd8…, et le catalogue du PC)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox install uptime-kuma code-server --catalog /tmp/dotbox-catalog'`,
+      does: "Dans le plan validé (8.8, 8.9). Le binaire a deux ajouts: user: dans le manifest (7.11) et /opt comme volume, au même chemin (D67). Sur le PC avant: fmt, clippy, 84 tests.",
+      effect: "Serveur: /opt/uptime-kuma (data/), /opt/code-server (config/), leurs images.",
+      undo: "sudo dotbox remove uptime-kuma --purge; sudo dotbox remove code-server --purge",
+      result: `✓ [1/2] Uptime-kuma   2.5.12-slim-rootless, two_factor   1 min 9 s
+✓ [2/2] Code-server   4.145.2-ls377, two_factor          1 min 14 s   (surtout le téléchargement des images)` },
+    { id: "J163", time: "20:13", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "8.8 et 8.9: ce que voient les deux apps",
+      cmd: `sudo_run.py 'docker ps; docker exec uptime-kuma id -u; stat /opt/uptime-kuma/data; wget https://{uptime-kuma,code-server}.<domaine>/
+docker exec -u abc code-server sh -c "ls /opt; ls /opt/dotbox; cat /opt/dotbox/dotbox.yml; touch /opt/prowlarr/config/x; touch /opt/traefik/x; sudo -n true"
+stat /opt/*; find /opt (fichiers sensibles lisibles)'`,
+      does: "D67: code-server voit /opt sans /opt/dotbox. Puis, puisque code-server rend /opt lisible depuis le navigateur, ce que l'utilisateur peut lire ou modifier dans /opt.",
+      effect: "Aucun (un fichier de test créé puis effacé dans /opt/prowlarr/config).",
+      result: `uptime-kuma  Up (healthy)  tourne en 1000:1000, /opt/uptime-kuma/data à <user> (755)
+code-server  Up (healthy)  « Authentication is disabled » (Authelia seul)
+HTTPS: 302 vers Authelia pour les deux
+code-server, utilisateur abc (1000): ls /opt: les dossiers des apps et du core
+  /opt/dotbox: Permission denied   dotbox.yml: Permission denied
+  écrire dans /opt/prowlarr/config: ok   écrire dans /opt/traefik: Permission denied
+  sudo: bloqué (no-new-privileges)
+Illisibles pour <user>: /opt/dotbox (700), secrets, acme.json, users_database.yml, local_api_credentials.yaml (600)
+Lisible: /opt/authelia/config/db.sqlite3 (644, root), ses secrets chiffrés par une clé de /opt/dotbox/secrets
+Modifiables par tous: des fichiers de /opt/crowdsec/data en 777 (detect.yaml, cloudflare_ip6s.txt…), créés par CrowdSec` },
+    { id: "J164", time: "20:14", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "8.8 et 8.9: relancé, puis redémarrés",
+      cmd: `sudo_run.py 'dotbox install uptime-kuma code-server --catalog /tmp/dotbox-catalog; docker restart uptime-kuma code-server'`,
+      does: "Relancé, install ne doit rien changer. Puis les apps doivent repartir seules.",
+      effect: "Serveur: les deux apps redémarrées une fois.",
+      result: `check  uptime-kuma healthy   0.5 s
+check  code-server healthy   1.0 s      (aucune écriture, aucun démarrage)
+après docker restart: les deux Up (healthy)
+Uptime Kuma n'a pas encore de base (kuma.db): elle est créée à la première visite, après le choix de la base` },
+    { id: "J165", time: "20:18", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "8.8 et 8.9: Uptime Kuma et code-server sur main, sans tag",
+      cmd: `git commit (feat: Uptime Kuma, code-server, user: et /opt dans le manifest); git push`,
+      does: "Comme convenu avec Mathod95 pour qBittorrent (J161): un commit par app sur main, le tag v0.0.4 à la fin du lot, avec son accord.",
+      effect: "GitHub: main, catalog/uptime-kuma.yml et catalog/code-server.yml lisibles par dotbox, Renovate suit leurs images, le site republié.",
+      undo: "git revert du commit, puis git push",
       result: "poussé sur main" }
   ];
 
@@ -2167,7 +2209,8 @@ volumes:
         { id: "7.10", status: "fait", ref: "J120", kind: "ecriture", where: "PC (code)", title: "Le healthcheck de l'image",
           does: "health: image dans un manifest: l'image a déjà son healthcheck (HEALTHCHECK de son Dockerfile, comme qui ou Jellyfin), dotbox n'en ajoute pas et attend qu'elle soit healthy. Utile quand l'image n'a pas curl (qui a wget).",
           effect: "PC: src/catalog.rs, src/engine.rs." },
-        { id: "7.11", kind: "ecriture", where: "PC (code)", title: "Lancer le container avec l'utilisateur (user:)",
+        { id: "7.11", status: "fait", ref: "J162", kind: "ecriture", where: "PC (code)", title: "Lancer le container avec l'utilisateur (user:)",
+          note: "Fait le 19 novembre 2026 avec Uptime Kuma (8.8): user: \"{{uid}}:{{gid}}\", la seule valeur acceptée, jamais root ni un autre compte.",
           does: "Pour Jellyfin et Seerr, dont les images officielles ne connaissent pas PUID et PGID: Jellyfin tourne en root sauf si le compose donne user: <uid>:<gid>, Seerr tourne en node (uid 1000) et doit pouvoir écrire /app/config. Un champ user: dans le manifest, rempli avec {{uid}}:{{gid}}.",
           effect: "PC: src/catalog.rs, src/engine.rs." },
         { id: "7.12", status: "fait", ref: "J134", kind: "ecriture", where: "PC (code)", title: "Le core dans le catalogue (D64)",
@@ -2371,12 +2414,25 @@ volumes:
         { id: "8.7", kind: "ecriture", where: "PC → Serveur", title: "Seerr (après CrowdSec)",
           does: "Les demandes de films et de séries, connexion par le compte Jellyfin ou Plex (niveau app). Image officielle ghcr.io/seerr-team/seerr:v3.5.2 (12 novembre 2026), port 5055, configuration dans /app/config. Elle tourne avec l'utilisateur node (uid 1000) et n'a ni healthcheck ni curl: user: (7.11), et un healthcheck avec wget à prévoir. Après CrowdSec (D40, D56).",
           effect: "PC: catalog/seerr.yml. Serveur: /opt/seerr, l'image de Seerr." },
-        { id: "8.8", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Uptime Kuma",
+        { id: "8.8", status: "fait", ref: "J162-J164", kind: "ecriture", where: "PC → Serveur", title: "Uptime Kuma",
+          note: "Image choisie: 2.5.12-slim-rootless (sans root, sans Chromium ni MariaDB embarquée), lancée avec user: (7.11). Testé (J162 à J164). Reste le test de Mathod95 dans le navigateur: à la première visite, Uptime Kuma demande la base (SQLite) et crée son compte.",
           does: "Surveille que les apps et les sites répondent, et prévient quand l'un tombe. Image officielle louislam/uptime-kuma:2.5.12 (17 novembre 2026), port 3001, /app/data, two_factor, healthcheck de l'image. Comme qui, elle a sa propre connexion: son compte est créé à la première visite, derrière Authelia, donc seulement par Mathod95. À vérifier: si l'image accepte un autre utilisateur que root (user:, 7.11).",
           effect: "PC: catalog/uptime-kuma.yml. Serveur: /opt/uptime-kuma, l'image d'Uptime Kuma." },
-        { id: "8.9", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "code-server",
+        { id: "8.9", status: "fait", ref: "J162-J164", kind: "ecriture", where: "PC → Serveur", title: "code-server",
           does: "VS Code dans le navigateur, pour lire et modifier des fichiers du serveur. Image linuxserver lscr.io/linuxserver/code-server:4.145.2-ls377 (15 novembre 2026), port 8443, health /healthz, two_factor. Sans mot de passe à lui (PASSWORD vide): Authelia protège seul, comme AuthenticationMethod External pour Radarr. Sans sudo dans le container. Ce qu'il voit du serveur: Q36, tranchée (D67): /config et /opt.",
-          effect: "PC: catalog/code-server.yml. Serveur: /opt/code-server, l'image de code-server." },
+          effect: "PC: catalog/code-server.yml. Serveur: /opt/code-server, l'image de code-server.",
+          note: "Moteur: /opt accepté comme volume, au même chemin (D67). Testé (J162 à J164). Reste le test de Mathod95 dans le navigateur.",
+          backlog: [
+            { id: "8.9.1", kind: "ecriture", where: "PC (code) → Serveur", title: "Des fichiers de CrowdSec modifiables par tous",
+              lede: "Dans /opt/crowdsec/data, des fichiers en 777 (detect.yaml, cloudflare_ip6s.txt…), créés par CrowdSec en téléchargeant ses règles (J163). Tout compte du serveur peut les modifier, code-server compris.",
+              sections: [ { h: "Ce que ça changerait", p: "dotbox init retire l'écriture pour les autres (chmod o-w) dans /opt/crowdsec, et passe le dossier en 750. À vérifier: CrowdSec les recrée-t-il en 777 à chaque mise à jour de ses règles?" } ] },
+            { id: "8.9.2", kind: "ecriture", where: "PC (code) → Serveur", title: "La base d'Authelia lisible par l'utilisateur",
+              lede: "/opt/authelia/config/db.sqlite3 est en 644 (J163). Ses secrets à deux facteurs sont chiffrés par une clé de /opt/dotbox/secrets, illisible, mais le reste (sessions, appareils) se lit.",
+              sections: [ { h: "Ce que ça changerait", p: "dotbox init passe /opt/authelia/config en 700 (Authelia tourne en root dans son container): seule configuration.yml resterait à voir, par sudo." } ] },
+            { id: "8.9.3", kind: "ecriture", where: "PC (code)", title: "dotbox install ne voit pas un compose.override.yml modifié",
+              lede: "install ne relance une app qui tourne que si son compose.yml a changé. Un compose.override.yml modifié (dans code-server, par exemple) n'est appliqué que par docker compose up -d dans /opt/<app>: c'est ce que dit la page code-server.",
+              sections: [ { h: "Ce que ça changerait", p: "install garde l'empreinte de compose.override.yml (dans dotbox.yml ou à côté) et relance l'app quand elle change. Ou la commande prévue dans la page CLI, qui ouvre l'override puis l'applique." } ] }
+          ] },
         { id: "8.10", kind: "ecriture", where: "PC → Serveur", title: "Portainer (plus tard, D68)",
           does: "Une interface pour voir et piloter les containers. Image officielle portainer/portainer-ce:2.45.4 (18 novembre 2026). Pour piloter Docker, il lui faut le socket Docker en écriture: c'est l'équivalent de root sur le serveur, alors que Traefik n'a qu'un proxy en lecture seule. Il peut aussi créer et modifier des containers que dotbox ne connaît pas. À trancher: Q35.",
           effect: "PC: catalog/portainer.yml. Serveur: /opt/portainer, l'image de Portainer, le socket Docker monté." },
@@ -3187,7 +3243,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.

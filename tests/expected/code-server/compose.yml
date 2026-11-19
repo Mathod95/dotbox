@@ -1,0 +1,37 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: code-server
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:<version>
+    container_name: code-server
+    restart: unless-stopped
+    networks:
+      - dotbox
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Paris'
+      DEFAULT_WORKSPACE: '/opt'
+    volumes:
+      - /opt/code-server/config:/config
+      - /opt:/opt
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8443/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.code-server.rule: Host(`code-server.example.com`)
+      traefik.http.routers.code-server.entrypoints: websecure
+      traefik.http.services.code-server.loadbalancer.server.port: "8443"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.code-server.middlewares: authelia@docker
+
+networks:
+  dotbox:
+    external: true

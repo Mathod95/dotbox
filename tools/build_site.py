@@ -58,6 +58,8 @@ DOCS = [
     {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "group": "Apps"},
     {"slug": "qui", "name": "qui", "dots": "QUI", "group": "Apps"},
     {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "group": "Apps"},
+    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "group": "Apps"},
+    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},

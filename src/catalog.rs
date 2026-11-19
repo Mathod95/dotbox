@@ -92,6 +92,9 @@ struct Raw {
     /// ports publiés, seulement ce qui n'est pas du web (D44): « 56881/tcp »
     #[serde(default)]
     ports: Vec<String>,
+    /// l'utilisateur du container, pour les images sans PUID ni PGID (7.11): « {{uid}}:{{gid}} »
+    #[serde(default)]
+    user: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -148,6 +151,8 @@ pub struct Manifest {
     pub data: Vec<String>,
     pub settings: Option<Settings>,
     pub ports: Vec<Port>,
+    /// le container tourne avec l'utilisateur de dotbox.yml (user: dans le compose)
+    pub run_as_user: bool,
 }
 
 impl Manifest {
@@ -200,13 +205,15 @@ fn volume(app: &str, spec: &str) -> Result<Volume, String> {
         ));
     }
     let host = if src.starts_with('/') {
-        // seulement /data: les médias et les téléchargements (Paths)
-        if src.contains("..") || !(src == "/data" || src.starts_with("/data/")) {
+        // /data: les médias et les téléchargements (Paths). /opt: les dossiers des apps, pour
+        // code-server (D67), /opt/dotbox reste à root seul.
+        if src.contains("..") || !(src == "/data" || src.starts_with("/data/") || src == "/opt") {
             return Err(format!(
-                "volume {spec:?}: a server path must be /data or under /data"
+                "volume {spec:?}: a server path must be /data, under /data, or /opt"
             ));
         }
-        // les mêmes chemins dans le container et sur le serveur, sinon pas de hardlink (Paths)
+        // les mêmes chemins dans le container et sur le serveur: pas de hardlink sinon (Paths),
+        // et un chemin lu dans l'app est le même sur le serveur
         if dst != src {
             return Err(format!(
                 "volume {spec:?}: /data keeps the same path in the container ({src}:{src})"
@@ -299,6 +306,12 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             ));
         }
     }
+    // seulement l'utilisateur de dotbox.yml: jamais root, jamais un autre compte
+    let run_as_user = match raw.user.as_deref() {
+        None => false,
+        Some("{{uid}}:{{gid}}") => true,
+        Some(u) => return Err(format!("user {u:?}: only \"{{{{uid}}}}:{{{{gid}}}}\"")),
+    };
     let mut ports: Vec<Port> = Vec::new();
     for spec in &raw.ports {
         let p = port(spec)?;
@@ -368,6 +381,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         data: raw.data,
         settings,
         ports,
+        run_as_user,
     })
 }
 
@@ -856,6 +870,15 @@ mod tests {
                 .unwrap_err()
                 .contains("twice")
         );
+        // user: seulement celui de dotbox.yml (7.11)
+        assert!(with("user: \"{{uid}}:{{gid}}\"\n").unwrap().run_as_user);
+        assert!(!parse(OK).unwrap().run_as_user);
+        assert!(with("user: root\n").is_err());
+        assert!(with("user: \"0:0\"\n").is_err());
+        // /opt au même chemin (D67), rien d'autre
+        assert!(with("volumes:\n  - /opt:/opt\n").is_ok());
+        assert!(with("volumes:\n  - /opt:/srv\n").is_err());
+        assert!(with("volumes:\n  - /opt/dotbox:/opt/dotbox\n").is_err());
     }
 
     #[test]

@@ -1,0 +1,98 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Uptime Kuma<i>●</i>surveille que tes apps et tes sites répondent, et te prévient quand l'un tombe.</p>
+<p class="lede" data-l="en">Uptime Kuma<i>●</i>checks that your apps and sites answer, and warns you when one goes down.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <p class="app-links"><a href="https://github.com/louislam/uptime-kuma" target="_blank" rel="noopener">Code source ↗</a> <a href="https://uptime.kuma.pet" target="_blank" rel="noopener">Site ↗</a> <a href="https://github.com/louislam/uptime-kuma/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://hub.docker.com/r/louislam/uptime-kuma" target="_blank" rel="noopener">Image officielle ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Adresse</td><td><code>https://uptime-kuma.example.com</code></td></tr>
+      <tr><td>Accès</td><td>two_factor (Authelia: mot de passe, puis code à 6 chiffres), puis le compte d'Uptime Kuma</td></tr>
+      <tr><td>Image</td><td><code>louislam/uptime-kuma:2.5.12-slim-rootless</code></td></tr>
+      <tr><td>Installer</td><td><code>sudo dotbox install uptime-kuma</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-what">Ce que fait Uptime Kuma</h2>
+  <ul>
+    <li>Il interroge régulièrement ce que tu lui donnes: une adresse web, un port, un nom de domaine, un container.</li>
+    <li>Il garde l'historique: temps de réponse, pannes, date d'expiration des certificats.</li>
+    <li>Quand quelque chose tombe ou revient, il te prévient par le moyen choisi: e-mail, Telegram, Discord, ntfy et beaucoup d'autres.</li>
+    <li>Il peut publier une page d'état, pour montrer à d'autres ce qui marche.</li>
+  </ul>
+
+  <h2 id="fr-image">L'image choisie</h2>
+  <p>L'image officielle, dans sa variante <code>slim-rootless</code>. <code>rootless</code>: elle ne tourne pas en root, et Dot Box la lance avec ton utilisateur, puisqu'elle ne connaît pas <code>PUID</code> et <code>PGID</code>. <code>slim</code>: sans Chromium ni MariaDB embarqués, une image bien plus légère. Seules les sondes « navigateur réel » manquent, et la base reste SQLite.</p>
+
+  <h2 id="fr-install">Ce que fait l'installation</h2>
+  <ul>
+    <li>Elle crée <code>/opt/uptime-kuma/data</code> à ton utilisateur.</li>
+    <li>Elle écrit <code>/opt/uptime-kuma/compose.yml</code>, démarre Uptime Kuma avec ton utilisateur et attend que son propre healthcheck réponde.</li>
+  </ul>
+
+  <h2 id="fr-files">Où sont les fichiers</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Sur le serveur</th><th>Dans le container</th><th>Ce que c'est</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/uptime-kuma/compose.yml</code></td><td></td><td>Généré par <code>dotbox</code>, réécrit à chaque install: ne pas le modifier.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/compose.override.yml</code></td><td></td><td>Le tien, facultatif: tes changements au compose, jamais touchés par <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/data/kuma.db</code></td><td><code>/app/data/kuma.db</code></td><td>La base: tes sondes, l'historique, les réglages et le compte.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/data/upload/</code></td><td><code>/app/data/upload/</code></td><td>Les images des pages d'état.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="fr-settings">Ce que Dot Box règle</h2>
+  <p>Rien dans Uptime Kuma lui-même: tous ses réglages vivent dans sa base. Dans le compose: <code>user</code> à ton utilisateur, aucun port publié, <code>no-new-privileges</code>, et un redémarrage automatique.</p>
+
+  <h2 id="fr-next">Après l'installation</h2>
+  <p>Ouvre son adresse: Authelia te demande de te connecter, puis Uptime Kuma te demande quelle base utiliser (choisis SQLite) et de créer son compte. Ce second compte reste, comme pour <a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a>: personne d'autre que toi n'atteint cette page, Authelia passe d'abord.</p>
+  <p>Pour surveiller une app sans passer par Internet, donne-lui son nom de container et son port dans le réseau <code>dotbox</code>, par exemple <code>http://radarr:7878/ping</code>.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <p class="app-links"><a href="https://github.com/louislam/uptime-kuma" target="_blank" rel="noopener">Source code ↗</a> <a href="https://uptime.kuma.pet" target="_blank" rel="noopener">Website ↗</a> <a href="https://github.com/louislam/uptime-kuma/wiki" target="_blank" rel="noopener">Wiki ↗</a> <a href="https://hub.docker.com/r/louislam/uptime-kuma" target="_blank" rel="noopener">Official image ↗</a></p>
+  <div class="table-scroll"><table>
+    <tbody>
+      <tr><td>Address</td><td><code>https://uptime-kuma.example.com</code></td></tr>
+      <tr><td>Access</td><td>two_factor (Authelia: password, then a 6-digit code), then the Uptime Kuma account</td></tr>
+      <tr><td>Image</td><td><code>louislam/uptime-kuma:2.5.12-slim-rootless</code></td></tr>
+      <tr><td>Install</td><td><code>sudo dotbox install uptime-kuma</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-what">What Uptime Kuma does</h2>
+  <ul>
+    <li>It regularly checks what you give it: a web address, a port, a domain name, a container.</li>
+    <li>It keeps the history: response times, outages, certificate expiry dates.</li>
+    <li>When something goes down or comes back, it warns you the way you chose: email, Telegram, Discord, ntfy and many others.</li>
+    <li>It can publish a status page, to show others what works.</li>
+  </ul>
+
+  <h2 id="en-image">The chosen image</h2>
+  <p>The official image, in its <code>slim-rootless</code> variant. <code>rootless</code>: it does not run as root, and Dot Box runs it as your user, since it does not know <code>PUID</code> and <code>PGID</code>. <code>slim</code>: no embedded Chromium or MariaDB, a much lighter image. Only "real browser" monitors are missing, and the database stays SQLite.</p>
+
+  <h2 id="en-install">What the install does</h2>
+  <ul>
+    <li>It creates <code>/opt/uptime-kuma/data</code>, owned by your user.</li>
+    <li>It writes <code>/opt/uptime-kuma/compose.yml</code>, starts Uptime Kuma as your user and waits for its own healthcheck to answer.</li>
+  </ul>
+
+  <h2 id="en-files">Where the files are</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>On the server</th><th>In the container</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/uptime-kuma/compose.yml</code></td><td></td><td>Generated by <code>dotbox</code>, rewritten on every install: do not edit it.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/compose.override.yml</code></td><td></td><td>Yours, optional: your changes to the compose, never touched by <code>dotbox</code>.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/data/kuma.db</code></td><td><code>/app/data/kuma.db</code></td><td>The database: your monitors, the history, the settings and the account.</td></tr>
+      <tr><td><code>/opt/uptime-kuma/data/upload/</code></td><td><code>/app/data/upload/</code></td><td>Status page images.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="en-settings">What Dot Box sets</h2>
+  <p>Nothing in Uptime Kuma itself: all its settings live in its database. In the compose: <code>user</code> set to your user, no published port, <code>no-new-privileges</code>, and an automatic restart.</p>
+
+  <h2 id="en-next">After the install</h2>
+  <p>Open its address: Authelia asks you to log in, then Uptime Kuma asks which database to use (pick SQLite) and to create its account. This second account stays, as for <a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a>: nobody but you reaches this page, Authelia comes first.</p>
+  <p>To monitor an app without going through the Internet, give it its container name and port in the <code>dotbox</code> network, for example <code>http://radarr:7878/ping</code>.</p>
+</article>
