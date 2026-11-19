@@ -142,6 +142,28 @@ pub fn current() -> Option<Source> {
     })
 }
 
+/// Les droits du catalogue: 755 pour les dossiers, 644 pour les fichiers, modifiables par
+/// root seul.
+fn set_modes(dir: &Path) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+    let set = |p: &Path, mode: u32| {
+        std::fs::set_permissions(p, std::fs::Permissions::from_mode(mode))
+            .map_err(|e| format!("cannot set the mode of {}: {e}", p.display()))
+    };
+    set(dir, 0o755)?;
+    for e in std::fs::read_dir(dir).map_err(|e| format!("cannot read {}: {e}", dir.display()))? {
+        let p = e
+            .map_err(|e| format!("cannot read {}: {e}", dir.display()))?
+            .path();
+        if p.is_dir() {
+            set_modes(&p)?;
+        } else {
+            set(&p, 0o644)?;
+        }
+    }
+    Ok(())
+}
+
 /// Lit le catalogue sur GitHub et le range dans /opt/dotbox/catalog/.
 pub fn fetch() -> Result<Source, String> {
     let source = parse_commits(&get(&format!("{API}/commits?path=catalog&per_page=1"))?)?;
@@ -189,7 +211,8 @@ pub fn fetch() -> Result<Source, String> {
         let now = system::run("date", &["+%Y-%m-%d %H:%M:%S %Z"]).unwrap_or_default();
         std::fs::write(format!("{new}/catalog.yml"), source_yml(&source, &now))
             .map_err(|e| format!("cannot write {new}/catalog.yml: {e}"))?;
-        Ok(())
+        // des droits fixes, quel que soit l'umask de celui qui lance dotbox (J140)
+        set_modes(Path::new(&new))
     })();
     if let Err(e) = result {
         let _ = std::fs::remove_dir_all(&new);
@@ -257,6 +280,26 @@ mod tests {
             git_blob_sha(b"hello\n", tmp.to_str().unwrap()).unwrap(),
             "ce013625030ba8dba906f756967f9e9ca394464a"
         );
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn the_catalog_is_writable_by_its_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+        let tmp = std::env::temp_dir().join(format!("dotbox-modes-{}", std::process::id()));
+        let core = tmp.join("core");
+        std::fs::create_dir_all(&core).unwrap();
+        std::fs::write(tmp.join("radarr.yml"), "x").unwrap();
+        std::fs::write(core.join("traefik.yml"), "x").unwrap();
+        for p in [&tmp, &core] {
+            std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o777)).unwrap();
+        }
+        set_modes(&tmp).unwrap();
+        let mode = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(&tmp), 0o755);
+        assert_eq!(mode(&core), 0o755);
+        assert_eq!(mode(&tmp.join("radarr.yml")), 0o644);
+        assert_eq!(mode(&core.join("traefik.yml")), 0o644);
         let _ = std::fs::remove_dir_all(&tmp);
     }
 
