@@ -1,0 +1,46 @@
+name: Catalog hashes
+
+# Renovate change la version du bouncer pare-feu dans catalog/core/crowdsec.yml, mais il ne sait
+# pas calculer ses empreintes (Journal, 7.14). Ce workflow les calcule, les ajoute dans la branche
+# de la pull request, puis relance la CI du catalogue sur ce nouveau commit.
+on:
+  pull_request:
+    paths:
+      - "catalog/core/crowdsec.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: catalog-hashes-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  hashes:
+    if: startsWith(github.head_ref, 'renovate/') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Les empreintes du bouncer
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tools/bouncer_hashes.sh
+
+      - name: Commit dans la branche de Renovate, puis la CI relancée
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if git diff --quiet; then
+            echo "empreintes déjà à jour"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(catalog): empreintes du bouncer pare-feu"
+          git push origin "HEAD:${BRANCH}"
+          gh workflow run catalog.yml --ref "${BRANCH}"

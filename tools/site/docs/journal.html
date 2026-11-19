@@ -1533,7 +1533,77 @@ grep dans git diff et les nouveaux fichiers: le domaine, l'IP du serveur, le nom
       cmd: `releases.json: next devient v0.0.3; git commit; git tag v0.0.3; git push origin main v0.0.3`,
       does: "Accordé par Mathod95 (« Go pour 1 »): pour que la réinstallation du serveur passe par la vraie commande d'installation, install.sh installant la dernière version publiée (v0.0.2 jusque-là).",
       effect: "GitHub: le tag v0.0.3, la release publiée par release.yml (dotbox-linux-amd64, son .sha256, install.sh).",
-      result: "tag poussé, release en cours de publication par la CI" }
+      result: "release v0.0.3 en ligne: dotbox-linux-amd64, son .sha256 et install.sh" },
+    { id: "J138", time: "12:13", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "7.15: réinstallation complète, par la vraie commande d'installation",
+      cmd: `(serveur formaté par Mathod95 chez l'hébergeur, Debian 13)
+su -
+wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash`,
+      does: "Lancé par Mathod95 dans son terminal, le 17 novembre 2026, sur le serveur tout juste formaté: le test de bout en bout de v0.0.3, sans --catalog et sans --ca (donc en vrais certificats).",
+      effect: "Serveur: tout le core installé, /opt/dotbox/catalog/ lu sur GitHub. Le formatage a effacé la clé SSH de Claude et changé la clé d'hôte du serveur (retirée de known_hosts sur le PC) et le mot de passe de l'utilisateur.",
+      result: `[1/8] Dot Box     0.0.3, downloaded from GitHub, sha256 verified       1.3 s
+[2/8] System      Debian 13 amd64, *.<domaine>, ports 80 443           6.7 s
+[3/8] Catalog     79499de of 2026-11-17, 4 apps                        3.9 s
+[4/8] User        <user>, group sudo                                    49 s
+[5/8] Docker      29.10.0, local logs, live-restore                     41 s
+[6/8] Traefik     v3.7.19, socket proxy, Let's Encrypt certs            24 s
+[7/8] Authelia    4.39.28, account <user>                               17 s
+[8/8] CrowdSec    v1.8.2, SSH and Traefik watched, bouncer v0.0.38  1 min 28 s
+Dot Box is ready, 3 min 50 s. Carte: Docker running, Traefik, Authelia et CrowdSec healthy.
+Le catalogue lu sur GitHub au commit 79499de, et le core installé aux versions de catalog/core/.` },
+    { id: "J139", time: "05:57", status: "echec", where: "PC → Serveur", kind: "lecture",
+      title: "7.15: vérifier la réinstallation",
+      cmd: `openssl s_client -connect auth.<domaine>:443 et traefik.<domaine>:443 | openssl x509 -noout -issuer -enddate
+ssh -o BatchMode=yes dotbox-test 'cat /opt/dotbox/catalog/catalog.yml'
+python3 sudo_run.py 'catalog.yml, containers, bouncer, règles iptables, cscli capi status, décisions'`,
+      does: "Le 19 novembre 2026. Lecture seule.",
+      result: `certificats: Let's Encrypt de production (intermédiaires YR1 et YR2), valables jusqu'au 15 février 2027
+ssh avec la clé de Claude: ok (Mathod95 l'a remise après le formatage)
+/opt/dotbox/catalog/catalog.yml: Permission denied sans root (normal, lu par dotbox lancé avec sudo)
+sudo: mot de passe refusé une fois, pas de nouvel essai: celui de ~/.config/dotbox-test/sudo-pass est l'ancien. Le reste des vérifications attend sa mise à jour par Mathod95.` },
+    { id: "J140", time: "05:59", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "7.15: vérifier la réinstallation, avec root",
+      cmd: `python3 sudo_run.py 'ls -ld /opt/dotbox /opt/dotbox/catalog; cat /opt/dotbox/catalog/catalog.yml; find /opt/dotbox/catalog -type f; docker ps; systemctl is-active crowdsec-firewall-bouncer; iptables -S INPUT / DOCKER-USER; cscli capi status; cscli alerts list'`,
+      does: "La suite de J139, après la mise à jour du mot de passe sudo sur le PC par Mathod95.",
+      result: `catalog.yml: commit 79499dee5bbd..., date 2026-11-17, source github.com/Mathod95/dotbox
+8 fichiers: catalog.yml, core/authelia.yml, core/crowdsec.yml, core/traefik.yml, prowlarr, qui, radarr, sonarr
+crowdsec, authelia, traefik: healthy depuis 42 h, socket-proxy Up
+bouncer actif, INPUT et DOCKER-USER sautent vers CROWDSEC_CHAIN
+partage avec la communauté et blocklist de la communauté: activés
+50 alertes en 42 h: des attaques réelles, reçues dès l'installation
+À corriger: /opt/dotbox/catalog est en drwxrwxr-x (écrivable par le groupe root). Sans risque aujourd'hui, /opt/dotbox est en 700, mais dotbox doit fixer lui-même les droits du catalogue (755 et 644).` },
+    { id: "J141", time: "06:00", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "7.15: dotbox install prowlarr, sans --catalog",
+      cmd: `python3 sudo_run.py 'dotbox install prowlarr; ls -l /opt/prowlarr; docker ps; grep -A3 "^apps:" /opt/dotbox/dotbox.yml'`,
+      does: "Accordé par Mathod95 (« Go »). Le dernier test de 7.15: install se sert du catalogue rangé par init, sans --catalog.",
+      effect: "Serveur: /opt/prowlarr/ (compose.yml, config/ à <user>), l'image de Prowlarr, l'entrée prowlarr dans apps: de dotbox.yml, un certificat Let's Encrypt de production pour prowlarr.<domaine>.",
+      undo: "sudo dotbox remove prowlarr --purge",
+      result: `✓ [1/1] Prowlarr  3.0.2.5780-ls169, two_factor  1 min 28 s
+log: « read catalog 79499de of 2026-11-17 in /opt/dotbox/catalog », puis prowlarr.yml lu dans ce dossier
+prowlarr healthy, aucun port publié (9696/tcp sans adresse)` },
+    { id: "J142", time: "06:02", status: "fait", where: "PC", kind: "lecture",
+      title: "7.15: le certificat de Prowlarr et Authelia devant",
+      cmd: `openssl s_client -connect prowlarr.<domaine>:443 | openssl x509 -noout -issuer -enddate
+curl https://prowlarr.<domaine>/
+python3 sudo_run.py 'docker logs --since 10m traefik | grep acme'`,
+      result: `premier essai: le certificat par défaut de Traefik, le temps de la demande
+Traefik: « Obtaining bundled SAN certificate », « Validations succeeded », « Server responded with a certificate »: 15 s
+ensuite: Let's Encrypt de production (YR2), valable jusqu'au 17 février 2027
+sans session: 302 vers https://auth.<domaine>/?rd=https://prowlarr.<domaine>/` },
+    { id: "J143", time: "06:03", status: "fait", where: "PC", kind: "ecriture",
+      title: "7.15: des droits fixes pour le catalogue (J140)",
+      cmd: `cargo fmt --check; cargo clippy --all-targets -- -D warnings; cargo test; cargo build --release --target x86_64-unknown-linux-musl`,
+      does: "src/github.rs: après la lecture, 755 pour les dossiers du catalogue et 644 pour ses fichiers, quel que soit l'umask de celui qui lance dotbox. Un test de plus.",
+      effect: "PC: src/github.rs. Pas encore commité ni testé sur le serveur: il viendra avec la prochaine version corrective.",
+      result: "fmt, clippy: ok, 77 tests ok, binaire statique construit" },
+    { id: "J144", time: "18:21", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: la CI du catalogue sur main",
+      cmd: `git add .github/workflows/catalog.yml .github/workflows/catalog-hashes.yml tools/bouncer_hashes.sh tools/site/docs/journal.html
+git commit (ci: CI du catalogue et empreintes du bouncer); git push`,
+      does: "Accordé par Mathod95 (« Go »), le 19 novembre 2026. Les deux workflows et le script des empreintes du bouncer, avant que Renovate ouvre ses premières pull requests, pour que la CI tourne dès la première. Avec le Journal (7.14, D65). renovate.json n'y est pas: il passe par la pull request #1 (J145). Un commit ci: ne déclenche pas de release.",
+      effect: "GitHub: main, deux workflows de plus (Catalog, Catalog hashes), le site republié par pages.yml.",
+      undo: "git revert du commit, puis git push",
+      result: "poussé sur main" }
   ];
 
   var PLAN = [
@@ -1937,10 +2007,56 @@ volumes:
           does: "init lit le catalogue sur GitHub (7.6) juste après la vérification du système, puis installe le core à partir de catalog/core/. Proposé: une étape à elle, « Catalog », avec le commit et sa date dans la ligne, ce qui fait 7 étapes ([1/7], et [1/8] avec install.sh: D38 change). Ensuite, dotbox install <app> se sert de /opt/dotbox/catalog/ sans mise à jour à la main, et le relit s'il manque. --catalog <dossier> reste possible pour init et install. Si GitHub ne répond pas, init s'arrête avec un message clair (install.sh dépend déjà de GitHub).",
           note: "Validé avec le plan: l'étape « Catalog » à part, après System. D38 devient [1/7] sans install.sh, [1/8] avec. Testé sur le PC seulement, le serveur attend 7.15.",
           effect: "PC: src/init.rs, src/apps.rs, src/ui.rs (nombre d'étapes)." },
-        { id: "7.14", kind: "ecriture", where: "PC → GitHub", title: "Renovate et la CI du catalogue",
-          does: "renovate.json: les images des manifests (apps et core, versions linuxserver comprises) et les binaires du core publiés sur GitHub (bouncer, plugin), avec des règles personnalisées. Une CI sur chaque pull request qui touche catalog/: les tests (chaque manifest valide), et pour un binaire du core, l'empreinte reprise de GitHub (qui la donne pour chaque fichier publié) et vérifiée sur le fichier téléchargé, puisque Renovate ne sait pas la calculer. Seuls les correctifs fusionnent seuls. L'app Renovate s'installe depuis GitHub: une action de Mathod95.",
-          effect: "PC: renovate.json, .github/workflows/catalog.yml (nouveaux)." },
-        { id: "7.15", kind: "ecriture", where: "PC → GitHub → Serveur", title: "Tester: le catalogue sur main, puis init et install sans --catalog",
+        { id: "7.14", status: "valide", kind: "ecriture", where: "PC → GitHub", title: "Renovate et la CI du catalogue",
+          lede: "Renovate est installé sur le repo par Mathod95 (le 19 novembre 2026: Renovate Only, gratuit, mode Interactive, seulement Mathod95/dotbox). Sa pull request d'accueil (#1, « chore: Configure Renovate ») n'a trouvé que Cargo.toml et les deux workflows: nos manifests ont un format à nous, il faut lui apprendre à les lire. Plan validé le 19 novembre 2026, Q34 tranchée (D65). Les fichiers sont écrits et vérifiés sur le PC, rien n'est poussé: le push attend l'accord de Mathod95.",
+          links: [
+            { t: "Pull request #1", u: "https://github.com/Mathod95/dotbox/pull/1" },
+            { t: "Doc de Renovate: gestionnaires personnalisés", u: "https://docs.renovatebot.com/modules/manager/regex/" }
+          ],
+          sections: [
+            { h: "Ce que Renovate a trouvé seul",
+              l: ["Cargo.toml (les crates Rust) et .github/workflows/pages.yml et release.yml (les actions GitHub).",
+                  "Il annonce 4 pull requests: clap 4.6.8, sha2 0.11, argon2 0.6.0, actions/setup-python v7.",
+                  "Rien dans catalog/: ni les apps, ni le core."] },
+            { h: "1. renovate.json: lire le catalogue",
+              l: ["La base recommandée de Renovate (config:recommended), avec le tableau de bord des mises à jour (une issue « Dependency Dashboard »).",
+                  "Un gestionnaire personnalisé pour la ligne image: des apps (catalog/*.yml): Prowlarr, Radarr, Sonarr, qui.",
+                  "Un autre pour les lignes sous images: du core (catalog/core/*.yml): Traefik, le socket proxy, Authelia, CrowdSec.",
+                  "Les versions de linuxserver (3.0.2.5780-ls169, 3.4.7-r0-ls106) lues par une règle à elles: la version de l'app, puis le numéro de build de linuxserver. Un nouveau build (ls170) compte comme un correctif.",
+                  "CrowdSec garde la variante -debian: Renovate ne propose que des tags -debian.",
+                  "Le bouncer: un gestionnaire sur sa ligne version: dans catalog/core/crowdsec.yml, qui suit les releases GitHub de crowdsecurity/cs-firewall-bouncer. L'adresse de l'archive contient la version et change avec elle.",
+                  "Écrit: Renovate ne change que la ligne version: du bouncer. L'adresse de l'archive, le chemin du binaire et les deux empreintes en sont déduits par tools/bouncer_hashes.sh (point 4), une seule source de vérité.",
+                  "Ajouté en écrivant: tests/ ignoré (Renovate y lisait les compose.yml attendus des tests, avec leurs <version>)."] },
+            { h: "2. Les messages de commit",
+              p: "Renovate écrirait fix(deps) pour une partie des mises à jour. Selon nos règles, un fix: annonce une nouvelle version de dotbox, ce qui est faux pour le catalogue (D64: une mise à jour d'une app ne fait pas monter la version de dotbox). Proposé: chore(catalog): pour tout ce qui touche catalog/, chore(deps): pour le reste. On décide nous-mêmes quand une mise à jour des crates mérite une release." },
+            { h: "3. Ce qui fusionne seul",
+              l: ["Les correctifs du catalogue (Traefik v3.7.19 vers v3.7.20, un nouveau build linuxserver), quand la CI passe. C'est D64.",
+                  "Les versions mineures et majeures attendent Mathod95: une pull request, la CI, puis sa fusion.",
+                  "La limite de Renovate reste: 2 pull requests par heure au plus."] },
+            { h: "4. Les empreintes du bouncer",
+              p: "Renovate change la version et l'adresse de l'archive, mais il ne sait pas calculer les deux empreintes (l'archive et le binaire qu'elle contient). Proposé: un workflow, catalog-hashes.yml, sur les pull requests de Renovate qui touchent catalog/core/crowdsec.yml. Il télécharge l'archive, la compare à l'empreinte que GitHub publie pour chaque fichier d'une release, en sort le binaire, calcule son empreinte et ajoute un commit avec les deux dans la branche de la pull request. Sans lui, la CI échouerait et les empreintes seraient à recopier à la main.",
+              l: ["Écrit: le calcul est dans tools/bouncer_hashes.sh, qui sert aussi à la CI (--check). Il déduit de la version l'adresse et le chemin du binaire, vérifie l'archive contre l'empreinte publiée par GitHub, puis calcule celle du binaire.",
+                  "Un commit poussé par le jeton de GitHub Actions ne relance pas la CI: catalog-hashes.yml la relance lui-même (gh workflow run catalog.yml) sur le nouveau commit.",
+                  "Renovate ne touche plus à une branche modifiée par quelqu'un d'autre: le compte github-actions[bot] est déclaré dans gitIgnoredAuthors, pour que la fusion automatique reste possible."] },
+            { h: "5. La CI du catalogue (catalog.yml)",
+              l: ["Sur chaque pull request qui touche catalog/, src/ ou Cargo: cargo fmt --check, clippy et cargo test. Les tests vérifient que chaque manifest, core compris, est valide.",
+                  "Chaque image du catalogue doit exister dans son registre (docker buildx imagetools inspect): une faute dans un tag fait échouer la CI.",
+                  "Le bouncer: l'archive téléchargée et le binaire doivent avoir les empreintes écrites dans le manifest.",
+                  "C'est cette CI qui autorise ou non la fusion automatique d'un correctif."] },
+            { h: "6. Comment l'appliquer",
+              l: ["Les fichiers écrits et vérifiés sur le PC (renovate-config-validator, actionlint).",
+                  "renovate.json poussé dans la branche de la pull request #1 (renovate/configure), avec l'accord de Mathod95. Renovate met alors à jour la description de la pull request avec ce qu'il trouve dans catalog/: un aperçu avant de fusionner.",
+                  "Les deux workflows sur main, avec l'accord de Mathod95, avant la fusion de #1, pour que la CI tourne dès les premières pull requests.",
+                  "Mathod95 fusionne #1. Les premières pull requests arrivent, notées dans le Journal."] },
+            { h: "À trancher", p: "Q34: les crates Rust et les actions GitHub, aussi ou pas. Tranchée: D65." },
+            { h: "Vérifié sur le PC (19 novembre 2026)",
+              l: ["renovate.json: renovate-config-validator --strict de Renovate 44.253.0 (Node 24, dans un dossier temporaire), sans erreur. Il a seulement signalé l'ancienne forme de dependencyDashboard, retirée: config:recommended l'active déjà.",
+                  "Les workflows: actionlint 1.7.7 avec shellcheck, sans remarque. tools/bouncer_hashes.sh: shellcheck, sans remarque.",
+                  "tools/bouncer_hashes.sh --check sur le catalogue: conforme (v0.0.38). Dans une copie, version passée à v0.0.36: --check échoue sur les quatre lignes, puis le script les réécrit et --check passe.",
+                  "Renovate lancé à blanc (--platform=local --dry-run) sur un clone jetable: les 9 lignes du catalogue sont lues, la règle linuxserver s'applique aux 4 images de linuxserver, CrowdSec reste en -debian. Une mise à jour déjà en attente: le socket proxy, 3.4.7-r0-ls106 vers 3.4.8-r0-ls107, un correctif. Côté crates: argon2 0.6.0 et sha2 0.11 dans une seule pull request « crates Rust ». Sans jeton GitHub, les actions et le bouncer n'ont pas pu être cherchés, Renovate hébergé en a un."] }
+          ],
+          effect: "PC: renovate.json, tools/bouncer_hashes.sh, .github/workflows/catalog.yml et catalog-hashes.yml (nouveaux). GitHub: la branche de la pull request #1, puis main." },
+        { id: "7.15", status: "fait", ref: "J138-J143", kind: "ecriture", where: "PC → GitHub → Serveur", title: "Tester: le catalogue sur main, puis init et install sans --catalog",
           does: "Les tests sur le PC, puis catalog/ poussé sur main (avec l'accord de Mathod95: dotbox lit main), puis sur le serveur: dotbox init lit le catalogue (commit et date affichés) et installe le core depuis lui, dotbox install sonarr sans --catalog. Puis la réinstallation complète que prévoit Mathod95, en vrais certificats.",
           effect: "GitHub: catalog/ sur main. Serveur: /opt/dotbox/catalog/." }
       ] },
@@ -2447,7 +2563,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       reco: "Choix de Mathod95: passer par WireGuard ou NetBird. Les connexions arrivent alors par le réseau privé du VPN, que la liste blanche de CrowdSec exclut: jamais banni par ce chemin, et SSH pourra plus tard être réservé au VPN. En attendant le VPN (Roadmap), le filet est la console de l'hébergeur (docker exec crowdsec cscli decisions delete --ip <IP>). Les tests de 10.6 ne bannissent qu'une IP de documentation." },
     { t: "Le core dans le catalogue, et init qui récupère le catalogue",
       p: "Traefik et Authelia ont été codés dans le binaire les 15 et 16 novembre (étapes 4 et 5), avant que le catalogue existe (D41, qui ne parlait que des apps). Mettre à jour Traefik demande donc une nouvelle version de dotbox. Mathod95: « Je ne veux pas qu'une app du catalogue nécessite l'update du binaire Rust, ce sont deux choses à part », et « installer Dot Box via init devrait récupérer tout le catalogue directement, pour ne pas avoir besoin de faire une mise à jour à la main avant d'installer Prowlarr, Radarr et Sonarr ».",
-      reco: "Choix de Mathod95 du 17 novembre 2026: dotbox init lit le catalogue sur GitHub dès le début (7.6, 7.13), le core y entre comme les apps (catalog/core/: Traefik, Authelia, CrowdSec, le bouncer et le plugin, 7.12), et dotbox install se sert du catalogue déjà lu. Le binaire garde comment installer, plus quelles versions: une mise à jour du core ou d'une app ne demande jamais de nouvelle version de dotbox. Garde-fous: min_dotbox, les correctifs seuls fusionnés automatiquement, la CI sur chaque pull request, l'empreinte des binaires reprise de GitHub par la CI (7.14). Ce chantier passe avant 10.7, et avant la réinstallation complète du serveur. D43 (le catalogue sur GitHub après les apps) est dépassée: Prowlarr, Radarr, Sonarr et qui sont faits, et le format a tenu." }
+      reco: "Choix de Mathod95 du 17 novembre 2026: dotbox init lit le catalogue sur GitHub dès le début (7.6, 7.13), le core y entre comme les apps (catalog/core/: Traefik, Authelia, CrowdSec, le bouncer et le plugin, 7.12), et dotbox install se sert du catalogue déjà lu. Le binaire garde comment installer, plus quelles versions: une mise à jour du core ou d'une app ne demande jamais de nouvelle version de dotbox. Garde-fous: min_dotbox, les correctifs seuls fusionnés automatiquement, la CI sur chaque pull request, l'empreinte des binaires reprise de GitHub par la CI (7.14). Ce chantier passe avant 10.7, et avant la réinstallation complète du serveur. D43 (le catalogue sur GitHub après les apps) est dépassée: Prowlarr, Radarr, Sonarr et qui sont faits, et le format a tenu." },
+    { t: "Renovate suit aussi les crates Rust et les actions GitHub (Q34)",
+      p: "Mathod95: « Je te laisse trancher Q34, je ne vois pas trop ce que ça va changer. Au pire on pourra regarder ça plus tard. »",
+      reco: "Tranché par Claude: oui, regroupées, une pull request par semaine pour les crates Rust (« crates Rust ») et une pour les actions GitHub (« actions GitHub »), le lundi avant 6 h, sans fusion automatique, en chore(deps). Rien ne change dans le binaire sans que Mathod95 ait fusionné. À revoir quand on veut: une règle de renovate.json." }
   ];
 
   var QUESTIONS = [
@@ -2637,7 +2756,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Une liste blanche dans /opt/dotbox/dotbox.yml (crowdsec: allow: [...]), écrite par l'utilisateur, appliquée par dotbox init.",
           "Rien de plus, et une commande pour se débannir depuis la console de l'hébergeur (dotbox crowdsec unban <ip>, ou cscli decisions delete).",
           "Les deux."],
-      reco: "Proposé: les deux. La liste blanche est facultative, la commande pour se débannir sert toujours." }
+      reco: "Proposé: les deux. La liste blanche est facultative, la commande pour se débannir sert toujours." },
+    { n: 34, done: "D65", t: "Renovate: aussi les crates Rust et les actions GitHub?",
+      p: "Renovate a trouvé Cargo.toml et les workflows (pull request #1). Leurs mises à jour changent le binaire ou la CI, pas le catalogue: aucune ne fusionnerait seule. clap, sha2, argon2 et setup-python sont déjà en retard.",
+      l: ["Oui, regroupées: une pull request par semaine pour les crates, une pour les actions, sans fusion automatique.",
+          "Oui, une pull request par mise à jour, comme Renovate le fait par défaut.",
+          "Non: Renovate ne s'occupe que du catalogue, les crates et les actions à la main."],
+      reco: "Proposé: la première. Les crates et les actions restent à jour sans bruit, et rien ne change dans le binaire sans que Mathod95 l'ait fusionné." },
   ];
 
 
@@ -2800,7 +2925,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "4": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 68],
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137],
+    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };
@@ -2808,11 +2933,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64], "8": [43, 44, 55, 56], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63], "sans": [12]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
-    "6": [22, 23, 27], "7": [4, 28], "8": [29], "9": [30], "10": [3, 11, 31, 32, 33], "sans": [9]
+    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29], "9": [30], "10": [3, 11, 31, 32, 33], "sans": [9]
   };
   var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11], "10": [1, 2, 3] };
   var placed = {};

@@ -1,0 +1,74 @@
+name: Catalog
+
+# La CI du catalogue (Journal, 7.14): sur chaque pull request qui touche le catalogue, le code ou
+# les workflows. C'est elle qui autorise la fusion automatique des correctifs proposés par Renovate.
+# workflow_dispatch: relancée par catalog-hashes.yml après son commit (un commit poussé avec le
+# jeton de GitHub Actions ne relance pas la CI de lui-même).
+on:
+  pull_request:
+    paths:
+      - "catalog/**"
+      - "src/**"
+      - "tests/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "tools/bouncer_hashes.sh"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: fmt, clippy et tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+
+      - name: Vérifications (comme sur le PC)
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test --locked
+
+  images:
+    name: Les images existent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Chaque image du catalogue existe dans son registre
+        run: |
+          images=$( { sed -n 's/^image: *//p' catalog/*.yml
+                      sed -n 's/^  [a-z0-9-]*: *\([^ ]*:[^ ]*\)$/\1/p' catalog/core/*.yml; } | sort -u )
+          status=0
+          for image in $images; do
+            if docker buildx imagetools inspect "$image" > /dev/null; then
+              echo "ok      $image"
+            else
+              echo "absente $image"
+              status=1
+            fi
+          done
+          exit "$status"
+
+  bouncer:
+    name: Le bouncer et ses empreintes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Adresse, chemin du binaire et empreintes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tools/bouncer_hashes.sh --check
