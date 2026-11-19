@@ -8,7 +8,7 @@ files:
   # Le binaire officiel du bouncer, publié sur GitHub (pas d'image officielle). Les empreintes de
   # l'archive (donnée par GitHub) et du binaire qu'elle contient sont vérifiées à l'installation.
   firewall-bouncer:
-    version: v0.0.38
+    version: v0.0.36
     url: https://github.com/crowdsecurity/cs-firewall-bouncer/releases/download/v0.0.38/crowdsec-firewall-bouncer-linux-amd64.tgz
     sha256: 3cb7ca302438ede690849218d585dee6cbba7915982f79f3dd45024a9eced31e
     binary: crowdsec-firewall-bouncer-v0.0.38/crowdsec-firewall-bouncer
