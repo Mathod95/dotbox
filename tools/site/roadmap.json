@@ -820,14 +820,15 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "progress",
+      "status": "done",
       "fr": "Catalogue: app GitHub Renovate installée sur le repo, avec son `renovate.json`",
       "en": "Catalog: Renovate GitHub app installed on the repository, with its `renovate.json`",
       "doc": "renovate",
       "journal": [
         "7.14",
         "D64",
-        "D65"
+        "D65",
+        "J144-J155"
       ]
     },
     {
@@ -859,27 +860,29 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "progress",
+      "status": "done",
       "fr": "Catalogue: fusion automatique des versions correctives, relecture pour les autres",
       "en": "Catalog: automatic merge of patch versions, review for the others",
       "doc": "renovate",
       "journal": [
         "7.14",
         "D64",
-        "D65"
+        "D65",
+        "J144-J155"
       ]
     },
     {
       "stage": "updates",
       "domain": "cli",
-      "status": "progress",
+      "status": "done",
       "fr": "CLI: Renovate tient aussi à jour les dépendances Rust du repo `dotbox`",
       "en": "CLI: Renovate also keeps the Rust dependencies of the `dotbox` repository up to date",
       "doc": "renovate",
       "journal": [
         "7.14",
         "D64",
-        "D65"
+        "D65",
+        "J144-J155"
       ]
     },
     {

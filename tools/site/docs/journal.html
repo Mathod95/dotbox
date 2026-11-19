@@ -1681,7 +1681,37 @@ rm renovate.json (la copie locale, identique); git pull --ff-only`,
     Le bouncer et ses empreintes  success   18:58:11
     Les images existent           success   18:58:13
     fmt, clippy et tests          success   18:58:33
-#4  Dependency Dashboard` }
+#4  Dependency Dashboard` },
+    { id: "J153", time: "19:01", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "7.14: l'état avant le nouveau init",
+      cmd: `sudo_run.py 'dotbox --version; cat /opt/dotbox/catalog/catalog.yml; docker ps'`,
+      does: "Point 5 de 7.14, accordé par Mathod95 (« Go »). Le binaire et le catalogue gardés sur le serveur depuis la réinstallation (J138).",
+      effect: "Aucun.",
+      result: `dotbox 0.0.3
+catalog.yml: commit 79499de, date 2026-11-17
+socket-proxy  lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106  Up 2 days
+traefik       traefik:v3.7.19                                   Up 2 days (healthy)` },
+    { id: "J154", time: "19:01", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "7.14: dotbox init relit le catalogue, le socket proxy suit (D64)",
+      cmd: `sudo_run.py 'dotbox init < /dev/null'`,
+      does: "Le même binaire v0.0.3, les réponses reprises de /opt/dotbox/dotbox.yml. L'étape Catalog lit main au commit de Renovate (#3), l'étape Traefik voit son compose.yml changé et relance les containers.",
+      effect: "Serveur: /opt/dotbox/catalog/ au commit e6d99de, /opt/traefik/compose.yml réécrit, le container socket-proxy recréé. Traefik n'a pas redémarré.",
+      undo: "Remettre 3.4.7-r0-ls106 dans le catalogue (un revert sur main), puis sudo dotbox init",
+      result: `✓ [7/7] CrowdSec … ✓ Dot Box is ready  9.3 s   (exit 0)
+catalog.yml: commit e6d99de, date 2026-11-19, dossier en 755
+socket-proxy  lscr.io/linuxserver/socket-proxy:3.4.8-r0-ls107  Up 6 seconds
+traefik       traefik:v3.7.19                                   Up 2 days (healthy)
+prowlarr, authelia, crowdsec: inchangés` },
+    { id: "J155", time: "19:03", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "7.14: Traefik lit toujours les containers, HTTPS répond",
+      cmd: `sudo_run.py 'wget -S --max-redirect=0 https://{auth,prowlarr,traefik}.<domaine>/; docker logs --since 4m traefik | grep -iE "error|unable|refused"; docker logs --since 2m socket-proxy'`,
+      does: "curl n'est pas sur le serveur (D8): wget, qui vérifie le certificat.",
+      effect: "Aucun.",
+      result: `auth      HTTP/1.1 200 OK
+prowlarr  HTTP/1.1 302 Found   (vers Authelia)
+traefik   HTTP/1.1 302 Found   (vers Authelia)
+Traefik, 18:01:53-54 UTC: 3 erreurs du fournisseur docker (unexpected EOF, socket-proxy introuvable) pendant la recréation du proxy
+socket-proxy, 18:01:54.89: les requêtes de Traefik repassent (200)` }
   ];
 
   var PLAN = [
@@ -2085,7 +2115,7 @@ volumes:
           does: "init lit le catalogue sur GitHub (7.6) juste après la vérification du système, puis installe le core à partir de catalog/core/. Proposé: une étape à elle, « Catalog », avec le commit et sa date dans la ligne, ce qui fait 7 étapes ([1/7], et [1/8] avec install.sh: D38 change). Ensuite, dotbox install <app> se sert de /opt/dotbox/catalog/ sans mise à jour à la main, et le relit s'il manque. --catalog <dossier> reste possible pour init et install. Si GitHub ne répond pas, init s'arrête avec un message clair (install.sh dépend déjà de GitHub).",
           note: "Validé avec le plan: l'étape « Catalog » à part, après System. D38 devient [1/7] sans install.sh, [1/8] avec. Testé sur le PC seulement, le serveur attend 7.15.",
           effect: "PC: src/init.rs, src/apps.rs, src/ui.rs (nombre d'étapes)." },
-        { id: "7.14", status: "valide", kind: "ecriture", where: "PC → GitHub", title: "Renovate et la CI du catalogue",
+        { id: "7.14", status: "fait", ref: "J144-J155", kind: "ecriture", where: "PC → GitHub", title: "Renovate et la CI du catalogue",
           lede: "Renovate est installé sur le repo par Mathod95 (le 19 novembre 2026: Renovate Only, gratuit, mode Interactive, seulement Mathod95/dotbox). Sa pull request d'accueil (#1, « chore: Configure Renovate ») n'a trouvé que Cargo.toml et les deux workflows: nos manifests ont un format à nous, il faut lui apprendre à les lire. Plan validé le 19 novembre 2026, Q34 tranchée (D65). Les fichiers sont écrits et vérifiés sur le PC, rien n'est poussé: le push attend l'accord de Mathod95.",
           links: [
             { t: "Pull request #1", u: "https://github.com/Mathod95/dotbox/pull/1" },
@@ -2137,7 +2167,7 @@ volumes:
                   "2. Fait (J146). La page Renovate de la doc, et les propositions #48 (Update) et #49 (Sandbox), qui parlaient encore d'un repo Mathod95/dotbox-catalog (J146).",
                   "3. Fait (J149, J150). Le test de catalog-hashes.yml, sans attendre une vraie release du bouncer: une branche test/catalog-hashes où la version du bouncer revient à v0.0.36, comme le ferait Renovate (J147). Mathod95 ouvre la pull request. Attendu: la CI échoue sur le bouncer, catalog-hashes.yml ajoute un commit avec les quatre lignes, relance la CI, qui passe. Puis la pull request est fermée sans fusion et la branche supprimée.",
                   "4. Fait (J151, J152): #1 fusionnée par Claude avec le jeton de Mathod95, puis #3 (le socket proxy) fusionnée seule par Renovate après la CI. Mathod95 fusionne la pull request #1. Renovate ouvre alors la pull request du socket proxy (3.4.8-r0-ls107). Attendu: la CI passe et Renovate la fusionne seul. Le tableau de bord (une issue « Dependency Dashboard ») apparaît.",
-                  "5. Sur le serveur, avec l'accord de Mathod95: sudo dotbox init relit le catalogue et met à jour le socket proxy, avec le même binaire v0.0.3. C'est la preuve de D64: une mise à jour du core sans nouvelle version de dotbox.",
+                  "5. Fait (J153 à J155): Traefik ne redémarre pas, le socket proxy est recréé en une seconde, HTTPS répond. Sur le serveur, avec l'accord de Mathod95: sudo dotbox init relit le catalogue et met à jour le socket proxy, avec le même binaire v0.0.3. C'est la preuve de D64: une mise à jour du core sans nouvelle version de dotbox.",
                   "6. Les crates Rust et setup-python v7, le lundi: relues par Claude, fusionnées par Mathod95. argon2 0.6 et sha2 0.11 changent leur API, le code devra sans doute suivre."] }
           ],
           effect: "PC: renovate.json, tools/bouncer_hashes.sh, .github/workflows/catalog.yml et catalog-hashes.yml (nouveaux). GitHub: la branche de la pull request #1, puis main." },
@@ -3010,7 +3040,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "4": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 68],
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152],
+    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };
