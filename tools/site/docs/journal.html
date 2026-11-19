@@ -2099,7 +2099,15 @@ wg-easy: MASQUERADE du réseau du VPN par eth0, le réseau dotbox: un appareil d
       does: "Accordé par Mathod95 (« On fait toutes les app manquantes et on push le tag », D73). next devient v0.0.4 dans Releases.",
       effect: "GitHub: le tag v0.0.4, la release (dotbox-linux-amd64, son .sha256, install.sh) publiée par release.yml. install.sh installe désormais la v0.0.4.",
       undo: "Supprimer la release et le tag sur GitHub (une version publiée ne se reprend pas: mieux vaut une v0.0.5)",
-      result: "voir la release sur GitHub" }
+      result: `release.yml: success; release v0.0.4 avec dotbox-linux-amd64, dotbox-linux-amd64.sha256 et install.sh` },
+    { id: "J193", time: "00:36", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "install.sh installe la v0.0.4",
+      cmd: `sudo_run.py 'wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --no-init; dotbox --version'`,
+      does: "Le vrai chemin d'installation, avec le binaire publié à la place de celui copié depuis le PC.",
+      effect: "Serveur: /usr/local/bin/dotbox remplacé par le binaire de la release v0.0.4.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.4-appsec.bak /usr/local/bin/dotbox (un binaire de test plus ancien)",
+      result: `✓ [1/8] Dot Box       0.0.4, downloaded from GitHub, sha256 verified     1.5 s
+dotbox 0.0.4; sha256 10c6a7da63747542…, le même que dotbox-linux-amd64.sha256 de la release` }
   ];
 
   var PLAN = [
@@ -3809,7 +3817,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
