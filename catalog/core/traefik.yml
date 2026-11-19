@@ -4,4 +4,4 @@ name: traefik
 min_dotbox: 0.0.3
 images:
   traefik: traefik:v3.7.19
-  socket-proxy: lscr.io/linuxserver/socket-proxy:3.4.7-r0-ls106
+  socket-proxy: lscr.io/linuxserver/socket-proxy:3.4.8-r0-ls107
