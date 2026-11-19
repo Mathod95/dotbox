@@ -6,8 +6,11 @@ services:
     image: <crowdsec>
     container_name: crowdsec
     restart: unless-stopped
+    depends_on:
+      - socket-proxy
     networks:
       - dotbox
+      - logs
     ports:
       # L'API locale, pour le bouncer pare-feu du système: sur 127.0.0.1, jamais sur Internet.
       - "127.0.0.1:8080:8080"
@@ -34,6 +37,27 @@ services:
       retries: 3
       start_period: 60s
 
+  # Les logs des apps sans Authelia, pour leurs scénarios de force brute (10.9, D72). Son propre
+  # proxy, en lecture seule: celui de Traefik ne donne pas les logs, et Traefik n'en a pas besoin.
+  socket-proxy:
+    image: <socket-proxy>
+    container_name: crowdsec-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      INFO: "1"
+      ALLOW_LOGS: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - logs
+    security_opt:
+      - no-new-privileges:true
+
 secrets:
   bouncer_key_firewall:
     file: /opt/dotbox/secrets/crowdsec_bouncer_firewall
@@ -43,3 +67,5 @@ secrets:
 networks:
   dotbox:
     external: true
+  logs:
+    internal: true

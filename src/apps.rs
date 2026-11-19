@@ -314,6 +314,10 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
     }
     let state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
     say("check", &format!("{app} {state} ({})", m.image));
+    // CrowdSec lit ses logs et bannit qui devine les mots de passe (D72)
+    if let Some(w) = &m.crowdsec {
+        crate::crowdsec::watch_app(app, &w.collection, &w.kind)?;
+    }
     if setup_pending {
         ui::done(&format!(
             "{}, two_factor until its setup is done",
@@ -493,6 +497,7 @@ fn remove_steps(app: &str, purge: bool) -> Result<(), String> {
         std::fs::remove_file(&path).map_err(|e| format!("cannot delete {path}: {e}"))?;
         say("delete", &path);
     }
+    crate::crowdsec::unwatch_app(app)?;
     if cfg.remove_app(app) {
         system::write_if_changed(config::PATH, &cfg.render()?, 0o644)?;
         say("write", &format!("{} (apps: without {app})", config::PATH));

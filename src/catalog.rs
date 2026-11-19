@@ -98,6 +98,26 @@ struct Raw {
     /// l'assistant de premier démarrage: derrière Authelia tant qu'il n'est pas fini (D71)
     #[serde(default)]
     setup: Option<RawSetup>,
+    /// CrowdSec lit les logs du container (D72, 10.9)
+    #[serde(default)]
+    crowdsec: Option<RawWatch>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawWatch {
+    collection: String,
+    #[serde(rename = "type")]
+    kind: String,
+}
+
+/// CrowdSec lit les logs du container de l'app, par l'API Docker (D72, 10.9): `collection`,
+/// la collection du hub à installer (« LePresidente/jellyfin »), et `kind`, l'étiquette que lit
+/// son parseur (« jellyfin »).
+#[derive(Debug)]
+pub struct Watch {
+    pub collection: String,
+    pub kind: String,
 }
 
 #[derive(Deserialize)]
@@ -182,6 +202,7 @@ pub struct Manifest {
     /// le container tourne avec l'utilisateur de dotbox.yml (user: dans le compose)
     pub run_as_user: bool,
     pub setup: Option<Setup>,
+    pub crowdsec: Option<Watch>,
 }
 
 /// Un dossier du serveur dans /data (les médias et les téléchargements).
@@ -439,6 +460,36 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             })
         }
     };
+    let crowdsec = match raw.crowdsec {
+        None => None,
+        Some(w) => {
+            let part = |p: &str| {
+                !p.is_empty()
+                    && p.chars()
+                        .all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c))
+            };
+            if !w
+                .collection
+                .split_once('/')
+                .is_some_and(|(a, b)| part(a) && part(b))
+            {
+                return Err(format!(
+                    "crowdsec: collection {:?}, a hub collection like LePresidente/jellyfin",
+                    w.collection
+                ));
+            }
+            if !part(&w.kind) {
+                return Err(format!(
+                    "crowdsec: type {:?}, the label its parser reads, like jellyfin",
+                    w.kind
+                ));
+            }
+            Some(Watch {
+                collection: w.collection,
+                kind: w.kind,
+            })
+        }
+    };
     Ok(Manifest {
         name,
         description: raw.description,
@@ -454,6 +505,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         ports,
         run_as_user,
         setup,
+        crowdsec,
     })
 }
 
@@ -1038,6 +1090,11 @@ mod tests {
             st.values,
             [("KnownProxies/string".to_string(), "{{subnet}}".to_string())]
         );
+        let w = m.crowdsec.unwrap();
+        assert_eq!(
+            (w.collection.as_str(), w.kind.as_str()),
+            ("LePresidente/jellyfin", "jellyfin")
+        );
         let setup = m.setup.unwrap();
         assert_eq!(setup.file, "config/config/system.xml");
         assert!(setup.done.contains("IsStartupWizardCompleted"));
@@ -1082,6 +1139,11 @@ mod tests {
             )
             .is_err()
         );
+        // crowdsec: une collection du hub et l'étiquette de son parseur
+        assert!(with("crowdsec:\n  collection: a/b\n  type: b\n").is_ok());
+        assert!(with("crowdsec:\n  collection: b\n  type: b\n").is_err());
+        assert!(with("crowdsec:\n  collection: a/b c\n  type: b\n").is_err());
+        assert!(with("crowdsec:\n  collection: a/b\n  type: \"b\\nc\"\n").is_err());
         // env: une majuscule d'abord, comme JELLYFIN_PublishedServerUrl
         assert!(with("env:\n  JELLYFIN_PublishedServerUrl: x\n").is_ok());
         assert!(with("env:\n  _A: x\n").is_err());

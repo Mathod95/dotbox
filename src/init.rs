@@ -247,7 +247,8 @@ fn steps(args: &Args) -> Result<(), String> {
 
     // 7. CrowdSec: l'agent en container, le bouncer pare-feu sur le système (étape 10)
     ui::step("CrowdSec", "attack detection and firewall bouncer");
-    crowdsec::setup(&crowdsec_core)?;
+    // son socket proxy (les logs des apps, 10.9): la même image que celui de Traefik
+    crowdsec::setup(&crowdsec_core, traefik_core.image("socket-proxy")?)?;
     let crowdsec_version = crowdsec::version(crowdsec_core.image("crowdsec")?);
     ui::done(&format!(
         "{crowdsec_version}, SSH, Traefik and AppSec, bouncer {bouncer_version}"

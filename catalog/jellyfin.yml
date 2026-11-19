@@ -33,3 +33,8 @@ settings:
 setup:
   file: config/config/system.xml
   done: <IsStartupWizardCompleted>true</IsStartupWizardCompleted>
+# Jellyfin ne verrouille aucun compte: CrowdSec lit ses logs et bannit une IP après 5 échecs de
+# connexion (D72, 10.9). Le parseur de la collection lit l'étiquette jellyfin.
+crowdsec:
+  collection: LePresidente/jellyfin
+  type: jellyfin

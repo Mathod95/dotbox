@@ -36,6 +36,7 @@
     <li>Elle crée <code>/opt/jellyfin/config</code> et <code>/opt/jellyfin/cache</code> à ton utilisateur, et prépare <code>/data/media</code> s'il n'existe pas encore.</li>
     <li>Elle écrit <code>network.xml</code> avant le premier démarrage (voir plus bas), puis <code>compose.yml</code>.</li>
     <li>Elle démarre Jellyfin derrière Authelia et attend qu'il réponde. Le premier démarrage prend environ une minute de plus: Jellyfin prépare sa base.</li>
+    <li>Elle demande à CrowdSec de lire les logs de Jellyfin (voir plus bas). La première fois, CrowdSec relit sa configuration: AppSec s'interrompt quelques secondes.</li>
   </ul>
   <h3 id="fr-step2">2. Faire l'assistant</h3>
   <p>Ouvre <code>https://jellyfin.example.com</code>. Authelia te demande de te connecter, puis l'assistant de Jellyfin s'ouvre:</p>
@@ -57,7 +58,7 @@
   <ul>
     <li>Pendant l'assistant: Authelia, avec la double authentification.</li>
     <li>Ensuite: ton mot de passe Jellyfin, et AppSec, qui bloque les attaques connues avant qu'elles n'arrivent à Jellyfin (Security).</li>
-    <li>Jellyfin ne bloque pas un compte après des mots de passe ratés. Prévu: CrowdSec lira ses logs et bannira une IP après 5 échecs.</li>
+    <li>Jellyfin ne bloque pas un compte après des mots de passe ratés. CrowdSec lit donc ses logs (la collection <code>LePresidente/jellyfin</code> du hub): une IP qui rate 5 connexions en peu de temps, ou essaie 5 noms d'utilisateur, est bannie 4 heures, au pare-feu et dans Traefik.</li>
   </ul>
 
   <h2 id="fr-files">Où sont les fichiers</h2>
@@ -128,6 +129,7 @@
     <li>It creates <code>/opt/jellyfin/config</code> and <code>/opt/jellyfin/cache</code>, owned by your user, and prepares <code>/data/media</code> if it does not exist yet.</li>
     <li>It writes <code>network.xml</code> before the first start (see below), then <code>compose.yml</code>.</li>
     <li>It starts Jellyfin behind Authelia and waits for it to answer. The first start takes about a minute more: Jellyfin prepares its database.</li>
+    <li>It asks CrowdSec to read Jellyfin's logs (see below). The first time, CrowdSec reloads its configuration: AppSec pauses for a few seconds.</li>
   </ul>
   <h3 id="en-step2">2. Run the setup</h3>
   <p>Open <code>https://jellyfin.example.com</code>. Authelia asks you to log in, then Jellyfin's setup opens:</p>
@@ -149,7 +151,7 @@
   <ul>
     <li>During the setup: Authelia, with two-factor authentication.</li>
     <li>Afterwards: your Jellyfin password, and AppSec, which blocks known attacks before they reach Jellyfin (Security).</li>
-    <li>Jellyfin does not lock an account after failed passwords. Planned: CrowdSec will read its logs and ban an IP after 5 failures.</li>
+    <li>Jellyfin does not lock an account after failed passwords. So CrowdSec reads its logs (the hub's <code>LePresidente/jellyfin</code> collection): an IP that fails 5 logins in a short time, or tries 5 usernames, is banned for 4 hours, at the firewall and in Traefik.</li>
   </ul>
 
   <h2 id="en-files">Where the files are</h2>

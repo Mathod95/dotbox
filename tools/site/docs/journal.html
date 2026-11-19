@@ -1897,7 +1897,71 @@ container: user 1000:1000, healthy, /data/media monté en lecture seule (touch: 
 /System/Info/Public: LocalAddress « https://jellyfin.<domaine> » (JELLYFIN_PublishedServerUrl), StartupWizardCompleted false, ServerName = l'identifiant du container (backlog 8.6.10)
 Depuis le PC: / et /Startup/User → 302 vers https://auth.<domaine>, personne ne peut créer le compte admin
 healthy avant la fin du démarrage: /health répond 200 pendant que le reste répond 503 « Jellyfin Server is loading » (environ 20 s de plus, sur 2 cœurs)
-relancé: « check network.xml », « check image », « healthy », rien d'écrit, pas de redémarrage` }
+relancé: « check network.xml », « check image », « healthy », rien d'écrit, pas de redémarrage` },
+    { id: "J173", time: "23:41", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "8.6: Jellyfin sur main, sans tag (D73)",
+      cmd: `git commit (feat: Jellyfin, derrière Authelia jusqu'à la fin de son assistant); git push`,
+      does: "Accordé par Mathod95 (« Update la doc et les pages ! On fait toutes les app manquantes et on push le tag ! »). Avec la doc: la page Jellyfin, #50 et #54 dans Overview, le Journal (D71 à D73, Q38 à Q41, N12, 8.17 à 8.22, étape 11), la Roadmap (Jellystat, Portainer, deux lignes corrigées), Releases.",
+      effect: "GitHub: main (c8fe396), catalog/jellyfin.yml lisible par dotbox 0.0.4, le site republié.",
+      undo: "git revert du commit, puis git push",
+      result: "poussé sur main" },
+    { id: "J174", time: "23:44", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "10.9: CrowdSec arrêté par la source docker, 48 s sans AppSec",
+      cmd: `scp (binaire 0.0.4 avec 10.9, sha256 84e4467b74d4b98e…, et le catalogue du PC)
+sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4 /usr/local/bin/dotbox; dotbox init --catalog /tmp/dotbox-catalog'
+sudo_run.py 'dotbox install jellyfin --catalog /tmp/dotbox-catalog'
+sudo_run.py 'rm -f /opt/crowdsec/config/acquis.d/app-jellyfin.yaml; docker start crowdsec'`,
+      does: "Dans le plan 10.9: CrowdSec sur le réseau du socket proxy de Traefik (init), puis la collection LePresidente/jellyfin et le fichier d'acquisition (install), relus par SIGHUP.",
+      effect: "Serveur: la collection installée. CrowdSec s'est arrêté au rechargement: le portail d'Authelia et les apps app et public ont répondu 403 de 23:44:47 à 23:45:35 (D69). Corrigé tout de suite par Claude: le fichier retiré, CrowdSec redémarré.",
+      undo: "Fait: le fichier d'acquisition retiré, CrowdSec redémarré.",
+      result: `[ 2.0s] install  crowdsec collection LePresidente/jellyfin
+[ 2.0s] write    /opt/crowdsec/config/acquis.d/app-jellyfin.yaml (the logs of jellyfin)
+[ 2.2s] reload   crowdsec
+CrowdSec: « reload handler failure: … datasource of type docker: failed to get docker info: Error response from daemon: 403 Forbidden » (fatal)
+dotbox install n'a rien vu: CrowdSec était encore « healthy » au moment du contrôle
+23:45:09 CrowdSec relancé, healthy; portail 403 jusqu'à 23:45:35 (AppSec qui démarre), puis 200
+Leçons, corrigées dans le code: tester la config (crowdsec -t) avant de recharger, et vérifier que CrowdSec tourne encore 10 s après.` },
+    { id: "J175", time: "23:46", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "10.9: crowdsec -t repère une config cassée",
+      cmd: `sudo_run.py 'docker exec crowdsec crowdsec -t' (avec, puis sans le fichier fautif dans acquis.d, posé sans recharger CrowdSec)`,
+      does: "Vérifier que crowdsec -t charge l'acquisition (AppSec et docker compris) et sort en erreur sur le même fichier.",
+      effect: "Aucun: le fichier posé quelques secondes puis retiré, CrowdSec jamais rechargé.",
+      result: `sans le fichier: « Configuration test done », code 0, « Created 1 appsec runners » sans conflit de port
+avec: « fatal … failed to get docker info: 403 Forbidden », code 1
+CrowdSec healthy pendant tout le test` },
+    { id: "J176", time: "23:47", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "10.9: INFO=1 sur le proxy de Traefik, la source docker ne lit rien",
+      cmd: `scp (binaire c56f96c01c8e0bf2…); sudo_run.py 'dotbox init --catalog /tmp/dotbox-catalog; dotbox install jellyfin --catalog /tmp/dotbox-catalog'
+curl https://auth.<domaine>/ chaque seconde pendant l'install (depuis le PC)
+6 connexions ratées: docker exec jellyfin curl -H "X-Forwarded-For: 198.51.100.7" http://localhost:8096/Users/AuthenticateByName`,
+      does: "Le socket proxy de Traefik avec /info autorisé (INFO=1), et le test de config avant chaque rechargement.",
+      effect: "Serveur: socket-proxy recréé avec INFO=1, le fichier d'acquisition de Jellyfin, CrowdSec rechargé.",
+      result: `crowdsec -t: OK; reload; CrowdSec suit le container: « start monitoring container_name=jellyfin »
+Pendant le rechargement: 7 s de 403 sur le portail (23:47:46 à 23:47:53), une seule fois par app ajoutée
+Les 6 refus sont dans les logs de Jellyfin, avec l'IP de test, mais aucune décision: la source docker n'a lu aucune ligne
+cscli explain sur la même ligne: parseur LePresidente/jellyfin-logs OK, scénarios jellyfin-bf et jellyfin-bf_user-enum OK` },
+    { id: "J177", time: "23:50", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "10.9: le socket proxy de Traefik refuse les logs",
+      cmd: `sudo_run.py 'docker exec socket-proxy grep … /run/haproxy/haproxy.cfg; docker exec traefik wget http://socket-proxy:2375/containers/jellyfin/logs'`,
+      does: "Comprendre pourquoi la source docker ne reçoit rien.",
+      effect: "Aucun, lecture seule.",
+      result: `haproxy.cfg: « http-request deny if … /containers/…/logs !allow_logs »: les logs demandent ALLOW_LOGS=1, à 0 par défaut
+wget des logs depuis Traefik: 403 Forbidden
+Choix de Claude: ne pas donner les logs de tous les containers à Traefik. CrowdSec a son propre socket proxy, et celui de Traefik revient à CONTAINERS et POST seulement.` },
+    { id: "J178", time: "23:52", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "10.9: le proxy de CrowdSec, un ban de test",
+      cmd: `scp (binaire b60b39260f291676…)
+sudo_run.py 'rm -f /opt/crowdsec/config/acquis.d/app-jellyfin.yaml; dotbox init --catalog /tmp/dotbox-catalog; dotbox install jellyfin --catalog /tmp/dotbox-catalog'
+6 connexions ratées avec X-Forwarded-For: 198.51.100.7 (comme J176)
+sudo_run.py 'ipset list crowdsec-blacklists-0; docker exec crowdsec cscli decisions delete --ip 198.51.100.7'`,
+      does: "Le fichier d'acquisition retiré avant init: il visait encore le proxy de Traefik, et CrowdSec n'aurait pas démarré (backlog 10.9.4).",
+      effect: "Serveur: crowdsec-socket-proxy (CONTAINERS, INFO, ALLOW_LOGS, POST=0, réseau interne crowdsec_logs), CrowdSec recréé, le proxy de Traefik sans INFO, le fichier d'acquisition de Jellyfin. Le ban de test retiré.",
+      undo: "sudo dotbox remove jellyfin (retire le fichier d'acquisition), le binaire précédent puis sudo dotbox init",
+      result: `socket-proxy: INFO=0, ALLOW_LOGS=0; crowdsec-socket-proxy: CONTAINERS=1, INFO=1, ALLOW_LOGS=1, POST=0
+[ 1.2s] check crowdsec collection LePresidente/jellyfin; write app-jellyfin.yaml; [14.6s] check crowdsec -t; reload
+acquisition docker:jellyfin: 12 lignes lues, 6 parsées
+décision: LePresidente/jellyfin-bf, ban, 6 événements, 4 h, sur 198.51.100.7
+pare-feu: 198.51.100.7 dans crowdsec-blacklists-0, puis retiré avec la décision; 9 autres bans, tous de vrais attaquants` }
   ];
 
   var PLAN = [
@@ -2825,7 +2889,29 @@ sudo docker info --format '{{.LoggingDriver}} live-restore={{.LiveRestoreEnabled
           ],
           does: "D60: le plugin CrowdSec de Traefik (v1.8.2) et AppSec, le WAF de CrowdSec (source AppSec dans l'agent, règles de virtual patching), sur les seules apps sans Authelia devant (niveaux app et public): leurs requêtes passent par CrowdSec avant d'atteindre l'app, une attaque connue est bloquée dès la première. Avant Jellyfin (8.6) et Seerr (8.7), qui en profiteront les premiers. Le portail d'Authelia aussi (accord de Mathod95): sa page de connexion est ouverte à Internet, et c'est l'app qui permet de tester AppSec tout de suite. Une copie locale du plugin, vérifiée, que Traefik lit sur le disque: son catalogue n'est plus nécessaire au démarrage, une panne ne fait plus tomber la connexion. Sa version et son empreinte vont dans catalog/core/crowdsec.yml (D64), pas dans le binaire: 10.7 vient donc après 7.6, 7.12 et 7.13.",
           effect: "PC: catalog/core/crowdsec.yml, src/catalog.rs, src/crowdsec.rs, src/traefik.rs, src/engine.rs, renovate.json, catalog-hashes.yml. Serveur: /opt/crowdsec/config/acquis.d/, /opt/traefik/plugins-local/, /opt/dotbox/secrets/, les compose.yml de Traefik et CrowdSec." },
-        { id: "10.9", kind: "ecriture", where: "PC (code) → Serveur", title: "Les logs des apps sans Authelia (D72)",
+        { id: "10.9", status: "fait", ref: "J174-J178", kind: "ecriture", where: "PC (code) → Serveur", title: "Les logs des apps sans Authelia (D72)",
+          lede: "Plan détaillé du 19 novembre 2026, accordé d'avance par Mathod95 (« Je te laisse gérer tout sauf si tu as des questions à trancher »).",
+          sections: [
+            { h: "10.9.1 Lire les logs par l'API Docker",
+              l: ["CrowdSec sait lire les logs d'un container (source docker de l'acquisition). Jellyfin écrit ses logs aussi sur sa sortie, donc dans les logs Docker: pas de dossier à monter dans CrowdSec.",
+                  "L'API Docker passe par le socket proxy de Traefik (lecture seule, CONTAINERS=1, POST=0), déjà là. CrowdSec rejoint son réseau interne (traefik_socket): il lit les containers et leurs logs, sans pouvoir rien changer. dotbox init réécrit le compose de CrowdSec, sans changer le format du catalogue du core (D70)."] },
+            { h: "10.9.2 Le manifest: crowdsec:",
+              l: ["Deux champs: collection (la collection du hub, LePresidente/jellyfin) et type (l'étiquette que lit son parseur, jellyfin: le parseur LePresidente/jellyfin-logs filtre evt.Parsed.program == 'jellyfin').",
+                  "dotbox install écrit /opt/crowdsec/config/acquis.d/app-<app>.yaml (source docker, le nom du container, le socket proxy), installe la collection (cscli collections install), puis demande à CrowdSec de relire sa config. dotbox remove retire le fichier."] },
+            { h: "Ce qui a changé en route (J174 à J177)",
+              l: ["Le proxy de Traefik refuse les logs (ALLOW_LOGS) et /info (INFO), et c'est voulu: Traefik n'en a pas besoin. CrowdSec a donc son propre socket proxy, la même image, en lecture seule (CONTAINERS, INFO, ALLOW_LOGS, POST=0), sur un réseau interne à lui (crowdsec_logs). Celui de Traefik n'a pas changé.",
+                  "Un fichier d'acquisition cassé arrête CrowdSec à son rechargement, et AppSec bloque alors les apps app et public (D69): 48 s de coupure en J174. dotbox teste maintenant la config (crowdsec -t) avant de recharger, remet l'ancien fichier si le test échoue, et vérifie que CrowdSec tourne encore 10 s après.",
+                  "Le rechargement coupe AppSec 7 s (J176), seulement quand une app qui en a besoin est installée la première fois."] },
+            { h: "10.9.3 Tester",
+              l: ["Sur le PC: fmt, clippy, les tests (le compose de CrowdSec, le fichier d'acquisition).",
+                  "Sur le serveur: dotbox init (CrowdSec sur traefik_socket), dotbox install jellyfin. Puis 6 connexions ratées avec l'IP de documentation 198.51.100.7, envoyées depuis le container lui-même (X-Forwarded-For, que Jellyfin croit de localhost): CrowdSec doit la bannir (LePresidente/jellyfin-bf). La décision est retirée ensuite. Jamais l'IP de Mathod95 (D63).",
+                  "Une IP venue d'Internet ne peut pas se faire passer pour une autre: Traefik ajoute la vraie IP à X-Forwarded-For, et Jellyfin s'arrête à la première adresse qui n'est pas un proxy de confiance."] }
+          ],
+          backlog: [
+            { id: "10.9.4", kind: "ecriture", where: "PC (code)", title: "dotbox init et un fichier d'acquisition d'app périmé",
+              lede: "Les fichiers acquis.d/app-<app>.yaml sont écrits par dotbox install, pas par init. Si init change ce dont ils dépendent (le nom du proxy, en J178), CrowdSec recréé ne démarre plus, et AppSec bloque les apps.",
+              sections: [ { h: "Ce que ça changerait", p: "dotbox init réécrit aussi les fichiers des apps installées (dotbox.yml sait lesquelles, et leur manifest dit quoi), avant de recréer CrowdSec." } ] }
+          ],
           does: "Juste après Jellyfin (8.6), avant Plex et Vaultwarden. Le manifest d'une app app ou public dit quels logs lire et quelle collection du hub installer: LePresidente/jellyfin pour Jellyfin (5 échecs de connexion en 20 secondes, ou 5 noms d'utilisateur essayés en une minute). dotbox install ajoute la source à CrowdSec, installe la collection et redémarre CrowdSec. Grâce à KnownProxies (8.6.3), les logs de Jellyfin ont la vraie IP. Test: des connexions ratées depuis une IP de test, bannie puis débannie, jamais la tienne (D63). Plan détaillé à écrire ici avant de coder.",
           effect: "PC: src/crowdsec.rs, src/apps.rs, catalog/jellyfin.yml. Serveur: une source et une collection de plus dans CrowdSec." },
         { id: "10.8", kind: "ecriture", where: "PC", title: "La doc, Releases et Roadmap",
@@ -3508,8 +3594,8 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172],
-    "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169]
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173],
+    "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {

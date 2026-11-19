@@ -613,13 +613,15 @@
     {
       "stage": "apps",
       "domain": "access",
-      "status": "planned",
+      "status": "done",
       "fr": "Core: CrowdSec lit les logs des apps sans Authelia et bannit qui devine les mots de passe",
       "en": "Core: CrowdSec reads the logs of apps without Authelia and bans password guessers",
       "journal": [
         "10.9",
-        "D72"
-      ]
+        "D72",
+        "J174-J178"
+      ],
+      "doc": "security"
     },
     {
       "stage": "apps",

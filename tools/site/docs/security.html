@@ -85,6 +85,15 @@
     <li>Il partage les attaques qu'il voit avec la communauté CrowdSec, et reçoit en échange une liste d'IP déjà repérées ailleurs, bloquées d'avance. Ce qui part: le type d'attaque, l'heure et l'IP de l'attaquant.</li>
     <li>Dot Box installe l'image officielle de CrowdSec, et le binaire officiel du bouncer, son empreinte vérifiée.</li>
   </ul>
+  <div class="prop-new" data-prop="55">
+  <h3 id="fr-crowdsec-apps">Les connexions des apps sans Authelia</h3>
+  <p>Une app sans Authelia devant a sa propre page de connexion, ouverte à Internet. Jellyfin, par exemple, ne bloque pas un compte après des mots de passe ratés. Pour ces apps, CrowdSec lit aussi leurs logs et bannit une IP qui essaie des mots de passe, pour tout le serveur.</p>
+  <ul>
+    <li>Le manifest de l'app dit quelle collection du hub de CrowdSec installer, par exemple <code>LePresidente/jellyfin</code> pour Jellyfin. <code>dotbox install</code> l'installe, <code>dotbox remove</code> arrête la lecture.</li>
+    <li>CrowdSec lit les logs du container par l'API Docker, à travers son propre socket proxy, en lecture seule. Traefik n'a pas accès à ces logs.</li>
+    <li>Dot Box teste la configuration de CrowdSec avant de la lui faire relire: un fichier qui l'empêcherait de démarrer n'est jamais gardé.</li>
+  </ul>
+  </div>
 
   <div class="prop-old" data-prop="53">
   <h2 id="fr-appsec">AppSec <small>(prévu)</small></h2>
@@ -193,6 +202,15 @@
     <li>It shares the attacks it sees with the CrowdSec community, and receives in return a list of IPs already spotted elsewhere, blocked in advance. What is sent: the type of attack, the time and the attacker's IP.</li>
     <li>Dot Box installs CrowdSec's official image, and the bouncer's official binary, its checksum verified.</li>
   </ul>
+  <div class="prop-new" data-prop="55">
+  <h3 id="en-crowdsec-apps">Logins of apps without Authelia</h3>
+  <p>An app without Authelia in front has its own login page, open to the Internet. Jellyfin, for example, does not lock an account after failed passwords. For these apps, CrowdSec also reads their logs and bans an IP that guesses passwords, for the whole server.</p>
+  <ul>
+    <li>The app's manifest says which CrowdSec hub collection to install, for example <code>LePresidente/jellyfin</code> for Jellyfin. <code>dotbox install</code> installs it, <code>dotbox remove</code> stops the reading.</li>
+    <li>CrowdSec reads the container's logs through the Docker API, via its own socket proxy, read-only. Traefik has no access to these logs.</li>
+    <li>Dot Box tests CrowdSec's configuration before making it reload: a file that would keep it from starting is never kept.</li>
+  </ul>
+  </div>
 
   <div class="prop-old" data-prop="53">
   <h2 id="en-appsec">AppSec <small>(planned)</small></h2>

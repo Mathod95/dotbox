@@ -55,6 +55,10 @@
         {
           "fr": "Moteur: un volume sur un dossier de `/data` (`/data/media`), préparé à l'utilisateur comme `/data`",
           "en": "Engine: a volume on a folder of `/data` (`/data/media`), prepared for the user like `/data`"
+        },
+        {
+          "fr": "Core: CrowdSec lit les logs des apps sans Authelia (`crowdsec:` dans le manifest), par son propre socket proxy en lecture seule, et bannit qui devine leurs mots de passe (Jellyfin: 5 échecs)",
+          "en": "Core: CrowdSec reads the logs of apps without Authelia (`crowdsec:` in the manifest), through its own read-only socket proxy, and bans password guessers (Jellyfin: 5 failures)"
         }
       ],
       "changed": [
