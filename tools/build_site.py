@@ -45,6 +45,7 @@ DOCS = [
     {"slug": "installation", "name": "Installation", "dots": "INSTALL"},
     {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL"},
     {"slug": "update", "name": "Update", "dots": "UPDATE"},
+    {"slug": "renovate", "name": "Renovate", "dots": "RENOVATE"},
     {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS"},
     {"slug": "security", "name": "Security", "dots": "SECURITY"},
     {"slug": "paths", "name": "Paths", "dots": "PATHS"},

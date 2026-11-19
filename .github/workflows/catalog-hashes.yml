@@ -18,7 +18,8 @@ concurrency:
 
 jobs:
   hashes:
-    if: startsWith(github.head_ref, 'renovate/') && github.event.pull_request.head.repo.full_name == github.repository
+    # renovate/: les pull requests de Renovate. test/catalog-hashes: le test du workflow (Journal, 7.14).
+    if: (startsWith(github.head_ref, 'renovate/') || github.head_ref == 'test/catalog-hashes') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -820,49 +820,67 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Catalogue: app GitHub Renovate installée sur le repo, avec son `renovate.json`",
       "en": "Catalog: Renovate GitHub app installed on the repository, with its `renovate.json`",
-      "doc": "update",
+      "doc": "renovate",
       "journal": [
         "7.14",
-        "D64"
+        "D64",
+        "D65"
       ]
     },
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Catalogue: Renovate ouvre une pull request par nouvelle version d'image, regroupées une fois par semaine, et lit les versions linuxserver (`5.27.0.10274-ls283`)",
       "en": "Catalog: Renovate opens a pull request per new image version, grouped once a week, and reads linuxserver versions (`5.27.0.10274-ls283`)",
-      "doc": "update"
-    },
-    {
-      "stage": "updates",
-      "domain": "catalog",
-      "status": "planned",
-      "fr": "Catalogue: CI des pull requests, qui valide le manifest, démarre le container et attend qu'il tourne",
-      "en": "Catalog: pull request CI that validates the manifest, starts the container and waits for it to run",
-      "doc": "update",
+      "doc": "renovate",
       "journal": [
         "7.14",
-        "D64"
+        "D64",
+        "D65"
       ]
     },
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
+      "fr": "Catalogue: CI des pull requests, qui valide le manifest, démarre le container et attend qu'il tourne",
+      "en": "Catalog: pull request CI that validates the manifest, starts the container and waits for it to run",
+      "doc": "renovate",
+      "journal": [
+        "7.14",
+        "D64",
+        "D65"
+      ]
+    },
+    {
+      "stage": "updates",
+      "domain": "catalog",
+      "status": "progress",
       "fr": "Catalogue: fusion automatique des versions correctives, relecture pour les autres",
       "en": "Catalog: automatic merge of patch versions, review for the others",
-      "doc": "update"
+      "doc": "renovate",
+      "journal": [
+        "7.14",
+        "D64",
+        "D65"
+      ]
     },
     {
       "stage": "updates",
       "domain": "cli",
-      "status": "planned",
+      "status": "progress",
       "fr": "CLI: Renovate tient aussi à jour les dépendances Rust du repo `dotbox`",
-      "en": "CLI: Renovate also keeps the Rust dependencies of the `dotbox` repository up to date"
+      "en": "CLI: Renovate also keeps the Rust dependencies of the `dotbox` repository up to date",
+      "doc": "renovate",
+      "journal": [
+        "7.14",
+        "D64",
+        "D65"
+      ]
     },
     {
       "stage": "updates",

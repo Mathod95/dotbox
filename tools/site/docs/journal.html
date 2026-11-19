@@ -1603,7 +1603,37 @@ git commit (ci: CI du catalogue et empreintes du bouncer); git push`,
       does: "Accordé par Mathod95 (« Go »), le 19 novembre 2026. Les deux workflows et le script des empreintes du bouncer, avant que Renovate ouvre ses premières pull requests, pour que la CI tourne dès la première. Avec le Journal (7.14, D65). renovate.json n'y est pas: il passe par la pull request #1 (J145). Un commit ci: ne déclenche pas de release.",
       effect: "GitHub: main, deux workflows de plus (Catalog, Catalog hashes), le site republié par pages.yml.",
       undo: "git revert du commit, puis git push",
-      result: "poussé sur main" }
+      result: "poussé sur main (8f8e2be)" },
+    { id: "J145", time: "18:24", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: renovate.json dans la pull request #1",
+      cmd: `git worktree add (branche renovate/configure); renovate.json remplacé par le nôtre
+git commit (chore: Renovate lit le catalogue); git push origin HEAD:renovate/configure`,
+      does: "Accordé par Mathod95 (« Go »). Le renovate.json par défaut de Renovate (config:recommended seul) remplacé par celui de 7.14, dans la branche de sa pull request d'accueil. Renovate relit la branche et réécrit la description de la pull request avec ce qu'il ferait: l'aperçu avant que Mathod95 la fusionne.",
+      effect: "GitHub: la branche renovate/configure (pull request #1). main n'a pas changé.",
+      undo: "git push --force-with-lease origin c5ef2f2:renovate/configure",
+      result: `poussé (dcb4838). Description de la pull request #1 réécrite par Renovate à 18:23:
+Detected Package Files: Cargo.toml, les 4 workflows, catalog/prowlarr.yml, qui.yml, radarr.yml, sonarr.yml,
+  catalog/core/authelia.yml, crowdsec.yml (deux fois: l'image et le bouncer), traefik.yml
+What to Expect: 3 pull requests
+  chore(catalog): update lscr.io/linuxserver/socket-proxy docker tag to v3.4.8-r0-ls107   (à tout moment)
+  chore(deps): update crates rust   argon2 0.6.0, clap 4.6.8, sha2 0.11   (lundi avant 6 h)
+  chore(deps): update actions/setup-python action to v7   (lundi avant 6 h, branche renovate/major-actions-github: les versions majeures à part)` },
+    { id: "J146", time: "18:40", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: page Renovate, propositions #48 et #49, test de catalog-hashes.yml possible",
+      cmd: `git add tools/site/docs/renovate.html tools/build_site.py tools/site/docs/update.html tools/site/docs/sandbox.html tools/site/roadmap.json .github/workflows/catalog-hashes.yml tools/site/docs/journal.html CLAUDE.md
+git commit (docs: page Renovate, propositions #48 et #49, Journal); git push`,
+      does: "Accordé par Mathod95 (« Oui corrige la doc et fais ce que tu as à faire »). La page Renovate, après Update. Les propositions #48 (Update) et #49 (Sandbox): le catalogue est le dossier catalog/ de ce repo depuis D41, avec un lien vers la page Renovate. catalog-hashes.yml accepte aussi la branche test/catalog-hashes, pour le test du point 3. Roadmap: les cinq features de Renovate en cours. CLAUDE.md à jour.",
+      effect: "GitHub: main, le site republié par pages.yml.",
+      undo: "git revert du commit, puis git push",
+      result: "poussé sur main" },
+    { id: "J147", time: "18:42", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "7.14: la branche test/catalog-hashes",
+      cmd: `git worktree add (depuis main); catalog/core/crowdsec.yml: version: v0.0.36 (seulement cette ligne, comme Renovate)
+git commit (test: catalog-hashes.yml, bouncer v0.0.36); git push origin HEAD:test/catalog-hashes`,
+      does: "Le test de catalog-hashes.yml (7.14, point 3). Une version plus ancienne du bouncer, pour qu'il y ait des empreintes à recalculer. Cette branche ne doit jamais être fusionnée.",
+      effect: "GitHub: une branche test/catalog-hashes. main n'a pas changé.",
+      undo: "git push origin --delete test/catalog-hashes",
+      result: "poussée, en attente de la pull request de Mathod95" }
   ];
 
   var PLAN = [
@@ -2053,7 +2083,14 @@ volumes:
               l: ["renovate.json: renovate-config-validator --strict de Renovate 44.253.0 (Node 24, dans un dossier temporaire), sans erreur. Il a seulement signalé l'ancienne forme de dependencyDashboard, retirée: config:recommended l'active déjà.",
                   "Les workflows: actionlint 1.7.7 avec shellcheck, sans remarque. tools/bouncer_hashes.sh: shellcheck, sans remarque.",
                   "tools/bouncer_hashes.sh --check sur le catalogue: conforme (v0.0.38). Dans une copie, version passée à v0.0.36: --check échoue sur les quatre lignes, puis le script les réécrit et --check passe.",
-                  "Renovate lancé à blanc (--platform=local --dry-run) sur un clone jetable: les 9 lignes du catalogue sont lues, la règle linuxserver s'applique aux 4 images de linuxserver, CrowdSec reste en -debian. Une mise à jour déjà en attente: le socket proxy, 3.4.7-r0-ls106 vers 3.4.8-r0-ls107, un correctif. Côté crates: argon2 0.6.0 et sha2 0.11 dans une seule pull request « crates Rust ». Sans jeton GitHub, les actions et le bouncer n'ont pas pu être cherchés, Renovate hébergé en a un."] }
+                  "Renovate lancé à blanc (--platform=local --dry-run) sur un clone jetable: les 9 lignes du catalogue sont lues, la règle linuxserver s'applique aux 4 images de linuxserver, CrowdSec reste en -debian. Une mise à jour déjà en attente: le socket proxy, 3.4.7-r0-ls106 vers 3.4.8-r0-ls107, un correctif. Côté crates: argon2 0.6.0 et sha2 0.11 dans une seule pull request « crates Rust ». Sans jeton GitHub, les actions et le bouncer n'ont pas pu être cherchés, Renovate hébergé en a un."] },
+            { h: "Pour boucler (19 novembre 2026)",
+              l: ["1. Les workflows sur main (J144) et renovate.json dans la pull request #1 (J145): fait. L'aperçu de Renovate annonce les 3 pull requests attendues.",
+                  "2. La page Renovate de la doc, et les propositions #48 (Update) et #49 (Sandbox), qui parlaient encore d'un repo Mathod95/dotbox-catalog (J146).",
+                  "3. Le test de catalog-hashes.yml, sans attendre une vraie release du bouncer: une branche test/catalog-hashes où la version du bouncer revient à v0.0.36, comme le ferait Renovate (J147). Mathod95 ouvre la pull request. Attendu: la CI échoue sur le bouncer, catalog-hashes.yml ajoute un commit avec les quatre lignes, relance la CI, qui passe. Puis la pull request est fermée sans fusion et la branche supprimée.",
+                  "4. Mathod95 fusionne la pull request #1. Renovate ouvre alors la pull request du socket proxy (3.4.8-r0-ls107). Attendu: la CI passe et Renovate la fusionne seul. Le tableau de bord (une issue « Dependency Dashboard ») apparaît.",
+                  "5. Sur le serveur, avec l'accord de Mathod95: sudo dotbox init relit le catalogue et met à jour le socket proxy, avec le même binaire v0.0.3. C'est la preuve de D64: une mise à jour du core sans nouvelle version de dotbox.",
+                  "6. Les crates Rust et setup-python v7, le lundi: relues par Claude, fusionnées par Mathod95. argon2 0.6 et sha2 0.11 changent leur API, le code devra sans doute suivre."] }
           ],
           effect: "PC: renovate.json, tools/bouncer_hashes.sh, .github/workflows/catalog.yml et catalog-hashes.yml (nouveaux). GitHub: la branche de la pull request #1, puis main." },
         { id: "7.15", status: "fait", ref: "J138-J143", kind: "ecriture", where: "PC → GitHub → Serveur", title: "Tester: le catalogue sur main, puis init et install sans --catalog",
@@ -2925,7 +2962,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "4": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 68],
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
-    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145],
+    "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147],
     "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133]
   };

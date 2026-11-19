@@ -1,0 +1,124 @@
+<!-- LEDE -->
+<p class="lede" data-l="fr">Renovate<i>●</i>le robot qui tient les versions du catalogue à jour, sans nouvelle version de Dot Box.</p>
+<p class="lede" data-l="en">Renovate<i>●</i>the bot that keeps the catalog's versions up to date, with no new Dot Box release.</p>
+
+<!-- CONTENT -->
+<article class="prose" data-l="fr">
+  <h2 id="fr-why">À quoi il sert</h2>
+  <p>Chaque image du catalogue est fixée à une version précise, jamais <code>latest</code>. Quelqu'un doit donc remarquer qu'une nouvelle version est sortie et changer la ligne. C'est le travail de <a href="https://docs.renovatebot.com/" target="_blank" rel="noopener">Renovate</a>, une app GitHub hébergée par Mend, installée sur le repo <code>Mathod95/dotbox</code>. Il surveille les registres d'images et les releases, et ouvre une pull request à chaque nouvelle version.</p>
+  <p>Le catalogue vit dans le repo, et <code>dotbox</code> le lit sur <code>main</code>. Une fois la pull request fusionnée, la nouvelle version est disponible sur tous les serveurs, sans nouveau binaire. Sa configuration est dans <code>renovate.json</code>, à la racine du repo.</p>
+
+  <h2 id="fr-path">Le chemin d'une mise à jour</h2>
+  <ol class="flow">
+    <li><b>Nouvelle version</b><span>traefik:v3.7.20</span></li>
+    <li><b>Pull request</b><span>ouverte par Renovate</span></li>
+    <li><b>CI</b><span>catalog.yml</span></li>
+    <li><b>Fusion</b><span>seule ou à la main</span></li>
+    <li><b>main</b><span>lu par dotbox</span></li>
+  </ol>
+
+  <h2 id="fr-watched">Ce qu'il surveille</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Fichier</th><th>Quoi</th><th>Où il cherche</th></tr></thead>
+    <tbody>
+      <tr><td><code>catalog/&lt;app&gt;.yml</code></td><td>La ligne <code>image:</code> de chaque app</td><td>Le registre de l'image</td></tr>
+      <tr><td><code>catalog/core/*.yml</code></td><td>Les lignes sous <code>images:</code>: Traefik, le socket proxy, Authelia, CrowdSec</td><td>Le registre de l'image</td></tr>
+      <tr><td><code>catalog/core/crowdsec.yml</code></td><td>La version du bouncer pare-feu</td><td>Les releases GitHub de <code>crowdsecurity/cs-firewall-bouncer</code></td></tr>
+      <tr><td><code>Cargo.toml</code></td><td>Les crates Rust du binaire</td><td>crates.io</td></tr>
+      <tr><td><code>.github/workflows/</code></td><td>Les actions GitHub</td><td>GitHub</td></tr>
+    </tbody>
+  </table></div>
+  <p>Les images de linuxserver ont un format à elles: dans <code>7.0.3.10918-ls328</code>, la version de l'app puis le numéro de reconstruction de linuxserver. Renovate les lit avec une règle à part, et une reconstruction (<code>ls329</code>) compte comme un correctif. CrowdSec garde sa variante <code>-debian</code>: seules les versions <code>-debian</code> sont proposées.</p>
+
+  <h2 id="fr-merge">Ce qui fusionne seul</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Mise à jour</th><th>Pull request</th><th>Fusion</th></tr></thead>
+    <tbody>
+      <tr><td>Correctif du catalogue (<code>v3.7.19</code> vers <code>v3.7.20</code>, une reconstruction de linuxserver)</td><td>Une par image</td><td>Seule, quand la CI passe</td></tr>
+      <tr><td>Version mineure ou majeure du catalogue</td><td>Une par image</td><td>Par un mainteneur, après la CI</td></tr>
+      <tr><td>Crates Rust</td><td>Une par semaine, toutes ensemble, les versions majeures à part</td><td>Par un mainteneur, après la CI</td></tr>
+      <tr><td>Actions GitHub</td><td>Une par semaine, toutes ensemble, les versions majeures à part</td><td>Par un mainteneur, après la CI</td></tr>
+    </tbody>
+  </table></div>
+  <p>Renovate ouvre au plus deux pull requests par heure. Les pull requests groupées arrivent le lundi avant 6 h, heure de Paris. Une issue « Dependency Dashboard » dans le repo liste tout ce qui est en attente.</p>
+
+  <h2 id="fr-ci">La CI du catalogue</h2>
+  <p>Le workflow <code>catalog.yml</code> tourne sur chaque pull request qui touche le catalogue, le code ou les workflows. C'est lui qui autorise une fusion automatique:</p>
+  <ul>
+    <li>Le code: <code>cargo fmt --check</code>, <code>clippy</code> et les tests, qui vérifient aussi que chaque manifest est valide.</li>
+    <li>Les images: chacune doit exister dans son registre. Une faute dans un tag fait échouer la CI.</li>
+    <li>Le bouncer: l'archive et le binaire doivent avoir les empreintes écrites dans le manifest.</li>
+  </ul>
+
+  <h2 id="fr-bouncer">Les empreintes du bouncer</h2>
+  <p>Le bouncer pare-feu n'a pas d'image: <code>dotbox init</code> télécharge son archive et vérifie deux empreintes, celle de l'archive et celle du binaire qu'elle contient. Renovate ne change que sa version. Le workflow <code>catalog-hashes.yml</code> fait le reste dans la pull request, avec <code>tools/bouncer_hashes.sh</code>:</p>
+  <ul>
+    <li>Il déduit de la version l'adresse de l'archive et le chemin du binaire.</li>
+    <li>Il télécharge l'archive et la compare à l'empreinte que GitHub publie pour ce fichier.</li>
+    <li>Il calcule l'empreinte du binaire, écrit les quatre lignes et ajoute un commit dans la pull request.</li>
+    <li>Il relance la CI sur ce commit.</li>
+  </ul>
+
+  <h2 id="fr-commits">Les messages de commit</h2>
+  <p>Les versions de Dot Box se déduisent des messages de commit: un <code>fix:</code> annonce une version corrective. Une mise à jour du catalogue ne change pas le binaire, Renovate écrit donc <code>chore(catalog):</code>, et <code>chore(deps):</code> pour les crates et les actions. Quand une mise à jour des crates mérite une nouvelle version de Dot Box, c'est une décision à part.</p>
+</article>
+
+<article class="prose" data-l="en">
+  <h2 id="en-why">What it is for</h2>
+  <p>Every image in the catalog is pinned to a precise version, never <code>latest</code>. So someone has to notice when a new version is out and change the line. That is the job of <a href="https://docs.renovatebot.com/" target="_blank" rel="noopener">Renovate</a>, a GitHub app hosted by Mend, installed on the <code>Mathod95/dotbox</code> repository. It watches image registries and releases, and opens a pull request for each new version.</p>
+  <p>The catalog lives in the repository, and <code>dotbox</code> reads it from <code>main</code>. Once the pull request is merged, the new version is available on every server, with no new binary. Its configuration is in <code>renovate.json</code>, at the root of the repository.</p>
+
+  <h2 id="en-path">The path of an update</h2>
+  <ol class="flow">
+    <li><b>New version</b><span>traefik:v3.7.20</span></li>
+    <li><b>Pull request</b><span>opened by Renovate</span></li>
+    <li><b>CI</b><span>catalog.yml</span></li>
+    <li><b>Merge</b><span>automatic or by hand</span></li>
+    <li><b>main</b><span>read by dotbox</span></li>
+  </ol>
+
+  <h2 id="en-watched">What it watches</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>File</th><th>What</th><th>Where it looks</th></tr></thead>
+    <tbody>
+      <tr><td><code>catalog/&lt;app&gt;.yml</code></td><td>The <code>image:</code> line of each app</td><td>The image's registry</td></tr>
+      <tr><td><code>catalog/core/*.yml</code></td><td>The lines under <code>images:</code>: Traefik, the socket proxy, Authelia, CrowdSec</td><td>The image's registry</td></tr>
+      <tr><td><code>catalog/core/crowdsec.yml</code></td><td>The firewall bouncer's version</td><td>The GitHub releases of <code>crowdsecurity/cs-firewall-bouncer</code></td></tr>
+      <tr><td><code>Cargo.toml</code></td><td>The binary's Rust crates</td><td>crates.io</td></tr>
+      <tr><td><code>.github/workflows/</code></td><td>GitHub actions</td><td>GitHub</td></tr>
+    </tbody>
+  </table></div>
+  <p>linuxserver images have their own format: in <code>7.0.3.10918-ls328</code>, the app's version then linuxserver's rebuild number. Renovate reads them with a dedicated rule, and a rebuild (<code>ls329</code>) counts as a patch. CrowdSec keeps its <code>-debian</code> variant: only <code>-debian</code> versions are proposed.</p>
+
+  <h2 id="en-merge">What merges on its own</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Update</th><th>Pull request</th><th>Merge</th></tr></thead>
+    <tbody>
+      <tr><td>Catalog patch (<code>v3.7.19</code> to <code>v3.7.20</code>, a linuxserver rebuild)</td><td>One per image</td><td>Automatic, when CI passes</td></tr>
+      <tr><td>Catalog minor or major version</td><td>One per image</td><td>By a maintainer, after CI</td></tr>
+      <tr><td>Rust crates</td><td>One a week, all together, major versions apart</td><td>By a maintainer, after CI</td></tr>
+      <tr><td>GitHub actions</td><td>One a week, all together, major versions apart</td><td>By a maintainer, after CI</td></tr>
+    </tbody>
+  </table></div>
+  <p>Renovate opens at most two pull requests per hour. Grouped pull requests arrive on Monday before 6 am, Paris time. A "Dependency Dashboard" issue in the repository lists everything pending.</p>
+
+  <h2 id="en-ci">The catalog CI</h2>
+  <p>The <code>catalog.yml</code> workflow runs on every pull request that touches the catalog, the code or the workflows. It is what allows an automatic merge:</p>
+  <ul>
+    <li>The code: <code>cargo fmt --check</code>, <code>clippy</code> and the tests, which also check that every manifest is valid.</li>
+    <li>The images: each must exist in its registry. A typo in a tag fails the CI.</li>
+    <li>The bouncer: the archive and the binary must match the hashes written in the manifest.</li>
+  </ul>
+
+  <h2 id="en-bouncer">The bouncer's hashes</h2>
+  <p>The firewall bouncer has no image: <code>dotbox init</code> downloads its archive and checks two hashes, the archive's and the one of the binary inside it. Renovate only changes its version. The <code>catalog-hashes.yml</code> workflow does the rest in the pull request, with <code>tools/bouncer_hashes.sh</code>:</p>
+  <ul>
+    <li>It derives the archive's address and the binary's path from the version.</li>
+    <li>It downloads the archive and compares it with the hash GitHub publishes for that file.</li>
+    <li>It computes the binary's hash, writes the four lines and adds a commit to the pull request.</li>
+    <li>It runs the CI again on that commit.</li>
+  </ul>
+
+  <h2 id="en-commits">Commit messages</h2>
+  <p>Dot Box versions are derived from commit messages: a <code>fix:</code> announces a patch release. A catalog update does not change the binary, so Renovate writes <code>chore(catalog):</code>, and <code>chore(deps):</code> for crates and actions. When a crate update deserves a new Dot Box release, that is a separate decision.</p>
+</article>
