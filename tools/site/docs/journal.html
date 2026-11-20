@@ -2389,7 +2389,34 @@ git tag v0.0.5; git push origin v0.0.5`,
       effect: "GitHub: main à 3464f9a, le tag v0.0.5, la release (dotbox-linux-amd64, son .sha256, install.sh). install.sh installe désormais la v0.0.5. Le déploiement du site de ce commit a échoué chez GitHub (deploy-pages: « No artifacts named github-pages », l'envoi de l'artefact ayant réussi), sans pouvoir être relancé avec le jeton de Claude: le commit suivant le redéploie.",
       result: `130 tests passés, dotbox 0.0.5, shellcheck ok
 Release v0.0.5: completed success
-v0.0.5 2026-11-20T21:48:22Z dotbox-linux-amd64,dotbox-linux-amd64.sha256,install.sh` }
+v0.0.5 2026-11-20T21:48:22Z dotbox-linux-amd64,dotbox-linux-amd64.sha256,install.sh` },
+    { id: "J218", time: "23:25", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "Le site ne se déployait plus: deux jobs",
+      cmd: `gh run rerun 44823632248 --failed     # après l'ajout de la permission Actions (lecture et écriture) au jeton
+git commit (21134b3, ci: le site en deux jobs, construire puis déployer); git push origin main`,
+      does: "Depuis 3464f9a, deploy-pages échouait: « No artifacts named github-pages », alors que l'artefact existait (565 Ko, visible par l'API). Mêmes versions d'actions et même workflow que le dernier déploiement réussi, aucun incident sur githubstatus.com. Mathod95 a donné au jeton de Claude la permission Actions en lecture et écriture, pour relancer un run: la relance échoue pareil. deploy-pages cherche l'artefact par le service interne d'Actions, avec le jeton du run, pas le nôtre. Accord de Mathod95: pages.yml suit le modèle de GitHub Pages, un job build (construire, envoyer l'artefact) et un job deploy (needs: build).",
+      effect: "GitHub: .github/workflows/pages.yml en deux jobs, le site redéployé avec la release v0.0.5 et le Journal J217.",
+      result: `attempt 2 failure     (la relance, dans un seul job)
+Site 21134b3: success
+https://mathod95.github.io/dotbox/releases/: v0.0.5` },
+    { id: "J219", time: "23:26", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "13.8: sudo dotbox upgrade, vers la release v0.0.5",
+      cmd: `ssh dotbox-test 'dotbox version; dotbox upgrade'
+python3 sudo_run.py 'dotbox upgrade; ls -la /usr/local/bin/dotbox*; sha256sum /usr/local/bin/dotbox'
+ssh dotbox-test 'dotbox version; dotbox --version'
+gh release download v0.0.5 -p dotbox-linux-amd64.sha256
+python3 sudo_run.py 'dotbox upgrade'`,
+      does: "Le premier vrai remplacement par upgrade (en J209, seul le cas « déjà à jour » avait pu être testé). Le serveur tournait le binaire de J213, qui se disait 0.0.4. Sans sudo: refusé. En root: la release v0.0.5 téléchargée, son SHA-256 vérifié, l'ancien binaire gardé, le service redémarré. Puis une seconde fois: rien à faire.",
+      effect: "Serveur: /usr/local/bin/dotbox est la release v0.0.5, l'ancien dans /usr/local/bin/dotbox.previous, le service redémarré. Les apps et le core n'ont pas bougé.",
+      result: `error    dotbox upgrade replaces /usr/local/bin/dotbox: sudo dotbox upgrade
+✓ [1/1] Dot Box       0.0.4 → 0.0.5, service restarted                   1.6 s
+→ The apps and the core are untouched: sudo dotbox init brings the core to the catalog versions.
+  Back to the old binary: sudo install -m 755 /usr/local/bin/dotbox.previous /usr/local/bin/dotbox
+cli      0.0.5
+service  0.0.5, /run/dotbox/dotbox.sock
+sha256 sur le serveur = dotbox-linux-amd64.sha256 de la release: 65e3e314…20503
+✓ [1/1] Dot Box       0.0.5, the latest                                  0.2 s`,
+      undo: "sudo install -m 755 /usr/local/bin/dotbox.previous /usr/local/bin/dotbox && sudo systemctl restart dotbox" }
   ];
 
   var PLAN = [
@@ -3521,7 +3548,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "13.7", status: "fait", ref: "J206, J209", kind: "ecriture", where: "PC → Serveur", title: "dotbox diff",
           does: "L'écart entre ce qui est voulu et ce qui tourne, sans rien changer: une app de dotbox.yml arrêtée ou absente, une version qui n'est plus celle du catalogue, un compose.yml modifié à la main. Lit le catalogue rangé, sans aller sur GitHub. dotbox sync, qui corrige l'écart, vient plus tard (13.12). Route GET /api/v1/diff.",
           effect: "PC: un module diff, src/serve.rs, src/client.rs." },
-        { id: "13.8", status: "fait", ref: "J209", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox upgrade",
+        { id: "13.8", status: "fait", ref: "J209, J219", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox upgrade",
           does: "Dot Box lui-même, en root seulement, sans le service (il remplace son binaire): la dernière release GitHub, son SHA-256 vérifié comme install.sh, l'ancien binaire gardé (/usr/local/bin/dotbox.previous), puis le service redémarré. Ne touche ni aux apps ni au core: dotbox init le fait si l'on veut (la carte le rappelle).",
           effect: "PC: un module upgrade. Serveur, au test: le binaire remplacé par une release." },
         { id: "13.9", status: "fait", ref: "J209", kind: "ecriture", where: "PC", title: "dotbox completion bash|zsh|fish",
@@ -4309,8 +4336,8 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195],
     "11": [197, 198, 201, 202],
     "12": [196, 199, 200, 203, 204],
-    "13": [205, 206, 207, 208, 209, 210, 211, 212],
-    "14": [213, 214, 215, 216, 217],
+    "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
+    "14": [213, 214, 215, 216, 217, 218],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
