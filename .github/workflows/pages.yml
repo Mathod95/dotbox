@@ -12,10 +12,9 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # le modèle de GitHub Pages: un job construit et envoie l'artefact, un autre le déploie
+  # (dans un seul job, deploy-pages ne trouvait plus l'artefact, Journal J218)
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v6
@@ -27,5 +26,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/deploy-pages@v5
         id: deployment
