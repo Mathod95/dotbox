@@ -33,7 +33,7 @@ pub fn next_steps(user: &str) -> Vec<(String, &'static str)> {
         (format!("exit, then: exec su - {user}"), "installation"),
         (
             "open the Authelia address, add a 6-digit code app".into(),
-            "accessing-apps",
+            "post-installation",
         ),
         (
             "check the server: doctor, SSH, backups".into(),
@@ -316,7 +316,9 @@ mod tests {
         assert!(text.contains("│ CrowdSec   │ -         │ ○ later     │ -"));
         assert!(text.contains("├────┬───────┴───────────┴─────────────┴"));
         assert!(text.contains("│ 1  │ exit, then: exec su - admin"));
-        assert!(text.contains("https://mathod95.github.io/dotbox/getting-started/accessing-apps/"));
+        assert!(
+            text.contains("https://mathod95.github.io/dotbox/getting-started/post-installation/")
+        );
         assert!(lines.last().unwrap().starts_with("  ╰────┴"));
     }
 

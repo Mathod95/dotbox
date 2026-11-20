@@ -10,17 +10,19 @@
     <thead><tr><th>Élément</th><th>Minimum</th><th>Conseillé</th></tr></thead>
     <tbody>
       <tr><td>Système</td><td>Versions LTS uniquement: Debian 12 ou 13, Ubuntu 24.04 ou 26.04, installation neuve</td><td>Debian 13</td></tr>
-      <tr><td>Processeur</td><td>amd64, 2 cœurs</td><td>4 cœurs, avec puce graphique pour le transcodage du serveur média</td></tr>
-      <tr><td>Mémoire</td><td>2 Go pour le core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 Go avec beaucoup d'apps</td></tr>
+      <tr><td>Processeur</td><td>amd64, 2 cœurs</td><td>4 cœurs. Le transcodage par la puce graphique viendra plus tard: Dot Box ne la donne pas encore au serveur média.</td></tr>
+      <tr><td>Mémoire</td><td>2 Go pour le core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>4 Go pour une dizaine d'apps, 8 Go avec un serveur média et une grande bibliothèque</td></tr>
       <tr><td>Disque</td><td>20 Go pour le système et <code>/opt</code></td><td><code>/data</code> sur un disque à part, assez grand pour tes médias</td></tr>
-      <tr><td>Accès</td><td>Root en SSH pour l'installation (<code>su -</code>), puis ton utilisateur avec <code>sudo</code></td><td>Une clé SSH, sans mot de passe</td></tr>
+      <tr><td>Accès</td><td>Le mot de passe root pour l'installation (<code>su -</code>), ou un accès root en SSH si l'hébergeur ne donne que celui-là. Ensuite, ton utilisateur avec <code>sudo</code>.</td><td>Une clé SSH, sans mot de passe</td></tr>
     </tbody>
   </table></div>
   <h3 id="fr-network">Réseau</h3>
   <ul>
     <li><b>Ports 80 et 443</b> ouverts depuis internet et libres, pour Traefik: le 80 sert à obtenir les certificats et à rediriger vers HTTPS, le 443 aux apps. <code>dotbox init</code> s'arrête si un autre service les occupe.</li>
     <li><b>Le port SSH</b> (22 ou le tien), pour l'administration et l'accès de secours.</li>
+    <li><b>Les ports de certaines apps</b>, seulement si tu les installes: <code>56881</code> en TCP et UDP pour les pairs de qBittorrent, <code>51820</code> en UDP pour le VPN de wg-easy. Ce ne sont pas des pages web: ils ne passent pas par Traefik.</li>
   </ul>
+  <p>Si ton hébergeur a un pare-feu devant le serveur, ouvre-y ces ports. Un port 80 fermé chez l'hébergeur est la cause la plus courante d'un certificat qui ne s'obtient pas.</p>
 
   <h2 id="fr-domain">Le domaine</h2>
   <p>Chaque app est servie sur son sous-domaine (<code>radarr.example.com</code>), jamais par IP et port: les ports des containers restent sur le réseau interne <code>dotbox</code>.</p>
@@ -40,12 +42,6 @@
   <p>Traefik demande un certificat à Let's Encrypt pour chaque sous-domaine, dès que l'app est installée, par le challenge HTTP-01: Let's Encrypt vérifie que le sous-domaine répond sur le port 80 du serveur. Les certificats se renouvellent tout seuls.</p>
   <p>Comme tout certificat, ils sont inscrits dans des registres publics: on peut y voir qu'un sous-domaine comme <code>radarr.example.com</code> existe, pas ce qu'il contient.</p>
 
-  <h2 id="fr-optional">Optionnel</h2>
-  <ul>
-    <li><b>Un stockage hors du serveur</b> pour les sauvegardes: un remote rclone, un NAS en SFTP ou un bucket S3.</li>
-    <li><b>Des sources</b> pour Prowlarr: pas nécessaires pour installer, seulement pour télécharger.</li>
-    <li><b>Un compte Plex</b>, seulement si tu installes Plex. Jellyfin n'a besoin d'aucun compte externe.</li>
-  </ul>
 </article>
 
 <article class="prose" data-l="en">
@@ -55,17 +51,19 @@
     <thead><tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr></thead>
     <tbody>
       <tr><td>System</td><td>LTS releases only: Debian 12 or 13, Ubuntu 24.04 or 26.04, fresh install</td><td>Debian 13</td></tr>
-      <tr><td>CPU</td><td>amd64, 2 cores</td><td>4 cores, with a GPU for media server transcoding</td></tr>
-      <tr><td>Memory</td><td>2 GB for the core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>8 GB with many apps</td></tr>
+      <tr><td>CPU</td><td>amd64, 2 cores</td><td>4 cores. Transcoding on the GPU will come later: Dot Box does not hand it to the media server yet.</td></tr>
+      <tr><td>Memory</td><td>2 GB for the core (Traefik, Authelia, CrowdSec, Dot Box)</td><td>4 GB for about ten apps, 8 GB with a media server and a large library</td></tr>
       <tr><td>Disk</td><td>20 GB for the system and <code>/opt</code></td><td><code>/data</code> on a separate disk, large enough for your media</td></tr>
-      <tr><td>Access</td><td>Root over SSH for the install (<code>su -</code>), then your user with <code>sudo</code></td><td>An SSH key, no password</td></tr>
+      <tr><td>Access</td><td>The root password for the install (<code>su -</code>), or root access over SSH if the hosting provider only gives that. Then your user with <code>sudo</code>.</td><td>An SSH key, no password</td></tr>
     </tbody>
   </table></div>
   <h3 id="en-network">Network</h3>
   <ul>
     <li><b>Ports 80 and 443</b> open to the internet and free, for Traefik: 80 is used to get certificates and to redirect to HTTPS, 443 serves the apps. <code>dotbox init</code> stops if another service uses them.</li>
     <li><b>The SSH port</b> (22 or yours), for administration and emergency access.</li>
+    <li><b>The ports of some apps</b>, only if you install them: <code>56881</code> over TCP and UDP for qBittorrent's peers, <code>51820</code> over UDP for wg-easy's VPN. They are not web pages: they do not go through Traefik.</li>
   </ul>
+  <p>If your hosting provider has a firewall in front of the server, open these ports there. Port 80 closed at the provider is the most common reason a certificate cannot be obtained.</p>
 
   <h2 id="en-domain">The domain</h2>
   <p>Each app is served on its own subdomain (<code>radarr.example.com</code>), never by IP and port: container ports stay on the internal <code>dotbox</code> network.</p>
@@ -85,10 +83,4 @@
   <p>Traefik requests a certificate from Let's Encrypt for each subdomain, as soon as the app is installed, through the HTTP-01 challenge: Let's Encrypt checks that the subdomain answers on the server's port 80. Certificates renew on their own.</p>
   <p>Like any certificate, they are listed in public logs: anyone can see that a subdomain such as <code>radarr.example.com</code> exists, not what it holds.</p>
 
-  <h2 id="en-optional">Optional</h2>
-  <ul>
-    <li><b>Off-server storage</b> for backups: an rclone remote, a NAS over SFTP or an S3 bucket.</li>
-    <li><b>Sources</b> for Prowlarr: not needed to install, only to download.</li>
-    <li><b>A Plex account</b>, only if you install Plex. Jellyfin needs no outside account.</li>
-  </ul>
 </article>

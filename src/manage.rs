@@ -1,0 +1,620 @@
+//! Les autres commandes de la CLI (Journal, étape 13): list, info, start, stop, restart, logs,
+//! update et diff. Ce qui lit répond tout de suite (une route GET du service), ce qui agit est
+//! une tâche du service, avec ses étapes en direct, comme install. Avec --local, en root, sans
+//! le service.
+
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+
+use console::style;
+use serde::{Deserialize, Serialize};
+
+use crate::catalog;
+use crate::clack::{self, Mark};
+use crate::config::Config;
+use crate::out::say;
+use crate::status::{self, CORE};
+use crate::{apps, engine, github, system, ui};
+
+fn catalog_dir() -> PathBuf {
+    PathBuf::from(github::DIR)
+}
+
+fn no_catalog() -> String {
+    format!("no catalog in {}: run sudo dotbox init", github::DIR)
+}
+
+// ---------- 13.1 dotbox list
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CatalogApp {
+    pub name: String,
+    pub role: String,
+    pub version: String,
+    pub installed: bool,
+}
+
+/// Le catalogue rangé par le dernier init, filtré sur le nom ou le rôle.
+pub fn list(search: &str) -> Result<Vec<CatalogApp>, String> {
+    let dir = catalog_dir();
+    let names = catalog::app_names(&dir);
+    if names.is_empty() {
+        return Err(no_catalog());
+    }
+    let cfg = Config::load()?;
+    let s = search.to_lowercase();
+    Ok(names
+        .into_iter()
+        .filter_map(|n| {
+            // un manifest pour un Dot Box plus récent est passé, pas une erreur
+            let m = catalog::load(&dir, &n).ok()?;
+            let hit = s.is_empty() || n.contains(&s) || m.description.to_lowercase().contains(&s);
+            hit.then(|| CatalogApp {
+                installed: cfg.app(&n).is_some(),
+                version: m.version().to_string(),
+                role: m.description.clone(),
+                name: n,
+            })
+        })
+        .collect())
+}
+
+pub fn print_list(list: &[CatalogApp]) {
+    let width = list.iter().map(|a| a.name.len()).max().unwrap_or(0).max(4) + 3;
+    let installed = list.iter().filter(|a| a.installed).count();
+    if !clack::fancy() {
+        for a in list {
+            let state = if a.installed { "installed" } else { "-" };
+            clack::put(&format!(
+                "{:<width$}{:<20}{:<11}{}",
+                a.name,
+                ui::fit(&a.version, 19),
+                state,
+                a.role
+            ));
+        }
+        return;
+    }
+    clack::open("dotbox list");
+    if list.is_empty() {
+        clack::sub("no app matches");
+    }
+    for a in list {
+        let text = format!("{:<20}{}", ui::fit(&a.version, 19), ui::fit(&a.role, 48));
+        if a.installed {
+            clack::item(Mark::Ok, &a.name, width, &text);
+        } else {
+            clack::item_off(&a.name, width, &text);
+        }
+    }
+    clack::close(&format!(
+        "{} {}, {installed} installed {}",
+        list.len(),
+        if list.len() == 1 { "app" } else { "apps" },
+        style("(◇ installed, ○ not yet: dotbox install <app>)").dim()
+    ));
+}
+
+// ---------- 13.2 dotbox info
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AppInfo {
+    pub name: String,
+    pub role: String,
+    /// l'image du catalogue
+    pub image: String,
+    /// la version qui tourne, si elle n'est pas celle du catalogue
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub running: String,
+    pub installed: bool,
+    pub state: String,
+    pub health: String,
+    pub url: String,
+    pub access: String,
+    pub setup_pending: bool,
+    pub volumes: Vec<String>,
+    pub ports: Vec<String>,
+}
+
+pub fn info(app: &str) -> Result<AppInfo, String> {
+    let dir = catalog_dir();
+    if catalog::app_names(&dir).is_empty() {
+        return Err(no_catalog());
+    }
+    let m = catalog::load(&crate::add::manifest_dir(&dir, app), app)?;
+    let cfg = Config::load()?;
+    let domain = cfg.get("domain").unwrap_or_default();
+    let (sub, access) = match cfg.app(app) {
+        Some((s, a)) => (if s.is_empty() { app.to_string() } else { s }, a),
+        None => (app.to_string(), m.access.as_str().to_string()),
+    };
+    let list = status::containers().unwrap_or_default();
+    let c = list.iter().find(|c| c.name == app);
+    let running = c.map(|c| status::tag(&c.image)).unwrap_or_default();
+    Ok(AppInfo {
+        name: app.to_string(),
+        role: m.description.clone(),
+        image: m.image.clone(),
+        running: if running == m.version() {
+            String::new()
+        } else {
+            running
+        },
+        installed: cfg.app(app).is_some(),
+        state: c
+            .map(|c| c.state.clone())
+            .unwrap_or_else(|| "missing".into()),
+        health: c.map(|c| c.health.clone()).unwrap_or_default(),
+        url: format!("https://{sub}.{domain}"),
+        setup_pending: status::setup_pending(app, &access),
+        access,
+        volumes: m
+            .volumes
+            .iter()
+            .map(|v| {
+                format!(
+                    "{} → {}{}",
+                    v.host,
+                    v.container,
+                    if v.read_only { " (read-only)" } else { "" }
+                )
+            })
+            .collect(),
+        ports: m
+            .ports
+            .iter()
+            .map(|p| format!("{}/{}", p.number, p.proto))
+            .collect(),
+    })
+}
+
+pub fn print_info(i: &AppInfo) {
+    let state = if !i.installed {
+        "not installed".to_string()
+    } else if i.state == "running" && !i.health.is_empty() {
+        i.health.clone()
+    } else {
+        i.state.clone()
+    };
+    let access = if i.setup_pending {
+        format!(
+            "{} after its first-run setup (two_factor until then)",
+            i.access
+        )
+    } else {
+        i.access.clone()
+    };
+    if !clack::fancy() {
+        clack::put(&format!("name       {}", i.name));
+        clack::put(&format!("role       {}", i.role));
+        clack::put(&format!("image      {}", i.image));
+        if !i.running.is_empty() {
+            clack::put(&format!("running    {}", i.running));
+        }
+        clack::put(&format!("state      {state}"));
+        clack::put(&format!("address    {}", i.url));
+        clack::put(&format!("access     {access}"));
+        for v in &i.volumes {
+            clack::put(&format!("folder     {v}"));
+        }
+        for p in &i.ports {
+            clack::put(&format!("port       {p}"));
+        }
+        return;
+    }
+    clack::open(&format!("dotbox info {}", i.name));
+    clack::field("Image", &i.image);
+    if !i.running.is_empty() {
+        clack::field(
+            "Running",
+            &Mark::Warn.paint(&format!("{}, run dotbox update {}", i.running, i.name)),
+        );
+    }
+    let painted = match state.as_str() {
+        "healthy" | "running" => Mark::Ok.paint(&state),
+        "starting" | "not installed" => Mark::Warn.paint(&state),
+        _ => Mark::Error.paint(&state),
+    };
+    clack::field("State", &painted);
+    clack::field("Address", &i.url);
+    clack::field("Access", &access);
+    for (n, v) in i.volumes.iter().enumerate() {
+        clack::field(if n == 0 { "Folders" } else { "" }, v);
+    }
+    if !i.ports.is_empty() {
+        clack::field("Ports", &i.ports.join(", "));
+    }
+    let end = if i.installed {
+        i.role.clone()
+    } else {
+        format!("{} · dotbox install {}", i.role, i.name)
+    };
+    clack::close(&style(end).dim().to_string());
+}
+
+// ---------- 13.3 dotbox start, stop, restart
+
+fn installed_app(app: &str) -> Result<(), String> {
+    if CORE.contains(&app) {
+        return Err(format!(
+            "{app} is part of the core: sudo dotbox init manages it"
+        ));
+    }
+    if !catalog::valid_name(app) {
+        return Err(format!("{app:?} is not an app name"));
+    }
+    Ok(())
+}
+
+/// Le container a-t-il un healthcheck (le sien ou celui de son image)?
+fn has_health(app: &str) -> bool {
+    system::run(
+        "docker",
+        &["inspect", "-f", "{{if .Config.Healthcheck}}yes{{end}}", app],
+    )
+    .is_ok_and(|s| s == "yes")
+}
+
+pub fn lifecycle(action: &str, app: &str, verbose: bool) -> Result<(), String> {
+    installed_app(app)?;
+    apps::begin(action, app, 1, verbose)?;
+    ui::step(&apps::title(app), action);
+    apps::finish((|| {
+        let cfg = Config::load()?;
+        if cfg.app(app).is_none() || !Path::new(&engine::compose_path(app)).exists() {
+            return Err(format!("{app} is not installed: dotbox install {app}"));
+        }
+        match action {
+            "start" => apps::compose(app, &["up", "-d", "--quiet-pull"])?,
+            "stop" => apps::compose(app, &["stop"])?,
+            _ => apps::compose(app, &["restart"])?,
+        };
+        say(action, app);
+        if action == "stop" {
+            ui::done("stopped");
+        } else {
+            let state = apps::wait_ready(app, has_health(app), Duration::from_secs(180))?;
+            ui::done(&state);
+        }
+        Ok(())
+    })())
+}
+
+// ---------- 13.4 dotbox logs
+
+/// Les logs d'une app, ou d'un container du core: lire n'est pas agir.
+pub fn logs_allowed(app: &str) -> Result<(), String> {
+    if CORE.contains(&app) {
+        return Ok(());
+    }
+    if !catalog::valid_name(app) {
+        return Err(format!("{app:?} is not an app name"));
+    }
+    if Config::load()?.app(app).is_none() {
+        return Err(format!("{app} is not installed"));
+    }
+    Ok(())
+}
+
+pub fn logs_args(app: &str, tail: u32, follow: bool) -> Vec<String> {
+    let mut a = vec!["logs".to_string(), "--tail".into(), tail.to_string()];
+    if follow {
+        a.push("-f".into());
+    }
+    a.push(app.to_string());
+    a
+}
+
+pub fn logs_local(app: &str, tail: u32, follow: bool) -> Result<(), String> {
+    logs_allowed(app)?;
+    let status = std::process::Command::new("docker")
+        .args(logs_args(app, tail, follow))
+        .status()
+        .map_err(|e| format!("cannot run docker logs: {e}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(String::new())
+    }
+}
+
+// ---------- 13.5 et 13.6 dotbox update
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Version {
+    pub app: String,
+    /// le tag qui tourne, vide sans container
+    pub current: String,
+    /// le tag du catalogue
+    pub latest: String,
+}
+
+impl Version {
+    pub fn up_to_date(&self) -> bool {
+        self.current == self.latest
+    }
+}
+
+/// Les apps installées, leur version et celle du catalogue rangé.
+pub fn versions(dir: &Path, cfg: &Config) -> Result<Vec<Version>, String> {
+    let list = status::containers()?;
+    Ok(cfg
+        .app_names()
+        .into_iter()
+        .filter_map(|app| {
+            let m = catalog::load(dir, &app).ok()?;
+            let current = list
+                .iter()
+                .find(|c| c.name == app)
+                .map(|c| status::tag(&c.image))
+                .unwrap_or_default();
+            Some(Version {
+                latest: m.version().to_string(),
+                current,
+                app,
+            })
+        })
+        .collect())
+}
+
+/// L'image d'avant la dernière mise à jour, pour --rollback.
+fn previous_path(app: &str) -> String {
+    format!("{}/.dotbox-previous", engine::dir(app))
+}
+
+pub fn update(
+    apps_wanted: &[String],
+    all: bool,
+    rollback: bool,
+    verbose: bool,
+) -> Result<(), String> {
+    for a in apps_wanted {
+        installed_app(a)?;
+    }
+    if rollback {
+        let [app] = apps_wanted else {
+            return Err("--rollback takes one app: dotbox update <app> --rollback".into());
+        };
+        return roll_back(app, verbose);
+    }
+    let what = if all {
+        "--all".to_string()
+    } else {
+        apps_wanted.join(" ")
+    };
+    apps::begin("update", &what, 1, verbose)?;
+    ui::step("Catalog", "the versions on GitHub");
+    let mut report = Vec::new();
+    let result = (|| {
+        let src = github::fetch()?;
+        ui::done(&format!("{} of {}", src.short(), src.date));
+        let dir = catalog_dir();
+        let cfg = Config::load()?;
+        let (domain, user) = apps::server(&cfg)?;
+        report = versions(&dir, &cfg)?;
+        for a in apps_wanted {
+            if !report.iter().any(|v| &v.app == a) {
+                return Err(format!("{a} is not installed: dotbox install {a}"));
+            }
+        }
+        let targets: Vec<Version> = report
+            .iter()
+            .filter(|v| !v.up_to_date())
+            .filter(|v| all || apps_wanted.contains(&v.app))
+            .cloned()
+            .collect();
+        ui::more_steps(targets.len());
+        // une app à la fois: la suivante seulement quand la précédente tourne (spec: Update)
+        for t in &targets {
+            if let Some(c) = status::containers()?.iter().find(|c| c.name == t.app) {
+                system::write_if_changed(&previous_path(&t.app), &format!("{}\n", c.image), 0o644)?;
+            }
+            apps::install_one(&dir, &t.app, &domain, &user, None)?;
+        }
+        report = versions(&dir, &cfg)?;
+        Ok(())
+    })();
+    apps::finish(result)?;
+    if ui::events() {
+        ui::result(serde_json::to_value(&report).unwrap_or_default());
+    } else {
+        print_versions(&report);
+    }
+    Ok(())
+}
+
+fn roll_back(app: &str, verbose: bool) -> Result<(), String> {
+    apps::begin("update", &format!("{app} --rollback"), 1, verbose)?;
+    let result = (|| {
+        let image = std::fs::read_to_string(previous_path(app))
+            .map(|s| s.trim().to_string())
+            .map_err(|_| format!("no previous image for {app}: dotbox update keeps one"))?;
+        let cfg = Config::load()?;
+        let (domain, user) = apps::server(&cfg)?;
+        apps::install_one(&catalog_dir(), app, &domain, &user, Some(&image))?;
+        // une seule marche en arrière
+        let _ = std::fs::remove_file(previous_path(app));
+        Ok(())
+    })();
+    apps::finish(result)
+}
+
+pub fn print_versions(report: &[Version]) {
+    let behind: Vec<&Version> = report.iter().filter(|v| !v.up_to_date()).collect();
+    if !clack::fancy() {
+        let w = report.iter().map(|v| v.current.len()).max().unwrap_or(0) + 2;
+        for v in report {
+            let state = if v.up_to_date() {
+                "up to date".to_string()
+            } else {
+                format!("→ {}", v.latest)
+            };
+            clack::put(&format!("{:<16}{:<w$}{state}", v.app, v.current));
+        }
+        return;
+    }
+    let width = report.iter().map(|v| v.app.len()).max().unwrap_or(0).max(4) + 3;
+    clack::put("");
+    for v in report {
+        if v.up_to_date() {
+            clack::item(
+                Mark::Ok,
+                &v.app,
+                width,
+                &format!(
+                    "{:<22}{}",
+                    ui::fit(&v.current, 21),
+                    style("up to date").dim()
+                ),
+            );
+        } else {
+            let current = if v.current.is_empty() {
+                "not running"
+            } else {
+                &v.current
+            };
+            clack::item(
+                Mark::Warn,
+                &v.app,
+                width,
+                &format!("{:<22}→ {}", ui::fit(current, 21), v.latest),
+            );
+        }
+    }
+    clack::put("");
+    match behind.len() {
+        0 => clack::put(&format!("  {}", Mark::Ok.paint("all up to date"))),
+        n => clack::put(&format!(
+            "  {}",
+            Mark::Warn.paint(&format!(
+                "{n} {} to update: dotbox update --all, or dotbox update <app>",
+                if n == 1 { "app" } else { "apps" }
+            ))
+        )),
+    }
+}
+
+// ---------- 13.7 dotbox diff
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Gap {
+    pub app: String,
+    pub what: String,
+    pub hint: String,
+}
+
+/// L'écart entre ce qui est voulu et ce qui tourne, sans rien changer ni aller sur GitHub.
+pub fn diff() -> Result<Vec<Gap>, String> {
+    let dir = catalog_dir();
+    let cfg = Config::load()?;
+    let list = status::containers()?;
+    let mut gaps = Vec::new();
+    for app in cfg.app_names() {
+        let gap = |what: String, hint: String| Gap {
+            app: app.clone(),
+            what,
+            hint,
+        };
+        match list.iter().find(|c| c.name == app) {
+            None => gaps.push(gap(
+                "no container, wanted running".into(),
+                format!("dotbox install {app}"),
+            )),
+            Some(c) if c.state != "running" => gaps.push(gap(
+                format!("{}, wanted running", c.state),
+                format!("dotbox start {app}"),
+            )),
+            Some(c) => {
+                if let Ok(m) = catalog::load(&dir, &app) {
+                    let tag = status::tag(&c.image);
+                    if tag != m.version() {
+                        gaps.push(gap(
+                            format!("runs {tag}, the catalog has {}", m.version()),
+                            format!("dotbox update {app}"),
+                        ));
+                    }
+                }
+            }
+        }
+        // le compose écrit par dotbox, changé à la main depuis
+        if let Ok(kept) = std::fs::read_to_string(apps::compose_sum_path(&app)) {
+            let now = crate::crowdsec::sha256(&engine::compose_path(&app)).unwrap_or_default();
+            if kept.trim() != now {
+                gaps.push(gap(
+                    "compose.yml changed by hand".into(),
+                    format!(
+                        "dotbox install {app} writes it again: keep your changes in compose.override.yml"
+                    ),
+                ));
+            }
+        }
+    }
+    Ok(gaps)
+}
+
+pub fn print_diff(gaps: &[Gap]) {
+    if !clack::fancy() {
+        for g in gaps {
+            clack::put(&format!("~ {:<16}{}  → {}", g.app, g.what, g.hint));
+        }
+        let n = gaps.len();
+        clack::put(&format!(
+            "{n} {}",
+            if n == 1 { "difference" } else { "differences" }
+        ));
+        return;
+    }
+    clack::open("dotbox diff");
+    let width = gaps.iter().map(|g| g.app.len()).max().unwrap_or(0).max(4) + 3;
+    for g in gaps {
+        clack::item(Mark::Warn, &g.app, width, &g.what);
+        clack::sub(&format!("→ {}", g.hint));
+    }
+    match gaps.len() {
+        0 => clack::close(&Mark::Ok.paint("in sync: what runs is what is wanted")),
+        n => clack::close(&Mark::Warn.paint(&format!(
+            "{n} {}",
+            if n == 1 { "difference" } else { "differences" }
+        ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn versions_behind() {
+        let v = Version {
+            app: "radarr".into(),
+            current: "7.0.3.10918-ls328".into(),
+            latest: "7.0.4.10950-ls329".into(),
+        };
+        assert!(!v.up_to_date());
+        let w = Version {
+            latest: v.current.clone(),
+            ..v.clone()
+        };
+        assert!(w.up_to_date());
+    }
+
+    #[test]
+    fn logs_arguments() {
+        assert_eq!(
+            logs_args("radarr", 100, false),
+            ["logs", "--tail", "100", "radarr"]
+        );
+        assert_eq!(
+            logs_args("radarr", 5, true),
+            ["logs", "--tail", "5", "-f", "radarr"]
+        );
+    }
+
+    #[test]
+    fn the_core_is_not_an_app_here() {
+        assert!(installed_app("traefik").is_err());
+        assert!(installed_app("../etc").is_err());
+        assert!(installed_app("radarr").is_ok());
+        assert!(logs_allowed("traefik").is_ok());
+    }
+}

@@ -20,7 +20,7 @@
     <h2 id="cli-cmds" data-i18n="allCmds"></h2>
     <div class="table-scroll">
       <table>
-        <thead><tr><th scope="col" data-i18n="colCmd"></th><th scope="col" data-i18n="colWhat"></th><th scope="col" data-i18n="colEx"></th></tr></thead>
+        <thead><tr><th scope="col" class="st-col"><span class="sr" data-i18n="colState"></span></th><th scope="col" data-i18n="colCmd"></th><th scope="col" data-i18n="colWhat"></th><th scope="col" data-i18n="colEx"></th></tr></thead>
         <tbody id="cmdTable"></tbody>
       </table>
     </div>
@@ -33,12 +33,13 @@
       <li><span data-i18n-html="step2"></span></li>
       <li><span data-i18n-html="step3"></span></li>
     </ol>
+    <p class="note" data-i18n-html="noteApi"></p>
     <p class="note" data-i18n-html="note"></p>
   </section>
 
   <section class="sec" aria-labelledby="cli-flags">
     <h2 id="cli-flags" data-i18n="flagsK"></h2>
-    <ul class="bullets" id="flagList"></ul>
+    <div id="flagList"></div>
   </section>
 
 <!-- CSS -->
@@ -65,22 +66,19 @@ code .sudo { color: var(--accent); font-weight: 600; }
 .screen { min-height: 560px; padding: clamp(16px, 2.4vw, 30px); overflow-x: auto; font-size: 13.5px; line-height: 1.7; color: var(--label); }
 .prompt { margin: 0 0 18px; color: var(--lit); white-space: pre; }
 .prompt b { color: var(--accent); font-weight: 400; }
-.help { display: grid; gap: 18px; min-width: 560px; }
-.help h3 { margin: 0 0 4px; font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
-.help .usage { margin: 0; padding-left: 2ch; color: var(--lit); white-space: pre; }
-.cmds { display: grid; grid-template-columns: 38ch minmax(0, 1fr); gap: 0 2ch; margin: 0; padding-left: 2ch; }
-.cmds dt { margin: 0; }
-.cmds dd { margin: 0; }
-.cmds button { padding: 0; border: 0; background: none; font: inherit; color: var(--lit); cursor: pointer; text-align: left; }
-.cmds button span { color: var(--muted); }
-.cmds button:hover, .cmds button:focus-visible { color: var(--accent); outline: none; }
-.cmds button:hover span { color: var(--accent); }
-.flags dt { color: var(--lit); }
+/* l'aide: chaque commande est un bouton, qui montre son exemple */
+.help-out button { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; text-align: left; }
+.help-out button:hover span, .help-out button:focus-visible span { color: var(--accent); }
+.help-out button:focus-visible { outline: none; }
 .out { margin: 0; padding: 0; list-style: none; white-space: pre; min-width: 560px; }
+/* une ligne vide de la sortie garde sa hauteur */
+.out li:empty::after { content: "\00a0"; }
 .out .ok { color: var(--accent); }
 .out .dim { color: var(--muted); }
 .out .warn { color: var(--wip); }
 .out .lit { color: var(--lit); }
+.out .err { color: #ef4444; }
+.out .frame { color: #3a3a3a; }
 .back { margin-top: 22px; padding: 9px 14px; border-radius: 999px; border: 1px solid #262626; background: var(--bg); font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); cursor: pointer; }
 .back:hover { color: var(--lit); border-color: #3a3a3a; }
 
@@ -92,8 +90,19 @@ tbody tr:last-child td { border-bottom: 0; }
 thead th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 tbody th { padding-top: 22px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
 td { color: var(--label); }
-td:first-child { white-space: nowrap; }
-td:first-child code { color: var(--lit); }
+td:nth-child(2) { white-space: nowrap; }
+td:nth-child(2) code { color: var(--lit); }
+/* état de la commande: un point allumé (fait), jaune (en partie) ou éteint (à faire) */
+.st-col { width: 1%; padding-right: 0; }
+td.st-col { padding-top: 21px; }
+.st { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #2a2a2a; }
+.st.done { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.st.partial { background: var(--wip); box-shadow: 0 0 8px var(--wip); }
+.flag-st { list-style: none; padding-left: 0; }
+.flag-st .st { margin-right: 12px; vertical-align: 1px; }
+.term-prop { margin-bottom: 14px; }
+.term-prop .prompt { margin-bottom: 10px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 td:last-child code { color: var(--label); }
 
 /* 5 · étapes + note */
@@ -122,26 +131,28 @@ td:last-child code { color: var(--label); }
       lede: "La commande dotbox<i>●</i>tout ce que fait l'interface web, depuis le terminal.",
       fCmds: "commandes", fApi: "API avec l'interface web", fSsh: "secours sans Authelia", fJson: "pour les scripts",
       showLabel: "Aide de la CLI", showHint: "Clique une commande pour voir un exemple.", sample: "Exemple",
-      usage: "Utilisation", flags: "Options", back: "← dotbox --help",
-      allCmds: "Toutes les commandes", colCmd: "Commande", colWhat: "Ce qu'elle fait", colEx: "Exemple",
+      back: "← dotbox --help",
+      allCmds: "Toutes les commandes", colState: "État", stDone: "Fait", stPartial: "En partie", stTodo: "À faire", colCmd: "Commande", colWhat: "Ce qu'elle fait", colEx: "Exemple",
       firstK: "Premiers pas",
       step1: "<b>Crée <code>*.example.com</code></b> vers ton serveur Debian ou Ubuntu.",
       step2: "<b>Lance le script d'installation</b>: il installe <code>dotbox</code> et lance <code>dotbox init</code>.",
       step3: "<b>Installe une app</b>: <code>dotbox install radarr</code>.",
-      note: "<b>Si l'interface ne répond plus</b>: en SSH, <code>dotbox --local</code> parle directement au moteur, sans passer par l'API ni par Authelia.",
+      noteApi: "<span class=\"prop-new\" data-prop=\"91\"><span><b>Les commandes passent par l'API</b>: la CLI demande le travail au service de Dot Box, sans <code>sudo</code> pour les membres du groupe <code>dotbox</code> (voir <a href=\"__DOC_API__\"__DOC_API_TARGET__>API</a>).</span></span>",
+      note: "<span class=\"prop-old\" data-prop=\"104\"><span><b>Si l'interface ne répond plus</b>: en SSH, <code>dotbox --local</code> parle directement au moteur, sans passer par l'API ni par Authelia.</span></span><span class=\"prop-new\" data-prop=\"104\"><span><b>Si le service ne répond plus</b>: en SSH, <code>sudo dotbox &lt;commande&gt; --local</code> fait le travail dans la commande, sans le service ni Authelia. <code>sudo systemctl restart dotbox</code> le relance.</span></span>",
       flagsK: "Options globales"
     },
     en: {
       lede: "The dotbox command<i>●</i>everything the web interface does, from the terminal.",
       fCmds: "commands", fApi: "API shared with the web interface", fSsh: "fallback without Authelia", fJson: "for scripts",
       showLabel: "CLI help", showHint: "Click a command to see an example.", sample: "Sample",
-      usage: "Usage", flags: "Flags", back: "← dotbox --help",
-      allCmds: "All commands", colCmd: "Command", colWhat: "What it does", colEx: "Example",
+      back: "← dotbox --help",
+      allCmds: "All commands", colState: "State", stDone: "Done", stPartial: "Partly done", stTodo: "To do", colCmd: "Command", colWhat: "What it does", colEx: "Example",
       firstK: "First steps",
       step1: "<b>Create <code>*.example.com</code></b> pointing to your Debian or Ubuntu server.",
       step2: "<b>Run the install script</b>: it installs <code>dotbox</code> and runs <code>dotbox init</code>.",
       step3: "<b>Install an app</b>: <code>dotbox install radarr</code>.",
-      note: "<b>If the interface stops responding</b>: over SSH, <code>dotbox --local</code> talks to the engine directly, without going through the API or Authelia.",
+      noteApi: "<span class=\"prop-new\" data-prop=\"91\"><span><b>Commands go through the API</b>: the CLI asks Dot Box's service for the work, without <code>sudo</code> for members of the <code>dotbox</code> group (see <a href=\"__DOC_API__\"__DOC_API_TARGET__>API</a>).</span></span>",
+      note: "<span class=\"prop-old\" data-prop=\"104\"><span><b>If the interface stops responding</b>: over SSH, <code>dotbox --local</code> talks to the engine directly, without going through the API or Authelia.</span></span><span class=\"prop-new\" data-prop=\"104\"><span><b>If the service stops responding</b>: over SSH, <code>sudo dotbox &lt;command&gt; --local</code> does the work in the command, without the service or Authelia. <code>sudo systemctl restart dotbox</code> restarts it.</span></span>",
       flagsK: "Global flags"
     }
   };
@@ -152,131 +163,145 @@ td:last-child code { color: var(--label); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
   // ---------- les commandes : une entrée par commande, la même source pour l'aide, le tableau et les exemples
-  // out : lignes de sortie, [classe, texte] (ok = accent, warn = jaune, dim = discret, lit = clair)
+  // out : lignes de sortie, [classe, texte] (ok = accent, warn = jaune, err = rouge, dim = discret,
+  // lit = clair, frame = le trait de cliclack; pas « bar », déjà pris par l'en-tête du terminal), ou [classe, [[classe, texte], ...]] pour plusieurs couleurs
   var GROUPS = [
     { id: "server", name: { fr: "Serveur", en: "Server" }, cmds: [
-      { name: "init", args: "[--domain <domain>] [--user <name>] [--ca <ca>]", sudo: true, hargs: "[--domain <d>] [--user <n>] [--ca <ca>]",
-        d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik, Authelia et CrowdSec", en: "Prepare the server: Docker, dotbox network, Traefik, Authelia and CrowdSec" },
+      { name: "init", h: ["init", "[--domain <d>] [--user <n>]", "Set up the server, then the core and the service"], state: "partial", prop: 80, args: "[--domain <domain>] [--user <name>] [--ca <ca>] [--verbose]", sudo: true, hargs: "[--domain <d>] [--user <n>] [--ca <ca>]",
+        d: { fr: "Prépare le serveur: vérifications, catalogue, ton utilisateur (groupes sudo et dotbox), Docker, réseau dotbox, Traefik, Authelia, CrowdSec et le service de Dot Box", en: "Prepare the server: checks, catalog, your user (sudo and dotbox groups), Docker, dotbox network, Traefik, Authelia, CrowdSec and the Dot Box service" },
         ex: "dotbox init --domain example.com",
-        out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  dns      *.example.com → 203.0.113.10"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["ok", "  up       crowdsec    Running"], ["", "  cert     dotbox.example.com (Let's Encrypt, HTTP-01)"], ["dim", "  admin    admin (password shown once below)"]] },
-      { name: "status", args: "",
-        d: { fr: "Les apps installées, leur état et leur adresse", en: "Installed apps, their state and their address" },
+        out: [["ok", "  ✓ [1/8] System        Debian 13 amd64, *.example.com, ports 80 443"], ["ok", "  ✓ [2/8] Catalog       90161a8 of 2026-11-19, 16 apps"], ["ok", "  ✓ [3/8] User          admin, groups sudo and dotbox"], ["ok", "  ✓ [4/8] Docker        29.10.0, local logs, live-restore"], ["ok", "  ✓ [5/8] Traefik       v3.7.19, socket proxy, Let's Encrypt certs"], ["ok", "  ✓ [6/8] Authelia      4.39.28, account admin"], ["ok", "  ✓ [7/8] CrowdSec      v1.8.2, SSH, Traefik and AppSec, bouncer v0.0.38"], ["ok", "  ✓ [8/8] Service       service running, /run/dotbox/dotbox.sock"], ["", ""], ["ok", "  ✓ Dot Box is ready, 3 min 50 s"], ["dim", "  then the card: your account, its Authelia password (shown once), what to do next"]],
+        was: { args: "[--domain <domain>] [--user <name>] [--ca <ca>]",
+          d: { fr: "Prépare le serveur: Docker, réseau dotbox, Traefik, Authelia et CrowdSec", en: "Prepare the server: Docker, dotbox network, Traefik, Authelia and CrowdSec" },
+          out: [["", "  check    Debian 13 · 4 CPU · 8 GB RAM"], ["", "  install  docker 28.2"], ["", "  network  dotbox"], ["", "  dns      *.example.com → 203.0.113.10"], ["ok", "  up       traefik     Running"], ["ok", "  up       authelia    Running"], ["ok", "  up       crowdsec    Running"], ["", "  cert     dotbox.example.com (Let's Encrypt, HTTP-01)"], ["dim", "  admin    admin (password shown once below)"]] } },
+      { name: "status", h: ["status", "", "The core and the apps: state, address, last doctor"], state: "done", args: "",
+        d: { fr: "Le core et les apps: version, état, accès, adresse, et le résumé du dernier doctor", en: "The core and the apps: version, state, access, address, and the last doctor's summary" },
         ex: "dotbox status",
-        out: [["dim", "  APP           STATE      URL"], ["", "  traefik       Running    -"], ["", "  authelia      Running    auth.example.com"], ["", "  prowlarr      Running    prowlarr.example.com"], ["", "  qbittorrent   Running    qbittorrent.example.com"], ["", "  radarr        Running    radarr.example.com"], ["warn", "  sonarr        Exited     sonarr.example.com"]] },
-      { name: "doctor", args: "",
-        d: { fr: "Vérifie Docker, DNS, certificats, ports, CrowdSec, mises à jour et espace disque", en: "Check Docker, DNS, certificates, ports, CrowdSec, updates and disk space" },
+        out: [["", [["frame", "┌"], ["lit", "  dotbox status"]]], ["", [["frame", "│"]]], ["", [["ok", "◇"], ["", "  Core         "], ["", "5 containers, all healthy"]]], ["", [["frame", "│"], ["dim", "    traefik v3.7.19 · authelia 4.39.28 · crowdsec v1.8.2"]]], ["", [["frame", "│"]]], ["", [["ok", "◇"], ["", "  radarr       7.0.3.10918-ls328  two_factor        "], ["dim", "radarr.example.com"]]], ["", [["ok", "◇"], ["", "  prowlarr     3.0.2.5780-ls169   two_factor        "], ["dim", "prowlarr.example.com"]]], ["", [["warn", "▲"], ["", "  jellyfin     12.4               app after setup   "], ["dim", "jellyfin.example.com"]]], ["", [["err", "■"], ["", "  sonarr       4.0.20.3014-ls329  exited            "], ["dim", "sonarr.example.com"]]], ["", [["frame", "│"]]], ["", [["frame", "└"], ["warn", "  doctor 20 Nov 07:57: 4 sections to look at, run dotbox doctor"]]]] },
+      { name: "doctor", h: ["doctor", "", "Check the server and say what to do"], state: "done", args: "",
+        d: { fr: "Vérifie le système, Docker, le DNS, les containers, les certificats, CrowdSec, les apps qui attendent leur assistant, les mises à jour, SSH et le disque, et dit quoi faire. Code de sortie 1 s'il trouve un problème", en: "Check the system, Docker, DNS, containers, certificates, CrowdSec, apps waiting for their setup, updates, SSH and disk, and say what to do. Exit code 1 if it finds a problem" },
         ex: "dotbox doctor",
-        out: [["ok", "  ok    docker 28.2, daemon running"], ["ok", "  ok    *.example.com resolves to 203.0.113.10"], ["ok", "  ok    certificates valid (6 subdomains)"], ["ok", "  ok    crowdsec running"], ["ok", "  ok    ports 80 and 443 open"], ["warn", "  warn  14 system updates pending (3 security)"], ["warn", "  warn  /data 86% used (612 GB free)"]] },
-      { name: "upgrade", args: "", sudo: true,
-        d: { fr: "Met à jour Dot Box lui-même", en: "Update Dot Box itself" },
+        out: [["", [["frame", "┌"], ["lit", "  dotbox doctor"]]], ["", [["frame", "│"]]], ["", [["ok", "◇"], ["", "  System         "], ["", "Debian GNU/Linux 13 (trixie) amd64"]]], ["", [["ok", "◇"], ["", "  Docker         "], ["", "29.10.0, network dotbox, local logs, live-restore"]]], ["", [["ok", "◇"], ["", "  DNS            "], ["", "*.example.com points to this server"]]], ["", [["err", "■"], ["", "  Containers     "], ["", "sonarr: exited"]]], ["", [["frame", "│"], ["dim", "    → dotbox start sonarr"]]], ["", [["ok", "◇"], ["", "  Certificates   "], ["", "15 valid, the first ends in 87 days"]]], ["", [["ok", "◇"], ["", "  CrowdSec       "], ["", "running, bouncer rules in INPUT and DOCKER-USER"]]], ["", [["warn", "▲"], ["", "  Apps           "], ["", "jellyfin: first-run setup not finished, behind Authelia until then"]]], ["", [["frame", "│"], ["dim", "    → open https://jellyfin.example.com, finish its setup, then dotbox install jellyfin"]]], ["", [["warn", "▲"], ["", "  Updates        "], ["", "2 to look at"]]], ["", [["frame", "│"], ["warn", "    3 system updates pending (1 security)"]]], ["", [["frame", "│"], ["dim", "    → sudo apt update && sudo apt full-upgrade"]]], ["", [["frame", "│"], ["warn", "    automatic security updates are off"]]], ["", [["frame", "│"], ["dim", "    → sudo apt install unattended-upgrades && sudo dpkg-reconfigure unattended-upgrades"]]], ["", [["warn", "▲"], ["", "  SSH            "], ["", "accepts passwords"]]], ["", [["frame", "│"], ["dim", "    → see https://mathod95.github.io/dotbox/getting-started/post-installation/"]]], ["", [["ok", "◇"], ["", "  Disk           "], ["", "/ 11% used"]]], ["", [["ok", "◇"], ["", "  Service        "], ["", "dotbox running"]]], ["", [["frame", "│"]]], ["", [["frame", "└"], ["err", "  4 sections to look at"]]]] },
+      { name: "upgrade", h: ["upgrade", "", "Update Dot Box itself (sudo)"], state: "done", args: "", sudo: true,
+        d: { fr: "Met à jour Dot Box lui-même: la dernière release, son SHA-256 vérifié, l'ancien binaire gardé, le service redémarré. Ne touche ni aux apps ni au core", en: "Update Dot Box itself: the latest release, its SHA-256 verified, the old binary kept, the service restarted. Touches neither the apps nor the core" },
         ex: "dotbox upgrade",
-        out: [["", "  dotbox   0.1.0 → 0.2.0"], ["", "  restart  dotbox"], ["ok", "  done     apps untouched"]] },
-      { name: "version", args: "",
-        d: { fr: "Version de la CLI et du serveur", en: "CLI and server version" },
+        out: [["ok", "  ✓ [1/1] Dot Box       0.0.4 → 0.0.5, service restarted                   6.2 s"], ["", ""], ["", [["lit", "  → "], ["", "The apps and the core are untouched: sudo dotbox init brings the core to the catalog versions."]]], ["dim", "    Back to the old binary: sudo install -m 755 /usr/local/bin/dotbox.previous /usr/local/bin/dotbox"]] },
+      { name: "version", h: ["version", "", "This command's version and the service's"], state: "done", args: "",
+        d: { fr: "La version de la commande et celle du service de Dot Box. Si le service tourne un autre binaire que /usr/local/bin/dotbox (un upgrade sans redémarrage), le dit, avec la commande pour le relancer", en: "The version of the command and of the Dot Box service. If the service runs another binary than /usr/local/bin/dotbox (an upgrade without a restart), says so, with the command to restart it" },
         ex: "dotbox version",
-        out: [["", "  cli      0.0.1"], ["", "  server   0.0.1 (example.com)"]] }
+        out: [["", "  cli      0.0.4"], ["", "  service  0.0.4, /run/dotbox/dotbox.sock"]] }
     ] },
     { id: "apps", name: { fr: "Apps", en: "Apps" }, cmds: [
-      { name: "list", args: "[search]",
-        d: { fr: "Le catalogue avec l'état de chaque app", en: "The catalog with the state of each app" },
-        ex: "dotbox list arr",
-        out: [["dim", "  APP        ROLE         STATE"], ["", "  prowlarr   indexers     -"], ["ok", "  radarr     movies       installed"], ["", "  sonarr     tv shows     -"]] },
-      { name: "info", args: "<app>",
-        d: { fr: "Manifest, image, sous-domaine et câblage d'une app", en: "Manifest, image, subdomain and wiring of an app" },
+      { name: "list", h: ["list", "[search]", "The catalog, with the installed apps"], state: "done", args: "[search]",
+        d: { fr: "Le catalogue, avec les apps déjà installées. Un mot en plus filtre sur le nom ou le rôle: dotbox list arr", en: "The catalog, with the apps already installed. One more word filters on the name or the role: dotbox list arr" },
+        ex: "dotbox list",
+        out: [["", [["frame", "┌"], ["lit", "  dotbox list"]]], ["", [["frame", "│"]]], ["", [["ok", "◇"], ["", "  autobrr       "], ["", "v1.91.0             Release grabber for trackers' announce channels"]]], ["", [["ok", "◇"], ["", "  code-server   "], ["", "4.145.2-ls377       VS Code in the browser"]]], ["", [["ok", "◇"], ["", "  jellyfin      "], ["", "12.4                Media server"]]], ["", [["ok", "◇"], ["", "  maintainerr   "], ["", "3.32.0              Rule-based library cleanup"]]], ["", [["ok", "◇"], ["", "  plex          "], ["", "1.43.5.11079-b3b13… Media server"]]], ["", [["ok", "◇"], ["", "  prowlarr      "], ["", "3.0.2.5780-ls169    Indexer manager for the *arr apps"]]], ["", [["ok", "◇"], ["", "  qbittorrent   "], ["", "5.3.0_v2.1.2-ls487  BitTorrent client"]]], ["", [["dim", "○"], ["", "  qui           "], ["dim", "v1.35.0             Web interface for qBittorrent"]]], ["", [["dim", "○"], ["", "  radarr        "], ["dim", "7.0.3.10918-ls328   Movie collection manager"]]], ["", [["ok", "◇"], ["", "  seerr         "], ["", "v3.5.2              Media requests"]]], ["", [["dim", "○"], ["", "  sonarr        "], ["dim", "4.0.20.3014-ls329   TV show collection manager"]]], ["", [["ok", "◇"], ["", "  tautulli      "], ["", "v2.19.1             Plex statistics and history"]]], ["", [["ok", "◇"], ["", "  uptime-kuma   "], ["", "2.5.12-slim-rootle… Uptime monitoring"]]], ["", [["ok", "◇"], ["", "  vaultwarden   "], ["", "1.37.5              Password manager (Bitwarden compatible)"]]], ["", [["ok", "◇"], ["", "  wg-easy       "], ["", "15.5.0              WireGuard VPN with a web interface"]]], ["", [["ok", "◇"], ["", "  wizarr        "], ["", "v2026.10.1          Media server invitations"]]], ["", [["frame", "│"]]], ["", [["frame", "└"], ["", "  16 apps, 13 installed "], ["dim", "(◇ installed, ○ not yet: dotbox install <app>)"]]]] },
+      { name: "info", h: ["info", "<app>", "Image, state, address, access, folders, ports"], state: "done", args: "<app>",
+        d: { fr: "Ce que l'on sait d'une app: son image, son état, son adresse, son accès, ses dossiers et ses ports. Une app pas encore installée aussi", en: "What is known about an app: its image, state, address, access, folders and ports. An app not installed yet too" },
         ex: "dotbox info radarr",
-        out: [["", "  image      lscr.io/linuxserver/radarr"], ["", "  url        https://radarr.example.com"], ["", "  sso        authelia"], ["", "  volumes    /opt/radarr:/config  /data:/data"], ["", "  wiring     qbittorrent (category radarr)"], ["", "             root folder /data/media/movies"]] },
-      { name: "install", args: "<app>... [--as <name>]",
-        d: { fr: "Installe des apps et les câble aux autres ; --as crée une instance de plus", en: "Install apps and wire them to the others; --as creates another instance" },
+        out: [["", [["frame", "┌"], ["lit", "  dotbox info radarr"]]], ["", [["frame", "│"]]], ["", [["frame", "│"], ["dim", "  Image      "], ["", "lscr.io/linuxserver/radarr:7.0.3.10918-ls328"]]], ["", [["frame", "│"], ["dim", "  State      "], ["ok", "healthy"]]], ["", [["frame", "│"], ["dim", "  Address    "], ["", "https://radarr.example.com"]]], ["", [["frame", "│"], ["dim", "  Access     "], ["", "two_factor"]]], ["", [["frame", "│"], ["dim", "  Folders    "], ["", "/opt/radarr/config → /config"]]], ["", [["frame", "│"], ["dim", "             "], ["", "/data → /data"]]], ["", [["frame", "│"]]], ["", [["frame", "└"], ["dim", "  Movie collection manager"]]]] },
+      { name: "install", h: ["install", "<app>...", "Install apps, behind Traefik and Authelia"], state: "done", args: "<app>... [--verbose]",
+        d: { fr: "Installe des apps du catalogue, derrière Traefik et Authelia", en: "Install apps from the catalog, behind Traefik and Authelia" },
         ex: "dotbox install sonarr",
-        out: [["", "  pull     lscr.io/linuxserver/sonarr"], ["", "  write    /opt/sonarr/compose.yml"], ["", "  label    traefik sonarr.example.com"], ["", "  up       sonarr      Running"], ["", "  wire     qbittorrent (category sonarr)"], ["", "  wire     root folder /data/media/tv"], ["ok", "  ready    https://sonarr.example.com"]] },
-      { name: "remove", args: "<app> [--keep-data]",
-        d: { fr: "Supprime une app; --keep-data garde /opt/<app>", en: "Remove an app; --keep-data keeps /opt/<app>" },
-        ex: "dotbox remove seerr --keep-data",
-        out: [["", "  down     seerr"], ["", "  unwire   radarr, sonarr"], ["ok", "  removed  seerr (data kept in /opt/seerr)"]] },
-      { name: "update", args: "[<app>...] [--all] [--rollback]",
-        d: { fr: "Met à jour l'image d'une app ou de toutes ; --rollback revient à la précédente", en: "Update one app's image or all of them; --rollback goes back to the previous one" },
+        out: [["ok", "  ✓ [1/1] Sonarr        4.0.20.3014-ls329, two_factor                45 s"], ["", ""], ["", "  sonarr        https://sonarr.example.com  two_factor"]] },
+      { name: "remove", h: ["remove", "<app> [--purge]", "Remove an app, keep its config"], state: "done", args: "<app> [--purge] [--verbose]",
+        d: { fr: "Arrête une app et garde sa configuration, qu'une réinstallation reprend. --purge efface /opt/<app> et l'image, après une confirmation", en: "Stop an app and keep its configuration, which a new install picks up. --purge deletes /opt/<app> and the image, after a confirmation" },
+        ex: "dotbox remove seerr",
+        out: [["ok", "  ✓ [1/1] Seerr         removed, configuration kept in /opt/seerr    4.0 s"]] },
+      { name: "update", h: ["update", "[<app>...] [--rollback]", "Update apps one at a time"], state: "done", args: "[<app>...] [--all] [--rollback]",
+        d: { fr: "Relit le catalogue sur GitHub, puis met à jour les apps une à une, la suivante quand la précédente tourne. Sans app, dit seulement ce qui est en retard. --rollback remet l'image d'avant", en: "Read the catalog on GitHub again, then update the apps one by one, the next once the previous runs. Without an app, only say what is behind. --rollback puts back the image from before" },
         ex: "dotbox update --all",
-        out: [["", "  prowlarr   2.0.5 → 2.1.0"], ["dim", "  radarr     up to date"], ["", "  sonarr     4.0.15 → 4.0.16"], ["ok", "  2 apps updated"]] },
-      { name: "start", args: "<app>",
-        d: { fr: "Démarre une app", en: "Start an app" },
-        ex: "dotbox start sonarr", out: [["ok", "  sonarr     Running"]] },
-      { name: "stop", args: "<app>",
-        d: { fr: "Arrête une app", en: "Stop an app" },
-        ex: "dotbox stop sonarr", out: [["dim", "  sonarr     Exited"]] },
-      { name: "restart", args: "<app>",
+        out: [["ok", "  ✓ [1/3] Catalog       90161a8 of 2026-11-19                              2.4 s"], ["ok", "  ✓ [2/3] Radarr        7.0.4.10950-ls329, two_factor                       41 s"], ["ok", "  ✓ [3/3] Sonarr        4.0.21.3030-ls330, two_factor                       38 s"], ["", ""], ["", [["ok", "◇"], ["", "  prowlarr   "], ["dim", "3.0.2.5780-ls169      up to date"]]], ["", [["ok", "◇"], ["", "  radarr     "], ["dim", "7.0.4.10950-ls329     up to date"]]], ["", [["ok", "◇"], ["", "  sonarr     "], ["dim", "4.0.21.3030-ls330     up to date"]]], ["", ""], ["ok", "  all up to date"]] },
+      { name: "start", h: ["start", "<app>", "Start an app"], state: "done", prop: 97, args: "<app>",
+        d: { fr: "Démarre une app, et retire la marque laissée par stop", en: "Start an app, and remove the mark left by stop" },
+        ex: "dotbox start sonarr", out: [["ok", "  ✓ [1/1] Sonarr        healthy                                             12 s"]],
+        was: { d: { fr: "Démarre une app", en: "Start an app" }, out: [["ok", "  sonarr     Running"]] } },
+      { name: "stop", h: ["stop", "<app>", "Stop an app"], state: "done", prop: 97, args: "<app>",
+        d: { fr: "Arrête une app, et le note dans dotbox.yml: diff et sync la laissent arrêtée jusqu'à start", en: "Stop an app, and note it in dotbox.yml: diff and sync leave it stopped until start" },
+        ex: "dotbox stop sonarr", out: [["ok", "  ✓ [1/1] Sonarr        stopped                                            0.7 s"]],
+        was: { d: { fr: "Arrête une app", en: "Stop an app" }, out: [["dim", "  sonarr     Exited"]] } },
+      { name: "restart", h: ["restart", "<app>", "Restart an app"], state: "done", prop: 97, args: "<app>",
         d: { fr: "Redémarre une app", en: "Restart an app" },
-        ex: "dotbox restart radarr", out: [["ok", "  radarr     Running"]] },
-      { name: "logs", args: "<app> [-f] [--tail <n>]",
-        d: { fr: "Les logs d'une app; -f les suit en direct", en: "An app's logs; -f follows them live" },
-        ex: "dotbox logs qbittorrent -f --tail 3",
-        out: [["dim", "  14:02:11  WebUI listening on 0.0.0.0:8080"], ["", "  14:05:47  Added torrent (category radarr)"], ["", "  14:31:02  Download finished, moved to /data/torrents/movies"], ["dim", "  … following, Ctrl+C to stop"]] },
-      { name: "exec", args: "<app> -- <command>",
-        d: { fr: "Lance une commande dans le container d'une app", en: "Run a command inside an app's container" },
+        ex: "dotbox restart radarr", out: [["ok", "  ✓ [1/1] Radarr        healthy                                             14 s"]],
+        was: { out: [["ok", "  radarr     Running"]] } },
+      { name: "logs", h: ["logs", "<app> [-f] [--tail <n>]", "An app's logs, or traefik, authelia, crowdsec"], state: "done", prop: 85, args: "<app> [-f] [--tail <n>]",
+        d: { fr: "Les logs d'une app, ou d'un container du core. -f les suit en direct", en: "An app's logs, or a core container's. -f follows them live" },
+        ex: "dotbox logs radarr --tail 3",
+        out: [["", "[Info] Bootstrap: Starting Radarr - /app/radarr/bin/Radarr - Version 7.0.3.10918"], ["", "[Info] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down."], ["", "[Info] RssSyncService: RSS Sync Completed. Reports found: 100, Reports grabbed: 0"]],
+        was: { d: { fr: "Les logs d'une app; -f les suit en direct", en: "An app's logs; -f follows them live" }, ex: "dotbox logs qbittorrent -f --tail 3", out: [["dim", "  14:02:11  WebUI listening on 0.0.0.0:8080"], ["", "  14:05:47  Added torrent (category radarr)"], ["", "  14:31:02  Download finished, moved to /data/torrents/movies"], ["dim", "  … following, Ctrl+C to stop"]] } },
+      { name: "exec", h: ["exec", "<app> -- <command>", "Run a command in an app's container (sudo)"], state: "done", sudo: true, prop: 119, args: "<app> -- <command>",
+        d: { fr: "Lance une commande dans le container d'une app, ou un shell sans commande. Les apps seulement, pas le core. Le code de sortie est celui de la commande", en: "Run a command inside an app's container, or a shell without a command. Apps only, not the core. The exit code is the command's" },
         ex: "dotbox exec radarr -- ls /data/media",
-        out: [["", "  movies  tv"]] },
-      { name: "edit", args: "<app>",
-        d: { fr: "Ouvre compose.override.yml dans ton éditeur, puis applique", en: "Open compose.override.yml in your editor, then apply it" },
+        out: [["", "  movies  tv"]],
+        was: { d: { fr: "Lance une commande dans le container d'une app", en: "Run a command inside an app's container" } } },
+      { name: "edit", h: ["edit", "<app>", "Apply the app's compose.override.yml (sudo)"], state: "done", sudo: true, prop: 120, args: "<app>",
+        d: { fr: "Ouvre compose.override.yml dans ton éditeur ($EDITOR, sinon nano, sinon vi), créé avec un exemple s'il n'existe pas, puis le vérifie et relance l'app. Sans changement, rien n'est fait. Un fichier refusé, ou une app qui ne repart pas: l'ancien fichier est remis", en: "Open compose.override.yml in your editor ($EDITOR, else nano, else vi), created with an example if missing, then check it and restart the app. Without a change, nothing is done. A refused file, or an app that does not come back: the old file is put back" },
         ex: "dotbox edit qbittorrent",
-        out: [["dim", "  open     /opt/qbittorrent/compose.override.yml ($EDITOR)"], ["", "  changed  ports: 6881:6881/udp"], ["ok", "  applied  qbittorrent Running"]] },
-      { name: "add", args: "<compose.yml> --name <app>",
-        d: { fr: "Transforme un compose en manifest Dot Box", en: "Turn a compose file into a Dot Box manifest" },
-        ex: "dotbox add ./docker-compose.yml --name immich",
-        out: [["", "  read     4 services: server, ml, redis, postgres"], ["", "  write    manifest immich (subdomain immich, sso on)"], ["", "  paths    /opt/immich, /data/photos"], ["ok", "  ready    dotbox install immich"]] }
+        out: [["dim", "  (nano opens /opt/qbittorrent/compose.override.yml: save, then close it)"], ["ok", "  ✓ [1/1] Qbittorrent   applied, healthy                                    13 s"]],
+        was: { out: [["dim", "  open     /opt/qbittorrent/compose.override.yml ($EDITOR)"], ["", "  changed  environment: TZ=Europe/Paris"], ["ok", "  applied  qbittorrent Running"]], d: { fr: "Ouvre compose.override.yml dans ton éditeur, puis applique", en: "Open compose.override.yml in your editor, then apply it" } } },
+      { name: "add", h: ["add", "<compose.yml> --name <app>", "Turn a compose file into an app (sudo)"], state: "done", sudo: true, prop: 121, args: "<compose.yml> --name <app>",
+        d: { fr: "Transforme un compose en manifest Dot Box, dans /opt/dotbox/apps/, que install trouve avant le catalogue. Un seul container pour l'instant: un compose à plusieurs services est refusé", en: "Turn a compose file into a Dot Box manifest, in /opt/dotbox/apps/, which install finds before the catalog. One container for now: a compose with several services is refused" },
+        ex: "dotbox add ./compose.yml --name it-tools",
+        out: [["", "  read     1 service: it-tools (corentinth/it-tools:2024.10.22-7ca5933)"], ["dim", "  ignored  container_name, restart, ports (Dot Box sets them)"], ["", "  write    /opt/dotbox/apps/it-tools.yml (subdomain it-tools, access two_factor, port 80)"], ["ok", "  ready    dotbox install it-tools"]],
+        was: { d: { fr: "Transforme un compose en manifest Dot Box", en: "Turn a compose file into a Dot Box manifest" }, ex: "dotbox add ./docker-compose.yml --name immich", out: [["", "  read     4 services: server, ml, redis, postgres"], ["", "  write    manifest immich (subdomain immich, access two_factor)"], ["", "  paths    /opt/immich, /data/photos"], ["ok", "  ready    dotbox install immich"]] } }
     ] },
     { id: "state", name: { fr: "État", en: "State" }, cmds: [
-      { name: "diff", args: "",
-        d: { fr: "L'écart entre l'état voulu et ce qui tourne", en: "The gap between the desired state and what is running" },
+      { name: "diff", h: ["diff", "", "What differs from what is wanted, changing nothing"], state: "done", args: "",
+        d: { fr: "L'écart entre ce qui est voulu et ce qui tourne, sans rien changer: une app arrêtée, une version qui n'est plus celle du catalogue, un compose.yml changé à la main. Code de sortie 1 s'il y en a un", en: "The gap between what is wanted and what runs, without changing anything: a stopped app, a version that is no longer the catalog's, a compose.yml changed by hand. Exit code 1 if there is one" },
         ex: "dotbox diff",
-        out: [["warn", "  ~ sonarr      Exited, wanted Running"], ["warn", "  ~ prowlarr    image 2.0.5, wanted 2.1.0"], ["dim", "  2 differences, run dotbox sync"]] },
-      { name: "sync", args: "[--dry-run]",
-        d: { fr: "Corrige l'écart: crée, met à jour ou arrête ce qu'il faut", en: "Fix the gap: create, update or stop what is needed" },
+        out: [["", [["frame", "┌"], ["lit", "  dotbox diff"]]], ["", [["frame", "│"]]], ["", [["warn", "▲"], ["", "  sonarr   "], ["", "exited, wanted running"]]], ["", [["frame", "│"], ["dim", "    → dotbox start sonarr"]]], ["", [["warn", "▲"], ["", "  prowlarr "], ["", "runs 3.0.2.5780-ls169, the catalog has 3.0.3.5801-ls170"]]], ["", [["frame", "│"], ["dim", "    → dotbox update prowlarr"]]], ["", [["warn", "▲"], ["", "  radarr   "], ["", "compose.yml changed by hand"]]], ["", [["frame", "│"], ["dim", "    → dotbox install radarr writes it again: keep your changes in compose.override.yml"]]], ["", [["frame", "│"]]], ["", [["frame", "└"], ["warn", "  3 differences"]]]] },
+      { name: "sync", h: ["sync", "[--dry-run]", "Apply dotbox.yml again: apps, access, core"], prop: 107, args: "[--dry-run]",
+        d: { fr: "Corrige l'écart que montre diff: refait sans question ce que font init et install, depuis dotbox.yml (compose.yml, sous-domaines, accès, fichiers du core). Ne change jamais de version, c'est le rôle de update. Laisse arrêtée une app arrêtée avec stop. --dry-run dit ce qui serait fait", en: "Fix the gap diff shows: redo without questions what init and install do, from dotbox.yml (compose.yml, subdomains, access, core files). Never changes a version, that is update's job. Leaves an app stopped with stop as it is. --dry-run says what would be done" },
         ex: "dotbox sync",
-        out: [["", "  start    sonarr"], ["", "  update   prowlarr 2.1.0"], ["ok", "  in sync"]] }
+        out: [["", "  rewrite  radarr compose.yml (changed by hand)"], ["", "  start    sonarr"], ["dim", "  keep     qbittorrent stopped (dotbox stop)"], ["ok", "  in sync"]],
+        was: { d: { fr: "Corrige l'écart: crée, met à jour ou arrête ce qu'il faut", en: "Fix the gap: create, update or stop what is needed" }, out: [["", "  start    sonarr"], ["", "  update   prowlarr 2.1.0"], ["ok", "  in sync"]] } }
     ] },
     { id: "backup", name: { fr: "Sauvegarde", en: "Backup" }, cmds: [
-      { name: "backup", args: "[--app <app>] [--to <dest>] [--stream]",
+      { name: "backup", h: ["backup", "[--app <a>] [--to <dest>]", "Back up /opt, app by app, encrypted"], args: "[--app <app>] [--to <dest>] [--stream]",
         d: { fr: "Sauvegarde /opt app par app, compressée et chiffrée", en: "Back up /opt app by app, compressed and encrypted" },
         ex: "dotbox backup --to /backups",
         out: [["", "  dotbox     12 MB"], ["", "  radarr     stop, archive 84 MB, Running"], ["", "  sonarr     stop, archive 61 MB, Running"], ["", "  prowlarr   snapshot, archive 38 MB"], ["ok", "  sent       /backups, keep 7"]] },
-      { name: "restore", args: "<archive|latest> [--app <app>] [--key <file>]", sudo: true,
+      { name: "restore", h: ["restore", "<archive> [--app <a>]", "Restore a backup, all of it or one app"], args: "<archive|latest> [--app <app>] [--key <file>]", sudo: true,
         d: { fr: "Restaure une app ou tout le serveur, ici ou sur un serveur neuf", en: "Restore one app or the whole server, here or on a new one" },
         ex: "dotbox restore latest --app radarr",
         out: [["", "  archive  /backups/radarr-2026-11-02.tar.zst.age"], ["", "  stop     radarr"], ["", "  extract  /opt/radarr"], ["ok", "  up       radarr      Running"]] }
     ] },
     { id: "users", name: { fr: "Utilisateurs", en: "Users" }, cmds: [
-      { name: "user", args: "add|list|remove|passwd <name>",
+      { name: "user", h: ["user", "add|list|remove|passwd", "The Authelia accounts"], args: "add|list|remove|passwd <name>",
         d: { fr: "Gère les comptes Authelia", en: "Manage Authelia accounts" },
         ex: "dotbox user add lea --group family",
         out: [["", "  user     lea (group family)"], ["dim", "  access   seerr"], ["ok", "  invite   link valid 48 h"]] },
-      { name: "authelia password", args: "[<name>]", sudo: true,
+      { name: "authelia password", h: ["authelia password", "[<name>]", "An Authelia account's web password (sudo)"], state: "done", args: "[<name>]", sudo: true,
         d: { fr: "Affiche le mot de passe web d'un compte Authelia, celui de la page de connexion, créé par dotbox init. Ce n'est pas le mot de passe Linux", en: "Shows the web password of an Authelia account, the one of the login page, created by dotbox init. It is not the Linux password" },
         ex: "dotbox authelia password",
         out: [["", "  password Xq7vR2mLp9sTe4KcWb8nZd3F   (admin, set by dotbox init)"], ["dim", "  note     if it was changed in Authelia since, this one no longer works"]] },
-      { name: "authelia", args: "verification", sudo: true,
+      { name: "authelia", h: ["authelia verification", "", "The last code Authelia sent (sudo)"], state: "done", args: "verification", sudo: true,
         d: { fr: "Affiche le dernier code de vérification d'identité, celui qu'Authelia demande avant d'enregistrer un appareil, et l'heure où il expire. Ce n'est pas le code à 6 chiffres, qui vient de l'app du téléphone", en: "Shows the last identity verification code, the one Authelia asks for before registering a device, and when it expires. It is not the 6-digit code, which comes from the phone app" },
         ex: "dotbox authelia verification",
         out: [["", "  code     CQLM7VEH   (created 09:22, valid until 09:27)"], ["dim", "  note     this is not the 6-digit code: that one comes from the app on your phone"]] }
     ] },
     { id: "config", name: { fr: "Configuration", en: "Configuration" }, cmds: [
-      { name: "config", args: "get|set <key> [value]",
+      { name: "config", h: ["config", "get|set <key> [value]", "Read or change dotbox.yml"], args: "get|set <key> [value]",
         d: { fr: "Lit ou change la config: domaine, chemins", en: "Read or change the config: domain, paths" },
         ex: "dotbox config get domain",
         out: [["", "  example.com"]] },
-      { name: "completion", args: "bash|zsh|fish",
+      { name: "completion", h: ["completion", "bash|zsh|fish", "The shell completion script, on standard output"], state: "done", args: "bash|zsh|fish",
         d: { fr: "Génère l'autocomplétion du shell", en: "Generate shell completion" },
-        ex: "dotbox completion zsh > ~/.zfunc/_dotbox",
-        out: [["ok", "  written  ~/.zfunc/_dotbox"]] }
+        ex: "dotbox completion bash > ~/.local/share/bash-completion/completions/dotbox",
+        out: [["dim", "  (nothing on screen: the script goes to the file, a new shell picks it up)"]] }
     ] }
   ];
   var FLAGS = [
-    { f: "--server <url>", d: { fr: "le serveur à piloter, celui de la config par défaut", en: "the server to control, the one from the config by default" } },
-    { f: "--local", d: { fr: "parle directement au moteur, sans l'API ni Authelia (en SSH)", en: "talks to the engine directly, without the API or Authelia (over SSH)" } },
-    { f: "--json", d: { fr: "sortie en JSON, pour les scripts", en: "JSON output, for scripts" } },
-    { f: "-y, --yes", d: { fr: "répond oui aux confirmations", en: "answers yes to confirmations" } },
-    { f: "-q, --quiet", d: { fr: "n'affiche que les erreurs", en: "only prints errors" } },
-    { f: "--no-color", d: { fr: "sortie sans couleurs", en: "output without colors" } },
-    { f: "-h, --help", d: { fr: "l'aide de la commande", en: "help for the command" } }
+    { f: "--local", h: "Do the work here, as root, without the service", state: "done", d: { fr: "fait le travail dans la commande, en root, sans le service de Dot Box (le secours, en SSH)", en: "does the work in the command, as root, without the Dot Box service (the rescue, over SSH)" } },
+    { f: "--json", h: "JSON output, for scripts", state: "done", d: { fr: "sortie en JSON, pour les scripts (list, info, status, doctor, diff, update, version)", en: "JSON output, for scripts (list, info, status, doctor, diff, update, version)" } },
+    { f: "-y, --yes", h: "Answer yes to confirmations", state: "done", d: { fr: "répond oui aux confirmations (remove --purge)", en: "answers yes to confirmations (remove --purge)" } },
+    { f: "-q, --quiet", h: "Only print errors", state: "done", d: { fr: "n'affiche que les erreurs", en: "only prints errors" } },
+    { f: "--no-color", h: "No colors (NO_COLOR works too)", state: "done", d: { fr: "sortie sans couleurs", en: "output without colors" } },
+    { f: "-h, --help", h: "This help, or a command's: dotbox <command> --help", state: "done", d: { fr: "l'aide de la commande", en: "help for the command" } },
+    { f: "-V, --version", h: "The version, on one line", state: "done", d: { fr: "la version de la commande, en une ligne (dotbox version donne aussi celle du service)", en: "the command's version, on one line (dotbox version also gives the service's)" } },
+    { f: "--verbose", state: "done", d: { fr: "le détail de chaque étape en direct (init, install, remove, start, stop, restart, update, upgrade)", en: "each step's details, live (init, install, remove, start, stop, restart, update, upgrade)" } }
   ];
+  var FLAGS_PROP = 0;    // numéro d'une proposition en cours sur la liste des options (0: aucune)
   var ALL = []; GROUPS.forEach(function (g) { g.cmds.forEach(function (c) { if (!c.added) ALL.push(c); }); });
 
   // Propositions (blue/green, comme les autres pages): une commande qui porte « prop » (numéro) et
@@ -300,6 +325,12 @@ td:last-child code { color: var(--label); }
     td.appendChild(o); td.appendChild(n); return td;
   }
   function cur(c, k) { return c.was && k in c.was ? c.was[k] : c[k]; }
+  // une cellule avec l'ancien contenu en bleu et le nouveau en vert
+  function pair(oldNode, newNode, num) {
+    var td = el("td"), o = el("span", "prop-old"), n = el("span", "prop-new");
+    o.setAttribute("data-prop", num); n.setAttribute("data-prop", num);
+    o.appendChild(oldNode); n.appendChild(newNode); td.appendChild(o); td.appendChild(n); return td;
+  }
   function propCell(c, k, render) {
     var td = el("td");
     if (!(c.was && k in c.was)) { td.appendChild(render(c[k])); return td; }
@@ -320,37 +351,59 @@ td:last-child code { color: var(--label); }
   // ---------- 3 · le terminal : l'aide, ou l'exemple d'une commande
   var screen = document.getElementById("screen"), shown = null;
   function prompt(cmd) { var p = el("p", "prompt"); p.appendChild(el("b", "", "$ ")); p.appendChild(document.createTextNode(cmd)); return p; }
+  // l'aide, dans le style du binaire (#109A, src/help.rs): les lignes « h » de GROUPS et FLAGS,
+  // toutes les commandes, codées ou non (le binaire ne montre que les siennes), chacune cliquable
+  var HELP_W = 34, DOCS = "https://mathod95.github.io/dotbox/getting-started/cli/";
+  function pad(n) { return n > 0 ? new Array(n + 1).join(" ") : ""; }
+  function line(cls, text) { return el("li", cls, text); }
   function showHelp() {
     shown = null; screen.innerHTML = "";
     screen.appendChild(prompt("dotbox --help"));
-    var h = el("div", "help");
-    var u = el("div"); u.appendChild(el("h3", "", t("usage"))); u.appendChild(el("p", "usage", "dotbox <command> [args] [--flags]")); h.appendChild(u);
+    var ul = el("ul", "out help-out"), li;
+    li = line(""); li.appendChild(el("span", "lit", "Dot Box 0.0.5")); li.appendChild(el("span", "dim", " · self-hosted apps on Docker Compose, behind Traefik and Authelia")); ul.appendChild(li);
+    ul.appendChild(line("", ""));
+    li = line(""); li.appendChild(el("span", "ok", "Usage")); li.appendChild(el("span", "lit", "  dotbox <command> [args] [options]")); ul.appendChild(li);
     GROUPS.forEach(function (g) {
-      var s = el("div"); s.appendChild(el("h3", "", tr(g.name)));
-      var dl = el("dl", "cmds");
+      ul.appendChild(line("", "")); ul.appendChild(line("ok", g.name.en.toUpperCase()));
       g.cmds.forEach(function (c) {
-        if (c.added) return;
-        var dt = el("dt"), b = el("button"); b.type = "button";
-        b.appendChild(document.createTextNode(c.name));
-        var a = cur(c, "hargs") || cur(c, "args");
-        if (a) { b.appendChild(document.createTextNode(" ")); b.appendChild(el("span", "", a)); }
+        if (c.added || !c.h) return;
+        var args = c.h[1] ? " " + c.h[1] : "", b = el("button"); b.type = "button";
+        b.appendChild(el("span", "lit", c.h[0])); if (args) b.appendChild(el("span", "dim", args));
         b.addEventListener("click", function () { showCmd(c); });
-        dt.appendChild(b); dl.appendChild(dt); dl.appendChild(el("dd", "", tr(cur(c, "d"))));
+        li = line(""); li.appendChild(document.createTextNode("  ")); li.appendChild(b);
+        li.appendChild(document.createTextNode(pad(HELP_W - c.h[0].length - args.length) + c.h[2]));
+        ul.appendChild(li);
       });
-      s.appendChild(dl); h.appendChild(s);
     });
-    var fl = el("div"); fl.appendChild(el("h3", "", t("flags")));
-    var fd = el("dl", "cmds flags");
-    FLAGS.forEach(function (f) { fd.appendChild(el("dt", "", f.f)); fd.appendChild(el("dd", "", f.d[lang] || f.d.fr)); });
-    fl.appendChild(fd); h.appendChild(fl);
-    screen.appendChild(h);
+    ul.appendChild(line("", "")); ul.appendChild(line("ok", "OPTIONS"));
+    FLAGS.forEach(function (f) {
+      if (!f.h) return;
+      li = line(""); li.appendChild(el("span", "lit", "  " + f.f + pad(HELP_W - f.f.length))); li.appendChild(document.createTextNode(f.h)); ul.appendChild(li);
+    });
+    ul.appendChild(line("", ""));
+    li = line(""); li.appendChild(el("span", "dim", "Docs  ")); li.appendChild(document.createTextNode(DOCS)); ul.appendChild(li);
+    screen.appendChild(ul);
+  }
+  function example(ex, out, sudo, into) {
+    into.appendChild(prompt((sudo && !SUDO_PROP ? "sudo " : "") + ex));
+    var ul = el("ul", "out");
+    out.forEach(function (l) {
+      if (!Array.isArray(l[1])) { ul.appendChild(el("li", l[0], l[1])); return; }
+      var li = el("li", l[0]);
+      l[1].forEach(function (sg) { li.appendChild(el("span", sg[0], sg[1])); });
+      ul.appendChild(li);
+    });
+    into.appendChild(ul);
   }
   function showCmd(c) {
     shown = c; screen.innerHTML = "";
-    screen.appendChild(prompt((c.sudo && !SUDO_PROP ? "sudo " : "") + c.ex));
-    var ul = el("ul", "out");
-    c.out.forEach(function (l) { ul.appendChild(el("li", l[0], l[1])); });
-    screen.appendChild(ul);
+    if (c.was && ("out" in c.was || "ex" in c.was || "sudo" in c.was)) {
+      var o = el("div", "prop-old term-prop"), n = el("div", "prop-new term-prop");
+      o.setAttribute("data-prop", c.prop); n.setAttribute("data-prop", c.prop);
+      example(cur(c, "ex"), cur(c, "out"), !!cur(c, "sudo"), o);
+      example(c.ex, c.out, !!c.sudo, n);
+      screen.appendChild(o); screen.appendChild(n);
+    } else example(c.ex, c.out, !!c.sudo, screen);
     var b = el("button", "back", t("back")); b.type = "button"; b.addEventListener("click", function () { showHelp(); b.blur(); });
     screen.appendChild(b);
     b.focus({ preventScroll: true });
@@ -360,21 +413,30 @@ td:last-child code { color: var(--label); }
   function table() {
     var tb = document.getElementById("cmdTable"); tb.innerHTML = "";
     GROUPS.forEach(function (g) {
-      var hr = el("tr"), th = el("th", "", tr(g.name)); th.colSpan = 3; th.scope = "colgroup"; hr.appendChild(th); tb.appendChild(hr);
+      var hr = el("tr"), th = el("th", "", tr(g.name)); th.colSpan = 4; th.scope = "colgroup"; hr.appendChild(th); tb.appendChild(hr);
       g.cmds.forEach(function (c) {
         var tr_ = el("tr");
-        tr_.appendChild(c.was && "args" in c.was
-          ? propCell(c, "args", function (a) { return el("code", "", "dotbox " + c.name + (a ? " " + a : "")); })
+        // état: allumé fait, jaune en partie, éteint à faire
+        var key = c.state === "done" ? "stDone" : c.state === "partial" ? "stPartial" : "stTodo";
+        var sc = el("td", "st-col"), dot = el("span", "st " + (c.state || "todo"));
+        dot.title = t(key); dot.setAttribute("role", "img"); dot.setAttribute("aria-label", t(key));
+        sc.appendChild(dot); tr_.appendChild(sc);
+        tr_.appendChild(c.was && ("args" in c.was || "name" in c.was || "sudo" in c.was)
+          ? pair(sudoCode("dotbox " + cur(c, "name") + (cur(c, "args") ? " " + cur(c, "args") : ""), !!cur(c, "sudo")),
+                 sudoCode("dotbox " + c.name + (c.args ? " " + c.args : ""), !!c.sudo), c.prop)
           : sudoCell(c, "dotbox " + c.name + (c.args ? " " + c.args : "")));
         tr_.appendChild(propCell(c, "d", function (d) { return document.createTextNode(tr(d)); }));
         // exemple: trop étroit pour un encadré, le nouveau texte s'affiche en vert tant que #45 n'est pas validée
-        var c3 = el("td", c.sudo && SUDO_PROP && !c.added ? "prop-col" : ""); c3.appendChild(sudoCode(c.ex, !!c.sudo)); tr_.appendChild(c3);
+        var c3;
+        if (c.was && ("ex" in c.was || "sudo" in c.was)) c3 = pair(sudoCode(cur(c, "ex"), !!cur(c, "sudo")), sudoCode(c.ex, !!c.sudo), c.prop);
+        else { c3 = el("td", c.sudo && SUDO_PROP && !c.added ? "prop-col" : ""); c3.appendChild(sudoCode(c.ex, !!c.sudo)); }
+        tr_.appendChild(c3);
         // commande ajoutée (prop + added): encadré vert sur la première cellule, le reste en vert
         if (c.added) {
-          var first = tr_.firstChild, box = el("span", "prop-new"); box.setAttribute("data-prop", c.prop);
+          var first = tr_.children[1], box = el("span", "prop-new"); box.setAttribute("data-prop", c.prop);
           while (first.firstChild) box.appendChild(first.firstChild);
           first.appendChild(box);
-          for (var k = 1; k < tr_.children.length; k++) tr_.children[k].classList.add("prop-col");
+          for (var k = 2; k < tr_.children.length; k++) tr_.children[k].classList.add("prop-col");
         }
         tb.appendChild(tr_);
       });
@@ -382,9 +444,28 @@ td:last-child code { color: var(--label); }
   }
 
   // ---------- 6 · options globales
+  function flagList(withState) {
+    var ul = el("ul", withState ? "bullets flag-st" : "bullets");
+    FLAGS.forEach(function (f) {
+      if (!withState && f.added) return;
+      var li = el("li");
+      if (withState) {
+        var key = f.state === "done" ? "stDone" : f.state === "partial" ? "stPartial" : "stTodo";
+        var dot = el("span", "st " + (f.state || "todo")); dot.title = t(key); dot.setAttribute("role", "img"); dot.setAttribute("aria-label", t(key));
+        li.appendChild(dot);
+      }
+      var d = !withState && f.was && f.was.d ? f.was.d : f.d;
+      li.appendChild(el("b", "", f.f)); li.appendChild(document.createTextNode(": " + tr(d))); ul.appendChild(li);
+    });
+    return ul;
+  }
   function flags() {
-    var ul = document.getElementById("flagList"); ul.innerHTML = "";
-    FLAGS.forEach(function (f) { var li = el("li"); li.appendChild(el("b", "", f.f)); li.appendChild(document.createTextNode(": " + tr(f.d))); ul.appendChild(li); });
+    var box = document.getElementById("flagList"); box.innerHTML = "";
+    if (!FLAGS_PROP) { box.appendChild(flagList(true)); return; }
+    var o = el("div", "prop-old"), n = el("div", "prop-new");
+    o.setAttribute("data-prop", FLAGS_PROP); n.setAttribute("data-prop", FLAGS_PROP);
+    o.appendChild(flagList(false)); n.appendChild(flagList(true));
+    box.appendChild(o); box.appendChild(n);
   }
 
   function applyLang(l) {

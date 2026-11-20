@@ -13,15 +13,40 @@
   <p>Les caches et les transcodes de Jellyfin et Plex, ainsi que les logs, sont exclus d'office.</p>
 
   <h2 id="fr-how">Comment ça se passe</h2>
+  <div class="prop-old" data-prop="113">
   <ol>
     <li><b>App par app</b>: Dot Box arrête une app, archive son dossier, la redémarre, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive, quelques secondes pour la plupart.</li>
     <li><b>Instantané</b>: sur btrfs ou ZFS, un instantané remplace l'arrêt.</li>
     <li><b>Compressée et chiffrée</b>: chaque archive est compressée (zstd) puis chiffrée (age). Une destination distante ne voit jamais tes secrets en clair.</li>
     <li><b>Envoyée</b> à chaque destination, puis les plus anciennes sont supprimées selon <code>keep</code>.</li>
   </ol>
+  </div>
+  <div class="prop-new" data-prop="113">
+  <ol>
+    <li><b>App par app</b>: Dot Box arrête une app, archive son dossier, la redémarre et attend qu'elle soit <i><b>Running</b></i>, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive, quelques secondes pour la plupart. Une app qui ne repart pas arrête la série, et Dot Box le dit.</li>
+    <li><b>Instantané</b>: plus tard, sur btrfs ou ZFS, un instantané remplacera l'arrêt.</li>
+    <li><b>Compressée et chiffrée</b>: chaque archive est compressée (zstd) puis chiffrée (age), et s'appelle <code>&lt;app&gt;-&lt;date&gt;.tar.zst.age</code>. Une destination distante ne voit jamais tes secrets en clair.</li>
+    <li><b>Envoyée</b> à chaque destination, puis les plus anciennes sont supprimées selon <code>keep</code>.</li>
+  </ol>
+  </div>
+  <div class="prop-old" data-prop="112">
   <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles.</p>
+  </div>
+  <div class="prop-new" data-prop="112">
+  <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>, lisible par root seulement. <code>dotbox init</code> la crée, ou la première sauvegarde sur un serveur déjà installé. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles. La carte de fin de <code>init</code> et la première sauvegarde te le rappellent.</p>
+  </div>
+
+  <div class="prop-new" data-prop="110">
+  <h2 id="fr-nothing">Rien à installer</h2>
+  <ul>
+    <li><b>Sur le serveur</b>: la compression (zstd) et le chiffrement (age) sont dans le binaire <code>dotbox</code>. rclone, pour les destinations distantes, tourne depuis son image Docker officielle, le temps de l'envoi.</li>
+    <li><b>En face</b>: la destination ne fait que stocker des fichiers chiffrés, qu'elle ne sait pas lire. Pour B2, S3 ou Google Drive, un compte suffit. Pour <code>sftp</code>, une machine avec un serveur SSH, ce qu'ont tout Linux et la plupart des NAS (Synology, TrueNAS...). Elle n'a jamais besoin de rclone, de zstd ni d'age.</li>
+    <li><b>Relire une archive ailleurs</b>, sur ton PC par exemple: <code>dotbox</code> sait le faire, et les formats sont standards, les outils officiels <code>zstd</code> et <code>age</code> les ouvrent aussi, avec la clé.</li>
+  </ul>
+  </div>
 
   <h2 id="fr-settings">Réglages</h2>
+  <div class="prop-old" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
   keep: 7                          <span class="c"># archives gardées par destination</span>
@@ -31,6 +56,19 @@
     - rclone: b2:dotbox-backups
     - sftp: backup@nas.local:/volume1/dotbox</pre>
   <p>La planification est un timer systemd créé par <code>init</code>. <code>dotbox status</code> montre la dernière sauvegarde, son résultat et la prochaine.</p>
+  </div>
+  <div class="prop-new" data-prop="111">
+  <pre>backup:
+  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
+  keep: 7                          <span class="c"># archives gardées par destination</span>
+  exclude: ["*/logs/*"]
+  destinations:
+    - local: /backups              <span class="c"># sur le serveur</span>
+    - rclone: b2:dotbox-backups    <span class="c"># un remote de rclone.conf</span>
+    - sftp: backup@nas.local:/volume1/dotbox   <span class="c"># par rclone aussi</span></pre>
+  <p>Par défaut: <code>daily 04:00</code>, <code>keep: 7</code>, vers <code>/backups</code>. La planification est un timer systemd, <code>dotbox-backup.timer</code>, écrit par <code>init</code> et par <code>dotbox sync</code>. <code>dotbox status</code> montre la dernière sauvegarde, son résultat et la prochaine.</p>
+  <p><code>rclone</code> et <code>sftp</code> passent tous les deux par rclone. Ses remotes (ton compte B2, ton NAS) sont dans <code>/opt/dotbox/secrets/rclone.conf</code>, lisible par root seulement.</p>
+  </div>
 
   <h2 id="fr-manual">Lancer une sauvegarde</h2>
   <pre><span class="p">$</span> dotbox backup
@@ -53,15 +91,40 @@
   <p>Jellyfin and Plex caches and transcodes, and logs, are always excluded.</p>
 
   <h2 id="en-how">How it works</h2>
+  <div class="prop-old" data-prop="113">
   <ol>
     <li><b>App by app</b>: Dot Box stops an app, archives its folder, restarts it, then moves to the next one. Each app is down only for its own archive, a few seconds for most.</li>
     <li><b>Snapshot</b>: on btrfs or ZFS, a snapshot replaces the stop.</li>
     <li><b>Compressed and encrypted</b>: each archive is compressed (zstd), then encrypted (age). A remote destination never sees your secrets in clear.</li>
     <li><b>Sent</b> to each destination, then the oldest are deleted according to <code>keep</code>.</li>
   </ol>
+  </div>
+  <div class="prop-new" data-prop="113">
+  <ol>
+    <li><b>App by app</b>: Dot Box stops an app, archives its folder, restarts it and waits for it to be <i><b>Running</b></i>, then moves to the next one. Each app is down only for its own archive, a few seconds for most. An app that does not come back stops the series, and Dot Box says so.</li>
+    <li><b>Snapshot</b>: later, on btrfs or ZFS, a snapshot will replace the stop.</li>
+    <li><b>Compressed and encrypted</b>: each archive is compressed (zstd), then encrypted (age), and is named <code>&lt;app&gt;-&lt;date&gt;.tar.zst.age</code>. A remote destination never sees your secrets in clear.</li>
+    <li><b>Sent</b> to each destination, then the oldest are deleted according to <code>keep</code>.</li>
+  </ol>
+  </div>
+  <div class="prop-old" data-prop="112">
   <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>. Keep a copy off the server, in a password manager: without it, archives cannot be read.</p>
+  </div>
+  <div class="prop-new" data-prop="112">
+  <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>, readable by root only. <code>dotbox init</code> creates it, or the first backup on a server already installed. Keep a copy off the server, in a password manager: without it, archives cannot be read. The card at the end of <code>init</code> and the first backup remind you.</p>
+  </div>
+
+  <div class="prop-new" data-prop="110">
+  <h2 id="en-nothing">Nothing to install</h2>
+  <ul>
+    <li><b>On the server</b>: compression (zstd) and encryption (age) are in the <code>dotbox</code> binary. rclone, for remote destinations, runs from its official Docker image, for the time of the upload.</li>
+    <li><b>On the other side</b>: the destination only stores encrypted files, which it cannot read. For B2, S3 or Google Drive, an account is enough. For <code>sftp</code>, a machine with an SSH server, which every Linux and most NAS have (Synology, TrueNAS...). It never needs rclone, zstd or age.</li>
+    <li><b>Reading an archive elsewhere</b>, on your PC for example: <code>dotbox</code> can do it, and the formats are standard, the official <code>zstd</code> and <code>age</code> tools open them too, with the key.</li>
+  </ul>
+  </div>
 
   <h2 id="en-settings">Settings</h2>
+  <div class="prop-old" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
   keep: 7                          <span class="c"># archives kept per destination</span>
@@ -71,6 +134,19 @@
     - rclone: b2:dotbox-backups
     - sftp: backup@nas.local:/volume1/dotbox</pre>
   <p>Scheduling is a systemd timer created by <code>init</code>. <code>dotbox status</code> shows the last backup, its result and the next one.</p>
+  </div>
+  <div class="prop-new" data-prop="111">
+  <pre>backup:
+  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
+  keep: 7                          <span class="c"># archives kept per destination</span>
+  exclude: ["*/logs/*"]
+  destinations:
+    - local: /backups              <span class="c"># on the server</span>
+    - rclone: b2:dotbox-backups    <span class="c"># a remote from rclone.conf</span>
+    - sftp: backup@nas.local:/volume1/dotbox   <span class="c"># through rclone too</span></pre>
+  <p>By default: <code>daily 04:00</code>, <code>keep: 7</code>, to <code>/backups</code>. Scheduling is a systemd timer, <code>dotbox-backup.timer</code>, written by <code>init</code> and by <code>dotbox sync</code>. <code>dotbox status</code> shows the last backup, its result and the next one.</p>
+  <p><code>rclone</code> and <code>sftp</code> both go through rclone. Its remotes (your B2 account, your NAS) are in <code>/opt/dotbox/secrets/rclone.conf</code>, readable by root only.</p>
+  </div>
 
   <h2 id="en-manual">Run a backup</h2>
   <pre><span class="p">$</span> dotbox backup

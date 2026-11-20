@@ -2,6 +2,106 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "v0.0.5",
+      "date": "2026-11-20",
+      "tagged": true,
+      "title": {
+        "fr": "Le service de Dot Box et les commandes de la CLI",
+        "en": "The Dot Box service and the CLI commands"
+      },
+      "new": [
+        {
+          "fr": "Core: le service `dotbox serve`, sous systemd, que la CLI appelle par `/run/dotbox/dotbox.sock`: root et le groupe `dotbox` seulement, une tâche à la fois",
+          "en": "Core: the `dotbox serve` service, under systemd, which the CLI calls through `/run/dotbox/dotbox.sock`: root and the `dotbox` group only, one job at a time"
+        },
+        {
+          "fr": "CLI: `dotbox status`: le core et les apps, leur version, leur état, leur accès, leur adresse, et le résumé du dernier doctor, dans un cadre façon cliclack (◇ ▲ ■)",
+          "en": "CLI: `dotbox status`: the core and the apps, their version, state, access and address, and the last doctor's summary, in a cliclack-style frame (◇ ▲ ■)"
+        },
+        {
+          "fr": "CLI: `dotbox doctor`: le système, Docker, le DNS, les containers, les certificats, CrowdSec, les apps qui attendent leur assistant, les mises à jour, SSH et le disque, une ligne par section façon cliclack, chaque problème avec quoi faire, code de sortie 1 s'il y en a un",
+          "en": "CLI: `dotbox doctor`: the system, Docker, DNS, containers, certificates, CrowdSec, apps waiting for their setup, updates, SSH and disk, one line per section in cliclack style, each problem with what to do, exit code 1 if there is one"
+        },
+        {
+          "fr": "CLI: `--local` fait le travail dans la commande, en root, sans le service",
+          "en": "CLI: `--local` does the work in the command, as root, without the service"
+        },
+        {
+          "fr": "CLI: `dotbox list [recherche]`, le catalogue avec les apps installées",
+          "en": "CLI: `dotbox list [search]`, the catalog with the installed apps"
+        },
+        {
+          "fr": "CLI: `dotbox info <app>`, son image, son état, son adresse, son accès, ses dossiers et ses ports",
+          "en": "CLI: `dotbox info <app>`, its image, state, address, access, folders and ports"
+        },
+        {
+          "fr": "CLI: `dotbox start`, `stop` et `restart <app>`",
+          "en": "CLI: `dotbox start`, `stop` and `restart <app>`"
+        },
+        {
+          "fr": "CLI: `dotbox logs <app>`, avec `-f` pour les suivre et `--tail`, pour une app ou un container du core",
+          "en": "CLI: `dotbox logs <app>`, with `-f` to follow them and `--tail`, for an app or a core container"
+        },
+        {
+          "fr": "CLI: `dotbox update`, le catalogue relu sur GitHub puis une app à la fois, la suivante quand la précédente tourne, et `--rollback` vers l'image d'avant",
+          "en": "CLI: `dotbox update`, the catalog read again on GitHub then one app at a time, the next once the previous runs, and `--rollback` to the image from before"
+        },
+        {
+          "fr": "CLI: `dotbox diff`, l'écart entre ce qui est voulu et ce qui tourne: une app arrêtée, une version qui n'est plus celle du catalogue, un `compose.yml` changé à la main",
+          "en": "CLI: `dotbox diff`, the gap between what is wanted and what runs: a stopped app, a version that is no longer the catalog's, a `compose.yml` changed by hand"
+        },
+        {
+          "fr": "CLI: `sudo dotbox upgrade`, la dernière release avec son SHA-256 vérifié, l'ancien binaire gardé, le service redémarré",
+          "en": "CLI: `sudo dotbox upgrade`, the latest release with its SHA-256 verified, the old binary kept, the service restarted"
+        },
+        {
+          "fr": "CLI: `dotbox completion bash|zsh|fish`, et les options globales `--json`, `-y`, `-q`, `--no-color`",
+          "en": "CLI: `dotbox completion bash|zsh|fish`, and the global options `--json`, `-y`, `-q`, `--no-color`"
+        },
+        {
+          "fr": "CLI: `dotbox version`, la version de la commande et celle du service, et l'avertissement si le service tourne un autre binaire",
+          "en": "CLI: `dotbox version`, the version of the command and of the service, and a warning if the service runs another binary"
+        },
+        {
+          "fr": "CLI: `sudo dotbox exec <app> -- <commande>`, une commande dans le container d'une app, ou un shell sans commande, avec le code de sortie de la commande",
+          "en": "CLI: `sudo dotbox exec <app> -- <command>`, a command in an app's container, or a shell without one, with the command's exit code"
+        },
+        {
+          "fr": "CLI: `sudo dotbox edit <app>`, `compose.override.yml` ouvert dans l'éditeur, vérifié par `docker compose config` puis appliqué, l'ancien fichier remis si l'app ne repart pas",
+          "en": "CLI: `sudo dotbox edit <app>`, `compose.override.yml` opened in the editor, checked by `docker compose config` then applied, the old file put back if the app does not come back"
+        },
+        {
+          "fr": "CLI: `sudo dotbox add <compose.yml> --name <app>`, un compose d'un seul service devient un manifest dans `/opt/dotbox/apps/`, que `dotbox install` lit avant le catalogue",
+          "en": "CLI: `sudo dotbox add <compose.yml> --name <app>`, a one-service compose becomes a manifest in `/opt/dotbox/apps/`, which `dotbox install` reads before the catalog"
+        }
+      ],
+      "changed": [
+        {
+          "fr": "CLI: `dotbox install` et `dotbox remove` passent par le service: sans `sudo` pour les membres du groupe `dotbox`, avec les mêmes étapes à l'écran",
+          "en": "CLI: `dotbox install` and `dotbox remove` go through the service: no `sudo` for members of the `dotbox` group, with the same steps on screen"
+        },
+        {
+          "fr": "CLI: `dotbox init` met l'utilisateur dans le groupe `dotbox` et installe le service, une étape de plus",
+          "en": "CLI: `dotbox init` adds the user to the `dotbox` group and installs the service, one more step"
+        },
+        {
+          "fr": "CLI: `dotbox remove --purge` demande sa confirmation avant d'envoyer quoi que ce soit, `--yes` pour s'en passer",
+          "en": "CLI: `dotbox remove --purge` asks for its confirmation before sending anything, `--yes` to skip it"
+        },
+        {
+          "fr": "CLI: `dotbox --help` range les commandes par groupes, avec leurs arguments et en couleurs, comme la page CLI",
+          "en": "CLI: `dotbox --help` sorts the commands into groups, with their arguments and in color, like the CLI page"
+        }
+      ],
+      "fixed": [
+        {
+          "fr": "CLI: la carte de fin de `dotbox init` renvoie vers Post-installation, qui explique la première connexion à Authelia, au lieu d'Accessing Apps",
+          "en": "CLI: the `dotbox init` end card links to Post-installation, which explains the first login to Authelia, instead of Accessing Apps"
+        }
+      ],
+      "removed": []
+    },
+    {
       "version": "v0.0.4",
       "date": "2026-11-20",
       "tagged": true,

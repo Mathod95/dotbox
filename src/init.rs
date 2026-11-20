@@ -10,7 +10,7 @@ use crate::card::{self, Component};
 use crate::catalog::{self, Core};
 use crate::config::{self, Config};
 use crate::out::say;
-use crate::{authelia, crowdsec, docker, github, log, prompt, secrets, system, traefik, ui};
+use crate::{authelia, crowdsec, docker, github, log, prompt, secrets, serve, system, traefik, ui};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -202,6 +202,20 @@ fn steps(args: &Args) -> Result<(), String> {
         system::run("usermod", &["-aG", "sudo", &name])?;
         say("group", &format!("{name} added to sudo"));
     }
+    // le groupe dotbox: la CLI parle au service sans sudo (D79). Pas le groupe docker (D33).
+    if system::run("getent", &["group", serve::GROUP]).is_err() {
+        system::run("groupadd", &["--system", serve::GROUP])?;
+        say("create", &format!("group {}", serve::GROUP));
+    }
+    if system::user_groups(&name)?
+        .iter()
+        .any(|g| g == serve::GROUP)
+    {
+        say("check", &format!("{name} in group {}", serve::GROUP));
+    } else {
+        system::run("usermod", &["-aG", serve::GROUP, &name])?;
+        say("group", &format!("{name} added to {}", serve::GROUP));
+    }
     // le mot de passe Authelia, demandé seulement si le compte n'existe pas encore (D34, D39);
     // sans terminal, il est tiré au hasard
     let chosen = if !authelia::account_exists(&name) && prompt::is_terminal() {
@@ -215,7 +229,7 @@ fn steps(args: &Args) -> Result<(), String> {
     } else {
         None
     };
-    ui::done(&format!("{name}, group sudo"));
+    ui::done(&format!("{name}, groups sudo and dotbox"));
 
     // 4. Docker
     ui::step("Docker", "official repository");
@@ -254,6 +268,11 @@ fn steps(args: &Args) -> Result<(), String> {
         "{crowdsec_version}, SSH, Traefik and AppSec, bouncer {bouncer_version}"
     ));
 
+    // 8. le service de Dot Box, que la CLI appelle (D79, 11.7)
+    ui::step("Service", "the Dot Box service, behind the dotbox command");
+    let service = serve::setup()?;
+    ui::done(&service);
+
     // la carte de fin (D26, D32, D37)
     let docker_state =
         if system::run("systemctl", &["is-active", "docker"]).is_ok_and(|s| s == "active") {
@@ -290,6 +309,16 @@ fn steps(args: &Args) -> Result<(), String> {
                 version: crowdsec_version,
                 state: crowdsec::state(),
                 address: String::new(),
+            },
+            Component {
+                name: "Dot Box".into(),
+                version: env!("CARGO_PKG_VERSION").into(),
+                state: match system::run("systemctl", &["is-active", "dotbox"]) {
+                    Ok(s) if s == "active" => "running".into(),
+                    Ok(s) => s,
+                    Err(_) => String::new(),
+                },
+                address: serve::SOCKET.into(),
             },
         ],
         elapsed: ui::duration(ui::elapsed()),

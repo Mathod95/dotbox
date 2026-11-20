@@ -298,7 +298,7 @@ pub fn rules_ok(input: &str, docker_user: &str, chain: &str) -> bool {
         && chain.contains(&format!("--match-set {SET_V4}"))
 }
 
-fn rules_in_place() -> bool {
+pub fn rules_in_place() -> bool {
     let rules = |c: &str| system::run("iptables", &["-S", c]).unwrap_or_default();
     rules_ok(&rules("INPUT"), &rules("DOCKER-USER"), &rules(CHAIN))
 }

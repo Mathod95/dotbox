@@ -15,34 +15,38 @@ use crate::{authelia, docker, log, prompt, system, traefik, ui};
 pub struct InstallArgs {
     /// Apps to install
     #[arg(required = true, value_name = "APP")]
-    apps: Vec<String>,
+    pub apps: Vec<String>,
 
-    /// Read the catalog from this folder instead of /opt/dotbox/catalog (for tests)
+    /// Read the catalog from this folder instead of /opt/dotbox/catalog (for tests, with --local)
     #[arg(long, value_name = "DIR")]
-    catalog: Option<PathBuf>,
+    pub catalog: Option<PathBuf>,
 
     /// Show every sub-step as it happens (they are always in the log)
     #[arg(long)]
-    verbose: bool,
+    pub verbose: bool,
 }
 
 #[derive(clap::Args)]
 pub struct RemoveArgs {
     /// App to remove: its configuration stays in /opt/APP
     #[arg(value_name = "APP")]
-    app: String,
+    pub app: String,
 
     /// Also delete /opt/APP and the image, after a confirmation
     #[arg(long)]
-    purge: bool,
+    pub purge: bool,
+
+    /// Set from the global --yes
+    #[arg(skip)]
+    pub yes: bool,
 
     /// Show every sub-step as it happens (they are always in the log)
     #[arg(long)]
-    verbose: bool,
+    pub verbose: bool,
 }
 
 /// « prowlarr » devient « Prowlarr » sur la ligne de l'étape.
-fn title(app: &str) -> String {
+pub fn title(app: &str) -> String {
     let mut t = app.to_string();
     if let Some(c) = t.get_mut(0..1) {
         c.make_ascii_uppercase();
@@ -51,10 +55,10 @@ fn title(app: &str) -> String {
 }
 
 /// Root, le log de ce lancement, l'affichage.
-fn begin(kind: &str, what: &str, steps: usize, verbose: bool) -> Result<(), String> {
+pub fn begin(kind: &str, what: &str, steps: usize, verbose: bool) -> Result<(), String> {
     if system::effective_uid()? != 0 {
         return Err(format!(
-            "run dotbox {kind} as root: sudo dotbox {kind} {what}"
+            "run dotbox {kind} --local as root: sudo dotbox {kind} {what} --local"
         ));
     }
     let stamp = system::run("date", &["+%Y-%m-%d-%H%M"])?;
@@ -72,11 +76,11 @@ fn begin(kind: &str, what: &str, steps: usize, verbose: bool) -> Result<(), Stri
 }
 
 /// Une confirmation refusée: rien n'a changé, ce n'est pas une erreur (ui::cancel).
-const CANCELLED: &str = "cancelled, nothing changed";
+pub const CANCELLED: &str = "cancelled, nothing changed";
 
 /// Une erreur dans une étape est déjà affichée par ui::fail, avec la fin du log. Une annulation
 /// s'affiche en ligne neutre, et le code de retour reste 1: rien n'a été fait.
-fn finish(result: Result<(), String>) -> Result<(), String> {
+pub fn finish(result: Result<(), String>) -> Result<(), String> {
     match result {
         Ok(()) => Ok(()),
         Err(e) if e == CANCELLED && ui::cancel(&e) => Err(String::new()),
@@ -86,7 +90,7 @@ fn finish(result: Result<(), String>) -> Result<(), String> {
 }
 
 /// Le domaine et l'utilisateur, posés par dotbox init.
-fn server(cfg: &Config) -> Result<(String, String), String> {
+pub fn server(cfg: &Config) -> Result<(String, String), String> {
     let domain = cfg
         .get("domain")
         .ok_or("no domain in /opt/dotbox/dotbox.yml: run sudo dotbox init first")?;
@@ -107,7 +111,7 @@ fn compose_files(app: &str) -> Vec<String> {
     files
 }
 
-fn compose(app: &str, args: &[&str]) -> Result<String, String> {
+pub fn compose(app: &str, args: &[&str]) -> Result<String, String> {
     let mut all: Vec<String> = vec!["compose".into()];
     all.extend(compose_files(app));
     all.extend(args.iter().map(|s| s.to_string()));
@@ -127,7 +131,7 @@ fn foreign_compose(app: &str) -> Option<String> {
 }
 
 /// Attend que l'app tourne: healthy si elle a un healthcheck, running sinon.
-fn wait_ready(app: &str, health: bool, timeout: Duration) -> Result<String, String> {
+pub fn wait_ready(app: &str, health: bool, timeout: Duration) -> Result<String, String> {
     let start = Instant::now();
     loop {
         let state = traefik::container_state(app);
@@ -189,13 +193,27 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
             );
         }
         for app in &apps {
-            ready.push(install_one(dir, app, &domain, &user)?);
+            ready.push(install_one(dir, app, &domain, &user, None)?);
         }
         Ok(())
     })();
     finish(result)?;
+    if ui::events() {
+        ui::result(serde_json::to_value(&ready).unwrap_or_default());
+    } else {
+        print_ready(&ready);
+    }
+    Ok(())
+}
+
+/// Le résumé de la fin: l'adresse de chaque app, et ce qu'il reste à faire pour celles qui
+/// attendent leur assistant de premier démarrage.
+pub fn print_ready(ready: &[Ready]) {
+    if crate::out::quiet() {
+        return;
+    }
     eprintln!();
-    for r in &ready {
+    for r in ready {
         let access = if r.setup_pending {
             "two_factor for now".to_string()
         } else {
@@ -216,19 +234,36 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
             r.address
         );
         eprintln!(
-            "    Then run sudo dotbox install {} again: Authelia steps aside ({}).",
+            "    Then run dotbox install {} again: Authelia steps aside ({}).",
             r.app, r.access
         );
         eprintln!();
     }
-    Ok(())
 }
 
 /// Installe une app (ou la remet d'aplomb si elle l'est déjà). Rend son nom, son adresse et
 /// son niveau d'accès.
-fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready, String> {
-    ui::step(&title(app), "from the catalog");
-    let m = catalog::load(dir, app)?;
+/// `image`: une autre image que celle du catalogue (dotbox update --rollback, 13.6).
+pub fn install_one(
+    dir: &Path,
+    app: &str,
+    domain: &str,
+    user: &str,
+    image: Option<&str>,
+) -> Result<Ready, String> {
+    let from = crate::add::manifest_dir(dir, app);
+    let doing = if image.is_some() {
+        "the previous image"
+    } else if from != dir {
+        "from your apps (dotbox add)"
+    } else {
+        "from the catalog"
+    };
+    ui::step(&title(app), doing);
+    let mut m = catalog::load(&from, app)?;
+    if let Some(i) = image {
+        m.image = i.to_string();
+    }
     say(
         "read",
         &format!(
@@ -298,6 +333,7 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
     if changed {
         say("write", &path);
     }
+    remember_compose(app)?;
     cfg.set_app(app, &sub, access.as_str());
     if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
         say("write", &format!("{} (apps: {app})", config::PATH));
@@ -339,6 +375,7 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         say("check", &format!("{app}: first-run setup already done"));
         if system::write_if_changed(&path, &engine::compose(&m, &ctx), 0o644)? {
             say("write", &path);
+            remember_compose(app)?;
             compose(app, &["up", "-d", "--quiet-pull"])?;
             say("start", app);
             state = wait_ready(app, m.health.is_some(), Duration::from_secs(180))?;
@@ -360,6 +397,18 @@ fn install_one(dir: &Path, app: &str, domain: &str, user: &str) -> Result<Ready,
         access: access.as_str().to_string(),
         setup_pending,
     })
+}
+
+/// L'empreinte du compose.yml que dotbox vient d'écrire: dotbox diff voit s'il a été changé à la
+/// main depuis (13.7).
+pub fn compose_sum_path(app: &str) -> String {
+    format!("{}/.dotbox-compose.sha256", engine::dir(app))
+}
+
+fn remember_compose(app: &str) -> Result<(), String> {
+    let sum = crate::crowdsec::sha256(&engine::compose_path(app)).unwrap_or_default();
+    system::write_if_changed(&compose_sum_path(app), &format!("{sum}\n"), 0o644)?;
+    Ok(())
 }
 
 /// Les modules du noyau que l'app demande (wireguard): chargés maintenant, et à chaque démarrage
@@ -418,17 +467,18 @@ fn setup_done(m: &catalog::Manifest) -> Option<bool> {
 }
 
 /// Une app installée, pour le résumé de la fin.
-struct Ready {
-    app: String,
-    address: String,
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Ready {
+    pub app: String,
+    pub address: String,
     /// le niveau voulu (dotbox.yml ou le manifest)
-    access: String,
+    pub access: String,
     /// derrière Authelia tant que son assistant de premier démarrage n'est pas fini (D71)
-    setup_pending: bool,
+    pub setup_pending: bool,
 }
 
 /// Le container tourne (avec ou sans healthcheck).
-fn running(state: &str) -> bool {
+pub fn running(state: &str) -> bool {
     matches!(state, "running" | "healthy" | "starting" | "unhealthy")
 }
 
@@ -553,10 +603,10 @@ pub fn remove(args: &RemoveArgs) -> Result<(), String> {
         "the app, its configuration is kept"
     };
     ui::step(&title(app), what);
-    finish(remove_steps(app, args.purge))
+    finish(remove_steps(app, args.purge, args.yes))
 }
 
-fn remove_steps(app: &str, purge: bool) -> Result<(), String> {
+fn remove_steps(app: &str, purge: bool, yes: bool) -> Result<(), String> {
     let mut cfg = Config::load()?;
     let path = engine::compose_path(app);
     let dir = engine::dir(app);
@@ -568,7 +618,7 @@ fn remove_steps(app: &str, purge: bool) -> Result<(), String> {
         return Err(e);
     }
     // la confirmation avant tout changement (D42)
-    if purge {
+    if purge && !yes {
         if !prompt::is_terminal() {
             return Err("--purge asks for a confirmation: run it in a terminal".into());
         }
@@ -588,6 +638,7 @@ fn remove_steps(app: &str, purge: bool) -> Result<(), String> {
         }
         std::fs::remove_file(&path).map_err(|e| format!("cannot delete {path}: {e}"))?;
         say("delete", &path);
+        let _ = std::fs::remove_file(compose_sum_path(app));
     }
     crate::crowdsec::unwatch_app(app)?;
     // le module reste chargé jusqu'au prochain démarrage du serveur: il ne gêne rien

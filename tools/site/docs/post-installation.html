@@ -4,8 +4,36 @@
 
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
+  <div class="prop-new" data-prop="56">
+  <h2 id="fr-authelia">Te connecter à Authelia</h2>
+  <p>À faire en premier: tant que ta double authentification n'est pas enregistrée, aucune app derrière Authelia ne s'ouvre. Ton compte existe déjà, au nom de l'utilisateur choisi pendant <code>init</code>, dans le groupe <code>admins</code>.</p>
+  <h3 id="fr-authelia-login">1. Te connecter</h3>
+  <p>Relis ton mot de passe sur le serveur:</p>
+  <pre><span class="p">$</span> sudo dotbox authelia password
+  password ••••••••••••••••   (admin, set by dotbox init)</pre>
+  <p>Ouvre <code>https://auth.example.com</code>, ou n'importe quelle app derrière Authelia, puis entre ton nom d'utilisateur et ce mot de passe.</p>
+  <h3 id="fr-authelia-device">2. Choisir ta double authentification</h3>
+  <p>Authelia ne connaît encore aucun appareil: clique sur « Register device ». Tu arrives dans ses réglages, où tu ajoutes l'une des deux méthodes, ou les deux:</p>
+  <ul>
+    <li><b>Un code à 6 chiffres</b> (One-Time Password), avec une app comme Aegis, 2FAS ou Google Authenticator.</li>
+    <li><b>Une passkey</b>, gardée par ton téléphone, ton ordinateur ou une clé de sécurité. Un faux site ne peut pas la recopier, contrairement au code.</li>
+  </ul>
+  <h3 id="fr-authelia-verify">3. Confirmer que c'est toi</h3>
+  <p>Avant d'enregistrer un appareil, Authelia demande un code de vérification d'identité. Il ne l'envoie pas par e-mail, puisque Dot Box n'en demande aucun: le code est écrit sur le serveur. Lis-le, puis recopie-le dans le navigateur:</p>
+  <pre><span class="p">$</span> sudo dotbox authelia verification
+  code     X7KQ2M9P   (created 14:02, valid until 14:07)
+  note     this is not the 6-digit code: that one comes from the app on your phone</pre>
+  <p>Ce code ne vaut que 5 minutes. Passé ce délai, Authelia refuse l'enregistrement: redemande un code dans le navigateur, puis relance la commande.</p>
+  <h3 id="fr-authelia-finish">4. Terminer</h3>
+  <ul>
+    <li>Code à 6 chiffres: scanne le QR code avec ton app, puis tape le code qu'elle affiche. Chaque nouvel essai crée une nouvelle clé, garde seulement la dernière dans ton app.</li>
+    <li>Passkey: suis la demande de ton navigateur.</li>
+  </ul>
+  <p>Enregistrer un appareil ne te connecte pas encore: Authelia te demande ensuite un code, ou ta passkey, puis ouvre l'app. Les fois suivantes, c'est le mot de passe puis la double authentification.</p>
+  </div>
   <h2 id="fr-doctor">Lancer dotbox doctor</h2>
   <p>Avant tout, <code>doctor</code> vérifie le serveur et liste ce qui reste à faire. Chaque point ci-dessous correspond à une de ses lignes.</p>
+  <div class="prop-old" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
 <span class="ok">  ok    docker 28.2, network dotbox</span>
 <span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
@@ -17,6 +45,26 @@
 <span class="w">  warn  ssh allows root login</span>
 <span class="w">  warn  backup only local (/backups)</span>
 <span class="ok">  ok    /data 12% used</span></pre>
+  </div>
+  <div class="prop-new" data-prop="94">
+  <pre><span class="p">$</span> dotbox doctor
+<span class="ok">  ok    Debian GNU/Linux 13 (trixie) amd64</span>
+<span class="ok">  ok    docker 29.10.0, network dotbox, local logs, live-restore</span>
+<span class="ok">  ok    *.example.com points to this server</span>
+<span class="ok">  ok    18 containers running</span>
+<span class="ok">  ok    15 certificates valid, the first ends in 87 days</span>
+<span class="ok">  ok    crowdsec running, bouncer rules in INPUT and DOCKER-USER</span>
+<span class="w">  warn  3 system updates pending (1 security)</span>
+<span class="c">        sudo apt update &amp;&amp; sudo apt full-upgrade</span>
+<span class="w">  warn  automatic security updates are off</span>
+<span class="w">  warn  reboot required</span>
+<span class="w">  warn  ssh accepts passwords</span>
+<span class="w">  warn  ssh allows root login</span>
+<span class="ok">  ok    / 11% used</span>
+<span class="ok">  ok    dotbox service running</span>
+
+<span class="w">  ! 5 problems</span></pre>
+  </div>
 
   <h2 id="fr-updates">Mettre le système à jour</h2>
   <p>Dot Box ne met pas à jour le système et ne redémarre jamais le serveur: c'est toi qui choisis le moment. <code>doctor</code> signale:</p>
@@ -42,7 +90,12 @@
   <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="fr-users">Créer les comptes</h2>
+  <div class="prop-old" data-prop="57">
   <p>Ton compte existe déjà: <code>init</code> l'a créé dans le groupe <code>admins</code>. Son mot de passe se relit avec <code>sudo dotbox authelia password</code>. Pour les autres:</p>
+  </div>
+  <div class="prop-new" data-prop="57">
+  <p>Ton compte existe déjà (Te connecter à Authelia, plus haut). Pour les autres:</p>
+  </div>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Les groupes décident des apps accessibles: <code>family</code> voit le serveur média et Seerr, <code>admins</code> voit tout. Le compte reçoit un lien d'invitation valable 48 heures pour choisir son mot de passe et sa double authentification.</p>
 
@@ -54,8 +107,36 @@
 </article>
 
 <article class="prose" data-l="en">
+  <div class="prop-new" data-prop="56">
+  <h2 id="en-authelia">Log in to Authelia</h2>
+  <p>Do this first: until your two-factor method is registered, no app behind Authelia opens. Your account already exists, named after the user chosen during <code>init</code>, in the <code>admins</code> group.</p>
+  <h3 id="en-authelia-login">1. Log in</h3>
+  <p>Read your password again on the server:</p>
+  <pre><span class="p">$</span> sudo dotbox authelia password
+  password ••••••••••••••••   (admin, set by dotbox init)</pre>
+  <p>Open <code>https://auth.example.com</code>, or any app behind Authelia, then enter your user name and this password.</p>
+  <h3 id="en-authelia-device">2. Choose your two-factor method</h3>
+  <p>Authelia knows no device yet: click « Register device ». You land in its settings, where you add one of the two methods, or both:</p>
+  <ul>
+    <li><b>A 6-digit code</b> (One-Time Password), with an app such as Aegis, 2FAS or Google Authenticator.</li>
+    <li><b>A passkey</b>, kept by your phone, your computer or a security key. A fake site cannot copy it, unlike the code.</li>
+  </ul>
+  <h3 id="en-authelia-verify">3. Confirm it is you</h3>
+  <p>Before registering a device, Authelia asks for an identity verification code. It does not email it, since Dot Box asks for no email address: the code is written on the server. Read it, then type it in the browser:</p>
+  <pre><span class="p">$</span> sudo dotbox authelia verification
+  code     X7KQ2M9P   (created 14:02, valid until 14:07)
+  note     this is not the 6-digit code: that one comes from the app on your phone</pre>
+  <p>This code is only valid for 5 minutes. After that, Authelia refuses the registration: ask for a new code in the browser, then run the command again.</p>
+  <h3 id="en-authelia-finish">4. Finish</h3>
+  <ul>
+    <li>6-digit code: scan the QR code with your app, then type the code it shows. Each new attempt creates a new key, keep only the latest one in your app.</li>
+    <li>Passkey: follow your browser's prompt.</li>
+  </ul>
+  <p>Registering a device does not log you in yet: Authelia then asks for a code, or your passkey, and opens the app. From then on, it is the password, then the second factor.</p>
+  </div>
   <h2 id="en-doctor">Run dotbox doctor</h2>
   <p>First, <code>doctor</code> checks the server and lists what is left to do. Each point below matches one of its lines.</p>
+  <div class="prop-old" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
 <span class="ok">  ok    docker 28.2, network dotbox</span>
 <span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
@@ -67,6 +148,26 @@
 <span class="w">  warn  ssh allows root login</span>
 <span class="w">  warn  backup only local (/backups)</span>
 <span class="ok">  ok    /data 12% used</span></pre>
+  </div>
+  <div class="prop-new" data-prop="94">
+  <pre><span class="p">$</span> dotbox doctor
+<span class="ok">  ok    Debian GNU/Linux 13 (trixie) amd64</span>
+<span class="ok">  ok    docker 29.10.0, network dotbox, local logs, live-restore</span>
+<span class="ok">  ok    *.example.com points to this server</span>
+<span class="ok">  ok    18 containers running</span>
+<span class="ok">  ok    15 certificates valid, the first ends in 87 days</span>
+<span class="ok">  ok    crowdsec running, bouncer rules in INPUT and DOCKER-USER</span>
+<span class="w">  warn  3 system updates pending (1 security)</span>
+<span class="c">        sudo apt update &amp;&amp; sudo apt full-upgrade</span>
+<span class="w">  warn  automatic security updates are off</span>
+<span class="w">  warn  reboot required</span>
+<span class="w">  warn  ssh accepts passwords</span>
+<span class="w">  warn  ssh allows root login</span>
+<span class="ok">  ok    / 11% used</span>
+<span class="ok">  ok    dotbox service running</span>
+
+<span class="w">  ! 5 problems</span></pre>
+  </div>
 
   <h2 id="en-updates">Update the system</h2>
   <p>Dot Box does not update the system and never reboots the server: you choose when. <code>doctor</code> reports:</p>
@@ -92,7 +193,12 @@
   <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
 
   <h2 id="en-users">Create accounts</h2>
+  <div class="prop-old" data-prop="57">
   <p>Your account already exists: <code>init</code> created it in the <code>admins</code> group. Its password can be read again with <code>sudo dotbox authelia password</code>. For the others:</p>
+  </div>
+  <div class="prop-new" data-prop="57">
+  <p>Your account already exists (Log in to Authelia, above). For the others:</p>
+  </div>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Groups decide which apps are reachable: <code>family</code> sees the media server and Seerr, <code>admins</code> sees everything. The account gets an invite link, valid for 48 hours, to choose its password and two-factor method.</p>
 

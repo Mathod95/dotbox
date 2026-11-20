@@ -353,19 +353,41 @@
     },
     {
       "stage": "core",
-      "domain": "core",
-      "status": "planned",
-      "fr": "CLI: `dotbox status` et `dotbox doctor`",
-      "en": "CLI: `dotbox status` and `dotbox doctor`",
-      "doc": "post-installation"
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: le service `dotbox serve` et son socket, la CLI sans `sudo` pour le groupe `dotbox`, `install` et `remove` par le service",
+      "en": "CLI: the `dotbox serve` service and its socket, the CLI without `sudo` for the `dotbox` group, `install` and `remove` through the service",
+      "doc": "api",
+      "journal": [
+        "11.2-11.8",
+        "D79",
+        "J197-J202"
+      ]
     },
     {
       "stage": "core",
       "domain": "core",
-      "status": "planned",
+      "status": "done",
+      "fr": "CLI: `dotbox status` et `dotbox doctor`",
+      "en": "CLI: `dotbox status` and `dotbox doctor`",
+      "doc": "post-installation",
+      "journal": [
+        "12.1-12.6",
+        "D78",
+        "J199-J202"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "core",
+      "status": "done",
       "fr": "CLI: `dotbox doctor` signale les mises à jour système en attente, `unattended-upgrades` désactivé et un redémarrage nécessaire",
       "en": "CLI: `dotbox doctor` reports pending system updates, `unattended-upgrades` turned off and a required reboot",
-      "doc": "post-installation"
+      "doc": "post-installation",
+      "journal": [
+        "12.2",
+        "J199"
+      ]
     },
     {
       "stage": "core",
@@ -458,10 +480,17 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "planned",
+      "status": "progress",
       "fr": "Moteur: l'état voulu dans `dotbox.yml`, `dotbox diff` et `dotbox sync`",
       "en": "Engine: the desired state in `dotbox.yml`, `dotbox diff` and `dotbox sync`",
-      "doc": "basics"
+      "doc": "basics",
+      "journal": [
+        "13.7",
+        "J206",
+        "J209",
+        "15",
+        "D81"
+      ]
     },
     {
       "stage": "apps",
@@ -469,15 +498,36 @@
       "status": "planned",
       "fr": "Moteur: sous-domaine et niveau d'accès modifiables dans `dotbox.yml`, appliqués par `dotbox sync`",
       "en": "Engine: subdomain and access level set in `dotbox.yml`, applied by `dotbox sync`",
-      "doc": "accessing-apps"
+      "doc": "accessing-apps",
+      "journal": [
+        "15.2"
+      ]
     },
     {
       "stage": "apps",
-      "domain": "engine",
-      "status": "planned",
-      "fr": "Moteur: plusieurs instances d'une même app, `dotbox install radarr --as radarr-4k`",
-      "en": "Engine: several instances of the same app, `dotbox install radarr --as radarr-4k`",
-      "doc": "basics"
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `sudo dotbox exec`, une commande ou un shell dans le container d'une app, en root (D80)",
+      "en": "CLI: `sudo dotbox exec`, a command or a shell in an app's container, as root (D80)",
+      "doc": "cli",
+      "journal": [
+        "14.1",
+        "D80",
+        "J214"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `sudo dotbox edit`, `compose.override.yml` dans l'éditeur, vérifié puis appliqué, l'ancien remis en cas d'échec (D80)",
+      "en": "CLI: `sudo dotbox edit`, `compose.override.yml` in the editor, checked then applied, the old one put back on failure (D80)",
+      "doc": "cli",
+      "journal": [
+        "14.2",
+        "D80",
+        "J215"
+      ]
     },
     {
       "stage": "apps",
@@ -494,10 +544,39 @@
     {
       "stage": "apps",
       "domain": "cli",
-      "status": "planned",
-      "fr": "CLI: options globales `--json`, `--local`, `--yes` et autocomplétion du shell",
-      "en": "CLI: global flags `--json`, `--local`, `--yes` and shell completion",
-      "doc": "cli"
+      "status": "done",
+      "fr": "CLI: options globales `--json`, `--local`, `--yes`, `--quiet`, `--no-color` et autocomplétion du shell",
+      "en": "CLI: global options `--json`, `--local`, `--yes`, `--quiet`, `--no-color` and shell completion",
+      "doc": "cli",
+      "journal": [
+        "13.9",
+        "13.10",
+        "J209",
+        "J210"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox version`, la version de la commande et celle du service, et l'avertissement si le service tourne un autre binaire",
+      "en": "CLI: `dotbox version`, the command's version and the service's, and a warning if the service runs another binary",
+      "doc": "cli",
+      "journal": [
+        "13.10",
+        "J212"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox --help` rangé par groupes comme la page CLI, avec les arguments de chaque commande, en couleurs",
+      "en": "CLI: `dotbox --help` sorted into groups like the CLI page, with each command's arguments, in color",
+      "doc": "cli",
+      "journal": [
+        "J213"
+      ]
     },
     {
       "stage": "apps",
@@ -815,7 +894,11 @@
       "status": "planned",
       "fr": "Moteur: sauvegarde de `/opt` app par app, arrêt court ou instantané btrfs/ZFS",
       "en": "Engine: backup of `/opt` app by app, short stop or btrfs/ZFS snapshot",
-      "doc": "backup"
+      "doc": "backup",
+      "journal": [
+        "16.3",
+        "16.8"
+      ]
     },
     {
       "stage": "backup",
@@ -823,15 +906,25 @@
       "status": "planned",
       "fr": "Moteur: archives compressées (zstd) puis chiffrées (age), clé dans `secrets/backup.key`",
       "en": "Engine: archives compressed (zstd) then encrypted (age), key in `secrets/backup.key`",
-      "doc": "backup"
+      "doc": "backup",
+      "journal": [
+        "16.1",
+        "16.2",
+        "D82"
+      ]
     },
     {
       "stage": "backup",
       "domain": "backup",
       "status": "planned",
-      "fr": "Moteur: destinations local, rclone et SFTP, rétention `keep`, timer systemd quotidien",
-      "en": "Engine: local, rclone and SFTP destinations, `keep` retention, daily systemd timer",
-      "doc": "backup"
+      "fr": "Moteur: destinations local, rclone et SFTP (par l'image Docker de rclone, rien à installer ni sur le serveur ni en face), rétention `keep`, timer systemd quotidien",
+      "en": "Engine: local, rclone and SFTP destinations (through rclone's Docker image, nothing to install on the server or on the other side), `keep` retention, daily systemd timer",
+      "doc": "backup",
+      "journal": [
+        "16.5",
+        "16.6",
+        "D83"
+      ]
     },
     {
       "stage": "backup",
@@ -839,15 +932,24 @@
       "status": "planned",
       "fr": "CLI: `dotbox backup` avec `--app`, `--to` et `--stream`",
       "en": "CLI: `dotbox backup` with `--app`, `--to` and `--stream`",
-      "doc": "backup"
+      "doc": "backup",
+      "journal": [
+        "16.3",
+        "16.5",
+        "16.8"
+      ]
     },
     {
       "stage": "backup",
       "domain": "backup",
       "status": "planned",
-      "fr": "CLI: `dotbox restore latest`, une app ou tout le serveur",
-      "en": "CLI: `dotbox restore latest`, one app or the whole server",
-      "doc": "restore"
+      "fr": "CLI: `sudo dotbox restore latest`, une app ou tout le serveur, en root",
+      "en": "CLI: `sudo dotbox restore latest`, one app or the whole server, as root",
+      "doc": "restore",
+      "journal": [
+        "16.4",
+        "16.7"
+      ]
     },
     {
       "stage": "backup",
@@ -876,34 +978,67 @@
     {
       "stage": "updates",
       "domain": "updates",
-      "status": "planned",
+      "status": "done",
       "fr": "Manifest: versions d'image fixées, jamais `latest`",
       "en": "Manifest: pinned image versions, never `latest`",
       "doc": "update"
     },
     {
       "stage": "updates",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox list`, `info`, `start`, `stop`, `restart` et `logs`, par le service",
+      "en": "CLI: `dotbox list`, `info`, `start`, `stop`, `restart` and `logs`, through the service",
+      "doc": "cli",
+      "journal": [
+        "13.1-13.4",
+        "J205",
+        "J206"
+      ]
+    },
+    {
+      "stage": "updates",
       "domain": "updates",
-      "status": "planned",
-      "fr": "CLI: `dotbox upgrade` pour Dot Box seul : release GitHub, checksum vérifié, ancien binaire gardé, fichiers convertis si leur format change",
-      "en": "CLI: `dotbox upgrade` for Dot Box only: GitHub release, checksum verified, previous binary kept, files converted if their format changes",
-      "doc": "update"
+      "status": "done",
+      "fr": "CLI: `dotbox upgrade` pour Dot Box seul: release GitHub, checksum vérifié, ancien binaire gardé, service redémarré",
+      "en": "CLI: `dotbox upgrade` for Dot Box alone: GitHub release, checksum verified, old binary kept, service restarted",
+      "doc": "update",
+      "journal": [
+        "13.8",
+        "J209"
+      ]
     },
     {
       "stage": "updates",
       "domain": "updates",
       "status": "planned",
+      "fr": "CLI: `dotbox upgrade` convertit `dotbox.yml` et les manifests si une nouvelle version change leur format",
+      "en": "CLI: `dotbox upgrade` converts `dotbox.yml` and the manifests if a new version changes their format",
+      "doc": "update"
+    },
+    {
+      "stage": "updates",
+      "domain": "updates",
+      "status": "done",
       "fr": "CLI: `dotbox update`, une app à la fois, la suivante seulement quand la précédente tourne",
       "en": "CLI: `dotbox update`, one app at a time, the next one only once the previous one is running",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "13.5",
+        "J208"
+      ]
     },
     {
       "stage": "updates",
       "domain": "updates",
-      "status": "planned",
+      "status": "done",
       "fr": "CLI: `dotbox update --rollback` vers l'image précédente",
       "en": "CLI: `dotbox update --rollback` to the previous image",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "13.6",
+        "J208"
+      ]
     },
     {
       "stage": "updates",
@@ -944,18 +1079,26 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Manifest: version minimale de Dot Box par manifest ; sinon Dot Box demande un `dotbox upgrade`",
       "en": "Manifest: minimum Dot Box version per manifest; otherwise Dot Box asks for a `dotbox upgrade`",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "7.6",
+        "13.8"
+      ]
     },
     {
       "stage": "updates",
       "domain": "updates",
-      "status": "planned",
+      "status": "progress",
       "fr": "Moteur: rafraîchit le catalogue à chaque `dotbox diff` et `dotbox update`, sans changer de binaire",
       "en": "Engine: refreshes the catalog on every `dotbox diff` and `dotbox update`, without changing the binary",
-      "doc": "update"
+      "doc": "update",
+      "journal": [
+        "13.5",
+        "J208"
+      ]
     },
     {
       "stage": "updates",
@@ -1046,10 +1189,14 @@
     {
       "stage": "updates",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "CLI: `dotbox add`, un fichier compose devient un manifest dans `/opt/dotbox/apps/`",
       "en": "CLI: `dotbox add`, a compose file becomes a manifest in `/opt/dotbox/apps/`",
-      "doc": "sandbox"
+      "doc": "sandbox",
+      "journal": [
+        "14.3",
+        "J216"
+      ]
     },
     {
       "stage": "updates",
@@ -1087,6 +1234,13 @@
       "status": "done",
       "fr": "Roadmap: cette page, la liste des features à cocher",
       "en": "Roadmap: this page, the feature checklist"
+    },
+    {
+      "stage": "site",
+      "domain": "site",
+      "status": "progress",
+      "fr": "Getting Started: raccourcis clavier, `n` page suivante, `p` précédente, `m` masque le menu de gauche, `?` la liste, désactivables",
+      "en": "Getting Started: keyboard shortcuts, `n` next page, `p` previous, `m` hides the left menu, `?` the list, can be turned off"
     }
   ]
 }

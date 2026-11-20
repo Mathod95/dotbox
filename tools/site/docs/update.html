@@ -4,27 +4,79 @@
 
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
+  <div class="prop-new" data-prop="75">
+  <h2 id="fr-today">Aujourd'hui</h2>
+  <p>Les commandes de mise à jour plus bas sont à venir. En attendant, tout se met à jour avec les commandes d'installation:</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Quoi</th><th>Comment</th></tr></thead>
+    <tbody>
+      <tr><td>Le binaire <code>dotbox</code></td><td>Relance <code>install.sh</code> avec <code>--no-init</code>: il installe la dernière version, sans toucher au reste.</td></tr>
+      <tr><td>Le core (Traefik, Authelia, CrowdSec)</td><td><code>sudo dotbox init</code> relit le catalogue sur GitHub et ne recrée que ce dont la version a changé.</td></tr>
+      <tr><td>Une app</td><td><code>sudo dotbox init</code> d'abord, pour relire le catalogue, puis <code>sudo dotbox install &lt;app&gt;</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <pre><span class="p">$</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | sudo bash -s -- --no-init
+<span class="p">$</span> sudo dotbox init
+<span class="p">$</span> sudo dotbox install radarr</pre>
+  <p>Une app qui demande une version plus récente de Dot Box refuse de s'installer, et le dit: mets d'abord le binaire à jour.</p>
+  </div>
   <h2 id="fr-dotbox">Mettre à jour Dot Box</h2>
+  <div class="prop-old" data-prop="76">
   <pre><span class="p">$</span> dotbox upgrade</pre>
   <p>Remplace le binaire et relance l'interface et l'API. Les apps ne sont pas touchées. Si la nouvelle version change le format des manifests ou de <code>dotbox.yml</code>, <code>upgrade</code> convertit les fichiers et l'indique dans son résumé.</p>
+  </div>
+  <div class="prop-new" data-prop="76">
+  <pre><span class="p">$</span> sudo dotbox upgrade</pre>
+  <p>À venir. Remplace le binaire, sans toucher aux apps ni au core. Si la nouvelle version change le format des manifests ou de <code>dotbox.yml</code>, <code>upgrade</code> convertit les fichiers et l'indique dans son résumé.</p>
+  </div>
 
   <h2 id="fr-apps">Mettre à jour une app</h2>
+  <div class="prop-old" data-prop="77">
   <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
   <p>Chaque manifest fixe une version d'image (<code>lscr.io/linuxserver/radarr:5.26.2</code>), jamais <code>latest</code>: ce qui tourne est toujours connu. <code>update</code> passe à la version la plus récente, recrée le container et attend qu'il soit <i><b>Running</b></i> avant de passer à l'app suivante. Une app qui ne redémarre pas arrête la série.</p>
+  </div>
+  <div class="prop-new" data-prop="77">
+  <pre><span class="p">$</span> sudo dotbox update radarr
+<span class="p">$</span> sudo dotbox update --all</pre>
+  <p>À venir. Chaque manifest fixe une version d'image (<code>lscr.io/linuxserver/radarr:7.0.3.10918-ls328</code>), jamais <code>latest</code>: ce qui tourne est toujours connu. <code>update</code> passe à la version la plus récente, recrée le container et attend qu'il soit <i><b>Running</b></i> avant de passer à l'app suivante. Une app qui ne redémarre pas arrête la série. Le core se met à jour de la même façon: ses versions sont aussi dans le catalogue.</p>
+  </div>
+  <div class="prop-old" data-prop="78">
   <p>Les nouvelles versions viennent du catalogue, le dossier <code>catalog/</code> du repo <code>Mathod95/dotbox</code>: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> y propose chaque nouvelle version, la CI la teste, puis elle est fusionnée sur <code>main</code>. Dot Box relit le catalogue à chaque <code>dotbox diff</code> ou <code>dotbox update</code>, sans changer de binaire.</p>
+  </div>
+  <div class="prop-new" data-prop="78">
+  <p>Les nouvelles versions viennent du catalogue, le dossier <code>catalog/</code> du repo <code>Mathod95/dotbox</code>: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> y propose chaque nouvelle version et la CI la teste. Un correctif fusionne seul sur <code>main</code> quand la CI passe, une version plus grande attend d'être relue. Dot Box relira le catalogue à chaque <code>dotbox diff</code> ou <code>dotbox update</code>, sans changer de binaire. Aujourd'hui, c'est <code>dotbox init</code> qui le relit.</p>
+  </div>
 
   <h2 id="fr-rollback">Revenir en arrière</h2>
   <pre><span class="p">$</span> dotbox update radarr --rollback</pre>
+  <div class="prop-old" data-prop="79">
   <p>L'image précédente est gardée sur le serveur: <code>--rollback</code> la remet en place si la nouvelle version pose problème.</p>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <p>À venir. L'image précédente est gardée sur le serveur: <code>--rollback</code> la remet en place si la nouvelle version pose problème.</p>
+  </div>
 
   <h2 id="fr-diff">Voir ce qui est disponible</h2>
+  <div class="prop-old" data-prop="79">
   <pre><span class="p">$</span> dotbox diff
 <span class="w">  ~ radarr     5.26.2, 5.27.0 available</span>
 <span class="w">  ~ sonarr     4.0.15, 4.0.16 available</span></pre>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <pre><span class="p">$</span> sudo dotbox diff
+<span class="w">  ~ radarr     7.0.3.10918-ls328, 7.0.4.10950-ls329 available</span>
+<span class="w">  ~ sonarr     4.0.20.3014-ls329, 4.0.21.3030-ls330 available</span></pre>
+  <p>À venir.</p>
+  </div>
 
   <h2 id="fr-auto">Mises à jour automatiques</h2>
+  <div class="prop-old" data-prop="79">
   <p>Désactivées par défaut: une mise à jour se fait quand tu la lances. Pour les programmer, une section dans <code>dotbox.yml</code>, sans Watchtower:</p>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <p>À venir. Désactivées par défaut: une mise à jour se fait quand tu la lances. Pour les programmer, une section dans <code>dotbox.yml</code>, sans Watchtower:</p>
+  </div>
   <pre>update:
   schedule: sunday 05:00
   apps: [radarr, sonarr, prowlarr]   <span class="c"># ou all</span></pre>
@@ -32,27 +84,79 @@
 </article>
 
 <article class="prose" data-l="en">
+  <div class="prop-new" data-prop="75">
+  <h2 id="en-today">Today</h2>
+  <p>The update commands below are coming later. Until then, everything updates with the install commands:</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>What</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>The <code>dotbox</code> binary</td><td>Run <code>install.sh</code> again with <code>--no-init</code>: it installs the latest release, without touching anything else.</td></tr>
+      <tr><td>The core (Traefik, Authelia, CrowdSec)</td><td><code>sudo dotbox init</code> reads the catalog on GitHub again and only recreates what changed version.</td></tr>
+      <tr><td>An app</td><td><code>sudo dotbox init</code> first, to read the catalog again, then <code>sudo dotbox install &lt;app&gt;</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <pre><span class="p">$</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | sudo bash -s -- --no-init
+<span class="p">$</span> sudo dotbox init
+<span class="p">$</span> sudo dotbox install radarr</pre>
+  <p>An app that needs a newer Dot Box refuses to install, and says so: update the binary first.</p>
+  </div>
   <h2 id="en-dotbox">Update Dot Box</h2>
+  <div class="prop-old" data-prop="76">
   <pre><span class="p">$</span> dotbox upgrade</pre>
   <p>Replaces the binary and restarts the interface and the API. Apps are not touched. If the new version changes the manifest or <code>dotbox.yml</code> format, <code>upgrade</code> converts the files and says so in its summary.</p>
+  </div>
+  <div class="prop-new" data-prop="76">
+  <pre><span class="p">$</span> sudo dotbox upgrade</pre>
+  <p>Coming later. Replaces the binary, without touching the apps or the core. If the new version changes the manifest or <code>dotbox.yml</code> format, <code>upgrade</code> converts the files and says so in its summary.</p>
+  </div>
 
   <h2 id="en-apps">Update an app</h2>
+  <div class="prop-old" data-prop="77">
   <pre><span class="p">$</span> dotbox update radarr
 <span class="p">$</span> dotbox update --all</pre>
   <p>Each manifest pins an image version (<code>lscr.io/linuxserver/radarr:5.26.2</code>), never <code>latest</code>, so what runs is always known. <code>update</code> moves to the newest version, recreates the container and waits for it to be <i><b>Running</b></i> before moving to the next app. An app that fails to restart stops the run.</p>
+  </div>
+  <div class="prop-new" data-prop="77">
+  <pre><span class="p">$</span> sudo dotbox update radarr
+<span class="p">$</span> sudo dotbox update --all</pre>
+  <p>Coming later. Each manifest pins an image version (<code>lscr.io/linuxserver/radarr:7.0.3.10918-ls328</code>), never <code>latest</code>, so what runs is always known. <code>update</code> moves to the newest version, recreates the container and waits for it to be <i><b>Running</b></i> before moving to the next app. An app that fails to restart stops the run. The core updates the same way: its versions are in the catalog too.</p>
+  </div>
+  <div class="prop-old" data-prop="78">
   <p>New versions come from the catalog, the <code>catalog/</code> folder of the <code>Mathod95/dotbox</code> repository: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> proposes each new version there, CI tests it, then it is merged into <code>main</code>. Dot Box reads the catalog again on every <code>dotbox diff</code> or <code>dotbox update</code>, without changing its binary.</p>
+  </div>
+  <div class="prop-new" data-prop="78">
+  <p>New versions come from the catalog, the <code>catalog/</code> folder of the <code>Mathod95/dotbox</code> repository: <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> proposes each new version there and CI tests it. A patch merges into <code>main</code> on its own when CI passes, a bigger version waits for a review. Dot Box will read the catalog again on every <code>dotbox diff</code> or <code>dotbox update</code>, without changing its binary. Today, <code>dotbox init</code> reads it.</p>
+  </div>
 
   <h2 id="en-rollback">Roll back</h2>
   <pre><span class="p">$</span> dotbox update radarr --rollback</pre>
+  <div class="prop-old" data-prop="79">
   <p>The previous image stays on the server: <code>--rollback</code> puts it back if the new version causes trouble.</p>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <p>Coming later. The previous image stays on the server: <code>--rollback</code> puts it back if the new version causes trouble.</p>
+  </div>
 
   <h2 id="en-diff">See what is available</h2>
+  <div class="prop-old" data-prop="79">
   <pre><span class="p">$</span> dotbox diff
 <span class="w">  ~ radarr     5.26.2, 5.27.0 available</span>
 <span class="w">  ~ sonarr     4.0.15, 4.0.16 available</span></pre>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <pre><span class="p">$</span> sudo dotbox diff
+<span class="w">  ~ radarr     7.0.3.10918-ls328, 7.0.4.10950-ls329 available</span>
+<span class="w">  ~ sonarr     4.0.20.3014-ls329, 4.0.21.3030-ls330 available</span></pre>
+  <p>Coming later.</p>
+  </div>
 
   <h2 id="en-auto">Automatic updates</h2>
+  <div class="prop-old" data-prop="79">
   <p>Off by default: an update happens when you run it. To schedule them, one section in <code>dotbox.yml</code>, no Watchtower needed:</p>
+  </div>
+  <div class="prop-new" data-prop="79">
+  <p>Coming later. Off by default: an update happens when you run it. To schedule them, one section in <code>dotbox.yml</code>, no Watchtower needed:</p>
+  </div>
   <pre>update:
   schedule: sunday 05:00
   apps: [radarr, sonarr, prowlarr]   <span class="c"># or all</span></pre>

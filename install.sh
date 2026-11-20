@@ -22,8 +22,8 @@ BASE_URL="https://github.com/${REPO}/releases/latest/download"
 BIN="/usr/local/bin/dotbox"
 TMP_DIR=""
 
-# Affichage (mockup final de CLI Output, D38): une seule ligne, [1/8] Dot Box, puis dotbox init
-# continue de [2/7] à [7/7]. Couleurs seulement dans un terminal.
+# Affichage (mockup final de CLI Output, D38): une seule ligne, [1/9] Dot Box, puis dotbox init
+# continue de [2/9] à [9/9]. Couleurs seulement dans un terminal.
 if [ -t 2 ]; then
   GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; DIM=$'\033[2m'; RESET=$'\033[0m'; CLEAR=$'\r\033[K'
 else
@@ -33,7 +33,7 @@ PENDING=0
 
 # step MARQUE RÉSUMÉ [DURÉE]: la ligne de l'étape, sur 80 colonnes
 step() {
-  printf '%s  %s %s[1/8]%s %-13s %-49s %s%6s%s\n' "$CLEAR" "$1" "$DIM" "$RESET" "Dot Box" "$2" "$DIM" "${3:-}" "$RESET" >&2
+  printf '%s  %s %s[1/9]%s %-13s %-49s %s%6s%s\n' "$CLEAR" "$1" "$DIM" "$RESET" "Dot Box" "$2" "$DIM" "${3:-}" "$RESET" >&2
 }
 say() { printf '  %-9s%s\n' "$1" "$2"; }
 die() {
@@ -99,7 +99,7 @@ main() {
   START="$(date +%s%N)"
   PENDING=1
   if [ -n "$CLEAR" ]; then
-    printf '  %s⠼%s %s[1/8]%s %-13s %s' "$YELLOW" "$RESET" "$DIM" "$RESET" "Dot Box" "downloading from GitHub" >&2
+    printf '  %s⠼%s %s[1/9]%s %-13s %s' "$YELLOW" "$RESET" "$DIM" "$RESET" "Dot Box" "downloading from GitHub" >&2
   fi
   wget -q --https-only -O "${TMP_DIR}/${ASSET}" "${BASE_URL}/${ASSET}" \
     || die "could not download ${ASSET} from ${BASE_URL}"
@@ -129,7 +129,7 @@ main() {
     return 0
   fi
 
-  # dotbox init sait ainsi que la ligne [1/8] est déjà affichée (D38)
+  # dotbox init sait ainsi que la ligne [1/9] est déjà affichée (D38)
   export DOTBOX_INSTALLER=1
 
   # Avec wget -qO- … | bash, l'entrée du script est le texte envoyé par wget, pas le clavier.

@@ -29,7 +29,7 @@ impl Source {
     }
 }
 
-fn get(url: &str) -> Result<String, String> {
+pub fn get(url: &str) -> Result<String, String> {
     system::run(
         "wget",
         &[

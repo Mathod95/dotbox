@@ -5,11 +5,23 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-app">Restaurer une app</h2>
+  <div class="prop-old" data-prop="114">
   <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
   <p>Remplace <code>/opt/radarr</code> par sa dernière sauvegarde et relance l'app. Les autres apps ne bougent pas. À la place de <code>latest</code>, une date ou un chemin d'archive précis.</p>
+  </div>
+  <div class="prop-new" data-prop="114">
+  <pre><span class="p">$</span> sudo dotbox restore latest --app radarr</pre>
+  <p>Remplace <code>/opt/radarr</code> par sa dernière sauvegarde et relance l'app. L'ancien dossier est mis de côté, pas effacé: si l'app ne repart pas, il est remis à sa place. Les autres apps ne bougent pas. À la place de <code>latest</code>, une date ou un chemin d'archive précis.</p>
+  <p class="note"><b>En root</b>: une archive peut contenir n'importe quel fichier de <code>/opt</code>, un <code>compose.override.yml</code> qui monte tout le serveur par exemple. <code>restore</code> passe donc par <code>sudo</code>, sans le service de Dot Box, comme <code>exec</code>, <code>edit</code> et <code>add</code>.</p>
+  </div>
 
   <h2 id="fr-all">Restaurer tout le serveur</h2>
+  <div class="prop-old" data-prop="115">
   <pre><span class="p">$</span> dotbox restore latest</pre>
+  </div>
+  <div class="prop-new" data-prop="115">
+  <pre><span class="p">$</span> sudo dotbox restore latest</pre>
+  </div>
   <p>Restaure <code>/opt/dotbox</code>, puis chaque app, puis lance <code>sync</code> pour que tout ce qui tourne corresponde à la config restaurée.</p>
 
   <h2 id="fr-migrate">Migrer vers un nouveau serveur</h2>
@@ -17,7 +29,18 @@
     <li><b>Sur l'ancien serveur</b>, une sauvegarde vers une destination que le nouveau peut joindre: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>Le DNS</b>: change l'enregistrement <code>*.example.com</code> pour l'IP du nouveau serveur. Les certificats ne peuvent être obtenus qu'une fois le DNS pointé vers lui.</li>
     <li><b>Sur le nouveau</b>, installe Dot Box sans lancer <code>init</code>: en root (<code>su -</code>), <code>wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --no-init</code>.</li>
+</ol>
+  <div class="prop-old" data-prop="116">
+  <ol start="4">
     <li><b>Restaure</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box relit la config de la sauvegarde, refait l'installation du core avec elle (Docker, Traefik, Authelia, CrowdSec, certificats), puis restaure toutes les apps.</li>
+  </ol>
+  </div>
+  <div class="prop-new" data-prop="116">
+  <ol start="4">
+    <li><b>Restaure</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box installe d'abord Docker, dont rclone a besoin pour aller chercher l'archive, puis relit la config de la sauvegarde, refait l'installation du core avec elle (Traefik, Authelia, CrowdSec, certificats) et restaure toutes les apps. Une archive copiée à la main sur le serveur (<code>scp</code>) s'ouvre aussi, sans passer par rclone.</li>
+  </ol>
+  </div>
+  <ol start="5">
     <li><b>Les médias</b>: copie <code>/data</code> avec rsync s'ils doivent suivre.</li>
   </ol>
   <p>Les apps ajoutées avec <code>dotbox add</code> et celles du Sandbox sont dans la sauvegarde: elles reviennent avec le reste, rien à réinstaller à la main.</p>
@@ -30,11 +53,23 @@
 
 <article class="prose" data-l="en">
   <h2 id="en-app">Restore an app</h2>
+  <div class="prop-old" data-prop="114">
   <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
   <p>Replaces <code>/opt/radarr</code> with its latest backup and restarts the app. Other apps are not touched. Instead of <code>latest</code>, a date or a specific archive path.</p>
+  </div>
+  <div class="prop-new" data-prop="114">
+  <pre><span class="p">$</span> sudo dotbox restore latest --app radarr</pre>
+  <p>Replaces <code>/opt/radarr</code> with its latest backup and restarts the app. The old folder is set aside, not deleted: if the app does not come back, it is put back. Other apps are not touched. Instead of <code>latest</code>, a date or a specific archive path.</p>
+  <p class="note"><b>As root</b>: an archive can hold any file of <code>/opt</code>, a <code>compose.override.yml</code> that mounts the whole server for example. So <code>restore</code> goes through <code>sudo</code>, without the Dot Box service, like <code>exec</code>, <code>edit</code> and <code>add</code>.</p>
+  </div>
 
   <h2 id="en-all">Restore the whole server</h2>
+  <div class="prop-old" data-prop="115">
   <pre><span class="p">$</span> dotbox restore latest</pre>
+  </div>
+  <div class="prop-new" data-prop="115">
+  <pre><span class="p">$</span> sudo dotbox restore latest</pre>
+  </div>
   <p>Restores <code>/opt/dotbox</code>, then every app, then runs <code>sync</code> so everything running matches the restored config.</p>
 
   <h2 id="en-migrate">Migrate to a new server</h2>
@@ -42,7 +77,18 @@
     <li><b>On the old server</b>, back up to a destination the new one can reach: <code>dotbox backup --to rclone:b2:dotbox-backups</code>.</li>
     <li><b>DNS</b>: change the <code>*.example.com</code> record to the new server's IP. Certificates can only be obtained once DNS points to it.</li>
     <li><b>On the new one</b>, install Dot Box without running <code>init</code>: as root (<code>su -</code>), <code>wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash -s -- --no-init</code>.</li>
+</ol>
+  <div class="prop-old" data-prop="116">
+  <ol start="4">
     <li><b>Restore</b>: <code>dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box reads the config from the backup, reinstalls the core with it (Docker, Traefik, Authelia, CrowdSec, certificates), then restores every app.</li>
+  </ol>
+  </div>
+  <div class="prop-new" data-prop="116">
+  <ol start="4">
+    <li><b>Restore</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box first installs Docker, which rclone needs to fetch the archive, then reads the config from the backup, reinstalls the core with it (Traefik, Authelia, CrowdSec, certificates) and restores every app. An archive copied to the server by hand (<code>scp</code>) opens too, without going through rclone.</li>
+  </ol>
+  </div>
+  <ol start="5">
     <li><b>Media</b>: copy <code>/data</code> with rsync if it should come along.</li>
   </ol>
   <p>Apps added with <code>dotbox add</code> and those from the Sandbox are in the backup: they come back with everything else, nothing to reinstall by hand.</p>

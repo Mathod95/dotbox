@@ -82,6 +82,17 @@ impl Config {
         }
     }
 
+    /// Les apps installées, dans l'ordre de apps:.
+    pub fn app_names(&self) -> Vec<String> {
+        match self.map.get("apps") {
+            Some(Value::Mapping(apps)) => apps
+                .keys()
+                .filter_map(|k| k.as_str().map(String::from))
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     /// Retire une app de apps:. Rend false si elle n'y était pas.
     pub fn remove_app(&mut self, name: &str) -> bool {
         match self.map.get_mut("apps") {

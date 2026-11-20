@@ -20,16 +20,17 @@
     <li><b>Pas de conflits</b>: chaque app tourne dans son container, avec ses propres dépendances.</li>
     <li><b>Un système propre</b>: aucun exécutable ni aucune dépendance des apps n'est installé sur le serveur.</li>
     <li><b>Installer et désinstaller en une commande</b>: <code>dotbox install</code>, <code>dotbox remove</code>.</li>
-    <li><b>Plusieurs instances d'une même app</b>: <code>dotbox install radarr --as radarr-4k</code> ajoute un second Radarr, avec son dossier <code>/opt/radarr-4k</code>, son sous-domaine et son propre câblage.</li>
   </ul>
   <h3 id="fr-sso">Une connexion pour tout</h3>
-  <p>Authelia protège chaque app qui n'a pas de vraie connexion, avec double authentification et passkeys, plutôt que de compter sur la connexion de chaque app.</p>
+  <p>Authelia se place devant les apps: un seul compte, avec double authentification (code à 6 chiffres ou passkey), plutôt que la connexion de chaque app. Les apps qui ont leurs propres comptes pour tes proches, ou qu'on ouvre depuis une TV ou un téléphone (Jellyfin, Plex, Seerr, Vaultwarden), gardent leur connexion. Wizarr ouvre ses invitations à tous.</p>
+  <h3 id="fr-protect">Protégé dès l'installation</h3>
+  <p>CrowdSec, installé avec le core, lit les logs de SSH, de Traefik et des apps qui ont leur propre connexion. Une IP qui devine des mots de passe ou attaque le serveur est bannie de tout le serveur, au pare-feu et dans Traefik. Devant les apps sans Authelia, AppSec, le pare-feu web de CrowdSec, bloque les attaques connues avant qu'elles n'atteignent l'app.</p>
   <h3 id="fr-compose">Une app, un fichier compose</h3>
   <p>Chaque app vit dans <code>/opt/&lt;app&gt;</code> avec son <code>compose.yml</code>. Tes ajustements vont dans <code>compose.override.yml</code>, que Dot Box ne touche jamais. Sans Dot Box, <code>docker compose up -d</code> suffit à la relancer.</p>
   <h3 id="fr-catalog">Catalogue ouvert</h3>
-  <p>19 apps au départ, et n'importe quel projet qui fournit un fichier compose devient une app avec <code>dotbox add</code>.</p>
-  <h3 id="fr-wiring">Câblage automatique</h3>
-  <p>Installe Radarr après qBittorrent et il est déjà branché: client de téléchargement, catégorie, dossier racine. Prowlarr, Sonarr, Seerr et ton serveur média (Jellyfin ou Plex) suivent la même règle.</p>
+  <p>Chaque app du catalogue est décrite dans le repo de Dot Box sur GitHub, avec une version d'image précise, jamais <code>latest</code>. Renovate propose chaque nouvelle version, testée avant d'entrer dans le catalogue, et une mise à jour n'attend jamais une nouvelle version de <code>dotbox</code>. N'importe quel projet qui fournit un fichier compose devient aussi une app avec <code>dotbox add</code>.</p>
+  <h3 id="fr-wiring">Câblage en une commande</h3>
+  <p>Relier les apps se fait à part, quand tu le décides: une commande branche qBittorrent dans Radarr et Sonarr, Radarr et Sonarr dans Prowlarr, crée les dossiers racine, et montre ce qu'elle va faire avant de demander ta confirmation. Seerr et ton serveur média (Jellyfin ou Plex) suivent la même règle.</p>
   <h3 id="fr-data">Une seule arborescence</h3>
   <p>Les téléchargements et les bibliothèques partagent <code>/data</code>, sur le même disque: les imports sont des hardlinks, pas des copies.</p>
   <h3 id="fr-sync">État voulu, état réel</h3>
@@ -47,10 +48,10 @@
     <li><b>Câblage</b><span>API des autres apps</span></li>
   </ol>
   <ol>
-    <li><b>Le manifest</b> décrit l'app: image, volumes, sous-domaine, SSO et liens avec les autres apps.</li>
+    <li><b>Le manifest</b> décrit l'app: image, volumes, sous-domaine, niveau d'accès et réglages.</li>
     <li><b>Le moteur</b> écrit le <code>compose.yml</code>, crée les dossiers et les configs avant le premier démarrage.</li>
-    <li><b>Docker Compose</b> démarre le container; Traefik le route vers son sous-domaine, Authelia le protège.</li>
-    <li><b>Une fois l'app <i><b>Running</b></i></b>, le moteur la branche aux autres par leurs API.</li>
+    <li><b>Docker Compose</b> démarre le container. Traefik l'envoie sur son sous-domaine, Authelia le protège.</li>
+    <li><b>Le câblage</b> vient ensuite, quand tu le lances: le moteur branche l'app aux autres par leurs API.</li>
   </ol>
   <p>Le parcours d'un film, une fois tout installé:</p>
   <ol class="flow">
@@ -79,20 +80,21 @@
     <li><b>No conflicts</b>: each app runs in its own container, with its own dependencies.</li>
     <li><b>A clean system</b>: no app executable or dependency is installed on the server.</li>
     <li><b>Install and uninstall in one command</b>: <code>dotbox install</code>, <code>dotbox remove</code>.</li>
-    <li><b>Several instances of the same app</b>: <code>dotbox install radarr --as radarr-4k</code> adds a second Radarr, with its own <code>/opt/radarr-4k</code> folder, subdomain and wiring.</li>
   </ul>
   <h3 id="en-sso">One login for everything</h3>
-  <p>Authelia protects every app that lacks a proper login, with two-factor authentication and passkeys, rather than relying on each app's own login.</p>
+  <p>Authelia sits in front of the apps: one account, with two-factor authentication (a 6-digit code or a passkey), rather than each app's own login. Apps that have their own accounts for your family and friends, or that you open from a TV or a phone (Jellyfin, Plex, Seerr, Vaultwarden), keep their login. Wizarr opens its invitations to everyone.</p>
+  <h3 id="en-protect">Protected from the install</h3>
+  <p>CrowdSec, installed with the core, reads the logs of SSH, of Traefik and of the apps that have their own login. An IP that guesses passwords or attacks the server is banned from the whole server, at the firewall and in Traefik. In front of apps without Authelia, AppSec, CrowdSec's web application firewall, blocks known attacks before they reach the app.</p>
   <h3 id="en-compose">One app, one compose file</h3>
   <p>Each app lives in <code>/opt/&lt;app&gt;</code> with its <code>compose.yml</code>. Your tweaks go in <code>compose.override.yml</code>, which Dot Box never touches. Without Dot Box, <code>docker compose up -d</code> is enough to restart it.</p>
   <h3 id="en-catalog">Open catalog</h3>
-  <p>19 apps to start with, and any project that ships a compose file becomes an app with <code>dotbox add</code>.</p>
-  <h3 id="en-wiring">Automatic wiring</h3>
-  <p>Install Radarr after qBittorrent and it is already connected: download client, category, root folder. Prowlarr, Sonarr, Seerr and your media server (Jellyfin or Plex) follow the same rule.</p>
+  <p>Each catalog app is described in Dot Box's repo on GitHub, with an exact image version, never <code>latest</code>. Renovate proposes each new version, tested before it enters the catalog, and an update never waits for a new <code>dotbox</code> release. Any project that ships a compose file also becomes an app with <code>dotbox add</code>.</p>
+  <h3 id="en-wiring">Wiring in one command</h3>
+  <p>Connecting the apps is a separate step, when you decide: one command adds qBittorrent to Radarr and Sonarr, Radarr and Sonarr to Prowlarr, creates the root folders, and shows what it will do before asking for your confirmation. Seerr and your media server (Jellyfin or Plex) follow the same rule.</p>
   <h3 id="en-data">One layout</h3>
   <p>Downloads and libraries share <code>/data</code>, on the same disk: imports are hardlinks, not copies.</p>
   <h3 id="en-sync">Desired state, actual state</h3>
-  <p><code>dotbox diff</code> shows the gap between what you want and what is running; <code>dotbox sync</code> fixes it.</p>
+  <p><code>dotbox diff</code> shows the gap between what you want and what is running, <code>dotbox sync</code> fixes it.</p>
   <h3 id="en-backup">Backup and migration</h3>
   <p>Everything that matters lives in <code>/opt</code> and the manifests. <code>dotbox backup</code>, then <code>dotbox restore</code> on a new server.</p>
 
@@ -106,10 +108,10 @@
     <li><b>Wiring</b><span>other apps' APIs</span></li>
   </ol>
   <ol>
-    <li><b>The manifest</b> describes the app: image, volumes, subdomain, SSO and links with other apps.</li>
+    <li><b>The manifest</b> describes the app: image, volumes, subdomain, access level and settings.</li>
     <li><b>The engine</b> writes the <code>compose.yml</code>, creates folders and configs before the first start.</li>
-    <li><b>Docker Compose</b> starts the container; Traefik routes it to its subdomain, Authelia protects it.</li>
-    <li><b>Once the app is <i><b>Running</b></i></b>, the engine connects it to the others through their APIs.</li>
+    <li><b>Docker Compose</b> starts the container. Traefik sends it to its subdomain, Authelia protects it.</li>
+    <li><b>Wiring</b> comes next, when you run it: the engine connects the app to the others through their APIs.</li>
   </ol>
   <p>A movie's journey, once everything is installed:</p>
   <ol class="flow">

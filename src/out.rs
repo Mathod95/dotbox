@@ -7,6 +7,17 @@ use std::io::Write;
 
 /// Une ligne « verbe détail ». Pendant dotbox init, c'est une sous-étape: elle va dans le log et
 /// sous la ligne de l'étape en cours (ui.rs).
+static QUIET: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// -q: seulement les erreurs (13.10).
+pub fn set_quiet(on: bool) {
+    QUIET.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn quiet() -> bool {
+    QUIET.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn say(verb: &str, detail: &str) {
     if crate::ui::active() {
         crate::ui::sub(verb, detail);

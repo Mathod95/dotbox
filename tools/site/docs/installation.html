@@ -5,11 +5,11 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-types">Un core, puis tes apps</h2>
-  <p>Dot Box s'installe en deux temps. D'abord le core, qui fait tourner tes apps, les rend accessibles et les protège. Ensuite les apps elles-mêmes, que tu choisis dans le catalogue (<code>dotbox list</code>).</p>
+  <p>Dot Box s'installe en deux temps. D'abord le core, qui fait tourner tes apps, les rend accessibles et les protège. Ensuite les apps elles-mêmes, que tu choisis dans le catalogue (<span class="prop-old" data-prop="74"><code>dotbox list</code></span><span class="prop-new" data-prop="74">voir Apps, <code>dotbox list</code> à venir</span>).</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Composant</th><th>Rôle</th><th>Installé par</th></tr></thead>
     <tbody>
-      <tr><td>Dot Box</td><td>Le binaire qui installe et gère tout le reste, avec l'interface web et l'API sur <code>dotbox.example.com</code></td><td><code>install.sh</code></td></tr>
+      <tr><td>Dot Box</td><td><span class="prop-old" data-prop="74">Le binaire qui installe et gère tout le reste, avec l'interface web et l'API sur <code>dotbox.example.com</code></span><span class="prop-new" data-prop="74">Le binaire qui installe et gère tout le reste. L'interface web et l'API sur <code>dotbox.example.com</code> sont à venir.</span></td><td><code>install.sh</code></td></tr>
       <tr><td>Docker</td><td>Les containers et le réseau <code>dotbox</code></td><td><code>dotbox init</code></td></tr>
       <tr><td>Traefik</td><td>Sous-domaines et certificats</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>Connexion unique</td><td><code>dotbox init</code></td></tr>
@@ -33,6 +33,7 @@
 
   <h2 id="fr-step2">Étape 2: répondre à dotbox init</h2>
   <p><code>init</code> demande le domaine et ton utilisateur, celui qui fait tourner les apps (par défaut, le compte avec lequel tu t'es connecté avant <code>su -</code>), dans le terminal ou en options: <code>dotbox init --domain example.com --user admin</code>. Ensuite, il:</p>
+  <div class="prop-old" data-prop="69">
   <ol>
     <li><b>Vérifie le serveur</b>, avant de modifier quoi que ce soit: le système (voir <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), ports 80 et 443 libres, espace disque, et <code>*.example.com</code> qui pointe vers le serveur.</li>
     <li><b>Installe Docker</b> s'il est absent, depuis le dépôt officiel de Docker pour Debian ou pour Ubuntu. Si des paquets en conflit sont présents (<code>docker.io</code>, <code>podman-docker</code>...), il les liste et demande avant de les retirer. Les logs des containers tournent sur quelques fichiers, et les containers continuent de tourner quand Docker redémarre (<code>live-restore</code>). Crée le réseau <code>dotbox</code>.</li>
@@ -40,9 +41,21 @@
     <li><b>Démarre</b> Traefik, Authelia, CrowdSec et Dot Box. Traefik obtient un certificat pour chaque sous-domaine. Authelia reçoit ton compte, au même nom que ton utilisateur, avec un mot de passe tiré au hasard.</li>
     <li><b>Programme la sauvegarde</b> quotidienne, en local pour commencer.</li>
   </ol>
+  </div>
+  <div class="prop-new" data-prop="69">
+  <ol>
+    <li><b>Vérifie le serveur</b>, avant de modifier quoi que ce soit: le système (voir <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), <code>*.example.com</code> qui pointe vers le serveur, et les ports 80 et 443 libres. La vérification de l'espace disque est à venir.</li>
+    <li><b>Lit le catalogue</b> sur GitHub, à un commit précis: les versions de Traefik, d'Authelia, de CrowdSec et des apps. Chaque fichier est vérifié, puis rangé dans <code>/opt/dotbox/catalog/</code>.</li>
+    <li><b>Installe <code>sudo</code></b> s'il manque <b>et prépare ton utilisateur</b>: le crée s'il n'existe pas, en demandant son mot de passe, et l'ajoute au groupe <code>sudo</code>. Pas au groupe <code>docker</code>, qui équivaut à root: <code>sudo docker</code> suffit. Un utilisateur existant garde son mot de passe, son shell et ses clés SSH.</li>
+    <li><b>Installe Docker</b> s'il est absent, depuis le dépôt officiel de Docker pour Debian ou pour Ubuntu. Si des paquets en conflit sont présents (<code>docker.io</code>, <code>podman-docker</code>...), il les liste et demande avant de les retirer. Les logs des containers tournent sur quelques fichiers, et les containers continuent de tourner quand Docker redémarre (<code>live-restore</code>). Crée le réseau <code>dotbox</code>.</li>
+    <li><b>Démarre Traefik, Authelia et CrowdSec</b>. Traefik obtient un certificat pour chaque sous-domaine. Authelia reçoit ton compte, au même nom que ton utilisateur, avec un mot de passe tiré au hasard. CrowdSec bloque les IP bannies au pare-feu, avec son bouncer, et dans Traefik.</li>
+    <li><b>À venir</b>: l'interface web de Dot Box sur <code>dotbox.example.com</code>, et la sauvegarde quotidienne, en local pour commencer.</li>
+  </ol>
+  </div>
   <p class="note"><b>Traefik ne tient pas les clés de Docker.</b> C'est le seul container exposé à Internet: il lit Docker à travers un socket proxy qui ne laisse passer que la liste des containers. S'il était compromis, il ne pourrait ni lancer ni arrêter de container.</p>
-  <p>À la fin, <code>init</code> affiche un récapitulatif: les adresses, ton compte et son mot de passe web, affiché une seule fois. Root peut le relire avec <code>sudo dotbox authelia password</code>.</p>
-  <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <code>dotbox doctor</code> signale les mises à jour en attente et quand un redémarrage est nécessaire (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <p>À la fin, <code>init</code> affiche une carte: l'état du core, ton compte et son mot de passe web, affiché une seule fois, puis ce qu'il reste à faire. Root peut relire le mot de passe avec <code>sudo dotbox authelia password</code>. La première chose à faire: te connecter à Authelia et enregistrer ta double authentification (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <p><code>init</code> ne met pas à jour le système et ne redémarre jamais le serveur: <span class="prop-old" data-prop="71"><code>dotbox doctor</code> signale</span><span class="prop-new" data-prop="71"><code>dotbox doctor</code> (à venir) signalera</span> les mises à jour en attente et quand un redémarrage est nécessaire (voir <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <div class="prop-old" data-prop="70">
   <p>Tout est écrit dans <code>/opt/dotbox/dotbox.yml</code>. Les secrets (clés d'Authelia, clé de sauvegarde) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
@@ -57,20 +70,42 @@ destinations:
   - local: /backups
 update:
 schedule: off</pre>
+  </div>
+  <div class="prop-new" data-prop="70">
+  <p>Tes réponses sont gardées dans <code>/opt/dotbox/dotbox.yml</code>, et chaque app installée y ajoute son sous-domaine et son accès. Les secrets (clés d'Authelia, clés de CrowdSec) vont dans <code>/opt/dotbox/secrets/</code>, lisibles par root seulement.</p>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+domain: example.com
+ca: letsencrypt                 <span class="c"># ou letsencrypt-staging, pour des essais</span>
+user: admin                     <span class="c"># fait tourner les apps, même nom dans Authelia</span>
+apps:                           <span class="c"># ajouté par dotbox install</span>
+  radarr:
+    subdomain: radarr
+    access: two_factor
+  jellyfin:
+    subdomain: jellyfin
+    access: app</pre>
+  <p>À venir dans ce fichier: les chemins (<code>paths</code>), la sauvegarde (<code>backup</code>) et les mises à jour (<code>update</code>).</p>
+  </div>
   <p><code>sudo dotbox init</code> peut être relancé sans risque: il vérifie, complète ce qui manque et ne recrée rien qui existe déjà.</p>
 
   <h2 id="fr-step3">Étape 3: installer tes apps</h2>
+  <div class="prop-old" data-prop="73">
   <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
   <p>Chaque app arrive sur son sous-domaine, avec son certificat, déjà branchée aux autres.</p>
+  </div>
+  <div class="prop-new" data-prop="73">
+  <pre><span class="p">$</span> sudo dotbox install qbittorrent prowlarr radarr sonarr</pre>
+  <p>Chaque app arrive sur son sous-domaine, avec son certificat. La première crée <code>/data/torrents</code> et <code>/data/media</code> pour ton utilisateur, et vérifie que les hardlinks marchent entre les deux. Relier les apps entre elles sera une commande à part, à venir.</p>
+  </div>
 </article>
 
 <article class="prose" data-l="en">
   <h2 id="en-types">One core, then your apps</h2>
-  <p>Dot Box installs in two stages. First the core, which runs your apps, makes them reachable and protects them. Then the apps themselves, which you pick from the catalog (<code>dotbox list</code>).</p>
+  <p>Dot Box installs in two stages. First the core, which runs your apps, makes them reachable and protects them. Then the apps themselves, which you pick from the catalog (<span class="prop-old" data-prop="74"><code>dotbox list</code></span><span class="prop-new" data-prop="74">see Apps, <code>dotbox list</code> coming later</span>).</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Role</th><th>Installed by</th></tr></thead>
     <tbody>
-      <tr><td>Dot Box</td><td>The binary that installs and manages everything else, with the web interface and API on <code>dotbox.example.com</code></td><td><code>install.sh</code></td></tr>
+      <tr><td>Dot Box</td><td><span class="prop-old" data-prop="74">The binary that installs and manages everything else, with the web interface and API on <code>dotbox.example.com</code></span><span class="prop-new" data-prop="74">The binary that installs and manages everything else. The web interface and API on <code>dotbox.example.com</code> are coming later.</span></td><td><code>install.sh</code></td></tr>
       <tr><td>Docker</td><td>Containers and the <code>dotbox</code> network</td><td><code>dotbox init</code></td></tr>
       <tr><td>Traefik</td><td>Subdomains and certificates</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>Single login</td><td><code>dotbox init</code></td></tr>
@@ -94,6 +129,7 @@ schedule: off</pre>
 
   <h2 id="en-step2">Step 2: answer dotbox init</h2>
   <p><code>init</code> asks for the domain and your user, the one that runs the apps (by default, the account you logged in with before <code>su -</code>), in the terminal or as flags: <code>dotbox init --domain example.com --user admin</code>. Then it:</p>
+  <div class="prop-old" data-prop="69">
   <ol>
     <li><b>Checks the server</b>, before changing anything: the system (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), ports 80 and 443 free, disk space, and <code>*.example.com</code> pointing to the server.</li>
     <li><b>Installs Docker</b> if it is missing, from Docker's official repository for Debian or for Ubuntu. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</li>
@@ -101,9 +137,21 @@ schedule: off</pre>
     <li><b>Starts</b> Traefik, Authelia, CrowdSec and Dot Box. Traefik gets a certificate for each subdomain. Authelia gets your account, with the same name as your user and a random password.</li>
     <li><b>Schedules the daily backup</b>, local to begin with.</li>
   </ol>
+  </div>
+  <div class="prop-new" data-prop="69">
+  <ol>
+    <li><b>Checks the server</b>, before changing anything: the system (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>), <code>*.example.com</code> pointing to the server, and ports 80 and 443 free. The disk space check is coming later.</li>
+    <li><b>Reads the catalog</b> on GitHub, at an exact commit: the versions of Traefik, Authelia, CrowdSec and the apps. Each file is verified, then stored in <code>/opt/dotbox/catalog/</code>.</li>
+    <li><b>Installs <code>sudo</code></b> if it is missing <b>and prepares your user</b>: creates it if it does not exist, asking for its password, and adds it to the <code>sudo</code> group. Not to the <code>docker</code> group, which amounts to root: <code>sudo docker</code> is enough. An existing user keeps its password, shell and SSH keys.</li>
+    <li><b>Installs Docker</b> if it is missing, from Docker's official repository for Debian or for Ubuntu. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</li>
+    <li><b>Starts Traefik, Authelia and CrowdSec</b>. Traefik gets a certificate for each subdomain. Authelia gets your account, with the same name as your user and a random password. CrowdSec blocks banned IPs at the firewall, with its bouncer, and in Traefik.</li>
+    <li><b>Coming later</b>: Dot Box's web interface on <code>dotbox.example.com</code>, and the daily backup, local to begin with.</li>
+  </ol>
+  </div>
   <p class="note"><b>Traefik does not hold the keys to Docker.</b> It is the only container exposed to the internet: it reads Docker through a socket proxy that only lets the list of containers through. If it were compromised, it could neither start nor stop a container.</p>
-  <p>At the end, <code>init</code> shows a summary: the addresses, your account and its web password, shown once. Root can read it again with <code>sudo dotbox authelia password</code>.</p>
-  <p><code>init</code> does not update the system and never reboots the server: <code>dotbox doctor</code> reports pending updates and when a reboot is needed (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <p>At the end, <code>init</code> shows a card: the state of the core, your account and its web password, shown once, then what is left to do. Root can read the password again with <code>sudo dotbox authelia password</code>. The first thing to do: log in to Authelia and register your two-factor method (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <p><code>init</code> does not update the system and never reboots the server: <span class="prop-old" data-prop="71"><code>dotbox doctor</code> reports</span><span class="prop-new" data-prop="71"><code>dotbox doctor</code> (coming later) will report</span> pending updates and when a reboot is needed (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</p>
+  <div class="prop-old" data-prop="70">
   <p>Everything is written to <code>/opt/dotbox/dotbox.yml</code>. Secrets (Authelia keys, backup key) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 domain: example.com
@@ -118,9 +166,31 @@ destinations:
   - local: /backups
 update:
 schedule: off</pre>
+  </div>
+  <div class="prop-new" data-prop="70">
+  <p>Your answers are kept in <code>/opt/dotbox/dotbox.yml</code>, and each installed app adds its subdomain and access level to it. Secrets (Authelia keys, CrowdSec keys) go to <code>/opt/dotbox/secrets/</code>, readable by root only.</p>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+domain: example.com
+ca: letsencrypt                 <span class="c"># or letsencrypt-staging, for trials</span>
+user: admin                     <span class="c"># runs the apps, same name in Authelia</span>
+apps:                           <span class="c"># added by dotbox install</span>
+  radarr:
+    subdomain: radarr
+    access: two_factor
+  jellyfin:
+    subdomain: jellyfin
+    access: app</pre>
+  <p>Coming later in this file: paths (<code>paths</code>), backup (<code>backup</code>) and updates (<code>update</code>).</p>
+  </div>
   <p><code>sudo dotbox init</code> can be run again safely: it checks, fills in what is missing and recreates nothing that already exists.</p>
 
   <h2 id="en-step3">Step 3: install your apps</h2>
+  <div class="prop-old" data-prop="73">
   <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
   <p>Each app lands on its own subdomain, with its certificate, already connected to the others.</p>
+  </div>
+  <div class="prop-new" data-prop="73">
+  <pre><span class="p">$</span> sudo dotbox install qbittorrent prowlarr radarr sonarr</pre>
+  <p>Each app lands on its own subdomain, with its certificate. The first one creates <code>/data/torrents</code> and <code>/data/media</code> for your user, and checks that hardlinks work between them. Connecting the apps together will be a separate command, coming later.</p>
+  </div>
 </article>

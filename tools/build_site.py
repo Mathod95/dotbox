@@ -70,6 +70,7 @@ DOCS = [
     {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "group": "Apps"},
     {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
+    {"slug": "api", "name": "API", "dots": "API"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},
     {"slug": "en-vrac", "name": "En vrac", "dots": "EN-VRAC"},

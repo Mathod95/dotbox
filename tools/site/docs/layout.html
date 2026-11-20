@@ -141,7 +141,23 @@ span.prop-old::before, span.prop-new::before { top: 8px; left: 12px; font-size: 
 li > span.prop-old, li > span.prop-new, td > span.prop-old, td > span.prop-new { display: block; }
 li > span.prop-old, td > span.prop-old { margin-bottom: 8px; }
 
+/* raccourcis clavier (n, p, m, ?) et barre de gauche repliée (m) */
+.tool { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); cursor: pointer; }
+.tool:hover { color: var(--lit); border-color: #333; }
+.tool kbd, .keys kbd { font-family: var(--mono); font-size: 11px; color: var(--lit); background: #161616; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; }
+.layout.wide { grid-template-columns: minmax(0, 1fr); }
+.layout.wide .side { display: none; }
+.keys { max-width: 440px; width: calc(100% - 32px); padding: 24px 26px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--label); }
+.keys::backdrop { background: rgba(0, 0, 0, .6); }
+.keys h2 { margin: 0 0 14px; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.keys dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 0 0 18px; align-items: center; }
+.keys dd { margin: 0; font-size: 15px; }
+.keys label { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+.keys .close { margin-top: 18px; }
+
 @media (max-width: 900px) {
+  .layout.wide { grid-template-columns: minmax(0, 1fr); }
+  .layout.wide .side { display: grid; }
   .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .side { position: static; max-height: none; }
   .toc { display: none; }
@@ -169,7 +185,7 @@ __PAGE_CSS__
   </div>
 
   <div class="layout">
-    <nav class="side" aria-label="Documentation">
+    <nav class="side" id="docSide" aria-label="Documentation">
 __NAV__
     </nav>
 
@@ -186,6 +202,18 @@ __CONTENT__
 __PN__
     </main>
   </div>
+
+  <dialog class="keys" id="keys" aria-labelledby="keysTitle">
+    <h2 id="keysTitle"><span data-l="fr">Raccourcis clavier</span><span data-l="en">Keyboard shortcuts</span></h2>
+    <dl>
+      <dt><kbd>n</kbd></dt><dd><span data-l="fr">Page suivante</span><span data-l="en">Next page</span></dd>
+      <dt><kbd>p</kbd></dt><dd><span data-l="fr">Page précédente</span><span data-l="en">Previous page</span></dd>
+      <dt><kbd>m</kbd></dt><dd><span data-l="fr">Masquer ou afficher le menu de gauche, pour élargir la page</span><span data-l="en">Hide or show the left menu, to widen the page</span></dd>
+      <dt><kbd>?</kbd></dt><dd><span data-l="fr">Cette fenêtre</span><span data-l="en">This window</span></dd>
+    </dl>
+    <label><input type="checkbox" id="keysOn" checked> <span data-l="fr">Raccourcis activés</span><span data-l="en">Shortcuts on</span></label>
+    <form method="dialog"><button class="tool close" type="submit"><kbd>Esc</kbd><span data-l="fr">Fermer</span><span data-l="en">Close</span></button></form>
+  </dialog>
 
   <footer class="footer">
     <span class="red">Self-hosted · Rust · Docker Compose</span>
@@ -301,6 +329,35 @@ __PN__
       apply();
     });
   });
+  // raccourcis clavier, sans bouton à l'écran pour l'instant (choix de Mathod95 du 20 novembre 2026):
+  // n page suivante, p précédente, m le menu de gauche, ? la liste. Coupés dans un
+  // champ, avec Ctrl, Alt ou Cmd, et désactivables (WCAG 2.1.4); les choix restent dans le navigateur.
+  function stored(k, dflt) { try { var v = localStorage.getItem(k); return v === null ? dflt : v; } catch (e) { return dflt; } }
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var layout = document.querySelector(".layout");
+  var keys = document.getElementById("keys"), keysOn = document.getElementById("keysOn");
+  function setWide(wide) {
+    layout.classList.toggle("wide", wide);
+    store("dotbox-wide", wide ? "1" : "0");
+  }
+  setWide(stored("dotbox-wide", "0") === "1");
+  keysOn.checked = stored("dotbox-keys", "1") === "1";
+  keysOn.addEventListener("change", function () { store("dotbox-keys", keysOn.checked ? "1" : "0"); });
+  function openKeys() { if (keys.showModal) keys.showModal(); else keys.setAttribute("open", ""); }
+  function go(cls) { var a = document.querySelector(".pn a." + cls); if (a) location.href = a.href; }
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || !keysOn.checked) return;
+    var t = e.target, tag = t && t.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+    if (keys.open) return;
+    if (e.key === "n") go("next");
+    else if (e.key === "p") go("prev");
+    else if (e.key === "m") setWide(!layout.classList.contains("wide"));
+    else if (e.key === "?") openKeys();
+    else return;
+    e.preventDefault();
+  });
+
   drawTitle();
   document.documentElement.lang = lang;
   window.DotBox.apply = apply;

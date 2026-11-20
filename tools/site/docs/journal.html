@@ -2107,7 +2107,279 @@ wg-easy: MASQUERADE du réseau du VPN par eth0, le réseau dotbox: un appareil d
       effect: "Serveur: /usr/local/bin/dotbox remplacé par le binaire de la release v0.0.4.",
       undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.4-appsec.bak /usr/local/bin/dotbox (un binaire de test plus ancien)",
       result: `✓ [1/8] Dot Box       0.0.4, downloaded from GitHub, sha256 verified     1.5 s
-dotbox 0.0.4; sha256 10c6a7da63747542…, le même que dotbox-linux-amd64.sha256 de la release` }
+dotbox 0.0.4; sha256 10c6a7da63747542…, le même que dotbox-linux-amd64.sha256 de la release` },
+    { id: "J194", time: "02:18", status: "fait", where: "Serveur", kind: "lecture",
+      title: "La mémoire du core et des apps, pour la page Prerequisites",
+      cmd: `ssh dotbox-test 'free -m; systemctl show crowdsec-firewall-bouncer -p MemoryCurrent; nproc; id -nG; getent group docker'
+python3 sudo_run.py 'docker stats --no-stream --format "{{.Name}}\\t{{.MemUsage}}"'`,
+      does: "Vérifier le minimum de 2 Go de mémoire écrit dans Prerequisites avant CrowdSec et AppSec. docker stats sans sudo est refusé: <user> n'est pas dans le groupe docker, c'est voulu (D33).",
+      effect: "Aucun.",
+      result: `Serveur: 2 cœurs, 3,9 Go de mémoire, pas de swap. 2,5 Go utilisés, 1,4 Go disponibles, avec le core et 13 apps.
+Core: crowdsec 263 Mo, traefik 78 Mo, authelia 46 Mo, socket-proxy 25 Mo, crowdsec-socket-proxy 21 Mo, bouncer 28 Mo: 461 Mo en tout.
+Apps: jellyfin 255, seerr 182, plex 171, maintainerr 163, wizarr 143, uptime-kuma 114, prowlarr 102, tautulli 86, code-server 79, wg-easy 51, autobrr 30, vaultwarden 20, qbittorrent 19 (Mo, au repos, bibliothèques vides).` },
+    { id: "J195", time: "04:20", status: "fait", where: "Serveur", kind: "lecture",
+      title: "dotbox.yml tel qu'il est, pour la page Installation",
+      cmd: `python3 sudo_run.py 'cat /opt/dotbox/dotbox.yml'`,
+      does: "Comparer le fichier réel à l'exemple de la page Installation.",
+      effect: "Aucun.",
+      result: `domain, ca: letsencrypt, user, puis apps: une entrée par app installée (subdomain, access), 13 apps.
+Pas de paths, backup ni update: pas encore codés.` },
+    { id: "J196", time: "07:30", status: "fait", where: "Serveur", kind: "lecture",
+      title: "12: le format de docker ps et de acme.json, avant d'écrire status et doctor",
+      cmd: `python3 sudo_run.py "docker ps -a --format '{{json .}}' | head -2"
+python3 sudo_run.py "python3 -c '…les clés de /opt/traefik/config/acme.json et le domaine des deux premiers certificats…'"`,
+      does: "Lire les vraies sorties avant d'écrire les fonctions qui les lisent.",
+      effect: "Aucun.",
+      result: `docker ps: Names, Image, State, Status (« Up 2 hours (healthy) »), et HealthStatus depuis Docker 29. status lit Names, Image, State et Status, présents dans toutes les versions.
+acme.json: un résolveur « letsencrypt » avec Account et Certificates, chaque certificat avec domain.main.` },
+    { id: "J197", time: "07:54", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "11.7: le binaire avec le service, puis dotbox init",
+      cmd: `scp dotbox (0.0.4 avec le service, sha256 b51e96c25596d13b…) dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'cp /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.4.bak && install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'`,
+      does: "Dans le plan validé (11.2 à 11.8, 12). Sur le PC avant: fmt, clippy, 113 tests, binaire musl. Le binaire publié v0.0.4 gardé à côté.",
+      effect: "Serveur: /usr/local/bin/dotbox, le groupe dotbox avec <user> dedans, /etc/systemd/system/dotbox.service, le service lancé.",
+      undo: "sudo systemctl disable --now dotbox; sudo rm /etc/systemd/system/dotbox.service; sudo install -m 755 /usr/local/bin/dotbox-0.0.4.bak /usr/local/bin/dotbox",
+      result: `✓ [3/8] User          <user>, groups sudo and dotbox
+✗ [8/8] Service       the Dot Box service, behind the dotbox command      18 s
+error the dotbox service does not answer on /run/dotbox/dotbox.sock
+journalctl: « dotbox 0.0.4 listening on /run/dotbox/dotbox.sock »`,
+      note: "Le service écoutait, mais init ne le reconnaissait pas. La cause: pour l'empreinte de son binaire, le service lançait sha256sum /proc/self/exe, et dans ce sous-processus /proc/self désigne sha256sum lui-même. Corrigé: /proc/<pid du service>/exe." },
+    { id: "J198", time: "07:55", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "11.7: l'empreinte corrigée, dotbox init de nouveau",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'`,
+      does: "Le même init, avec la correction de J197.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré avec le nouveau binaire.",
+      result: `✓ [8/8] Service       service running, /run/dotbox/dotbox.sock           1.4 s
+Carte: Dot Box 0.0.4 ● active /run/dotbox/dotbox.sock (« running » depuis, comme les autres)` },
+    { id: "J199", time: "07:55", status: "fait", where: "Serveur", kind: "lecture",
+      title: "12: dotbox status et dotbox doctor, sans sudo",
+      cmd: `ssh dotbox-test 'id -nG; dotbox status; dotbox doctor'`,
+      does: "La CLI appelle le service par le socket, avec l'utilisateur, sans sudo.",
+      effect: "Serveur: /opt/dotbox/doctor.json (le dernier résultat, 0644).",
+      result: `id: … sudo … dotbox
+status: les 5 containers du core et les 13 apps, version, état, accès, adresse. Code 0.
+doctor: ok système, Docker, DNS, 18 containers, 15 certificats (le premier finit dans 87 jours), CrowdSec et ses règles, disque 11 %, service.
+warn: Jellyfin, Seerr, Wizarr, Plex en attente de leur assistant, 1 mise à jour du système, mises à jour de sécurité automatiques désactivées, SSH accepte les mots de passe. Code 1.`,
+      note: "Trois défauts corrigés: Vaultwarden signalé à tort (sa route /admin passe toujours par Authelia: seule la route principale de l'app compte maintenant), la colonne de l'accès qui débordait, « 1 system updates »." },
+    { id: "J200", time: "07:57", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "12: les corrections de J199",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh dotbox-test 'dotbox doctor >/dev/null; dotbox status'`,
+      does: "Le binaire corrigé. init voit que le binaire a changé et redémarre le service.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `✓ [8/8] Service       service running, /run/dotbox/dotbox.sock           1.8 s
+jellyfin  12.4  healthy  app after setup  jellyfin.<domaine>
+vaultwarden  1.37.5  healthy  app  vaultwarden.<domaine>
+! doctor 20 Nov 07:57: 7 problems, run dotbox doctor` },
+    { id: "J201", time: "07:57", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "11.8: install et remove par le service, sans sudo",
+      cmd: `ssh dotbox-test 'dotbox install uptime-kuma; dotbox remove uptime-kuma; dotbox install uptime-kuma; dotbox remove nope; dotbox status --local'
+python3 sudo_run.py 'sudo -u nobody dotbox status; ls -l /run/dotbox/dotbox.sock'`,
+      does: "Une tâche par commande: le service lance dotbox install --local avec DOTBOX_EVENTS=1 et passe ses étapes à la CLI en direct. Uptime Kuma: une réinstallation, un retrait qui garde la configuration, une réinstallation qui la reprend. Puis les refus.",
+      effect: "Serveur: Uptime Kuma retiré puis réinstallé, sa configuration gardée.",
+      result: `✓ [1/1] Uptime-kuma   2.5.12-slim-rootless, two_factor                   0.5 s
+✓ [1/1] Uptime-kuma   removed, configuration kept in /opt/uptime-kuma    0.9 s
+✓ [1/1] Uptime-kuma   2.5.12-slim-rootless, two_factor                    20 s
+✗ [1/1] Nope … error nope is not installed, la fin du log et son chemin (code 1)
+status --local sans root: « --local works as root: sudo dotbox status --local »
+nobody: « /run/dotbox/dotbox.sock is for root and the dotbox group … » (code 1)
+srw-rw---- root dotbox /run/dotbox/dotbox.sock` },
+    { id: "J202", time: "07:57", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "11.8: une tâche à la fois, --json, doctor --local",
+      cmd: `ssh dotbox-test '(dotbox install uptime-kuma &); sleep 0.3; dotbox install qbittorrent; dotbox status --json'
+python3 sudo_run.py 'dotbox doctor --local; ls -l /opt/dotbox/doctor.json; systemctl is-enabled dotbox'`,
+      does: "Une seconde tâche pendant la première, la sortie JSON, et doctor sans le service.",
+      effect: "Serveur: Uptime Kuma réinstallé (rien de changé), /opt/dotbox/doctor.json réécrit.",
+      result: `error another job is running (dotbox install uptime-kuma): wait for it to end (code 1)
+status --json: {"core": [{"name": "traefik", "version": "v3.7.19", "state": "running", "health": "healthy", …
+doctor --local: les mêmes vérifications, ! 7 problems
+-rw-r--r-- root root /opt/dotbox/doctor.json, dotbox.service enabled` },
+    { id: "J203", time: "08:53", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "12.9: status et doctor façon cliclack",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh -tt dotbox-test 'dotbox doctor; dotbox status; dotbox status | head -3'`,
+      does: "Les maquettes validées de la page CLI (#92, #93), codées: un cadre ┌ │ └, une ligne par section ou par app avec ◇ ▲ ■, le détail des problèmes dessous avec → la commande. Dans un vrai terminal (ssh -tt).",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `┌  dotbox doctor
+◇  System … ◇  Certificates   15 valid, the first ends in 87 days … ▲  Apps   4 to look at … ▲  SSH   ssh accepts passwords …
+└  3 sections to look at   (code 1)
+┌  dotbox status … ▲  wizarr   v2026.10.1   public after setupwizarr.<domaine> …
+└  doctor 20 Nov 08:53: 3 sections to look at, run dotbox doctor
+dotbox status | head -3: « failed printing to stdout: Broken pipe », un panic`,
+      note: "Trois corrections: une sortie coupée (| head) arrête la commande sans paniquer, la colonne de l'accès s'élargit selon son contenu, et la section SSH ne répète plus « ssh »." },
+    { id: "J204", time: "08:55", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "12.9: les corrections de J203",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh -tt dotbox-test 'dotbox status | head -4; dotbox status'
+ssh dotbox-test 'dotbox doctor | tail -8'`,
+      does: "Le même test, plus la sortie sans terminal (un script, une redirection): du texte simple, sans cadre.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `dotbox status | head -4: le tableau en texte simple, code 0, pas de panic
+▲  wizarr        v2026.10.1         public after setup  wizarr.<domaine>
+doctor sans terminal: « warn  SSH          accepts passwords » puis « → see …/post-installation/ », « 7 problems », code 1` },
+    { id: "J205", time: "10:02", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "13: le binaire avec les nouvelles commandes, puis list et info",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh -tt dotbox-test 'dotbox list; dotbox list arr; dotbox info wg-easy; dotbox info sonarr'`,
+      does: "Dans le plan validé (13.1 à 13.11). Sur le PC avant: fmt, clippy, 121 tests, binaire musl. init redémarre le service avec le nouveau binaire.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `✓ [8/8] Service       service running, /run/dotbox/dotbox.sock
+list: 16 apps, 13 installed (◇ installée, ○ pas encore). list arr: prowlarr, radarr, sonarr, wizarr.
+info wg-easy: image, healthy, adresse, two_factor, /opt/wg-easy/config → /etc/wireguard, port 51820/udp.
+info sonarr: not installed, « dotbox install sonarr »` },
+    { id: "J206", time: "10:03", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "13: stop, diff, start, restart, logs",
+      cmd: `ssh -tt dotbox-test 'dotbox stop uptime-kuma; dotbox diff; dotbox start uptime-kuma; dotbox -q restart uptime-kuma; dotbox diff; dotbox logs uptime-kuma --tail 3; dotbox logs traefik --tail 2; timeout 3 dotbox logs prowlarr -f --tail 1; dotbox start traefik; dotbox logs nope'`,
+      does: "Uptime Kuma arrêté, l'écart vu par diff, relancé, redémarré sans rien afficher (-q). Les logs d'une app, du core, et suivis en direct. Les refus.",
+      effect: "Serveur: Uptime Kuma arrêté puis relancé.",
+      result: `✓ [1/1] Uptime-kuma   stopped  0.7 s
+diff: ▲ uptime-kuma  exited, wanted running → dotbox start uptime-kuma (code 1)
+✓ [1/1] Uptime-kuma   healthy  12 s, puis diff: in sync (code 0)
+logs: les 3 dernières lignes, celles de traefik, et -f jusqu'à la fin du timeout
+start traefik: « traefik is part of the core: sudo dotbox init manages it ». logs nope: « nope is not installed »`,
+      note: "Avec -q, l'indicateur tournait encore: corrigé en J210. Le log de Traefik montre des demandes de certificat pour un domaine qui n'est pas le nôtre: quelqu'un fait pointer son domaine vers ce serveur. Rien à faire, Traefik refuse." },
+    { id: "J207", time: "10:03", status: "fait", where: "Serveur", kind: "lecture",
+      title: "13.6: une version plus ancienne d'Uptime Kuma existe-t-elle?",
+      cmd: `python3 sudo_run.py 'docker manifest inspect louislam/uptime-kuma:2.5.11-slim-rootless; … 2.5.10-slim-rootless'`,
+      does: "Pour tester update de bout en bout, il faut une app en retard: on la remet d'abord sur une version plus ancienne.",
+      effect: "Aucun.",
+      result: `2.5.11-slim-rootless exists, 2.5.10-slim-rootless exists` },
+    { id: "J208", time: "10:04", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "13.5 et 13.6: --rollback, puis update",
+      cmd: `python3 sudo_run.py 'echo louislam/uptime-kuma:2.5.11-slim-rootless > /opt/uptime-kuma/.dotbox-previous'
+ssh -tt dotbox-test 'dotbox update uptime-kuma --rollback; dotbox diff; dotbox update; dotbox update uptime-kuma; dotbox diff'`,
+      does: "Le test prépare à la main l'image « précédente », comme l'aurait gardée une mise à jour. --rollback la remet, update sans app dit ce qui est en retard, update uptime-kuma la remet à la version du catalogue. Le résultat, lu dans les logs (/opt/dotbox/logs/update-*), l'affichage ayant été effacé par un filtre de la commande.",
+      effect: "Serveur: Uptime Kuma passé à 2.5.11 puis revenu à 2.5.12, l'image 2.5.11 téléchargée, /opt/uptime-kuma/.dotbox-previous.",
+      result: `--rollback: ok [1/1] Uptime-kuma: 2.5.11-slim-rootless, two_factor (1 min 4 s)
+update (sans app): ok [1/1] Catalog: 90161a8 of 2026-11-19, rien d'autre
+update uptime-kuma: [1/1] Catalog, puis [2/2] Uptime-kuma: 2.5.12-slim-rootless, two_factor (20 s)
+.dotbox-previous: louislam/uptime-kuma:2.5.11-slim-rootless, gardée pour un prochain --rollback` },
+    { id: "J209", time: "10:05", status: "fait", where: "Serveur", kind: "ecriture",
+      title: "13.7 à 13.10: le rapport d'update, completion, --json, upgrade, un compose changé à la main",
+      cmd: `ssh -tt dotbox-test 'dotbox update | tail -16; dotbox completion bash | head -3; dotbox list --json | head -7; dotbox diff --json'
+python3 sudo_run.py 'echo "# test J207" >> /opt/uptime-kuma/compose.yml; dotbox upgrade; dotbox diff; dotbox install uptime-kuma --local; dotbox diff'`,
+      does: "Une ligne ajoutée à la main au compose d'Uptime Kuma: diff doit le voir, une réinstallation le remet.",
+      effect: "Serveur: /opt/uptime-kuma/compose.yml changé puis réécrit par dotbox.",
+      result: `update: 13 apps « up to date »
+completion: _dotbox() { … (bash)
+list --json: [{"name": "autobrr", "role": …, "installed": true}, …], diff --json: []
+upgrade: ✓ [1/1] Dot Box  0.0.4, the latest  (la release v0.0.4 n'est pas plus récente: rien de changé)
+diff: ~ uptime-kuma  compose.yml changed by hand → dotbox install uptime-kuma writes it again…
+après install --local: 0 differences`,
+      note: "upgrade n'a vérifié ici que le cas « déjà la dernière »: le remplacement du binaire se testera avec la prochaine release. Trois défauts d'affichage corrigés en J210: la colonne des versions sans terminal, « 1 differences », et « from the catalog » pendant un --rollback." },
+    { id: "J210", time: "10:06", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "13: les corrections de J206 et J209",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh -tt dotbox-test 'dotbox -q restart uptime-kuma; dotbox update | tail -4'`,
+      does: "-q cache aussi l'indicateur, la colonne des versions s'élargit selon son contenu.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré, Uptime Kuma redémarré.",
+      result: `-q restart: rien à l'écran, code 0
+uptime-kuma     2.5.12-slim-rootless    up to date` },
+    { id: "J211", time: "11:09", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "13: dotbox version, et doctor conseille start pour une app arrêtée",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+ssh dotbox-test '/tmp/dotbox-new version; /tmp/dotbox-new version --json'
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+python3 sudo_run.py 'cp -p /usr/local/bin/dotbox /tmp/dotbox-keep && install -m 755 /usr/local/bin/dotbox-0.0.4.bak /usr/local/bin/dotbox && /tmp/dotbox-keep version; install -m 755 /tmp/dotbox-keep /usr/local/bin/dotbox && dotbox version'`,
+      does: "Demande de Mathod95: dotbox version (la commande de la spécification, la version de la CLI et du service) plutôt qu'un flag. Le dernier test pose un moment l'ancien binaire sur le disque, sans redémarrer le service: version doit le voir. Puis le bon binaire est remis.",
+      effect: "Serveur: /usr/local/bin/dotbox (remplacé un instant par l'ancien, puis remis), le service redémarré par init.",
+      result: `cli      0.0.4
+service  0.0.4, /run/dotbox/dotbox.sock
+--json: {"cli": "0.0.4", "service": "0.0.4", "same_binary": true}
+binaire changé sans redémarrage: service  0.0.4, an older binary than /usr/local/bin/dotbox → sudo systemctl restart dotbox`,
+      note: "« an older binary » était faux ici (c'est le fichier sur le disque qui était le plus ancien): remplacé par « runs another binary » en J212." },
+    { id: "J212", time: "11:10", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "13: le message de dotbox version",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-api
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-api /usr/local/bin/dotbox && dotbox init'
+ssh dotbox-test 'dotbox version'`,
+      does: "Le binaire avec le message corrigé.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `✓ [8/8] Service       service running, /run/dotbox/dotbox.sock
+cli      0.0.4
+service  0.0.4, /run/dotbox/dotbox.sock` },
+    { id: "J213", time: "21:44", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "Le binaire avec la nouvelle aide et l'étape 14",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox-0.0.4-help
+python3 sudo_run.py 'install -m 755 /tmp/dotbox-0.0.4-help /usr/local/bin/dotbox && systemctl restart dotbox && systemctl is-active dotbox'
+ssh dotbox-test 'dotbox version; dotbox --help; dotbox help; dotbox --no-color --help'`,
+      does: "Le binaire du PC: dotbox --help rangé comme la page CLI (#109A), serve caché, exec, edit et add (étape 14). Le service redémarré pour tourner le même binaire.",
+      effect: "Serveur: /usr/local/bin/dotbox, le service redémarré.",
+      result: `active
+cli      0.0.4
+service  0.0.4, /run/dotbox/dotbox.sock
+Dot Box 0.0.4 · self-hosted apps on Docker Compose, behind Traefik and Authelia
+
+Usage  dotbox <command> [args] [options]
+
+SERVER
+  init [--domain <d>] [--user <n>]  Set up the server, then the core and the service
+  ...
+dotbox help: les mêmes 45 lignes. --no-color: aucun code de couleur.`,
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.4.bak /usr/local/bin/dotbox && sudo systemctl restart dotbox" },
+    { id: "J214", time: "21:44", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "14.1: sudo dotbox exec",
+      cmd: `ssh dotbox-test 'dotbox exec radarr -- ls /data'
+python3 sudo_run.py 'dotbox exec prowlarr -- ls /data; dotbox exec prowlarr -- sh -c "exit 3"; echo "echo from-stdin" | dotbox exec prowlarr; dotbox exec traefik -- ls'
+python3 sudo_run.py 'dotbox exec qbittorrent -- ls /data; dotbox exec qbittorrent -- id'`,
+      does: "Sans sudo: refusé. En root: le code de sortie de la commande rendu tel quel, l'entrée standard passée par un tube, le core refusé. radarr n'est plus installé depuis la réinstallation du serveur, prowlarr ne monte pas /data: le test de /data se fait dans qBittorrent. Le terminal interactif (un shell avec -t) reste à essayer par Mathod95.",
+      effect: "Aucun: des lectures dans les containers.",
+      result: `error    dotbox exec is for root only (it could reach the whole server): sudo dotbox exec radarr
+code=3
+from-stdin
+error    traefik is part of the core: sudo dotbox init manages it
+media
+torrents
+uid=0(<x>) gid=0(<x>) ...` },
+    { id: "J215", time: "21:45", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "14.2: sudo dotbox edit sur qBittorrent",
+      cmd: `python3 sudo_run.py 'EDITOR=true dotbox edit qbittorrent'
+python3 sudo_run.py 'EDITOR=/tmp/ed-add.sh dotbox edit qbittorrent'     # DOTBOX_EDIT_TEST: "1"
+python3 sudo_run.py 'EDITOR=/tmp/ed-bad.sh dotbox edit qbittorrent'     # une clé qui n'existe pas
+python3 sudo_run.py 'EDITOR=/tmp/ed-down.sh dotbox edit qbittorrent'    # une image qui n'existe pas
+python3 sudo_run.py 'EDITOR=/tmp/ed-empty.sh dotbox edit qbittorrent'   # plus que des commentaires
+python3 sudo_run.py 'rm /tmp/ed-*.sh'`,
+      does: "Un éditeur scripté à la place de nano (pas de terminal en SSH depuis le PC): chaque script écrit un fichier dans la copie que dotbox edit lui donne. Sans changement: rien fait. Une variable ajoutée: vérifiée, appliquée, qBittorrent healthy avec la variable. Une clé inconnue: refusée par docker compose config, l'ancien fichier remis. Une image introuvable: docker compose up échoue, l'ancien fichier remis et qBittorrent relancé avec. Un fichier vidé: retiré, qBittorrent revient à son compose.yml.",
+      effect: "Serveur: /opt/qbittorrent/compose.override.yml créé puis retiré, qBittorrent relancé trois fois. Logs dans /opt/dotbox/logs/edit-*.",
+      result: `compose.override.yml of qbittorrent unchanged, nothing done
+✓ [1/1] Qbittorrent   applied, healthy                                    13 s
+DOTBOX_EDIT_TEST=1
+error    docker compose refuses it, the old file is back:
+         validating /opt/qbittorrent/compose.override.yml: services.qbittorrent.not_a_compose_key false schema
+✗ [1/1] Qbittorrent   compose.override.yml                               1.8 s
+error qbittorrent did not start, the old file is back:
+      ... lscr.io/linuxserver/qbittorrent:0.0.0-does-not-exist: not found
+healthy lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487
+✓ [1/1] Qbittorrent   applied, healthy                                    13 s
+compose.yml  config   (plus de compose.override.yml, plus de DOTBOX_EDIT_TEST)`,
+      undo: "Rien à défaire: qBittorrent est revenu à son état d'avant." },
+    { id: "J216", time: "21:45", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "14.3: sudo dotbox add, puis install et remove --purge d'it-tools",
+      cmd: `ssh dotbox-test 'printf ... > /tmp/it-tools/compose.yml; printf ... > /tmp/it-tools/two.yml'
+python3 sudo_run.py 'dotbox add /tmp/it-tools/two.yml --name immich; dotbox add /tmp/it-tools/compose.yml --name radarr; dotbox add /tmp/it-tools/compose.yml --name it-tools; cat /opt/dotbox/apps/it-tools.yml'
+ssh dotbox-test 'dotbox install it-tools; dotbox info it-tools'
+python3 sudo_run.py 'wget -S --max-redirect=0 -O /dev/null https://it-tools.<domaine>'
+ssh dotbox-test 'dotbox -y remove it-tools --purge; rm -rf /tmp/it-tools'
+python3 sudo_run.py 'rm /opt/dotbox/apps/it-tools.yml; rm -f /tmp/dotbox-0.0.4-help'`,
+      does: "Un compose d'un service (it-tools, corentinth/it-tools:2024.10.22-7ca5933, ports 8080:80) devient /opt/dotbox/apps/it-tools.yml. Deux services: refusé. Un nom du catalogue: refusé. Puis install par le service, sans sudo: le manifest lu dans les apps locales, l'app derrière Authelia. Puis remove --purge, et le manifest de test effacé.",
+      effect: "Serveur: /opt/it-tools et l'image installés puis effacés, /opt/dotbox/apps/ créé (vide à la fin).",
+      result: `error    2 services (server, db): Dot Box installs apps of one container for now, an app with a database alongside comes later
+error    radarr is in the catalog: dotbox install radarr, or another --name
+read     1 service: it-tools (corentinth/it-tools:2024.10.22-7ca5933)
+ignored  container_name, restart, ports (Dot Box sets them)
+write    /opt/dotbox/apps/it-tools.yml (subdomain it-tools, access two_factor, port 80)
+ready    dotbox install it-tools
+✓ [1/1] It-tools      2024.10.22-7ca5933, two_factor                     8.7 s
+state      running
+address    https://it-tools.<domaine>
+Location: https://<domaine>/?rd=https%3A%2F%2Fit-tools.<domaine>%2F&rm=GET   (la page de connexion d'Authelia)
+✓ [1/1] It-tools      removed, /opt/it-tools deleted                     3.0 s` }
   ];
 
   var PLAN = [
@@ -2892,8 +3164,8 @@ volumes:
           does: "Chaque manifest dit à quoi l'app peut se relier, par exemple dans radarr.yml: client de téléchargement qbittorrent (catégorie radarr), dossier racine /data/media/movies, et dans prowlarr.yml: radarr et sonarr comme applications. Rien n'est écrit en dur dans dotbox: une nouvelle app du catalogue apporte ses liens.",
           effect: "PC: src/catalog.rs, catalog/*.yml." },
         { id: "9.2", kind: "ecriture", where: "PC (code)", title: "Voir où en sont les liens, sans rien changer",
-          does: "Pour chaque lien possible entre apps installées: branché, pas branché, ou réglé autrement à la main (un autre client de téléchargement, par exemple). dotbox lit la clé d'API de chaque app dans sa configuration (config.xml pour Radarr, Sonarr et Prowlarr) et interroge son API: lecture seule. dotbox parle aux apps depuis le serveur, à leur adresse sur le réseau dotbox, sans passer par Traefik ni Authelia.",
-          effect: "PC: src/wire.rs (nouveau), un client HTTP (aussi utile à 7.6)." },
+          does: "Pour chaque lien possible entre apps installées: branché, pas branché, ou réglé autrement à la main (un autre client de téléchargement, par exemple). dotbox lit la clé d'API de chaque app dans sa configuration (config.xml pour Radarr, Sonarr et Prowlarr) et interroge son API: lecture seule. dotbox parle aux apps depuis le serveur, à leur adresse sur le réseau dotbox, sans passer par Traefik ni Authelia. dotbox info <app> le montrera aussi: une ligne Wiring dans son cadre (son client de téléchargement, son indexeur, ses dossiers racine), retirée de la maquette de la page CLI le 20 novembre 2026 (#86) tant que le câblage n'existe pas, à rajouter par une proposition à ce moment-là.",
+          effect: "PC: src/wire.rs (nouveau), un client HTTP (aussi utile à 7.6), src/manage.rs (la ligne Wiring de dotbox info)." },
         { id: "9.3", kind: "ecriture", where: "PC (code)", title: "Câbler: montrer, demander, puis faire",
           does: "La commande affiche ce qu'elle va faire, lien par lien, demande une confirmation, puis appelle les API: Radarr et Sonarr reçoivent qBittorrent (adresse qbittorrent:8080, son mot de passe selon Q29, leur catégorie) et leur dossier racine, Prowlarr reçoit Radarr et Sonarr (leur adresse et leur clé). Les liens posés par dotbox portent un nom reconnaissable (« qBittorrent (Dot Box) »). Relancée, elle n'ajoute rien deux fois et ne touche jamais à un réglage fait à la main.",
           effect: "PC: src/wire.rs, src/main.rs." },
@@ -3153,12 +3425,170 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           does: "Bannit une IP de documentation (pas une vraie machine), vérifie qu'elle est bloquée au pare-feu, puis la débannit.",
           effect: "Serveur: aucune trace durable." }
       ] },
-    { phase: "11", group: "avenir", title: "L'interface web de Dot Box",
-      intro: "Ajoutée au Journal le 19 novembre 2026: l'interface web n'avait qu'une ligne dans la Roadmap. La spécification (Basics, Accessing Apps): Dot Box a sa propre interface web sur dotbox.<domaine>, installée par dotbox init avec le core, derrière Authelia. La CLI passe par la même API. Elle montre le catalogue, l'état des apps, les logs d'installation en direct, et sait importer un compose. Après les apps (D73).",
+    { phase: "11", group: "avenir", title: "L'API, puis l'interface web de Dot Box",
+      intro: "Ajoutée au Journal le 19 novembre 2026: l'interface web n'avait qu'une ligne dans la Roadmap. La spécification (Basics, Accessing Apps): Dot Box a sa propre interface web sur dotbox.<domaine>, installée par dotbox init avec le core, derrière Authelia. La CLI passe par la même API. Elle montre le catalogue, l'état des apps, les logs d'installation en direct, et sait importer un compose. Après les apps (D73). Le 20 novembre 2026 (D79): l'API passe avant status et doctor (étape 12), pour que la CLI n'ait pas besoin de sudo. Spécification: page API. L'interface web vient ensuite, sur la même API.",
       steps: [
-        { id: "11.1", kind: "ecriture", where: "PC", title: "Le plan",
+        { id: "11.1", status: "fait", ref: "D79", kind: "ecriture", where: "PC", title: "Le plan",
           does: "Écrire ici le plan détaillé avant de coder: l'API (dans le binaire dotbox, ou un service à part), le front (dans le style Dot Hub de la page d'accueil), son container et sa route dans Traefik, ce que la CLI garde en local, comment l'API pilote Docker sans donner le socket au navigateur. Avec les questions à trancher par Mathod95.",
-          effect: "PC: tools/site/docs/journal.html." }
+          effect: "PC: tools/site/docs/journal.html. Fait le 20 novembre 2026: les sous-étapes 11.2 à 11.9 ci-dessous, et la page API." },
+        { id: "11.2", status: "fait", ref: "J197", kind: "ecriture", where: "PC (code)", title: "Le service: dotbox serve",
+          does: "Une nouvelle commande, dotbox serve, qui tourne en root sous systemd (dotbox.service, Restart=on-failure, après docker.service). Un seul binaire pour la CLI et le service: ils ont toujours la même version. Serveur HTTP en Rust: axum sur tokio (le plus utilisé, il gère les sockets Unix et les Server-Sent Events dont les tâches auront besoin). La logique reste dans les modules actuels (apps.rs, init.rs...), appelés par les routes.",
+          effect: "PC: src/serve.rs, src/main.rs, Cargo.toml (axum, tokio)." },
+        { id: "11.3", status: "fait", ref: "J201", kind: "ecriture", where: "PC (code)", title: "La porte de la CLI: le socket Unix",
+          does: "/run/dotbox/dotbox.sock, 0660, root:dotbox (dossier créé par systemd, RuntimeDirectory). Le service lit qui appelle par le noyau (SO_PEERCRED): root, ou un membre du groupe dotbox. Personne d'autre. Pas de mot de passe ni de jeton à garder.",
+          effect: "PC: src/serve.rs." },
+        { id: "11.4", status: "fait", ref: "J197", kind: "ecriture", where: "PC (code)", title: "Le groupe dotbox",
+          does: "dotbox init crée le groupe dotbox et y met l'utilisateur, à côté de sudo. Il ne donne que les routes de l'API, sur les apps du catalogue: ce n'est pas le groupe docker (D33). Restent en sudo, sans le service: init, upgrade, restore, authelia, add (un compose quelconque peut monter n'importe quel dossier) et --local.",
+          effect: "PC: src/init.rs. Serveur, au test: le groupe dotbox." },
+        { id: "11.5", status: "fait", ref: "J199, J201", kind: "ecriture", where: "PC (code)", title: "La CLI cliente",
+          does: "dotbox status, doctor, install et remove envoient leur requête au socket et mettent la réponse en forme. Les tâches longues (install, remove) suivent leurs étapes en direct, avec la même sortie qu'aujourd'hui. Si le service ne répond pas: le message dit sudo systemctl restart dotbox, ou sudo dotbox --local.",
+          effect: "PC: src/client.rs, src/main.rs." },
+        { id: "11.6", status: "fait", ref: "J201, J202", kind: "ecriture", where: "PC (code)", title: "Le secours: --local",
+          does: "sudo dotbox <commande> --local fait le travail dans la commande elle-même, sans le service, comme install et remove aujourd'hui. Pour le jour où le service ne démarre plus.",
+          effect: "PC: src/main.rs." },
+        { id: "11.7", status: "fait", ref: "J197, J198", kind: "ecriture", where: "PC → Serveur", title: "Le service installé par init",
+          does: "Une étape de plus dans dotbox init, après CrowdSec: l'unité systemd écrite, activée et démarrée, puis le socket vérifié. La carte de fin montre le service et son état.",
+          effect: "Serveur, au test: /etc/systemd/system/dotbox.service, le service lancé." },
+        { id: "11.8", status: "fait", ref: "J201, J202", kind: "ecriture", where: "PC → Serveur", title: "install et remove par l'API",
+          does: "POST et DELETE /api/v1/apps/{app}, une tâche suivie par GET /api/v1/jobs/{id}/events. install et remove perdent sudo. Après status et doctor (étape 12), qui sont plus simples et montrent si le chemin marche.",
+          effect: "PC: src/serve.rs, src/client.rs. Serveur, au test: le binaire." },
+        { id: "11.9", kind: "ecriture", where: "PC → Serveur", title: "La porte web (plus tard, avec l'interface)",
+          does: "dotbox.<domaine> par Traefik, derrière Authelia (two_factor, groupe admins). Le service écoute sur l'adresse du serveur dans le réseau dotbox, jamais sur une adresse publique. Traefik ajoute un en-tête secret (gardé dans /opt/dotbox/secrets/), sans lequel le service refuse la requête: une app du réseau dotbox ne peut pas se faire passer pour Traefik. Le service ne croit Remote-User et Remote-Groups qu'avec cet en-tête. Puis le front.",
+          effect: "Plus tard." }
+      ] },
+    { phase: "12", group: "avenir", title: "dotbox status et dotbox doctor",
+      intro: "Plan du 20 novembre 2026 (D78): deux commandes séparées, reliées. status dit ce qui tourne et où, en un instant. doctor cherche ce qui cloche, plus lentement, et dit quoi faire. Après le service de l'étape 11 (D79): le travail se fait dans le service, en root (Docker, acme.json et sshd -T le demandent), et la CLI l'appelle sans sudo. Les deux ne modifient rien sur le serveur, sauf le fichier du dernier résultat de doctor. Spécification: page CLI (status, doctor) et Post-installation (doctor). Le code d'abord sur le PC, puis les tests sur le serveur, en lecture seule.",
+      steps: [
+        { id: "12.1", status: "fait", ref: "J199, J200", kind: "ecriture", where: "PC (code)", title: "dotbox status",
+          does: "Nouveau module src/status.rs, appelé par la route GET /api/v1/status. Une ligne par container du core (traefik, socket-proxy, authelia, crowdsec, crowdsec-socket-proxy), puis par app de dotbox.yml: nom, version (le tag de l'image qui tourne), état (Running, healthy, starting, unhealthy, Exited), adresse et accès. Tout vient d'un seul docker ps -a et de dotbox.yml, sans réseau: la commande répond tout de suite. Une app de dotbox.yml sans container: « missing ». Une app dont l'assistant n'est pas fini: « two_factor until set up », comme install. Dernière ligne: le résumé du dernier doctor, lu dans /opt/dotbox/doctor.json (« doctor 20 Nov 14:02: 2 warnings, run dotbox doctor »), ou « doctor never run ». Code de sortie 0, 1 seulement si Docker ne répond pas.",
+          effect: "PC: src/status.rs, src/main.rs, tests." },
+        { id: "12.2", status: "fait", ref: "J199", kind: "ecriture", where: "PC (code)", title: "dotbox doctor: les vérifications",
+          does: "Nouveau module src/doctor.rs, appelé par les routes GET et POST /api/v1/doctor. Chaque vérification donne ok, warn ou error, et pour warn ou error la commande à lancer ou la page de la doc à lire. 1. Système: version prise en charge, amd64. 2. Docker: service actif, version, réseau dotbox, logs local et live-restore dans daemon.json. 3. DNS: *.<domaine> pointe vers ce serveur (le test de init). 4. Containers: chaque container du core et des apps en Running et healthy, et pas de redémarrages en boucle (RestartCount). 5. Certificats: pour chaque sous-domaine, dans /opt/traefik/config/acme.json: présent, staging ou Let's Encrypt, et sa date de fin. Moins de 14 jours: warn (Traefik renouvelle à 30 jours, il reste donc deux semaines d'échecs). 6. CrowdSec: cscli lapi status, le service du bouncer actif, ses règles dans INPUT et DOCKER-USER (le test de init), AppSec. 7. Les apps dont l'assistant n'est pas fini, avec la commande à relancer. 8. Le système: paquets en attente (dont ceux de sécurité, par apt-get -s upgrade), unattended-upgrades actif, /var/run/reboot-required. 9. SSH (sshd -T): PasswordAuthentication et PermitRootLogin, signalés, jamais modifiés. 10. Disque: /, /opt et /data, warn à 85 %.",
+          effect: "PC: src/doctor.rs, src/main.rs, tests." },
+        { id: "12.3", status: "fait", ref: "J199, J202", kind: "ecriture", where: "PC (code)", title: "doctor: la sortie et le dernier résultat",
+          does: "Une ligne par vérification, comme la maquette de Post-installation: « ok » en vert, « warn » en jaune, « error » en rouge, puis l'aide sous la ligne. Code de sortie: 0 si tout est ok, 1 s'il y a au moins un warn ou un error, pour un script ou Uptime Kuma. Le résultat est gardé dans /opt/dotbox/doctor.json (date, et chaque vérification qui n'est pas ok), en 0644: status le lit sans refaire les vérifications.",
+          effect: "PC: src/doctor.rs. Serveur, au test: /opt/dotbox/doctor.json." },
+        { id: "12.4", status: "fait", ref: "J199", kind: "ecriture", where: "PC (code)", title: "Lire les certificats",
+          does: "acme.json garde chaque certificat en PEM, encodé en base64. Pour lire sa date de fin sans dépendre d'openssl sur le serveur: deux crates, base64 et x509-parser (Rust pur). Ou bien openssl x509 -enddate, si Mathod95 préfère ne pas ajouter de crate: openssl est installé sur Debian 13, mais pas forcément partout. Recommandé: les crates. Fait avec les crates (plan validé tel quel), testé sur un certificat de test à date fixe (tests/expected/doctor/staging-cert.pem).",
+          effect: "PC: Cargo.toml, Cargo.lock." },
+        { id: "12.5", status: "fait", ref: "J197", kind: "ecriture", where: "PC", title: "Les tests sur le PC",
+          does: "cargo fmt --check, cargo clippy --all-targets -- -D warnings, cargo test (la lecture de docker ps, de acme.json, de apt-get -s, de sshd -T et de df, sur des sorties réelles du serveur de test, masquées), puis le binaire statique musl.",
+          effect: "Aucun hors du repo." },
+        { id: "12.6", status: "fait", ref: "J199-J202", kind: "ecriture", where: "PC → Serveur", title: "Les tests sur le serveur",
+          does: "Le binaire copié dans /usr/local/bin/dotbox (l'ancien gardé à côté), le service démarré par sudo dotbox init (11.7), puis dotbox status et dotbox doctor, sans sudo, et les mêmes avec --local. Comparés à docker ps, à acme.json et à ce qu'on sait du serveur. Attendus: un warn pour SSH (mot de passe accepté), les quatre apps qui attendent leur assistant (Jellyfin, Seerr, Wizarr, Plex). Chaque commande notée ici.",
+          effect: "Serveur: /usr/local/bin/dotbox, /opt/dotbox/doctor.json." },
+        { id: "12.7", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Page CLI: status et doctor avec leur vraie sortie, leur point d'état allumé. Page API: les routes faites. Post-installation: la maquette de doctor remplacée par la vraie sortie. Releases: une ligne dans next. Roadmap: les deux features cochées. Par des propositions, comme d'habitude.",
+          effect: "PC: tools/site/docs/cli.html, post-installation.html, tools/site/releases.json, roadmap.json." },
+        { id: "12.9", status: "fait", ref: "J203, J204", kind: "ecriture", where: "PC → Serveur", title: "La sortie façon cliclack (#92, #93)",
+          does: "Ajoutée le 20 novembre 2026, à la demande de Mathod95, après les maquettes validées de la page CLI. src/clack.rs: le cadre ┌ │ └ et les symboles ◇ ▲ ■. doctor range ses vérifications en sections (System, Docker, DNS, Containers, Certificates, CrowdSec, Apps, Updates, SSH, Disk, Service): une ligne par section, ses problèmes dessous avec → la commande. status: le core en une ligne, une ligne par app. Un indicateur pendant les vérifications de doctor. Sans terminal: du texte simple, comme avant.",
+          effect: "PC: src/clack.rs, src/status.rs, src/doctor.rs, src/client.rs, src/main.rs." },
+        { id: "12.8", kind: "ecriture", where: "PC → Serveur", title: "Plus tard",
+          does: "Pas dans ce plan: doctor lancé chaque jour par un timer systemd (avec la sauvegarde, quand elle existera), la vérification des sauvegardes, la double authentification enregistrée ou non dans Authelia, les ports 80 et 443 vus depuis Internet (il faut un service extérieur), et le bandeau de l'interface web.",
+          effect: "Aucun pour l'instant." }
+      ] },
+    { phase: "13", group: "avenir", title: "Les autres commandes de la CLI",
+      intro: "Plan du 20 novembre 2026, après le service (étape 11) et status / doctor (étape 12). La page CLI liste 25 commandes, dont 7 marchent. Ce plan code celles qui ne dépendent d'aucun gros morceau à venir, chacune avec sa route dans l'API (page API) et son --local, dans l'ordre: d'abord ce qui lit, puis ce qui agit. Une règle pour toutes (Q42): le groupe dotbox ne doit jamais valoir root. Ce qui permettrait de lancer n'importe quoi sur le serveur reste réservé à root, en sudo. Chaque commande: le code, ses tests sur le PC, puis le serveur, et sa ligne dans la page CLI (point d'état, vraie sortie) par une proposition.",
+      steps: [
+        { id: "13.1", status: "fait", ref: "J205", kind: "ecriture", where: "PC → Serveur", title: "dotbox list [recherche]",
+          does: "Le catalogue rangé par le dernier init (/opt/dotbox/catalog), une ligne par app: nom, rôle (la description du manifest), installée ou non. La recherche filtre sur le nom et le rôle. Route GET /api/v1/catalog. --json.",
+          effect: "PC: src/apps.rs ou un module list, src/serve.rs, src/client.rs." },
+        { id: "13.2", status: "fait", ref: "J205", kind: "ecriture", where: "PC → Serveur", title: "dotbox info <app>",
+          does: "Ce que l'on sait d'une app: son image et sa version (celle du catalogue, et celle qui tourne si elles diffèrent), son adresse et son accès, ses dossiers, ses ports publiés, son état, son assistant en attente ou non. Route GET /api/v1/apps/{app}. --json.",
+          effect: "PC: src/apps.rs, src/serve.rs, src/client.rs." },
+        { id: "13.3", status: "fait", ref: "J206", kind: "ecriture", where: "PC → Serveur", title: "dotbox start, stop et restart <app>",
+          does: "docker compose start, stop ou restart de l'app, puis l'attente qu'elle soit Running (ou healthy) pour start et restart, comme install. Les apps seulement: le core se gère par dotbox init. Routes POST /api/v1/apps/{app}/start, /stop, /restart, en tâches comme install.",
+          effect: "PC: src/apps.rs, src/serve.rs, src/client.rs. Serveur, au test: une app arrêtée puis relancée." },
+        { id: "13.4", status: "fait", ref: "J206", kind: "ecriture", where: "PC → Serveur", title: "dotbox logs <app> [-f] [--tail n]",
+          does: "docker logs de l'app (100 lignes par défaut), et -f les suit en direct jusqu'à Ctrl+C. Pour le core aussi (traefik, authelia, crowdsec): lire n'est pas agir. Route GET /api/v1/apps/{app}/logs?tail=&follow=, en flux.",
+          effect: "PC: src/serve.rs, src/client.rs." },
+        { id: "13.5", status: "fait", ref: "J208", kind: "ecriture", where: "PC → Serveur", title: "dotbox update [<app>...] [--all]",
+          does: "Relit le catalogue sur GitHub (comme init), puis pour chaque app dont la version a changé: la réinstalle avec la nouvelle image, une app à la fois, et passe à la suivante seulement quand elle est Running (spec: Update). Une app qui ne repart pas arrête la série. Sans app ni --all: dit ce qui est à jour et ce qui ne l'est pas, sans rien faire. L'image précédente est gardée pour 13.6. Route POST /api/v1/update, en tâche.",
+          effect: "PC: src/apps.rs, src/github.rs, src/serve.rs, src/client.rs. Serveur, au test: une app passée à une autre version." },
+        { id: "13.6", status: "fait", ref: "J208", kind: "ecriture", where: "PC → Serveur", title: "dotbox update <app> --rollback",
+          does: "Remet l'image d'avant la dernière mise à jour de l'app, gardée par 13.5 (son nom dans /opt/<app>/.dotbox-previous, l'image sur le serveur). Une seule marche en arrière.",
+          effect: "PC: src/apps.rs, src/engine.rs." },
+        { id: "13.7", status: "fait", ref: "J206, J209", kind: "ecriture", where: "PC → Serveur", title: "dotbox diff",
+          does: "L'écart entre ce qui est voulu et ce qui tourne, sans rien changer: une app de dotbox.yml arrêtée ou absente, une version qui n'est plus celle du catalogue, un compose.yml modifié à la main. Lit le catalogue rangé, sans aller sur GitHub. dotbox sync, qui corrige l'écart, vient plus tard (13.12). Route GET /api/v1/diff.",
+          effect: "PC: un module diff, src/serve.rs, src/client.rs." },
+        { id: "13.8", status: "fait", ref: "J209", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox upgrade",
+          does: "Dot Box lui-même, en root seulement, sans le service (il remplace son binaire): la dernière release GitHub, son SHA-256 vérifié comme install.sh, l'ancien binaire gardé (/usr/local/bin/dotbox.previous), puis le service redémarré. Ne touche ni aux apps ni au core: dotbox init le fait si l'on veut (la carte le rappelle).",
+          effect: "PC: un module upgrade. Serveur, au test: le binaire remplacé par une release." },
+        { id: "13.9", status: "fait", ref: "J209", kind: "ecriture", where: "PC", title: "dotbox completion bash|zsh|fish",
+          does: "L'autocomplétion du shell, générée par clap (crate clap_complete), sur la sortie standard. Rien sur le serveur.",
+          effect: "PC: Cargo.toml, src/main.rs." },
+        { id: "13.10", status: "fait", ref: "J206, J209, J210", kind: "ecriture", where: "PC", title: "Les options globales: --json, -y / --yes, -q, --no-color",
+          does: "--json sur toutes les commandes qui lisent (list, info, diff, status, doctor). -y répond oui aux confirmations (remove --purge, update --all). -q n'affiche que les erreurs. --no-color, et NO_COLOR respecté. --server (un autre serveur) attend la porte web de l'API (11.9).",
+          effect: "PC: src/main.rs, les commandes." },
+        { id: "13.11", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Page CLI: les points d'état et la vraie sortie de chaque commande faite, par des propositions. Page API: les routes faites. Releases: les lignes dans next. Roadmap: les features cochées.",
+          effect: "PC: tools/site/docs/cli.html, api.html, tools/site/releases.json, roadmap.json." },
+        { id: "13.12", kind: "ecriture", where: "PC → Serveur", title: "Plus tard, pas dans ce plan",
+          does: "Ce qui dépend d'un morceau plus gros, chacun avec son propre plan: dotbox sync (corriger l'écart de diff: il faut d'abord trancher ce que « voulu » veut dire pour une app arrêtée exprès), dotbox backup et restore (Sauvegarde), dotbox user (comptes Authelia et invitations), dotbox config get / set (un changement de domaine refait tous les certificats), le câblage (étape 9, Q30). Et les trois commandes qui valent root (Q42): exec, edit et add.",
+          effect: "Aucun." }
+      ] },
+    { phase: "14", group: "encours", title: "dotbox exec, edit et add (en root)",
+      intro: "Plan du 20 novembre 2026, à la demande de Mathod95. Les trois commandes qui valent root (D80): sudo, sans le service, et donc sans route dans l'API. Les plus simples d'abord. Spécification: page CLI. Le code et ses tests sur le PC, puis le serveur.",
+      steps: [
+        { id: "14.1", status: "fait", ref: "J214", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox exec <app> -- <commande>",
+          does: "docker exec dans le container de l'app, avec un terminal si l'on en a un (-it), sinon sans. Les apps seulement, le core se gère par dotbox init. Le code de sortie est celui de la commande. Sans commande: un shell (sh).",
+          effect: "PC: un module exec (ou manage.rs), src/main.rs. Serveur, au test: ls /data/media dans radarr, un shell dans radarr." },
+        { id: "14.2", status: "fait", ref: "J215", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox edit <app>",
+          does: "Ouvre /opt/<app>/compose.override.yml dans $EDITOR (sinon nano, sinon vi), créé avec un exemple en commentaire s'il n'existe pas. À la fermeture: rien ne change, rien n'est fait. Sinon docker compose config vérifie le fichier, puis docker compose up -d et l'attente de Running, comme install. Un fichier refusé, ou une app qui ne repart pas: l'ancien fichier est remis et l'app relancée avec, en le disant.",
+          effect: "PC: manage.rs ou un module edit. Serveur, au test: TZ ajouté à qBittorrent, puis une erreur volontaire, remise en place." },
+        { id: "14.3", status: "fait", ref: "J216", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox add <compose.yml> --name <app>",
+          does: "Lit un compose et écrit un manifest dans /opt/dotbox/apps/<app>.yml (apps locales, même format que le catalogue), que dotbox install trouve ensuite avant le catalogue. Repris du compose: image (version fixée exigée, jamais latest), port web (le premier exposé, ou --port), dossiers, environnement. Ajouté par Dot Box: sous-domaine, accès two_factor, réseau dotbox, PUID et PGID. Un seul service pour l'instant: le moteur ne sait pas encore faire une app à plusieurs containers (D74, D76). Un compose à plusieurs services est refusé avec ce motif, jusqu'à ce plan-là.",
+          effect: "PC: un module add, src/catalog.rs (les apps locales), src/apps.rs. Serveur, au test: une petite app d'un seul container, ajoutée, installée, retirée." },
+        { id: "14.4", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Page CLI: points d'état, vraies sorties, par des propositions. Releases: les lignes dans next. Roadmap: les features cochées.",
+          effect: "PC: tools/site/docs/cli.html, releases.json, roadmap.json." }
+      ] },
+    { phase: "15", group: "avenir", title: "dotbox sync",
+      intro: "Plan du 20 novembre 2026. dotbox diff montre l'écart entre ce qui est voulu et ce qui tourne (13.7), sync le corrige. Ce que veut dire « voulu »: D81. sync, c'est refaire sans question ce que init et install ont fait, à partir de dotbox.yml et du catalogue rangé, sans aller sur GitHub ni changer de version (c'est le rôle de dotbox update). Route POST /api/v1/sync, en tâche.",
+      steps: [
+        { id: "15.1", kind: "ecriture", where: "PC → Serveur", title: "L'état voulu d'une app (D81)",
+          does: "D81: dotbox stop note stopped: true dans l'entrée apps: de dotbox.yml, dotbox start l'enlève. diff et sync le respectent: une app arrêtée exprès n'est plus un écart.",
+          effect: "PC: src/config.rs, manage.rs, le diff de 13.7." },
+        { id: "15.2", kind: "ecriture", where: "PC → Serveur", title: "Les apps",
+          does: "Pour chaque app de dotbox.yml: compose.yml regénéré depuis le manifest rangé, avec le sous-domaine et l'accès de son entrée apps: (une modification à la main est remplacée, en le disant, comme install), docker compose up -d si quelque chose a changé ou si elle doit tourner, puis l'attente de Running. Une app à la fois. --dry-run dit ce qui serait fait, sans rien faire.",
+          effect: "PC: un module sync, apps.rs (install_one réutilisé), serve.rs, client.rs." },
+        { id: "15.3", kind: "ecriture", where: "PC → Serveur", title: "Le core",
+          does: "Les fichiers du core regénérés depuis dotbox.yml (Traefik, Authelia, CrowdSec), comme init les écrit, et chaque container relancé seulement si son fichier a changé. C'est ce qui rendra possible le changement de domaine (dotbox config set domain, plus tard): tout se refait depuis dotbox.yml.",
+          effect: "PC: sync, init.rs (les morceaux du core rendus appelables sans les questions)." },
+        { id: "15.4", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Page CLI (sync, et l'exemple qui montrait une mise à jour de version, si Q45 retient de ne pas en faire), page API (la route), Releases, Roadmap.",
+          effect: "PC: cli.html, api.html, releases.json, roadmap.json." }
+      ] },
+    { phase: "16", group: "avenir", title: "dotbox backup et restore",
+      intro: "Plan du 20 novembre 2026. Spécification: pages Backup et Restore. /opt/dotbox et /opt/<app>, jamais /data. App par app (arrêt court), compressée (zstd), chiffrée (age), envoyée vers une ou plusieurs destinations, les plus anciennes supprimées selon keep. La sauvegarde tourne dans le service (dotbox status suit l'avancement). restore se fait en root, sans le service (page API, D79): une archive peut contenir n'importe quel fichier de /opt, un compose.override.yml qui monte / par exemple, et l'ouvrir au groupe dotbox lui donnerait root. Les outils: D82, zstd et age dans le binaire. Les destinations: D83, local puis rclone par son image Docker. Rien à installer, ni sur le serveur ni en face. Après sync (étape 15): restore du serveur entier finit par un sync.",
+      steps: [
+        { id: "16.1", kind: "ecriture", where: "PC", title: "L'archive",
+          does: "Une archive par app: tar du dossier, compressé en zstd, chiffré en age pour la clé publique de backup.key. Nom: <app>-<date>.tar.zst.age. Exclus d'office: logs, caches et transcodes (Jellyfin, Plex), plus backup.exclude. Les tests: une archive faite puis relue sur le PC, et une archive refusée avec une autre clé.",
+          effect: "PC: un module backup, Cargo.toml (crates tar, ruzstd, age: D82)." },
+        { id: "16.2", kind: "ecriture", where: "PC → Serveur", title: "La clé",
+          does: "/opt/dotbox/secrets/backup.key (age, X25519), root seulement, créée par dotbox init si elle manque (et par la première sauvegarde sur un serveur déjà installé). La carte de fin de init, et dotbox backup la première fois, rappellent d'en garder une copie hors du serveur.",
+          effect: "PC: init.rs, secrets.rs, card.rs. Serveur: la clé créée." },
+        { id: "16.3", kind: "ecriture", where: "PC → Serveur", title: "dotbox backup [--app <app>]",
+          does: "/opt/dotbox d'abord, puis chaque app: arrêtée, archivée, relancée et attendue Running avant la suivante. Les archives vont dans la destination local (par défaut /backups), puis keep fait le ménage. Une app qui ne repart pas arrête la série. Le résultat est gardé (/opt/dotbox/backup.json) pour dotbox status et doctor. Route POST /api/v1/backup, en tâche.",
+          effect: "PC: backup, serve.rs, client.rs, status.rs. Serveur, au test: une sauvegarde complète dans /backups." },
+        { id: "16.4", kind: "ecriture", where: "PC → Serveur", title: "sudo dotbox restore <latest|date|archive> [--app <app>]",
+          does: "Une app: arrêtée, /opt/<app> mis de côté (renommé, pas effacé), l'archive déchiffrée et extraite, l'app relancée et attendue Running. Si elle ne repart pas: l'ancien dossier remis. Tout le serveur: /opt/dotbox, puis chaque app, puis sync. En root, sans le service ni route dans l'API (D79).",
+          effect: "PC: un module restore. Serveur, au test: radarr restauré après un réglage changé exprès." },
+        { id: "16.5", kind: "ecriture", where: "PC → Serveur", title: "Les destinations distantes et --to",
+          does: "D83: rclone, par son image Docker officielle, lancée le temps de l'envoi (rien d'installé sur le serveur), pour rclone: et sftp:, avec sa config dans /opt/dotbox/secrets/rclone.conf. En face, rien à installer: un compte (B2, S3, Google Drive) ou un serveur SSH (sftp). --to <destination> pour une sauvegarde à part.",
+          effect: "PC: backup. Serveur, au test: une destination sftp ou rclone de test, à choisir." },
+        { id: "16.6", kind: "ecriture", where: "PC → Serveur", title: "La planification",
+          does: "backup.schedule de dotbox.yml (off, daily HH:MM...) en un timer systemd, dotbox-backup.timer, écrit par init et par dotbox sync. Par défaut: daily 04:00, keep 7, vers /backups.",
+          effect: "PC: init.rs, sync. Serveur: le timer." },
+        { id: "16.7", kind: "ecriture", where: "PC → Serveur", title: "Restaurer sur un serveur neuf",
+          does: "install.sh --no-init, puis sudo dotbox restore <destination> --key backup.key. Docker d'abord, installé comme le fait init, parce que rclone en a besoin pour aller chercher l'archive (D83). Une archive copiée à la main sur le serveur s'ouvre sans Docker. Puis la config de l'archive relue, init refait avec elle sans question, puis toutes les apps. Testé en vrai seulement par une réinstallation du serveur de test, sur décision de Mathod95.",
+          effect: "PC: restore, init.rs. Serveur: à décider." },
+        { id: "16.8", kind: "ecriture", where: "PC", title: "Plus tard, pas dans ce plan",
+          does: "Les instantanés btrfs et ZFS à la place de l'arrêt, et --stream (envoyer sans copie locale).",
+          effect: "Aucun." },
+        { id: "16.9", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Pages Backup, Restore et CLI (sorties réelles), page API, Releases, Roadmap, par des propositions.",
+          effect: "PC: backup.html, restore.html, cli.html, api.html, releases.json, roadmap.json." }
       ] }
   ];
 
@@ -3408,6 +3838,24 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Gitea plus tard",
       p: "Question posée: le niveau d'accès de Gitea (app, pour git en HTTPS, ou two_factor), avec un port SSH publié pour git push.",
       reco: "Choix de Mathod95 du 20 novembre 2026: plus tard, Gitea reste dans la Roadmap." },
+    { t: "dotbox status et dotbox doctor restent séparés",
+      p: "Question de Mathod95: faut-il deux commandes, comme brew doctor à côté de brew services? status répond à « qu'est-ce qui tourne, et où », instantanément, souvent. doctor répond à « est-ce que quelque chose cloche », en plusieurs secondes (DNS, certificats, apt, SSH, disque), de temps en temps. Les fusionner rendrait status lent, ou doctor superficiel.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: on garde les deux, reliés. status finit par le résumé du dernier doctor, sans refaire ses vérifications. doctor sort avec le code 1 s'il trouve un problème. Plus tard, doctor tourne chaque jour, et l'interface web montre les deux sur un même tableau de bord." },
+    { t: "L'API d'abord, une CLI sans sudo",
+      p: "Le plan de l'étape 12 faisait de status et doctor des commandes en sudo, comme install et remove, alors que la spécification fait passer la CLI par l'API de Dot Box (D33). Mathod95: plutôt l'API d'abord, que de revenir plus tard sur chaque sudo. Puis: « fais ce qui te semble le plus professionnel ».",
+      reco: "Le 20 novembre 2026: le service dotbox serve (systemd, root) et sa porte pour la CLI, un socket Unix réservé à root et au groupe dotbox, passent avant status et doctor (étape 11, 11.2 à 11.8). La CLI ne fait que l'appeler, sans sudo. sudo reste pour init, upgrade, restore, authelia, add et --local. La porte web et l'interface viennent après (11.9). Une page API à côté de la page CLI, comme Docker ou Proxmox: la CLI dit ce que l'on tape, l'API comment le service est construit." },
+    { t: "exec, edit et add réservées à root (ancienne Q42)",
+      p: "Ouvertes au groupe dotbox, ces trois commandes en feraient l'équivalent de root: exec lance une commande dans un container, edit et add appliquent un compose qui peut monter n'importe quel dossier du serveur.",
+      reco: "Choix de Mathod95 du 20 novembre 2026: sudo dotbox exec, edit et add, en root, sans le service. Le groupe dotbox ne donne que les actions prévues de Dot Box. Elles viendront après le plan de l'étape 13 (13.12)." },
+    { t: "sync refait ce qui est voulu, sans changer de version (ancienne Q45)",
+      p: "dotbox diff montre l'écart, sync le corrige. Une app arrêtée avec dotbox stop l'est peut-être exprès, et changer de version est déjà le rôle de dotbox update (une app à la fois, --rollback, sauvegarde avant si update.schedule).",
+      reco: "Choix de Mathod95 du 20 novembre 2026 (proposition 1 de Q45). dotbox stop note l'app arrêtée dans son entrée apps: de dotbox.yml (stopped: true), dotbox start l'enlève: diff et sync la laissent arrêtée, ce n'est plus un écart. sync ne change jamais de version: il refait sans question ce que font init et install, depuis dotbox.yml et le catalogue rangé (compose.yml, sous-domaines, accès, fichiers du core), sans aller sur GitHub. L'exemple de la page CLI qui montrait sync mettre à jour une version est corrigé par une proposition." },
+    { t: "zstd et age dans le binaire (ancienne Q46)",
+      p: "Le binaire est statique (musl), sans dépendance en C, et dotbox init n'installe que ce dont il a besoin.",
+      reco: "Choix de Mathod95 du 20 novembre 2026 (proposition 1 de Q46): tar, zstd et age en Rust pur dans le binaire (crates tar, ruzstd, age). Rien à installer sur le serveur. La destination ne fait que stocker des fichiers chiffrés, qu'elle ne sait pas lire. Pour relire une archive ailleurs (sur un PC): dotbox, ou les outils officiels zstd et age avec la clé, les formats étant standards. À mesurer d'abord sur le PC: la taille et la durée d'une archive de radarr avec ruzstd." },
+    { t: "Les destinations: local, puis rclone par son image Docker (ancienne Q47)",
+      p: "La page Backup prévoit local, rclone et sftp. Mathod95 demande si le serveur en face doit avoir zstd, age ou rclone, et s'il faut les installer.",
+      reco: "Choix de Mathod95 du 20 novembre 2026 (proposition 1 de Q47). local par Dot Box, d'abord, et qui marche seule. rclone et sftp par rclone, lancé depuis son image Docker officielle le temps de l'envoi: rien d'installé, Docker est déjà là. Sa config (ses remotes) dans /opt/dotbox/secrets/rclone.conf. En face, rien à installer: rclone parle le langage du stockage. Pour B2, S3 ou Google Drive, un compte suffit. Pour sftp, une machine avec un serveur SSH (tout Linux, la plupart des NAS). Le serveur en face n'a jamais besoin de rclone, ni de zstd ou d'age. Sur un serveur neuf (install.sh --no-init), Docker n'est pas encore là: restore l'installe d'abord, comme init, avant d'aller chercher l'archive par rclone. Une archive copiée à la main sur le serveur s'ouvre sans Docker." },
   ];
 
   var QUESTIONS = [
@@ -3644,6 +4092,42 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           "Fixer la version dans le catalogue (catalog/core/docker.yml, D70), suivie par Renovate: le même Docker partout, testé avant d'être pris. Mais le numéro des paquets change selon le système (5:29.9.3-1~debian.13~trixie), et dotbox init doit alors savoir faire une mise à jour de Docker.",
           "Une version minimale seulement: dotbox init refuse un Docker trop vieux, dotbox doctor signale une mise à jour en attente."],
       reco: "Proposé: la troisième pour l'instant, la deuxième avec dotbox update (Mises à jour), quand le core saura se mettre à jour." },
+    { n: 42, done: "D80", t: "exec, edit et add: réservées à root?",
+      p: "Le groupe dotbox ne donne que les actions de Dot Box (D79). Trois commandes de la page CLI permettraient d'en sortir: dotbox exec lance une commande dans un container (certains tournent en root, wg-easy a NET_ADMIN), dotbox edit applique un compose.override.yml (un volume / monté, et c'est tout le serveur), dotbox add transforme un compose quelconque en app (les mêmes risques). Ouvertes au groupe dotbox, elles en feraient l'équivalent du groupe docker, écarté par D33.",
+      l: ["Réservées à root: sudo dotbox exec, edit et add, sans le service. Le groupe dotbox reste sûr.",
+          "Ouvertes au groupe dotbox, avec un avertissement dans la doc: plus simple, mais le groupe dotbox vaut alors root.",
+          "edit et add ouverts, mais le service refuse un compose qui monte un dossier hors de /opt/<app> et de /data, ou qui demande privileged, cap_add, devices: plus de travail, et une liste de refus à tenir à jour."],
+      reco: "Proposé: la première. Elles viendront après ce plan (13.12). Tranchée en D80." },
+    { n: 43, t: "Plusieurs instances d'une même app (--as)?",
+      p: "Écrit le 8 novembre 2026 dans Basics, la page CLI, la Roadmap et CLAUDE.md, sans décision notée: dotbox install radarr --as radarr-4k ajouterait un second Radarr, avec son dossier /opt/radarr-4k, son sous-domaine, son câblage, et le prochain port libre pour une app qui publie un port (qBittorrent, D44). Rien n'est codé. Le 20 novembre, Mathod95 demande d'où vient cette option: elle n'avait jamais été tranchée.",
+      l: ["Pas d'instances en double: une app du catalogue, une seule fois sur le serveur.",
+          "Plusieurs instances, avec --as <nom> (un dossier, un sous-domaine, un container et des ports à part par instance).",
+          "Plusieurs instances, mais par un manifest à part dans le catalogue (radarr-4k.yml), sans option dans la CLI."],
+      reco: "Choix de Mathod95 du 20 novembre 2026: on ne prévoit pas de doublons pour l'instant. --as est retiré de Basics, de la page CLI, de la Roadmap et de CLAUDE.md. La question reste ouverte, à reprendre si le besoin apparaît." },
+    { n: 44, t: "Piloter un autre serveur depuis son PC (--server)?",
+      p: "La page CLI listait --server <url>, « le serveur à piloter, celui de la config par défaut », sans décision notée. Rien n'est codé. Il manque trois choses. Une porte: le service n'écoute que sur /run/dotbox/dotbox.sock, sur le serveur, et la porte web dotbox.<domaine> attend 11.9. Une connexion: cette porte sera derrière Authelia en two_factor, une connexion faite pour un navigateur, qu'une commande ne sait pas faire. Une config sur le PC: dotbox.yml est sur le serveur, le PC n'en a pas. En attendant, ssh <serveur> dotbox <commande> marche, la CLI n'ayant plus besoin de sudo (D79). Le serveur d'un ami: il ouvre l'accès (un compte Linux du groupe dotbox, ou plus tard un compte Authelia du groupe admins), ce qui donne la main sur toutes ses apps, sans lecture seule.",
+      l: ["Seulement par SSH: ssh <serveur> dotbox <commande>, rien de plus à coder. Plusieurs serveurs = plusieurs alias SSH.",
+          "Par la porte web, avec un jeton propre à la CLI (créé une fois, gardé sur le PC), et des serveurs nommés sur le PC, comme docker context ou kubectl (--server perso, --server ami).",
+          "Par SSH, mais lancé par dotbox lui-même: des serveurs nommés sur le PC, et dotbox --server perso status passe par ssh sans jeton à gérer."],
+      reco: "Choix de Mathod95 du 20 novembre 2026: --server est retiré de la page CLI pour l'instant. La question reste ouverte, à reprendre avec la porte web (11.9). À trancher aussi: un accès en lecture seule, pour donner la vue sans la main." },
+    { n: 45, done: "D81", t: "dotbox sync: qu'est-ce qui est « voulu »?",
+      p: "dotbox diff (13.7) signale une app arrêtée, une version qui n'est plus celle du catalogue, un compose.yml modifié à la main. sync doit corriger, mais une app arrêtée avec dotbox stop l'est peut-être exprès, et la page CLI montre sync qui met à jour une version, ce que fait déjà dotbox update (une app à la fois, avec --rollback et la sauvegarde avant si update.schedule).",
+      l: ["dotbox stop note l'app arrêtée dans dotbox.yml (stopped: true), start l'enlève, sync la laisse arrêtée. sync ne change jamais de version: le catalogue rangé dit seulement comment installer, update change les versions.",
+          "Toute app de dotbox.yml doit tourner: sync relance aussi celles arrêtées exprès. Et sync met à jour les versions, comme update --all.",
+          "sync ne touche qu'à la config (compose.yml, sous-domaines, accès, core), jamais à l'état ni aux versions."],
+      reco: "Proposé: la première. stop et start deviennent durables, et chaque commande garde un seul rôle. Tranchée en D81." },
+    { n: 46, done: "D82", t: "Sauvegarde: zstd et age dans le binaire, ou les outils du système?",
+      p: "La page Backup dit zstd puis age. Le binaire est statique (musl), sans aucune dépendance en C aujourd'hui, et dotbox init n'installe que ce dont il a besoin.",
+      l: ["Dans le binaire, en Rust pur: les crates tar, ruzstd (zstd, moins serré que l'outil officiel) et age. Rien à installer sur le serveur, et le même code sur le PC pour relire une archive.",
+          "Les outils du système: tar, zstd et age installés par apt. Le zstd officiel compresse mieux, mais trois paquets de plus, et une version d'age qui dépend de la distribution.",
+          "Dans un container (une image qui a tar, zstd et age): rien sur le serveur, mais une image de plus à suivre dans le catalogue."],
+      reco: "Proposé: la première. À vérifier d'abord sur le PC: la taille et la durée d'une archive de radarr avec ruzstd. Tranchée en D82." },
+    { n: 47, done: "D83", t: "Sauvegarde: quelles destinations, et par quoi?",
+      p: "La page Backup prévoit local, rclone et sftp. rclone sait aussi faire du SFTP.",
+      l: ["local par Dot Box, rclone et sftp par rclone, lancé depuis son image Docker officielle (rien d'installé), sa config dans /opt/dotbox/secrets/rclone.conf.",
+          "rclone installé sur le serveur par apt ou son script, sftp par rclone.",
+          "local seulement pour l'instant, le distant plus tard."],
+      reco: "Proposé: la première, après local (16.3), qui marche seule. Tranchée en D83." },
   ];
 
 
@@ -3809,7 +4293,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Où ranger chaque entrée J (D48): l'étape 0 (notre environnement de travail) ou une autre étape.
   // Chaque J est rangée une seule fois. Une J oubliée ici apparaît dans « Non rangées ».
   var HOME = {
-    "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114],
+    "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195],
+    "11": [197, 198, 201, 202],
+    "12": [196, 199, 200, 203, 204],
+    "13": [205, 206, 207, 208, 209, 210, 211, 212],
+    "14": [213, 214, 215, 216],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -3824,11 +4312,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "sans": [12]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79], "12": [78], "13": [80], "15": [81], "16": [82, 83], "sans": [12]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21], "1": [8], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26],
-    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "sans": [9]
+    "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44], "13": [42], "15": [45], "16": [46, 47], "sans": [9, 43]
   };
   var NHOME = { "0": [5], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3] };
   var placed = {};

@@ -6,11 +6,18 @@
 //! disparaissent avec le reste. Le détail va dans le log (log.rs), et à l'écran avec --verbose.
 //!
 //! Lancé par install.sh (DOTBOX_INSTALLER=1), install.sh a déjà affiché [1/7] Dot Box: les étapes
-//! vont de [2/7] à [7/7]. Seul, de [1/6] à [6/6].
+//! vont de [2/9] à [9/9]. Seul, de [1/8] à [8/8].
+//!
+//! Dans le service (D79), une tâche (install, remove) tourne dans un processus lancé avec
+//! DOTBOX_EVENTS=1: au lieu d'afficher, chaque fonction écrit un événement JSON par ligne sur sa
+//! sortie standard. Le service les passe à la CLI, qui les rejoue ici (replay) avec le même
+//! affichage qu'en local.
 
 use console::{Term, style};
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
-use std::sync::Mutex;
+use serde_json::{Value, json};
+use std::io::Write;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use crate::log;
@@ -23,7 +30,19 @@ const LEFT: usize = 24;
 const TIME_W: usize = 6;
 pub const SUMMARY_W: usize = WIDTH - LEFT - 1 - TIME_W;
 const SPINNER: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ";
-const STEPS: usize = 7;
+const STEPS: usize = 8;
+
+/// Une tâche lancée par le service: des événements sur stdout, pas d'affichage.
+pub fn events() -> bool {
+    static ON: OnceLock<bool> = OnceLock::new();
+    *ON.get_or_init(|| std::env::var("DOTBOX_EVENTS").is_ok_and(|v| v == "1"))
+}
+
+fn emit(event: Value) {
+    let mut out = std::io::stdout().lock();
+    let _ = writeln!(out, "{event}");
+    let _ = out.flush();
+}
 
 struct Current {
     n: usize,
@@ -60,6 +79,9 @@ fn term() -> Term {
 }
 
 fn print(line: &str) {
+    if crate::out::quiet() {
+        return;
+    }
     let _ = term().write_line(line);
 }
 
@@ -84,6 +106,9 @@ pub fn start_steps(total: usize, verbose: bool) {
 }
 
 fn begin(first: usize, total: usize, verbose: bool) {
+    if events() {
+        emit(json!({"t": "start", "first": first, "total": total}));
+    }
     *lock() = Some(State {
         first,
         total,
@@ -189,7 +214,7 @@ fn bar_style(with_head: bool) -> ProgressStyle {
 }
 
 fn new_bar(tty: bool, verbose: bool, prefix: String, with_head: bool) -> ProgressBar {
-    if !tty || verbose {
+    if !tty || verbose || crate::out::quiet() {
         return ProgressBar::hidden();
     }
     let bar = ProgressBar::with_draw_target(None, ProgressDrawTarget::stderr());
@@ -214,6 +239,9 @@ pub fn step(name: &str, doing: &str) {
     let n = s.first + s.count;
     s.count += 1;
     log::write(&format!("== [{n}/{}] {name}: {doing}", s.total));
+    if events() {
+        emit(json!({"t": "step", "name": name, "doing": doing}));
+    }
     if s.verbose && s.tty {
         print(&step_line(
             &style("·").dim().to_string(),
@@ -240,6 +268,10 @@ pub fn step(name: &str, doing: &str) {
 /// Une sous-étape: dans le log, et sous la ligne de l'étape (ou en entier avec --verbose).
 pub fn sub(verb: &str, detail: &str) {
     log::write(&format!("{verb:<9}{detail}"));
+    if events() {
+        emit(json!({"t": "sub", "verb": verb, "detail": detail}));
+        return;
+    }
     let mut g = lock();
     let Some(s) = g.as_mut() else { return };
     let verbose = s.verbose;
@@ -262,6 +294,10 @@ pub fn sub(verb: &str, detail: &str) {
 
 /// La progression de la sous-étape en cours, de 0 à 100.
 pub fn progress(pct: f64) {
+    if events() {
+        emit(json!({"t": "progress", "pct": pct}));
+        return;
+    }
     let mut g = lock();
     let Some(c) = g.as_mut().and_then(|s| s.cur.as_mut()) else {
         return;
@@ -337,6 +373,10 @@ pub fn done(summary: &str) {
         "ok [{}/{}] {}: {summary} ({time})",
         c.n, s.total, c.name
     ));
+    if events() {
+        emit(json!({"t": "done", "summary": summary}));
+        return;
+    }
     print(&step_line(
         &style("✓").green().to_string(),
         c.n,
@@ -354,6 +394,10 @@ pub fn cancel(text: &str) -> bool {
     let mut g = lock();
     let Some(s) = g.as_mut() else { return false };
     let Some(c) = s.cur.take() else { return false };
+    if events() {
+        emit(json!({"t": "cancel", "text": text}));
+        return true;
+    }
     close(&c);
     print(&cancel_line(
         c.n,
@@ -376,11 +420,20 @@ pub fn fail(error: &str) -> bool {
     let mut g = lock();
     let Some(s) = g.as_mut() else { return false };
     let Some(c) = s.cur.take() else { return false };
-    close(&c);
+    if events() {
+        emit(json!({"t": "fail", "error": error, "tail": log::tail(10), "log": log::path()}));
+        return true;
+    }
+    show_failure(&c, s.total, error, &log::tail(10), log::path().as_deref());
+    true
+}
+
+fn show_failure(c: &Current, total: usize, error: &str, tail: &[String], log: Option<&str>) {
+    close(c);
     print(&step_line(
         &style("✗").red().to_string(),
         c.n,
-        s.total,
+        total,
         &c.name,
         &c.doing,
         &duration(c.started.elapsed()),
@@ -390,19 +443,97 @@ pub fn fail(error: &str) -> bool {
         let label = if i == 0 { "error" } else { "" };
         print(&format!("  {} {line}", style(format!("{label:<5}")).red()));
     }
-    let tail = log::tail(10);
     if !tail.is_empty() {
         print("");
         print(&format!("  {}", style("last lines of the log").dim()));
         for l in tail {
-            print(&format!("  {}", style(fit(&l, WIDTH - 2)).dim()));
+            print(&format!("  {}", style(fit(l, WIDTH - 2)).dim()));
         }
     }
-    if let Some(p) = log::path() {
+    if let Some(p) = log {
         print("");
         print(&format!("  {:<9}{p}", "log"));
     }
-    true
+}
+
+/// Des étapes de plus, connues en cours de route (dotbox update: les apps en retard, une fois le
+/// catalogue relu).
+pub fn more_steps(n: usize) {
+    if events() {
+        emit(json!({"t": "more", "n": n}));
+    }
+    if let Some(s) = lock().as_mut() {
+        s.total += n;
+    }
+}
+
+/// Un résultat structuré à la fin d'une tâche (les apps installées): la CLI l'affiche elle-même.
+pub fn result(value: Value) {
+    if events() {
+        emit(json!({"t": "result", "value": value}));
+    }
+}
+
+/// Ce que la CLI fait d'un événement reçu du service.
+pub enum Replayed {
+    /// rien de plus à faire
+    Shown,
+    /// l'étape a échoué ou a été annulée: déjà affiché, la commande sort en erreur
+    Failed,
+    /// le résultat de la tâche
+    Result(Value),
+    /// la fin de la tâche, avec son code de sortie
+    End(i64),
+}
+
+/// Rejoue un événement du service avec l'affichage local (11.5).
+pub fn replay(e: &Value, verbose: bool) -> Replayed {
+    let text = |k: &str| {
+        e.get(k)
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string()
+    };
+    match e.get("t").and_then(Value::as_str).unwrap_or_default() {
+        "start" => {
+            let n = |k: &str| e.get(k).and_then(Value::as_u64).unwrap_or(1) as usize;
+            begin(n("first"), n("total"), verbose);
+        }
+        "step" => step(&text("name"), &text("doing")),
+        "more" => more_steps(e.get("n").and_then(Value::as_u64).unwrap_or(0) as usize),
+        "sub" => sub(&text("verb"), &text("detail")),
+        "progress" => progress(e.get("pct").and_then(Value::as_f64).unwrap_or(0.0)),
+        "done" => done(&text("summary")),
+        "cancel" => {
+            cancel(&text("text"));
+            return Replayed::Failed;
+        }
+        "fail" => {
+            let tail: Vec<String> = e
+                .get("tail")
+                .and_then(Value::as_array)
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|l| l.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let log = e.get("log").and_then(Value::as_str);
+            let error = text("error");
+            let mut g = lock();
+            match g.as_mut().and_then(|s| s.cur.take().map(|c| (c, s.total))) {
+                Some((c, total)) => show_failure(&c, total, &error, &tail, log),
+                None => print(&format!("  {} {error}", style("error").red())),
+            }
+            return Replayed::Failed;
+        }
+        "line" => print(&text("text")),
+        "error" => print(&format!("  {} {}", style("error").red(), text("text"))),
+        "result" => return Replayed::Result(e.get("value").cloned().unwrap_or(Value::Null)),
+        "end" => return Replayed::End(e.get("code").and_then(Value::as_i64).unwrap_or(1)),
+        _ => {}
+    }
+    Replayed::Shown
 }
 
 /// Les lignes d'une erreur à afficher, passées à la ligne à 80 colonnes (« error » occupe les 8
@@ -452,8 +583,8 @@ mod tests {
 
     #[test]
     fn numbering_with_and_without_install_sh() {
-        assert_eq!(numbering(true), (2, 8));
-        assert_eq!(numbering(false), (1, 7));
+        assert_eq!(numbering(true), (2, 9));
+        assert_eq!(numbering(false), (1, 8));
     }
 
     #[test]
