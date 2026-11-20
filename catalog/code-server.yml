@@ -3,7 +3,7 @@
 name: code-server
 description: VS Code in the browser
 min_dotbox: 0.0.4
-image: lscr.io/linuxserver/code-server:4.145.2-ls377
+image: lscr.io/linuxserver/code-server:4.146.0-ls378
 port: 8443
 access: two_factor
 health: /healthz
