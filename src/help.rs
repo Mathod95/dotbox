@@ -27,6 +27,11 @@ pub const GROUPS: &[(&str, &[Entry])] = &[
                 "The core and the apps: state, address, last doctor",
             ),
             ("doctor", "", "Check the server and say what to do"),
+            (
+                "motd",
+                "[--refresh] [--style <s>]",
+                "The SSH welcome message, as at login",
+            ),
             ("upgrade", "", "Update Dot Box itself (sudo)"),
             ("version", "", "This command's version and the service's"),
         ],

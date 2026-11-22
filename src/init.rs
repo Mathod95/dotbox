@@ -11,7 +11,8 @@ use crate::catalog::{self, Core};
 use crate::config::{self, Config};
 use crate::out::say;
 use crate::{
-    authelia, backup, crowdsec, docker, github, log, prompt, secrets, serve, system, traefik, ui,
+    authelia, backup, crowdsec, docker, github, log, motd, prompt, secrets, serve, system, traefik,
+    ui,
 };
 
 #[derive(clap::Args)]
@@ -282,7 +283,9 @@ fn steps(args: &Args) -> Result<(), String> {
         say("check", backup::KEY);
     }
     let planned = backup::setup_timer(&backup::Settings::of(&cfg)?)?;
-    ui::done(&format!("{service}, {planned}"));
+    // le message d'accueil SSH et le doctor de nuit (étape 17, D86, D89)
+    let welcome = motd::setup(&motd::Settings::of(&cfg)?)?;
+    ui::done(&format!("{service}, {planned}, {welcome}"));
 
     // la carte de fin (D26, D32, D37)
     let docker_state =

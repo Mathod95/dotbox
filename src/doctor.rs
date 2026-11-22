@@ -13,7 +13,7 @@ use crate::status::{self, Entry};
 use crate::{card, crowdsec, system, traefik};
 
 pub const PATH: &str = "/opt/dotbox/doctor.json";
-const ACME: &str = "/opt/traefik/config/acme.json";
+pub const ACME: &str = "/opt/traefik/config/acme.json";
 /// Traefik renouvelle 30 jours avant la fin: à 14 jours, il échoue depuis deux semaines.
 const CERT_WARN_DAYS: i64 = 14;
 const DISK_WARN: u32 = 85;
@@ -400,7 +400,7 @@ fn now() -> i64 {
 }
 
 /// Les noms qui doivent avoir un certificat: Authelia, le tableau de bord de Traefik, les apps.
-fn expected_names(domain: &str, apps: &[Entry]) -> Vec<String> {
+pub fn expected_names(domain: &str, apps: &[Entry]) -> Vec<String> {
     let mut names = vec![format!("auth.{domain}"), format!("traefik.{domain}")];
     names.extend(
         apps.iter()

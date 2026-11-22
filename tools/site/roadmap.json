@@ -408,16 +408,19 @@
     {
       "stage": "core",
       "domain": "core",
-      "status": "planned",
-      "fr": "Core: message d'accueil SSH (MOTD) Dot Box, `dotbox motd`: un état des lieux du serveur à chaque connexion, compact par défaut ou deux autres formes, installé par défaut et désactivable",
-      "en": "Core: Dot Box SSH welcome message (MOTD), `dotbox motd`: a look at the state of the server at each login, compact by default or two other styles, installed by default and can be turned off",
+      "status": "progress",
+      "fr": "Core: message d'accueil SSH (MOTD) Dot Box, `dotbox motd`: un état des lieux du serveur à chaque connexion, compact par défaut ou trois autres formes, installé par défaut et désactivable",
+      "en": "Core: Dot Box SSH welcome message (MOTD), `dotbox motd`: a look at the state of the server at each login, compact by default or three other styles, installed by default and can be turned off",
       "journal": [
-        "17.1-17.3",
+        "17.1-17.6",
+        "J291-J292",
         "D86",
         "D87",
         "D89",
         "D90",
         "D91",
+        "D107",
+        "D114",
         "Q55"
       ],
       "doc": "motd"
@@ -475,7 +478,8 @@
         "Q71",
         "D111",
         "Q72",
-        "D112"
+        "D112",
+        "D113"
       ]
     },
     {

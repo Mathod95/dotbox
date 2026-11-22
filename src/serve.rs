@@ -330,6 +330,8 @@ async fn serve() -> Result<(), String> {
         .route("/api/v1/version", get(version))
         .route("/api/v1/status", get(get_status))
         .route("/api/v1/doctor", get(get_doctor).post(post_doctor))
+        .route("/api/v1/motd", get(get_motd))
+        .route("/api/v1/motd/refresh", post(post_motd_refresh))
         .route("/api/v1/apps", post(install))
         .route("/api/v1/apps/{app}", get(info).delete(remove))
         .route("/api/v1/apps/{app}/logs", get(logs))
@@ -351,6 +353,7 @@ async fn serve() -> Result<(), String> {
         .layer(middleware::from_fn(check_web))
         .with_state(jobs.clone());
     tokio::spawn(web_listen(web));
+    tokio::spawn(count_bans());
     let app = api.layer(middleware::from_fn(check_peer)).with_state(jobs);
     eprintln!("dotbox {} listening on {SOCKET}", env!("CARGO_PKG_VERSION"));
     axum::serve(listener, app.into_make_service_with_connect_info::<Peer>())
@@ -399,6 +402,28 @@ async fn get_doctor() -> Response {
 
 async fn post_doctor() -> Response {
     blocking(doctor::run).await
+}
+
+async fn get_motd() -> Response {
+    blocking(crate::motd::collect).await
+}
+
+/// Rafraîchit ce qui est en cache (doctor, le catalogue, CrowdSec), puis rend le message. Un
+/// morceau qui échoue n'empêche pas le reste: il garde son ancienne valeur et son âge.
+async fn post_motd_refresh() -> Response {
+    blocking(|| {
+        let _ = crate::motd::refresh();
+        crate::motd::collect()
+    })
+    .await
+}
+
+/// Le compte des bannissements de CrowdSec pour le MOTD (D89): toutes les dix minutes.
+async fn count_bans() {
+    loop {
+        let _ = tokio::task::spawn_blocking(crate::motd::refresh_bans).await;
+        tokio::time::sleep(std::time::Duration::from_secs(600)).await;
+    }
 }
 
 #[derive(Deserialize)]

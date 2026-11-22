@@ -3309,6 +3309,31 @@ wizarr en two_factor: le plan montre 1 écart, Apply this plan, le plan est vide
 Run doctor: la date et « 3 things to look at »
 en 390 px: aucune vue plus large que l'écran
 corrigés en chemin: un clic qui visait le titre (le test), les colonnes d'Apps et d'Updates décalées par un bouton de plus, les problèmes de doctor en majuscules, le plan sans espacement`,
+      undo: "git revert du commit." },
+    { id: "J291", time: "21:09", status: "fait", where: "Serveur", kind: "lecture",
+      title: "17.3: ce que rend cscli, et comment Debian 13 affiche le MOTD",
+      cmd: `docker exec crowdsec cscli alerts list --since 24h -l 0 -o json
+ls -la /etc/update-motd.d/ /etc/motd ; cat /etc/update-motd.d/10-uname
+grep -n motd /etc/pam.d/sshd ; ls -la /run/motd.dynamic
+dpkg -S /etc/update-motd.d/10-uname /etc/motd`,
+      does: "Avant de coder le MOTD: le format de la liste des alertes de CrowdSec (pour compter les IP bannies en 24 h), et ce que Debian pose aujourd'hui pour le message d'accueil. Lecture seule.",
+      effect: "Aucun.",
+      result: `cscli: un tableau JSON, une alerte par détection, avec source.value (l'IP) et decisions (vide sans bannissement). 144 alertes en 24 h, 47 IP bannies (IP masquées)
+/etc/update-motd.d: un seul script, 10-uname (uname -snrvm), exécutable, du paquet base-files
+/etc/motd: 286 octets, le texte de licence, d'aucun paquet
+/etc/pam.d/sshd, lignes 33 et 34: pam_motd.so motd=/run/motd.dynamic, puis pam_motd.so noupdate (/etc/motd)
+/run/motd.dynamic: réécrit à chaque connexion (21:09)`,
+      undo: "Rien à annuler." },
+    { id: "J292", time: "21:18", status: "fait", where: "PC", kind: "ecriture",
+      title: "17.4: dotbox motd codé et essayé sur le PC",
+      cmd: `src/motd.rs (nouveau), src/main.rs (dotbox motd), src/client.rs, src/serve.rs (GET /api/v1/motd, POST /api/v1/motd/refresh, le compte de CrowdSec), src/init.rs et src/sync.rs (le MOTD et le timer), src/config_cmd.rs (motd.enabled, motd.style), src/help.rs, web/app.js (Settings)
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test && cargo build --release --target x86_64-unknown-linux-musl
+node --check web/app.js, et le script de la page CLI`,
+      does: "Le plan de 17.3, codé à la demande de Mathod95 (D114). Les quatre styles (compact, fastfetch, banner, ascii), les lignes et leurs alertes de D90, le cache de D89, le script de pam_motd, la ligne du noyau et la licence retirées avec une copie, le doctor de nuit, et ce que diff et sync en voient.",
+      effect: "PC: src/, web/app.js, tools/site/docs/cli.html (#149), motd.html (#150 à #153). Rien sur le serveur.",
+      result: `cargo test: 166 passed (13 de plus: les réglages, les âges, chaque ligne, cscli, du, les quatre styles au caractère près, le script), clippy: rien, binaire bd6facbd
+le test qui compare dotbox --help à la page CLI a demandé la ligne de motd dans la page: ajoutée en proposition #149
+corrigé en chemin: les alertes du core disaient docker logs, la page dit dotbox logs (il accepte chaque container du core)`,
       undo: "git revert du commit." }
   ];
 
@@ -4442,7 +4467,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           does: "GET /api/v1/config: les clés de dotbox.yml. Une valeur changée est envoyée (PUT /config/{key}), vérifiée par le service (le motif d'un refus s'affiche sous la clé), puis le plan se recharge (GET /diff). « Apply this plan » envoie le plan montré (POST /sync): le service refuse s'il a changé entre-temps (D93). user et domain en lecture seule dans la page (domain: une migration, page Restore).",
           effect: "PC: web/app.js." },
         { id: "11.27", status: "valide", ref: "J290 (le PC)", kind: "ecriture", where: "PC → Serveur", title: "Les tests",
-          does: "Sur le PC: cargo fmt, clippy, test, le binaire, node --check sur app.js, et le front ouvert dans le navigateur contre une fausse API (un petit serveur Python du dossier de travail, qui rejoue les réponses de J289 et simule les tâches): chaque vue, chaque bouton, sur un écran étroit aussi. Puis sur le serveur de test, avec l'accord de Mathod95: le binaire, et Mathod95 dans son navigateur, par le routeur de test (11.17): chaque vue, une vraie tâche (redémarrer une app, une sauvegarde), les logs en direct.",
+          does: "Le 22 novembre 2026, Mathod95 a essayé le front contre la fausse API: « J'ai testé l'interface, ça me convient pour l'instant ». La partie serveur se fera sur un serveur neuf, avec le MOTD (D114). Sur le PC: cargo fmt, clippy, test, le binaire, node --check sur app.js, et le front ouvert dans le navigateur contre une fausse API (un petit serveur Python du dossier de travail, qui rejoue les réponses de J289 et simule les tâches): chaque vue, chaque bouton, sur un écran étroit aussi. Puis sur le serveur de test, avec l'accord de Mathod95: le binaire, et Mathod95 dans son navigateur, par le routeur de test (11.17): chaque vue, une vraie tâche (redémarrer une app, une sauvegarde), les logs en direct.",
           effect: "Serveur, au test: le binaire, le service redémarré." }
       ] },
     { phase: "12", group: "avenir", title: "dotbox status et dotbox doctor",
@@ -4596,16 +4621,25 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           effect: "Serveur: /usr/local/bin/dotbox, le service redémarré, /opt/dotbox/secrets/backup.key, /backups, dotbox-backup.timer et .service, chaque app arrêtée quelques secondes, prowlarr restauré." }
       ] },
     { phase: "17", group: "avenir", title: "Le MOTD",
-      intro: "Ajoutée le 21 novembre 2026. Spécification: page MOTD (groupe References, D88). Décidé en D86 (notre commande, compact par défaut, trois formes, en anglais, seulement notre message, installé par défaut et désactivable). Debian seulement (D87). Rien n'est codé avant que Q53 à Q55 soient tranchées et que le plan soit accordé. Le MOTD attend l'étape 16 (backup), et la CLI passe d'abord (D91, 21 novembre 2026). Q53 tranchée en D89, Q54 en D90.",
+      intro: "Ajoutée le 21 novembre 2026. Spécification: page MOTD (groupe References, D88). Décidé en D86 (notre commande, compact par défaut, trois formes, en anglais, seulement notre message, installé par défaut et désactivable). Debian seulement (D87). Rien n'est codé avant que Q53 à Q55 soient tranchées et que le plan soit accordé. Le MOTD attend l'étape 16 (backup), et la CLI passe d'abord (D91, 21 novembre 2026). Q53 tranchée en D89, Q54 en D90. Le 22 novembre 2026, Mathod95 demande de le coder tout de suite, pour l'essayer avec l'interface web sur un serveur neuf (D114): codé et essayé sur le PC (J291, J292), Q55 encore ouverte.",
       steps: [
         { id: "17.1", kind: "ecriture", where: "PC", title: "La page MOTD, dans References", status: "valide",
           does: "Créée à la demande de Mathod95, avec ce qui a été dit le 21 novembre 2026: ce que Debian montre aujourd'hui et ce qui part, le fonctionnement de pam_motd, les trois formes en maquette, la commande et ses options, en direct ou en cache, les lignes et leurs alertes, ce qui ne doit jamais apparaître. En anglais seulement (Q52).",
           effect: "PC: tools/site/docs/motd.html, tools/build_site.py." },
         { id: "17.2", kind: "lecture", where: "PC", title: "Trancher Q53, Q54 et Q55",
-          does: "En direct ou en cache, les lignes et leurs alertes (et Last login), ce qui ne doit jamais apparaître. Chaque choix reporté dans la page MOTD.",
+          does: "En direct ou en cache, les lignes et leurs alertes (et Last login), ce qui ne doit jamais apparaître. Chaque choix reporté dans la page MOTD. Q53 et Q54 tranchées (D89, D90). Q55 reste ouverte: le code montre ce que montre la page (le domaine, la version, le nom des apps), à revoir quand elle sera tranchée.",
           effect: "Aucun." },
-        { id: "17.3", kind: "ecriture", where: "PC", title: "Le plan du code",
-          does: "Écrit une fois 17.2 tranchée, pour l'accord de Mathod95: dotbox motd et ses options, le script de /etc/update-motd.d/, ce que init retire du MOTD de Debian et sa copie, motd: dans dotbox.yml, les tests.",
+        { id: "17.3", status: "fait", ref: "J291", kind: "ecriture", where: "PC", title: "Le plan du code",
+          does: "Écrit une fois 17.2 tranchée, pour l'accord de Mathod95: dotbox motd et ses options, le script de /etc/update-motd.d/, ce que init retire du MOTD de Debian et sa copie, motd: dans dotbox.yml, les tests. Mathod95 a demandé de coder sans attendre (D114): le plan est celui qui a été codé. (a) dotbox motd [--refresh] [--style <s>], dans SERVER. En root, le travail dans la commande, sans le service: la connexion SSH n'en dépend pas. Sans sudo, le service rassemble les lignes (GET /api/v1/motd, POST /api/v1/motd/refresh) et la commande les dessine. --json comme les autres. --login, caché, pour le script. (b) /etc/update-motd.d/60-dotbox: timeout 5 dotbox motd --login, un Docker bloqué ne bloque pas la connexion. --login force les couleurs (pam_motd n'est pas un terminal), n'échoue jamais, n'affiche rien si motd.enabled est false. (c) Ce que init et sync retirent: 10-uname rendu non exécutable (un repère gardé pour le remettre), /etc/motd vidé (sa copie dans /opt/dotbox/motd/etc-motd). motd.enabled: false remet tout. Une mise à jour de base-files peut remettre 10-uname: diff le montre, sync le refait (N20). (d) En direct à chaque connexion: /proc (système, charge, mémoire), df (disques), un docker ps (core, apps), systemctl is-active dotbox, acme.json (certificats), backup.json, /run/reboot-required, et les apps en retard contre le catalogue rangé. (e) En cache, dans /opt/dotbox/motd.json, chaque valeur avec son heure: la dernière release de Dot Box, les paquets Debian en attente, les IP bannies, le plus gros dossier d'un disque plein. Les deux points laissés ouverts par D89: le service compte les bannissements toutes les dix minutes, et la nuit relit aussi le catalogue. (f) dotbox-doctor.timer, 05:00 (jusqu'à 15 minutes plus tard, pour ne pas envoyer tous les serveurs sur GitHub à la même seconde), après la sauvegarde de 04:00: dotbox motd --refresh, qui lance doctor, relit le catalogue, la release, apt, CrowdSec et du. Ce qui échoue garde son ancienne valeur et son âge. Avance 12.8 (doctor chaque jour). (g) dotbox config set motd.enabled et motd.style, et les deux dans la vue Settings de l'interface web. motd.style n'a rien à appliquer: il compte dès la connexion suivante. (h) Le pied montre l'adresse de l'interface web, qui existe maintenant.",
+          effect: "Aucun." },
+        { id: "17.4", status: "fait", ref: "J292", kind: "ecriture", where: "PC", title: "Le code et ses tests",
+          does: "src/motd.rs et ses branchements (main, client, serve, init, sync, config_cmd, help, web/app.js). cargo fmt, clippy, test, le binaire statique.",
+          effect: "PC: src/, web/app.js." },
+        { id: "17.5", status: "valide", kind: "ecriture", where: "PC", title: "La doc",
+          does: "Page CLI #149 (dotbox motd, une commande ajoutée, demandée par le test qui compare l'aide à la page). Page MOTD #150 (codé, pas encore essayé sur un serveur), #151 (d'où vient chaque ligne, qui écrit le cache, le timer de nuit, les 5 secondes, sans le service en root), #152 (le pied avec l'adresse de l'interface web), #153 (la maquette compact refaite avec les vraies lignes). #148 (le style ascii) toujours à valider. À valider par Mathod95.",
+          effect: "PC: cli.html, motd.html." },
+        { id: "17.6", kind: "ecriture", where: "Serveur", title: "L'essai sur un serveur neuf",
+          does: "Avec l'interface web (11.27), sur un serveur réinstallé (D114). Ce qu'il faudra voir: le message à la connexion SSH, sans la ligne du noyau ni la licence, dans chacun des quatre styles (dotbox config set motd.style), dotbox motd sans sudo, --refresh, le timer (systemctl list-timers), puis motd.enabled false et sync: le message de Debian revient. Pour un serveur neuf par install.sh, il faut une release (D114).",
           effect: "Plus tard." }
       ] }
   ];
@@ -4961,6 +4995,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "L'ordre: l'interface web, la CLI, les réseaux de confiance, puis le push et un tag",
       p: "Mathod95, le 22 novembre 2026: « Code la webui, je pense que tu as tout ce qu'il te faut à présent! Par la suite, tu coderas la CLI!! Et enfin on verra pour ajouter le secure_networks. Et à la fin, on pourra tout pousser avec un tag ».",
       reco: "Choix de Mathod95 du 22 novembre 2026. (1) L'interface web, sur la maquette de la page Web UI (#147): plan 11.19 à 11.27. (2) Ce qui reste de la CLI: dotbox user (comptes et groupes Authelia). (3) Les réseaux de confiance (D111). (4) Le push de main et un tag, quand Mathod95 le dira (v0.0.6, avec les points de N15 et N18 à régler avant: min_dotbox 0.0.6 dans les manifests de Jellyfin, Plex et rclone, backup_exclude de Jellyfin et Plex)." },
+    { t: "Réseaux de confiance: l'interface de Dot Box reconnaît l'admin (ancienne Q72)",
+      p: "Q72: en bypass, Authelia ne dit pas qui est là, et l'interface web de Dot Box en a besoin. Claude proposait qu'elle demande toujours au moins le mot de passe. Mathod95, le 22 novembre 2026: « On parle de la webview? Techniquement, si je me connecte depuis une IP secure_network, la logique veut que ce soit uniquement moi, donc ça devrait par défaut m'authentifier en tant que moi! ».",
+      reco: "Choix de Mathod95 du 22 novembre 2026. Depuis un réseau de confiance, l'interface web de Dot Box reconnaît l'admin sans rien demander: Traefik pose lui-même son nom (Remote-User) et le groupe admins (Remote-Groups) pour les adresses de ce réseau, comme le routeur de test de D109, et le secret de la porte web (D106). Techniquement faisable, c'est déjà ce que fait le routeur de test. Ce que Claude a noté, à garder en tête au moment de coder (D112, étape des réseaux de confiance): tout ce qui sort par cette adresse est l'admin du serveur. À la maison: chaque appareil du réseau, la famille, les invités sur le Wi-Fi, un appareil compromis. Pour le VPN: chaque pair qui a une adresse de la plage, y compris ceux donnés à des amis par wg-easy. Pistes: ne déclarer que les adresses des pairs de Mathod95, ou une plage à part pour ses pairs. Le nom de la clé reste à trouver (D111).",
+      refs: "Q72, D106, D109, D111, D112" },
+    { t: "Le MOTD tout de suite, puis l'essai des deux sur un serveur neuf",
+      p: "Mathod95, le 22 novembre 2026, après avoir essayé l'interface contre la fausse API (« J'ai testé l'interface, ça me convient pour l'instant! »): « Tu codes le MOTD, comme ça je teste les deux directement sur un serveur fresh? ».",
+      reco: "Choix de Mathod95 du 22 novembre 2026, qui change l'ordre de D112. (1) Le MOTD (étape 17), codé tout de suite (J291, J292). (2) L'interface web et le MOTD essayés ensemble sur un serveur réinstallé (11.27, 17.6), au lieu du serveur de test tel qu'il est: le routeur de test disparaît avec la réinstallation (11.18), et l'interface passe enfin par Authelia, le vrai chemin. (3) Puis dotbox user, les réseaux de confiance (D111, D113), le push et un tag. Ce que Claude a signalé: install.sh prend la dernière release sur GitHub, et le catalogue est lu sur main. Un serveur neuf par install.sh demande donc le push et un tag v0.0.6 avant l'essai, avec ce que N15 et N18 demandent (min_dotbox 0.0.6 dans les manifests de Jellyfin, Plex et rclone, backup_exclude, catalog/core/rclone.yml). Autre voie, sans release: copier le binaire à la main sur le serveur neuf, puis sudo dotbox init. Les deux restent à choisir par Mathod95.",
+      refs: "D112, 11.27, 11.18, 17.6, N15, N18" },
   ];
 
   var QUESTIONS = [
@@ -5407,7 +5449,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Rien: tout le monde passe par Authelia, comme aujourd'hui. Le confort vient d'Authelia lui-même (une session longue, « se souvenir de moi », une passkey plus rapide qu'un code).", "Des réseaux de confiance en one_factor (recommandé): depuis la maison ou le VPN, le mot de passe seul, sans le code. Authelia sait toujours qui est là, l'interface web marche, une adresse qui change ou qui est partagée ne suffit pas à entrer. Désactivé par défaut, une clé de dotbox.yml (par exemple access.trusted_networks, une liste d'adresses ou de plages), posée par dotbox config et sync, signalée par doctor.", "Des réseaux de confiance en bypass, pour les apps seulement, au choix app par app, jamais pour l'interface web de Dot Box ni pour les apps qui touchent au serveur (code-server, wg-easy, Uptime Kuma...).", "bypass partout, interface web comprise (comme le routeur de test, en permanent): Claude le déconseille, une adresse n'est pas une identité."],
       reco: "Proposé par Claude: la deuxième, one_factor pour des réseaux choisis, éteinte par défaut, le VPN de préférence à l'adresse de la maison (une clé par appareil plutôt qu'un lieu). La troisième en plus, si Mathod95 la veut, pour des apps choisies. Pas encore tranchée. À trancher avec: quels réseaux (la maison, le VPN, les deux), pour quelles apps, et l'adresse de la maison est-elle vraiment fixe et à lui seul. Tranchée par Mathod95 le 22 novembre 2026 (D111).",
       refs: "D106, D109, D111, Q72, Q4, 5.3, 7.3, wg-easy (8)" },
-    { n: 72,
+    { n: 72, done: "D113",
       t: "Réseaux de confiance en bypass: et l'interface web de Dot Box?",
       p: "D111: Mathod95 veut les deux politiques (one_factor et bypass), pour toutes les apps (« Toutes les apps ?? »). Un point reste: en bypass, Authelia ne dit pas qui est là, et l'interface web de Dot Box en a besoin (Remote-User, le groupe admins, D106). Elle refuserait toute requête.",
       l: ["L'interface web de Dot Box n'est jamais en bypass: depuis un réseau de confiance en bypass, elle demande quand même le mot de passe (one_factor). Les apps, elles, passent sans rien.", "Traefik pose lui-même admins pour ce réseau, comme le routeur de test (D109), en permanent: celui qui vient de cette adresse est admin de tout le serveur sans rien prouver."],
@@ -5548,6 +5590,9 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "À reporter dans Releases et la Roadmap au prochain commit",
       p: "Mathod95, le 22 novembre 2026: « Tu mets bien à jour la Roadmap et la page Release au fait? ». La règle (CLAUDE.md, Releases): Releases ne contient que ce qui est livré sur main, et la Roadmap se coche au commit. Rien n'est commité depuis v0.0.5 (D85, pas de push jusqu'à nouvel ordre): ni l'une ni l'autre n'a changé depuis. Ce qu'il faudra y porter, pour ne rien perdre. Releases, dans next: dotbox sync, diff refait (le plan, l'app arrêtée exprès), stopped dans dotbox.yml (15, D81, D93, D94). dotbox config get et set (15.5). dotbox backup, sudo dotbox restore, la planification et sa clé, les destinations sftp et rclone (16, D97, D99). La porte web de dotbox.<domaine> et sa page d'attente (11.11 à 11.15, D106). doctor: les sections Backup et la porte web. status: la ligne Backup. Corrigé: container_state qui prenait un container arrêté pour en marche (J226), config get user (J237). Changé: rust-version 1.87. Roadmap: « l'état voulu, diff, sync » fait. « sous-domaine et niveau d'accès... appliqués par sync » fait. Les quatre features de la sauvegarde faites, sauf --stream et les instantanés btrfs/ZFS (à part, ou en cours). « sudo dotbox restore » en cours (16.7, un serveur neuf). « changement de domaine » en cours (codé, pas testé en vrai). « Interface web » en cours, et son texte à revoir: « import de compose » ne tient plus (D102, Q67). Le MOTD: le quatrième style (#148) à la validation. Les apps repérées ne vont pas dans la Roadmap (D101). Reporté le 22 novembre 2026, au premier commit permis par D110: Releases a son next (sync, diff, config, backup, restore, la porte web, doctor et status, backup_exclude, rclone, le fournisseur file de Traefik, Rust 1.87, la correction de container_state). La correction de config get user n'y est pas: config n'a jamais été publiée. Roadmap: sync, l'accès par sync, config (nouvelle), la sauvegarde, l'archive, les destinations et dotbox backup cochés. --stream et les instantanés btrfs/ZFS deviennent deux features à part, à faire. restore et le changement de domaine en cours. La porte web (nouvelle) en cours, jusqu'au test dans le navigateur (11.16, 11.18). Le texte de l'interface web sans « import de compose ». Reste: le MOTD à la validation de #148.",
       refs: "D85, D101, D102, D106, D110, 15, 16, 11.11 à 11.18, CLAUDE.md (Releases)" },
+    { t: "Le MOTD sur Debian 13: qui écrit quoi (J291)",
+      p: "Ce que montre le serveur de test, le 22 novembre 2026. /etc/pam.d/sshd appelle pam_motd deux fois: d'abord avec motd=/run/motd.dynamic, qui lance en root les scripts exécutables de /etc/update-motd.d/ (run-parts, dans l'ordre des noms) et garde leur sortie dans /run/motd.dynamic, puis avec noupdate, qui affiche /etc/motd. La sortie des scripts n'est pas un terminal: dotbox motd --login force les couleurs. Debian n'a qu'un script, 10-uname (la ligne du noyau), un fichier de configuration du paquet base-files: une mise à jour de base-files peut le remettre exécutable, dotbox diff le montre alors et dotbox sync le refait. /etc/motd (le texte de licence) n'appartient à aucun paquet: Dot Box le vide et garde sa copie dans /opt/dotbox/motd/etc-motd. La ligne Last login vient de sshd (PrintLastLog), pas de pam_motd: elle reste (D90). CrowdSec: cscli alerts list --since 24h -l 0 -o json rend une alerte par détection, avec l'IP (source.value) et ses décisions. Une IP qui revient compte une fois. 144 alertes et 47 IP bannies en 24 h sur le serveur de test, sans aucune app connue du grand public: le bruit habituel d'Internet.",
+      refs: "D86, D89, D90, J291, 17.3" },
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -5601,6 +5646,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
+    "17": [291, 292],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
@@ -5618,14 +5664,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
-    "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107], "sans": [12, 91]
+    "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114], "sans": [12, 91]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55], "sans": [9, 43, 51]
   };
-  var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18] };
+  var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

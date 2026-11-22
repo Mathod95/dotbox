@@ -17,7 +17,8 @@ use crate::config::{self, Config};
 use crate::out::say;
 use crate::status::Container;
 use crate::{
-    apps, authelia, backup, catalog, crowdsec, engine, github, prompt, status, system, traefik, ui,
+    apps, authelia, backup, catalog, crowdsec, engine, github, motd, prompt, status, system,
+    traefik, ui,
 };
 
 /// Une ligne du plan.
@@ -214,6 +215,7 @@ pub fn plan() -> Result<Vec<Gap>, String> {
     }
     gaps.extend(web_gaps(&domain));
     gaps.extend(backup_gaps(&cfg));
+    gaps.extend(motd_gaps(&cfg));
     Ok(gaps)
 }
 
@@ -293,6 +295,27 @@ fn backup_gaps(cfg: &Config) -> Vec<Gap> {
         ));
     }
     gaps
+}
+
+/// Le message d'accueil SSH et le doctor de nuit (étape 17): ils suivent motd.enabled.
+fn motd_gaps(cfg: &Config) -> Vec<Gap> {
+    let gap = |what: String, sync: &str| Gap {
+        app: "dotbox".into(),
+        what,
+        hint: "dotbox sync".into(),
+        sync: sync.into(),
+        info: false,
+    };
+    match motd::Settings::of(cfg) {
+        Err(e) => vec![Gap {
+            hint: format!("fix {}", config::PATH),
+            ..gap(e, "")
+        }],
+        Ok(s) => motd::gaps(&s)
+            .into_iter()
+            .map(|(what, sync)| gap(what, sync))
+            .collect(),
+    }
 }
 
 fn app_gaps(
@@ -545,9 +568,10 @@ fn apply(targets: &[String]) -> Result<(), String> {
         }
     }
     if targets.iter().any(|t| t == "dotbox") {
-        ui::step("Dot Box", "the web gate and the backup timer");
+        ui::step("Dot Box", "the web gate, the timers and the MOTD");
         let done = backup::setup_timer(&backup::Settings::of(&cfg)?)?;
-        ui::done(&format!("web gate, {done}"));
+        let welcome = motd::setup(&motd::Settings::of(&cfg)?)?;
+        ui::done(&format!("web gate, {done}, {welcome}"));
     }
     Ok(())
 }

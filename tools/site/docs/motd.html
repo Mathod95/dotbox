@@ -3,7 +3,12 @@
 
 <!-- CONTENT -->
 <article class="prose">
+  <div class="prop-old" data-prop="150">
   <p class="note"><b>Being defined.</b> This page gathers what has been decided about the MOTD and what is still open (<a href="__DOC_JOURNAL__#d86"__DOC_JOURNAL_TARGET__>Journal, D86</a> , D89 and D90, Q55 still open). It comes after the Backup step, which it needs. It is the specification for the code, which is not written yet. Debian only for now (D87).</p>
+  </div>
+  <div class="prop-new" data-prop="150">
+  <p class="note"><b>Coded, not yet tried on a server.</b> This page is the specification of <code>dotbox motd</code> (<a href="__DOC_JOURNAL__#d86"__DOC_JOURNAL_TARGET__>Journal, D86</a>, D89, D90 and step 17). What it never shows is still open (Q55). Debian only for now (D87).</p>
+  </div>
 
   <h2 id="what">What it is</h2>
   <p>Each time you open an SSH session, Dot Box prints a short summary of the server: the system, the apps, the core, and what needs your attention. <code>dotbox init</code> installs it by default, and one line in <code>dotbox.yml</code> turns it off.</p>
@@ -40,6 +45,7 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
   <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>, except <b>ascii</b>, which only uses plain ASCII.</p></div>
 
   <h3 id="compact">compact (default)</h3>
+  <div class="prop-old" data-prop="153">
   <pre><span class="c">┌</span>  Dot Box 0.0.5 · example.com
 <span class="c">│</span>
 <span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
@@ -49,6 +55,22 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
 <span class="c">│</span>
 <span class="c">└</span>  dotbox status · dotbox --help</pre>
+  </div>
+  <div class="prop-new" data-prop="153">
+  <p>What <code>dotbox motd</code> prints, line by line as coded: a line per state, then the yellow lines with their command.</p>
+  <pre><span class="c">┌</span>  Dot Box 0.0.6 · example.com
+<span class="c">│</span>
+<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
+<span class="ok">◇</span>  Memory    2.1 / 7.8 GiB
+<span class="ok">◇</span>  Disks     / 12 % · /data 61 %
+<span class="ok">◇</span>  Apps      14 running<span class="c"> · 1 stopped (sonarr)</span>
+<span class="ok">◇</span>  Doctor    nothing to report, 2 h ago
+<span class="ok">◇</span>  Backup    1 h ago · 15 archives · 120 MB
+<span class="ok">◇</span>  CrowdSec  37 IPs banned in 24 h, 4 min ago
+<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
+<span class="c">│</span>
+<span class="c">└</span>  <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
+  </div>
 
   <h3 id="fastfetch">fastfetch</h3>
   <p>The 7 × 7 dot pictogram on the left, the lines on the right.</p>
@@ -107,6 +129,7 @@ motd:
 
   <h2 id="live">Live or cached</h2>
   <p>Some lines cost nothing to compute. Others take seconds, or need the Internet, and would slow down every login.</p>
+<div class="prop-old" data-prop="151">
   <div class="table-scroll"><table>
     <thead><tr><th>Line</th><th>Cost</th><th>Where it comes from</th></tr></thead>
     <tbody>
@@ -126,6 +149,30 @@ motd:
     <li>The CrowdSec bans are cached.</li>
   </ul>
   <p>Each cached line says how old it is (« 2 h ago »), so old news never looks fresh. <code>dotbox motd --refresh</code> runs the cached checks again now and rewrites their files.</p>
+  </div>
+  <div class="prop-new" data-prop="151">
+  <div class="table-scroll"><table>
+    <thead><tr><th>Line</th><th>Cost</th><th>Where it comes from</th></tr></thead>
+    <tbody>
+      <tr><td>System, uptime, load</td><td>Instant</td><td><code>/proc</code></td></tr>
+      <tr><td>Memory, disks</td><td>Instant</td><td><code>/proc</code>, <code>df</code></td></tr>
+      <tr><td>Core and apps</td><td>A few tens of milliseconds</td><td>One <code>docker ps</code></td></tr>
+      <tr><td>Certificates, last backup, a reboot asked for</td><td>Instant</td><td>Traefik's <code>acme.json</code>, <code>/opt/dotbox/backup.json</code>, <code>/run/reboot-required</code></td></tr>
+      <tr><td>Apps behind</td><td>Instant</td><td>What runs, against the catalog kept in <code>/opt/dotbox/catalog</code></td></tr>
+      <tr><td>CrowdSec bans</td><td>Cached</td><td><code>cscli alerts list</code>, counted by the Dot Box service every 10 minutes</td></tr>
+      <tr><td>Doctor's problems</td><td>Cached</td><td><code>/opt/dotbox/doctor.json</code>, written by <code>dotbox doctor</code></td></tr>
+      <tr><td>A new Dot Box, Debian updates, the biggest folder of a full disk</td><td>Cached</td><td><code>/opt/dotbox/motd.json</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Everything that is not cached is read at each login, without the network. The cached lines come from jobs that run elsewhere:</p>
+  <ul>
+    <li>Every night at 05:00, after the 04:00 backup, <code>dotbox-doctor.timer</code> runs <code>dotbox motd --refresh</code>: doctor, the catalog read again from GitHub, the latest release of Dot Box, the pending Debian updates, the CrowdSec bans, and the biggest folder of a disk above 90 %. It may start up to 15 minutes late, so that servers do not all reach GitHub at the same second.</li>
+    <li>The catalog is also read again by <code>dotbox update</code>, so the apps behind follow the last of the two.</li>
+    <li>The Dot Box service counts the CrowdSec bans every 10 minutes.</li>
+  </ul>
+  <p>Each cached line says how old it is (« 2 h ago »), so old news never looks fresh. <code>dotbox motd --refresh</code> runs the cached checks now. A check that fails keeps its last value and its age.</p>
+  <p>At login, the script gives <code>dotbox motd</code> 5 seconds: a Docker that no longer answers never blocks the connection. As root, <code>dotbox motd</code> works without the Dot Box service. Without <code>sudo</code>, it asks the service.</p>
+  </div>
 
 <h2 id="lines">What it shows</h2>
   <p>The same lines in all three styles, only the drawing changes. Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
@@ -143,7 +190,7 @@ motd:
       <tr><td>Certificates</td><td>The closest expiry</td><td>When under 14 days</td><td>Always, with the subdomain</td></tr>
       <tr><td>Backup</td><td>The last backup</td><td>Once backups exist</td><td>Failed, or older than 2 days</td></tr>
       <tr><td>CrowdSec</td><td>IPs banned in the last 24 h</td><td>Always</td><td>Never (its state is in Core)</td></tr>
-      <tr><td>Footer</td><td><code>dotbox status · dotbox --help</code>, later the web interface's address</td><td>Always</td><td>Never</td></tr>
+      <tr><td>Footer</td><td><span class="prop-old" data-prop="152"><code>dotbox status · dotbox --help</code>, later the web interface's address</span><span class="prop-new" data-prop="152"><code>dotbox status · dotbox --help</code> and the web interface's address, <code>https://dotbox.example.com</code></span></td><td>Always</td><td>Never</td></tr>
     </tbody>
   </table></div>
   <p>The <code>Last login</code> line printed by sshd stays as it is, under the message: Dot Box does not touch the SSH configuration on its own. The SSH hardening option may bring it into the message later.</p>

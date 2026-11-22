@@ -5,7 +5,7 @@
 use crate::out::say;
 use crate::{apps, catalog, crowdsec, system, ui};
 
-const REPO: &str = "Mathod95/dotbox";
+pub const REPO: &str = "Mathod95/dotbox";
 const ASSET: &str = "dotbox-linux-amd64";
 const BIN: &str = "/usr/local/bin/dotbox";
 const PREVIOUS: &str = "/usr/local/bin/dotbox.previous";

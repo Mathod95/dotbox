@@ -403,6 +403,10 @@
       add(gen, cfgRow("ca", cfg.ca, CAS));
       add(gen, cfgRow("backup.schedule", cfg["backup.schedule"], "text", "off, hourly, daily 04:00, or a day: sunday 05:00"));
       add(gen, cfgRow("backup.keep", cfg["backup.keep"], "text", "archives kept per app and per destination"));
+      if ("motd.enabled" in cfg) {
+        add(gen, cfgRow("motd.enabled", cfg["motd.enabled"], ["true", "false"], "the SSH welcome message, false puts Debian's back"));
+        add(gen, cfgRow("motd.style", cfg["motd.style"], ["compact", "fastfetch", "banner", "ascii"], "from the next SSH login"));
+      }
       add(m, gen);
 
       var names = Object.keys(cfg).filter(function (k) { return /^apps\.[^.]+\.subdomain$/.test(k); }).map(function (k) { return k.split(".")[1]; });

@@ -20,6 +20,7 @@ mod help;
 mod init;
 mod log;
 mod manage;
+mod motd;
 mod out;
 mod prompt;
 mod restore;
@@ -75,6 +76,19 @@ enum Command {
 
     /// Check the server and say what to do: Docker, DNS, certificates, CrowdSec, updates, SSH, disk
     Doctor,
+
+    /// The SSH welcome message: the server, the apps and what needs you, as at login
+    Motd {
+        /// Run the cached checks again now: doctor, the catalog, the latest release, CrowdSec
+        #[arg(long)]
+        refresh: bool,
+        /// Show another style once: compact, fastfetch, banner or ascii
+        #[arg(long, value_name = "STYLE")]
+        style: Option<String>,
+        /// Called at each SSH login by /etc/update-motd.d/60-dotbox
+        #[arg(long, hide = true)]
+        login: bool,
+    },
 
     /// The catalog, with the installed apps
     List {
@@ -233,12 +247,12 @@ enum Command {
 enum ConfigAction {
     /// Every key and its value, or one key's value
     Get {
-        /// domain, ca, apps.<app>.subdomain, apps.<app>.access
+        /// domain, ca, backup.schedule, backup.keep, motd.enabled, motd.style, apps.<app>.subdomain, apps.<app>.access
         key: Option<String>,
     },
     /// Check a value, then write it to dotbox.yml (applies nothing)
     Set {
-        /// domain, ca, apps.<app>.subdomain, apps.<app>.access
+        /// domain, ca, backup.schedule, backup.keep, motd.enabled, motd.style, apps.<app>.subdomain, apps.<app>.access
         key: String,
         value: String,
     },
@@ -330,6 +344,15 @@ fn main() -> ExitCode {
         Command::Status => client::status(json),
         Command::Doctor if local => local_doctor(json),
         Command::Doctor => client::doctor(json),
+        Command::Motd { login: true, .. } => {
+            motd::login();
+            Ok(())
+        }
+        // en root, sans le service: la connexion SSH ne dépend pas de lui
+        Command::Motd { refresh, style, .. } if system::effective_uid() == Ok(0) => {
+            motd::local(refresh, style.as_deref(), json)
+        }
+        Command::Motd { refresh, style, .. } => client::motd(refresh, style.as_deref(), json),
         Command::List { search } if local => local_root("list").and_then(|_| {
             manage::list(search.as_deref().unwrap_or_default())
                 .map(|l| json_or(json, &l, |l| manage::print_list(l)))

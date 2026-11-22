@@ -7,11 +7,10 @@ use serde::{Deserialize, Serialize};
 use crate::catalog::{self, Access};
 use crate::clack::{self, Mark};
 use crate::config::{self, Config};
-use crate::{backup, system, traefik};
+use crate::{backup, motd, system, traefik};
 
 /// Les clés que config sait changer aujourd'hui.
-const KEYS: &str =
-    "domain, ca, backup.schedule, backup.keep, apps.<app>.subdomain, apps.<app>.access";
+const KEYS: &str = "domain, ca, backup.schedule, backup.keep, motd.enabled, motd.style, apps.<app>.subdomain, apps.<app>.access";
 
 #[derive(Debug, PartialEq)]
 enum Key {
@@ -22,6 +21,9 @@ enum Key {
     /// l'heure de la sauvegarde (D97): daily 04:00 par défaut
     BackupSchedule,
     BackupKeep,
+    /// le message d'accueil SSH (D86): true par défaut
+    MotdEnabled,
+    MotdStyle,
 }
 
 fn parse_key(key: &str) -> Result<Key, String> {
@@ -30,6 +32,8 @@ fn parse_key(key: &str) -> Result<Key, String> {
         "ca" => return Ok(Key::Ca),
         "backup.schedule" => return Ok(Key::BackupSchedule),
         "backup.keep" => return Ok(Key::BackupKeep),
+        "motd.enabled" => return Ok(Key::MotdEnabled),
+        "motd.style" => return Ok(Key::MotdStyle),
         "user" => {
             return Err(
                 "user cannot be changed with dotbox config: the apps' files belong to it (D93)"
@@ -107,6 +111,16 @@ pub fn entries(cfg: &Config) -> Vec<Entry> {
         out.push(Entry {
             key: "backup.keep".into(),
             value: b.keep.to_string(),
+        });
+    }
+    if let Ok(m) = motd::Settings::of(cfg) {
+        out.push(Entry {
+            key: "motd.enabled".into(),
+            value: m.enabled.to_string(),
+        });
+        out.push(Entry {
+            key: "motd.style".into(),
+            value: m.style,
         });
     }
     for app in cfg.app_names() {
@@ -214,6 +228,16 @@ fn check(
             }
             Ok(backup::Settings::of(cfg)?.keep.to_string())
         }
+        Key::MotdEnabled => {
+            if !matches!(value, "true" | "false") {
+                return Err(format!("motd.enabled {value:?}: true or false"));
+            }
+            Ok(motd::Settings::of(cfg)?.enabled.to_string())
+        }
+        Key::MotdStyle => {
+            motd::check_style(value)?;
+            Ok(motd::Settings::of(cfg)?.style)
+        }
         Key::Access(app) => {
             let (_, access) = app_of(cfg, app)?;
             match Access::parse(value) {
@@ -250,6 +274,8 @@ fn apply(cfg: &mut Config, key: &Key, value: &str) -> Result<(), String> {
                 .map_err(|_| "backup.keep: a number".to_string())?;
             cfg.set_in("backup", "keep", n.into());
         }
+        Key::MotdEnabled => cfg.set_in("motd", "enabled", (value == "true").into()),
+        Key::MotdStyle => cfg.set_in("motd", "style", value.into()),
     }
     Ok(())
 }
@@ -321,6 +347,8 @@ pub fn print_set(c: &Change) {
     // keep n'a rien à appliquer: la prochaine sauvegarde le lit
     let then = if c.key == "backup.keep" {
         "it counts from the next backup"
+    } else if c.key == "motd.style" {
+        "it shows from the next login: dotbox motd to see it now"
     } else {
         "then: dotbox diff to see the plan, dotbox sync to apply it"
     };
@@ -407,6 +435,33 @@ mod tests {
                 .unwrap()
                 .contains("backup:\n  schedule: daily 02:30\n  keep: 14\n")
         );
+    }
+
+    #[test]
+    fn motd_keys() {
+        let mut c = Config::parse(YML).unwrap();
+        let get = |c: &Config, k: &str| {
+            entries(c)
+                .into_iter()
+                .find(|e| e.key == k)
+                .map(|e| e.value)
+                .unwrap_or_default()
+        };
+        assert_eq!(get(&c, "motd.enabled"), "true");
+        assert_eq!(get(&c, "motd.style"), "compact");
+        let k = parse_key("motd.style").unwrap();
+        assert!(check(&c, &k, "fancy", &no_dns_problem).is_err());
+        assert_eq!(check(&c, &k, "ascii", &no_dns_problem).unwrap(), "compact");
+        apply(&mut c, &k, "ascii").unwrap();
+        let k = parse_key("motd.enabled").unwrap();
+        assert!(check(&c, &k, "no", &no_dns_problem).is_err());
+        apply(&mut c, &k, "false").unwrap();
+        assert!(
+            c.render()
+                .unwrap()
+                .contains("motd:\n  style: ascii\n  enabled: false\n")
+        );
+        assert_eq!(get(&c, "motd.enabled"), "false");
     }
 
     #[test]

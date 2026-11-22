@@ -45,6 +45,14 @@
           "en": "Web UI: six views on `dotbox.<domain>` (Overview, Apps, Catalog, Updates, Backup, Settings), through the same API as the CLI. Install, start, stop, update, back up, set `dotbox.yml` then apply the plan, each job followed live, an app's logs live"
         },
         {
+          "fr": "Core: `dotbox motd`, le message d'accueil SSH: le système, la mémoire, les disques, les apps, le dernier doctor, la dernière sauvegarde et CrowdSec, puis une ligne jaune avec sa commande pour ce qui demande une action. Quatre styles (`compact`, `fastfetch`, `banner`, `ascii`), `--refresh` et `--style`. Posé par `dotbox init` et `dotbox sync`, sans la ligne du noyau ni la licence de Debian (une copie gardée), `motd.enabled` et `motd.style` dans `dotbox.yml`",
+          "en": "Core: `dotbox motd`, the SSH welcome message: the system, the memory, the disks, the apps, the last doctor, the last backup and CrowdSec, then a yellow line with its command for what needs you. Four styles (`compact`, `fastfetch`, `banner`, `ascii`), `--refresh` and `--style`. Set up by `dotbox init` and `dotbox sync`, without Debian's kernel line and license text (a copy kept), `motd.enabled` and `motd.style` in `dotbox.yml`"
+        },
+        {
+          "fr": "Core: `dotbox-doctor.timer`, chaque nuit à 05:00, après la sauvegarde: doctor, le catalogue relu, la dernière release de Dot Box et les mises à jour de Debian. Le service compte les IP bannies par CrowdSec toutes les dix minutes",
+          "en": "Core: `dotbox-doctor.timer`, every night at 05:00, after the backup: doctor, the catalog read again, the latest release of Dot Box and Debian's updates. The service counts the IPs banned by CrowdSec every ten minutes"
+        },
+        {
           "fr": "CLI: `dotbox doctor` vérifie la sauvegarde (la clé, le timer, la dernière sauvegarde) et la porte web. `dotbox status` montre la dernière sauvegarde",
           "en": "CLI: `dotbox doctor` checks the backup (the key, the timer, the last backup) and the web gate. `dotbox status` shows the last backup"
         },

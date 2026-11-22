@@ -122,6 +122,22 @@ pub fn doctor(json_out: bool) -> Result<(), String> {
     }
 }
 
+/// dotbox motd sans sudo: le service rassemble les lignes, la commande les dessine.
+pub fn motd(refresh: bool, style: Option<&str>, json_out: bool) -> Result<(), String> {
+    if let Some(s) = style {
+        crate::motd::check_style(s)?;
+    }
+    let v = if refresh {
+        crate::clack::waiting("refreshing doctor, the catalog and CrowdSec", || {
+            runtime()?.block_on(call(Method::POST, "/api/v1/motd/refresh", None))
+        })?
+    } else {
+        get("/api/v1/motd")?
+    };
+    let m: crate::motd::Motd = serde_json::from_value(v).map_err(|e| e.to_string())?;
+    crate::motd::show(&m, style, json_out)
+}
+
 /// Une tâche: la demander, puis suivre ses événements jusqu'à la fin.
 async fn job(
     method: Method,
