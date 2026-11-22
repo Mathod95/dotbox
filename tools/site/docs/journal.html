@@ -3384,7 +3384,7 @@ renovate/configure: la pull request d'accueil #1, fermée. 2 commits, seulement 
 renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte): qui v1.35.0 vers v1.36.1, une mise à jour mineure, qui attend Mathod95 (D65). Sa CI a échoué sur « fmt, clippy et tests »: elle date d'avant la correction du test de qui (Q73, D116), et Renovate ne refait pas la branche d'une mineure tout seul
 Fusionnée sur le main d'aujourd'hui: 166 tests passent`,
       undo: "Rien à annuler." },
-    { id: "J297", time: "22:50", status: "fait", where: "PC", kind: "écriture",
+    { id: "J297", time: "22:50", status: "fait", where: "PC", kind: "ecriture",
       title: "D117: #6 fusionnée, les branches de Renovate effacées, il ne reste que main",
       cmd: `git merge --no-ff origin/renovate/ghcr.io-autobrr-qui-1.x ; cargo fmt --check ; cargo clippy ; cargo test
 git push origin main
