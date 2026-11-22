@@ -5079,6 +5079,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 22 novembre 2026: « C'est un ajout pour rien, je pense! Le peu de chances de voir ces pages est extrêmement rare, je pense, pour se prendre la tête à le coder. »",
       reco: "Choix de Mathod95 du 22 novembre 2026: la quatrième option de Q77, rien n'est ajouté. Ni error-pages dans le core, ni thème Dot Box, ni clé error_pages.theme. Un nom inconnu garde le certificat par défaut de Traefik puis son 404, une app arrêtée le 404 ou le 502 de Traefik. Q76 (couper les noms inconnus par sniStrict, ou ne rien changer) reste ouverte.",
       refs: "Q77, Q76, N21" },
+    { t: "Un sous-domaine inconnu: on ne change rien (ancienne Q76)",
+      p: "Mathod95, le 22 novembre 2026, après avoir appris que la page d'erreur du navigateur ne se personnalise pas: « Ok, donc on s'en fout de ça aussi! »",
+      reco: "Choix de Mathod95 du 22 novembre 2026: la quatrième option de Q76. Pas de sniStrict, pas de DNS par app: un nom inventé reçoit le certificat par défaut de Traefik, puis son 404 brut si l'on passe l'avertissement. Sans risque (N21).",
+      refs: "Q76, N21, D118" },
   ];
 
   var QUESTIONS = [
@@ -5549,7 +5553,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Une règle (Settings, Rules, Rulesets) sur main: interdire le force push et l'effacement. Rien d'autre: les push directs et Renovate continuent.", "La même, plus exiger les vérifications de la CI avant toute fusion, avec la clé de déploiement en exception.", "Settings, General: « Automatically delete head branches », pour que GitHub efface la branche d'une pull request fusionnée.", "Effacer renovate/configure à la main (la corbeille de la page des branches). Laisser celle de #6: elle disparaîtra à sa fusion."],
       reco: "Proposé par Claude: la première, la troisième et la quatrième, à faire par Mathod95 dans GitHub (la CLI gh n'est pas connectée sur le PC, et Claude n'a que la clé de déploiement). Pas encore tranchée.",
       refs: "D65, D110, D116, Q73, J296" },
-    { n: 76,
+    { n: 76, done: "D119",
       t: "Un sous-domaine qui n'existe pas: le rendre inaccessible?",
       p: "Mathod95, le 22 novembre 2026, après N21: « Je ne devrais pas avoir un site inaccessible? ». Aujourd'hui, un nom inventé arrive sur le serveur (DNS *.<domaine>), Traefik présente son certificat par défaut puis répond 404. Rien n'est atteint, mais le serveur répond, et un scanner voit qu'il y a un Traefik derrière. Ce que Claude a vérifié dans src/traefik.rs: aucune option TLS, donc le certificat par défaut est servi pour tout nom inconnu.",
       l: ["sniStrict: true dans les options TLS par défaut de Traefik (fichier dynamique écrit par init et sync, appliqué par dotbox sync). Traefik coupe la poignée de main TLS quand le nom ne correspond à aucun certificat: le navigateur affiche « ce site ne peut pas fournir de connexion sécurisée », sans certificat ni 404. Les apps installées ne changent pas. Une app tout juste installée, le temps que Let's Encrypt donne son certificat (quelques secondes), serait refusée au lieu de montrer l'avertissement. Un client sans SNI (très ancien) serait refusé. Précisé à Mathod95 le 22 novembre 2026 (« même si on coupe les noms inconnus, on aura quand même l'avertissement de Chrome pour le certificat? »): non, aucun certificat n'est présenté, donc pas d'avertissement ni de bouton pour continuer. Chrome affiche une erreur de connexion (ERR_SSL_PROTOCOL_ERROR ou ERR_CONNECTION_CLOSED), comme pour un site qui ne répond pas en https. Cette page est celle du navigateur, pas du serveur: elle ne se personnalise pas (question de Mathod95, même jour). Une page à nous demanderait une connexion TLS réussie, donc un certificat valide pour le nom inventé, donc un wildcard (DNS-01, écarté).", "En plus, sur le port 80, ne rediriger vers https que les noms connus, et couper les autres. Plus de travail (un routeur par nom au lieu de la redirection de l'entrypoint), pour peu de gain: la redirection mène de toute façon à la poignée de main refusée.", "Plus de DNS *.<domaine>: un enregistrement par app, créé par l'utilisateur à chaque installation. Un nom inventé ne se résout plus du tout (vraiment inaccessible), mais chaque dotbox install demande un passage chez le fournisseur DNS. Dot Box ne touche jamais au DNS (décision du 9 novembre 2026). Contraire au prérequis actuel.", "Ne rien changer: le 404 est sans risque."],
@@ -5773,7 +5777,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
-    "4": [15, 16, 17, 18, 19, 20, 29, 118], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
+    "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
     "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91]
   };
   var QHOME = {
