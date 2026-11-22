@@ -3334,7 +3334,21 @@ node --check web/app.js, et le script de la page CLI`,
       result: `cargo test: 166 passed (13 de plus: les réglages, les âges, chaque ligne, cscli, du, les quatre styles au caractère près, le script), clippy: rien, binaire bd6facbd
 le test qui compare dotbox --help à la page CLI a demandé la ligne de motd dans la page: ajoutée en proposition #149
 corrigé en chemin: les alertes du core disaient docker logs, la page dit dotbox logs (il accepte chaque container du core)`,
-      undo: "git revert du commit." }
+      undo: "git revert du commit." },
+    { id: "J293", time: "21:50", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "La release v0.0.6 (D115)",
+      cmd: `catalog/jellyfin.yml et catalog/plex.yml: min_dotbox 0.0.6 et backup_exclude (N15). catalog/core/rclone.yml: min_dotbox 0.0.6 (N18). Cargo.toml: version 0.0.6. releases.json: next devient v0.0.6
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --locked
+git fetch && git rebase origin/main
+git push origin main && git tag -a v0.0.6 && git push origin v0.0.6`,
+      does: "La release demandée par Mathod95 (« fais les ajustements, push, tag, ça suffira amplement »), pour réinstaller le serveur de test par install.sh et y essayer l'interface web et le MOTD (D114). Pas de copie de la clé de sauvegarde: Mathod95 repart d'une installation neuve, les sauvegardes avec rclone seront essayées plus tard.",
+      effect: "GitHub: main (9 commits), le tag v0.0.6, la release (dotbox-linux-amd64, son .sha256, install.sh), le site.",
+      result: `Renovate avait fusionné autobrr v1.91.1 sur main (#5): nos 8 commits replacés par-dessus, 166 tests passent toujours
+main 6a94d84..748c4ba, tag v0.0.6
+CI Site: réussie. CI Release: réussie (run 45068693724), publiée à 20:53 UTC
+dotbox-linux-amd64: decfc04b
+releases.json: tagged true`,
+      undo: "Une release publiée ne se retire pas: une v0.0.7 corrige." }
   ];
 
   var PLAN = [
@@ -5650,7 +5664,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292],
+    "17": [291, 292, 293],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],

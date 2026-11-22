@@ -4,6 +4,7 @@
     {
       "version": "v0.0.6",
       "date": "2026-11-22",
+      "tagged": true,
       "title": {
         "fr": "Sync, la sauvegarde, l'interface web et le MOTD",
         "en": "Sync, backups, the web UI and the MOTD"
