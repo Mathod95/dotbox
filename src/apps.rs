@@ -193,7 +193,16 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
             );
         }
         for app in &apps {
-            ready.push(install_one(dir, app, &domain, &user, None)?);
+            // l'installer, c'est la vouloir en marche: plus arrêtée exprès (D81)
+            let mut cfg = Config::load()?;
+            if cfg.set_stopped(app, false) {
+                system::write_if_changed(config::PATH, &cfg.render()?, 0o644)?;
+                say(
+                    "write",
+                    &format!("{} ({app}: no longer stopped)", config::PATH),
+                );
+            }
+            ready.push(install_one(dir, app, &domain, &user, None, true)?);
         }
         Ok(())
     })();
@@ -241,44 +250,35 @@ pub fn print_ready(ready: &[Ready]) {
     }
 }
 
-/// Installe une app (ou la remet d'aplomb si elle l'est déjà). Rend son nom, son adresse et
-/// son niveau d'accès.
-/// `image`: une autre image que celle du catalogue (dotbox update --rollback, 13.6).
-pub fn install_one(
+/// Ce que dotbox écrirait pour une app, sans rien écrire ni lancer: le manifest, le contexte et
+/// le compose.yml. install_one l'écrit, dotbox diff et dotbox sync le comparent au fichier (15.2).
+pub struct Wanted {
+    pub m: catalog::Manifest,
+    pub ctx: Ctx,
+    pub sub: String,
+    /// le niveau voulu (dotbox.yml ou le manifest)
+    pub access: Access,
+    /// derrière Authelia tant que son assistant de premier démarrage n'est pas fini (D71)
+    pub setup_pending: bool,
+    pub compose: String,
+}
+
+/// `image`: une autre image que celle du catalogue (dotbox update --rollback, 13.6, ou celle qui
+/// tourne, pour dotbox sync, qui ne change jamais de version).
+pub fn wanted(
     dir: &Path,
     app: &str,
     domain: &str,
     user: &str,
     image: Option<&str>,
-) -> Result<Ready, String> {
+) -> Result<Wanted, String> {
     let from = crate::add::manifest_dir(dir, app);
-    let doing = if image.is_some() {
-        "the previous image"
-    } else if from != dir {
-        "from your apps (dotbox add)"
-    } else {
-        "from the catalog"
-    };
-    ui::step(&title(app), doing);
     let mut m = catalog::load(&from, app)?;
     if let Some(i) = image {
         m.image = i.to_string();
     }
-    say(
-        "read",
-        &format!(
-            "{}/{app}.yml: {}, {}",
-            dir.display(),
-            m.description,
-            m.image
-        ),
-    );
-    if let Some(e) = foreign_compose(app) {
-        return Err(e);
-    }
-
     // le sous-domaine et le niveau: ceux de dotbox.yml s'ils y sont, sinon ceux du manifest
-    let mut cfg = Config::load()?;
+    let cfg = Config::load()?;
     let (sub, access) = match cfg.app(app) {
         Some((s, a)) => (
             if s.is_empty() { app.to_string() } else { s },
@@ -290,29 +290,89 @@ pub fn install_one(
         return Err(format!("the subdomain {sub} is taken by the core"));
     }
     // ouverte à Internet, mais son assistant de premier démarrage n'est pas fini: derrière
-    // Authelia en attendant, pour que personne ne crée le compte admin avant toi (D71)
-    let mut setup_pending =
-        !access.behind_authelia() && m.setup.is_some() && setup_done(&m) != Some(true);
-    let route = if setup_pending {
-        say(
-            "check",
-            &format!("{app}: first-run setup not done yet, behind Authelia until then"),
-        );
-        Access::TwoFactor
-    } else {
-        access
-    };
-
+    // Authelia en attendant, pour que personne ne crée le compte admin avant toi (D71). Un
+    // assistant qu'on ne peut pas interroger (l'app ne tourne pas): ce que dit le compose écrit.
+    let setup_pending = !access.behind_authelia()
+        && m.setup.is_some()
+        && match setup_done(&m) {
+            Some(done) => !done,
+            None => {
+                !Path::new(&engine::compose_path(app)).exists()
+                    || crate::status::setup_pending(app, access.as_str())
+            }
+        };
     let (uid, gid) = system::user_ids(user)?;
-    let mut ctx = Ctx {
+    let ctx = Ctx {
         domain: domain.to_string(),
         subdomain: sub.clone(),
-        access: route,
+        access: if setup_pending {
+            Access::TwoFactor
+        } else {
+            access
+        },
         uid,
         gid,
         tz: system::timezone(),
         subnet: docker::network_subnet()?,
     };
+    let compose = engine::compose(&m, &ctx);
+    Ok(Wanted {
+        m,
+        ctx,
+        sub,
+        access,
+        setup_pending,
+        compose,
+    })
+}
+
+/// Installe une app (ou la remet d'aplomb si elle l'est déjà). Rend son nom, son adresse et
+/// son niveau d'accès.
+/// `image`: voir wanted. `start`: false pour une app arrêtée exprès (D81): tout est écrit, elle
+/// reste arrêtée (update et sync).
+pub fn install_one(
+    dir: &Path,
+    app: &str,
+    domain: &str,
+    user: &str,
+    image: Option<&str>,
+    start: bool,
+) -> Result<Ready, String> {
+    let from = crate::add::manifest_dir(dir, app);
+    let doing = match image {
+        Some(i) => format!("image {}", crate::status::tag(i)),
+        None if from != dir => "from your apps (dotbox add)".into(),
+        None => "from the catalog".into(),
+    };
+    ui::step(&title(app), &doing);
+    if let Some(e) = foreign_compose(app) {
+        return Err(e);
+    }
+    let Wanted {
+        m,
+        mut ctx,
+        sub,
+        access,
+        mut setup_pending,
+        compose: text,
+    } = wanted(dir, app, domain, user, image)?;
+    say(
+        "read",
+        &format!(
+            "{}/{app}.yml: {}, {}",
+            dir.display(),
+            m.description,
+            m.image
+        ),
+    );
+    if setup_pending {
+        say(
+            "check",
+            &format!("{app}: first-run setup not done yet, behind Authelia until then"),
+        );
+    }
+    let mut cfg = Config::load()?;
+    let (uid, gid) = (ctx.uid, ctx.gid);
     for v in &m.volumes {
         // /data: ses dossiers et la vérification des hardlinks, plus bas
         if !catalog::in_data(&v.host) && !Path::new(&v.host).exists() {
@@ -329,7 +389,7 @@ pub fn install_one(
         check_ports(&m)?;
     }
     let path = engine::compose_path(app);
-    let changed = system::write_if_changed(&path, &engine::compose(&m, &ctx), 0o644)?;
+    let changed = system::write_if_changed(&path, &text, 0o644)?;
     if changed {
         say("write", &path);
     }
@@ -340,6 +400,24 @@ pub fn install_one(
     }
 
     docker::pull(&m.image)?;
+    if !start {
+        // arrêtée exprès (D81): tout est prêt, elle reste arrêtée. Un container qui tourne
+        // encore (ses réglages l'ont arrêté, ou il a été lancé à la main) s'arrête.
+        if running(&traefik::container_state(app)) {
+            compose(app, &["stop"])?;
+            say("stop", app);
+        }
+        if let Some(w) = &m.crowdsec {
+            crate::crowdsec::watch_app(app, &w.collection, &w.kind)?;
+        }
+        ui::done(&format!("{}, stopped (dotbox stop)", m.version()));
+        return Ok(Ready {
+            app: app.to_string(),
+            address: format!("https://{sub}.{domain}"),
+            access: access.as_str().to_string(),
+            setup_pending,
+        });
+    }
     // de nouveaux réglages: write_settings a arrêté l'app, elle repart ici et les relit
     let state = traefik::container_state(app);
     if changed || settings_changed || !running(&state) {

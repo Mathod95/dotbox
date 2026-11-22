@@ -82,11 +82,33 @@ pub const GROUPS: &[(&str, &[Entry])] = &[
     ),
     (
         "STATE",
-        &[(
-            "diff",
-            "",
-            "What differs from what is wanted, changing nothing",
-        )],
+        &[
+            (
+                "diff",
+                "",
+                "What differs from what is wanted, changing nothing",
+            ),
+            (
+                "sync",
+                "",
+                "Apply dotbox.yml: show the plan, ask, then apply",
+            ),
+        ],
+    ),
+    (
+        "BACKUP",
+        &[
+            (
+                "backup",
+                "[--app <a>] [--to <dest>]",
+                "Back up /opt, app by app, encrypted",
+            ),
+            (
+                "restore",
+                "<archive> [--app <a>]",
+                "Restore a backup, all of it or one app",
+            ),
+        ],
     ),
     (
         "USERS",
@@ -105,11 +127,18 @@ pub const GROUPS: &[(&str, &[Entry])] = &[
     ),
     (
         "CONFIGURATION",
-        &[(
-            "completion",
-            "bash|zsh|fish",
-            "The shell completion script, on standard output",
-        )],
+        &[
+            (
+                "config",
+                "get|set <key> [value]",
+                "Read or change dotbox.yml",
+            ),
+            (
+                "completion",
+                "bash|zsh|fish",
+                "The shell completion script, on standard output",
+            ),
+        ],
     ),
 ];
 

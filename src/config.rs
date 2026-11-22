@@ -69,16 +69,48 @@ impl Config {
         Some((field("subdomain"), field("access")))
     }
 
+    /// Le sous-domaine et l'accès d'une app. Les autres champs de son entrée (stopped) restent.
     pub fn set_app(&mut self, name: &str, subdomain: &str, access: &str) {
         if !self.map.get("apps").is_some_and(Value::is_mapping) {
             self.map
                 .insert(Value::String("apps".into()), Value::Mapping(Mapping::new()));
         }
         if let Some(Value::Mapping(apps)) = self.map.get_mut("apps") {
-            let mut entry = Mapping::new();
+            let mut entry = match apps.get(name) {
+                Some(Value::Mapping(old)) => old.clone(),
+                _ => Mapping::new(),
+            };
             entry.insert("subdomain".into(), subdomain.into());
             entry.insert("access".into(), access.into());
             apps.insert(name.into(), Value::Mapping(entry));
+        }
+    }
+
+    /// Arrêtée exprès avec dotbox stop (D81): diff et sync la laissent arrêtée.
+    pub fn app_stopped(&self, name: &str) -> bool {
+        self.map
+            .get("apps")
+            .and_then(Value::as_mapping)
+            .and_then(|apps| apps.get(name))
+            .and_then(Value::as_mapping)
+            .and_then(|e| e.get("stopped"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false)
+    }
+
+    /// stop écrit stopped: true, start, restart et install l'enlèvent (D81). Rend true si
+    /// l'entrée a changé. Une app absente de apps: ne change rien.
+    pub fn set_stopped(&mut self, name: &str, stopped: bool) -> bool {
+        let Some(Value::Mapping(apps)) = self.map.get_mut("apps") else {
+            return false;
+        };
+        let Some(Value::Mapping(entry)) = apps.get_mut(name) else {
+            return false;
+        };
+        if stopped {
+            entry.insert("stopped".into(), true.into()) != Some(Value::Bool(true))
+        } else {
+            entry.remove("stopped").is_some()
         }
     }
 
@@ -90,6 +122,24 @@ impl Config {
                 .filter_map(|k| k.as_str().map(String::from))
                 .collect(),
             _ => Vec::new(),
+        }
+    }
+
+    /// Une section entière (backup:), telle qu'elle est écrite.
+    pub fn section(&self, key: &str) -> Option<&Mapping> {
+        self.map.get(key).and_then(Value::as_mapping)
+    }
+
+    /// Une clé dans une section (backup.schedule), la section créée si elle manque.
+    pub fn set_in(&mut self, section: &str, key: &str, value: Value) {
+        if !self.map.get(section).is_some_and(Value::is_mapping) {
+            self.map.insert(
+                Value::String(section.into()),
+                Value::Mapping(Mapping::new()),
+            );
+        }
+        if let Some(Value::Mapping(m)) = self.map.get_mut(section) {
+            m.insert(Value::String(key.into()), value);
         }
     }
 
@@ -148,6 +198,30 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn stopped_on_purpose() {
+        let mut c = Config::parse("domain: example.com\n").unwrap();
+        // pas dans apps: rien ne change
+        assert!(!c.set_stopped("radarr", true));
+        c.set_app("radarr", "radarr", "two_factor");
+        assert!(!c.app_stopped("radarr"));
+        assert!(c.set_stopped("radarr", true));
+        assert!(!c.set_stopped("radarr", true));
+        assert!(c.app_stopped("radarr"));
+        // install réécrit le sous-domaine et l'accès: stopped reste
+        c.set_app("radarr", "films", "two_factor");
+        let c2 = Config::parse(&c.render().unwrap()).unwrap();
+        assert!(c2.app_stopped("radarr"));
+        assert_eq!(
+            c2.app("radarr"),
+            Some(("films".to_string(), "two_factor".to_string()))
+        );
+        assert!(c.set_stopped("radarr", false));
+        assert!(!c.set_stopped("radarr", false));
+        assert!(!c.app_stopped("radarr"));
+        assert!(!c.render().unwrap().contains("stopped"));
+    }
 
     #[test]
     fn roundtrip_keeps_unknown_keys() {

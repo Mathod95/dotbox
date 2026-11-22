@@ -2,7 +2,8 @@
 //! lui parle par un socket Unix, /run/dotbox/dotbox.sock, réservé à root et au groupe dotbox
 //! (D79). Il vérifie qui appelle par le noyau (SO_PEERCRED), sans mot de passe ni jeton.
 //!
-//! Les routes (page API): /api/v1/version, /status, /doctor, /apps et /jobs. Une installation
+//! Les routes (page API): /api/v1/version, /status, /doctor, /apps, /diff, /sync, /config et
+//! /jobs. Une installation
 //! ou un retrait est une tâche: un processus `dotbox install … --local` lancé avec
 //! DOTBOX_EVENTS=1, dont les événements (ui.rs) sont gardés et passés en direct à la CLI, en
 //! Server-Sent Events. Une tâche à la fois, comme apt.
@@ -26,10 +27,18 @@ use tokio::io::AsyncBufReadExt;
 use tokio::net::UnixListener;
 use tokio::sync::watch;
 
-use crate::{doctor, manage, status, system};
+use crate::{config_cmd, doctor, manage, status, sync, system};
 
 pub const SOCKET: &str = "/run/dotbox/dotbox.sock";
 pub const GROUP: &str = "dotbox";
+/// La porte web (11.11, D106): le service écoute aussi sur la passerelle du réseau dotbox, pour
+/// Traefik seulement (jamais sur une adresse publique).
+pub const WEB_PORT: u16 = 8800;
+/// L'en-tête que Traefik ajoute, et le secret qu'il porte (/opt/dotbox/secrets/web_gate).
+pub const GATE_HEADER_NAME: &str = "X-Dotbox-Gate";
+pub const GATE_SECRET: &str = "web_gate";
+/// Le groupe d'Authelia qui a droit à l'interface web (Q69, 4).
+pub const WEB_GROUP: &str = "admins";
 /// Les tâches finies gardées en mémoire, pour qui les relit.
 const KEEP_JOBS: usize = 20;
 
@@ -106,6 +115,133 @@ async fn check_peer(ConnectInfo(peer): ConnectInfo<Peer>, req: Request, next: Ne
     }
 }
 
+/// L'adresse du serveur dans le réseau dotbox (sa passerelle), là où Traefik le joint.
+pub fn gateway() -> Result<String, String> {
+    let gw = system::run(
+        "docker",
+        &[
+            "network",
+            "inspect",
+            "dotbox",
+            "-f",
+            "{{range .IPAM.Config}}{{.Gateway}}{{end}}",
+        ],
+    )?;
+    let gw = gw.trim().to_string();
+    gw.parse::<std::net::Ipv4Addr>()
+        .map_err(|_| format!("the dotbox network has no IPv4 gateway ({gw:?})"))?;
+    Ok(gw)
+}
+
+/// Deux textes égaux, comparés sans s'arrêter au premier écart (le temps ne dit rien du secret).
+fn same(a: &[u8], b: &[u8]) -> bool {
+    a.len() == b.len() && a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+}
+
+/// Une requête web est-elle admise (Q69, 3 à 5)? Le secret de Traefik, le groupe admins posé par
+/// Authelia, et pour ce qui change quelque chose, l'origine dotbox.<domaine>.
+pub fn web_allowed(
+    secret: &str,
+    given: Option<&str>,
+    groups: Option<&str>,
+    changes: bool,
+    origin: Option<&str>,
+    domain: &str,
+) -> Result<(), &'static str> {
+    if secret.is_empty() || !given.is_some_and(|g| same(g.as_bytes(), secret.as_bytes())) {
+        return Err("only through Traefik, at https://dotbox.<domain>");
+    }
+    if !groups.is_some_and(|g| g.split(',').any(|x| x.trim() == WEB_GROUP)) {
+        return Err("only for the admins group of Authelia");
+    }
+    if changes && origin != Some(format!("https://dotbox.{domain}").as_str()) {
+        return Err("a change must come from the Dot Box page itself");
+    }
+    Ok(())
+}
+
+async fn check_web(req: Request, next: Next) -> Response {
+    fn header(req: &Request, name: &str) -> Option<String> {
+        req.headers()
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .map(String::from)
+    }
+    let (given, groups, origin) = (
+        header(&req, GATE_HEADER_NAME),
+        header(&req, "Remote-Groups"),
+        header(&req, "Origin"),
+    );
+    let secret = crate::secrets::read(GATE_SECRET).unwrap_or_default();
+    let domain = crate::config::Config::load()
+        .ok()
+        .and_then(|c| c.get("domain"))
+        .unwrap_or_default();
+    let changes = !matches!(
+        *req.method(),
+        axum::http::Method::GET | axum::http::Method::HEAD
+    );
+    let verdict = web_allowed(
+        secret.trim(),
+        given.as_deref(),
+        groups.as_deref(),
+        changes,
+        origin.as_deref(),
+        &domain,
+    );
+    match verdict {
+        Ok(()) => next.run(req).await,
+        Err(why) => problem(StatusCode::FORBIDDEN, why),
+    }
+}
+
+/// La page d'attente (11.14): la porte marche, l'interface viendra vue par vue.
+async fn waiting(headers: axum::http::HeaderMap) -> axum::response::Html<String> {
+    let user = headers
+        .get("Remote-User")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("?");
+    let esc = |t: &str| {
+        t.replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
+    };
+    axum::response::Html(
+        WAITING
+            .replace("{user}", &esc(user))
+            .replace("{version}", env!("CARGO_PKG_VERSION")),
+    )
+}
+
+const WAITING: &str = include_str!("../web/waiting.html");
+
+/// L'écoute web: sur la passerelle du réseau dotbox, réessayée tant que Docker n'est pas prêt.
+async fn web_listen(app: Router) {
+    loop {
+        let gw = tokio::task::spawn_blocking(gateway)
+            .await
+            .unwrap_or_else(|e| Err(e.to_string()));
+        let bound = match gw {
+            Ok(gw) => tokio::net::TcpListener::bind((gw.as_str(), WEB_PORT))
+                .await
+                .map(|l| (gw, l))
+                .map_err(|e| e.to_string()),
+            Err(e) => Err(e),
+        };
+        match bound {
+            Ok((gw, listener)) => {
+                eprintln!("dotbox web gate listening on {gw}:{WEB_PORT}");
+                if let Err(e) = axum::serve(listener, app.clone()).await {
+                    eprintln!("the web gate stopped: {e}");
+                }
+            }
+            Err(e) => eprintln!("the web gate is not listening yet: {e}"),
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    }
+}
+
 fn problem(code: StatusCode, msg: &str) -> Response {
     (code, Json(json!({ "error": msg }))).into_response()
 }
@@ -158,7 +294,7 @@ async fn serve() -> Result<(), String> {
         .map_err(|e| format!("cannot set the rights of {SOCKET}: {e}"))?;
 
     let jobs: Shared = Arc::default();
-    let app = Router::new()
+    let api: Router<Shared> = Router::new()
         .route("/api/v1/version", get(version))
         .route("/api/v1/status", get(get_status))
         .route("/api/v1/doctor", get(get_doctor).post(post_doctor))
@@ -169,9 +305,19 @@ async fn serve() -> Result<(), String> {
         .route("/api/v1/catalog", get(catalog_list))
         .route("/api/v1/update", post(update))
         .route("/api/v1/diff", get(get_diff))
-        .route("/api/v1/jobs/{id}/events", get(events))
-        .layer(middleware::from_fn(check_peer))
-        .with_state(jobs);
+        .route("/api/v1/sync", post(post_sync))
+        .route("/api/v1/backup", post(post_backup))
+        .route("/api/v1/config", get(config_all))
+        .route("/api/v1/config/{key}", get(config_one).put(config_set))
+        .route("/api/v1/jobs/{id}/events", get(events));
+    // la porte web: les mêmes routes, plus la page, derrière check_web (11.11)
+    let web = api
+        .clone()
+        .route("/", get(waiting))
+        .layer(middleware::from_fn(check_web))
+        .with_state(jobs.clone());
+    tokio::spawn(web_listen(web));
+    let app = api.layer(middleware::from_fn(check_peer)).with_state(jobs);
     eprintln!("dotbox {} listening on {SOCKET}", env!("CARGO_PKG_VERSION"));
     axum::serve(listener, app.into_make_service_with_connect_info::<Peer>())
         .await
@@ -239,7 +385,67 @@ async fn info(Path(app): Path<String>) -> Response {
 }
 
 async fn get_diff() -> Response {
-    blocking(manage::diff).await
+    blocking(sync::plan).await
+}
+
+async fn config_all() -> Response {
+    blocking(|| config_cmd::get(None)).await
+}
+
+/// Une clé mal formée ou refusée: 400, avec le motif.
+async fn config_answer<T: serde::Serialize + Send + 'static>(
+    f: impl FnOnce() -> Result<T, String> + Send + 'static,
+) -> Response {
+    match tokio::task::spawn_blocking(f).await {
+        Ok(Ok(v)) => Json(v).into_response(),
+        Ok(Err(e)) => problem(StatusCode::BAD_REQUEST, &e),
+        Err(e) => problem(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+async fn config_one(Path(key): Path<String>) -> Response {
+    config_answer(move || config_cmd::get(Some(&key))).await
+}
+
+#[derive(Deserialize)]
+struct ConfigBody {
+    value: String,
+}
+
+/// dotbox config set: écrit dotbox.yml, n'applique rien (D93). Pas une tâche: un fichier.
+async fn config_set(Path(key): Path<String>, Json(body): Json<ConfigBody>) -> Response {
+    config_answer(move || config_cmd::set(&key, &body.value)).await
+}
+
+#[derive(Deserialize)]
+struct SyncBody {
+    /// le plan que la CLI a montré, et que l'utilisateur a accepté (D93)
+    plan: Vec<sync::Gap>,
+}
+
+/// dotbox sync: le plan est recalculé ici, et doit être celui qui a été montré. Sinon, rien
+/// n'est fait (comme un plan Terraform périmé): on n'applique jamais autre chose.
+async fn post_sync(State(jobs): State<Shared>, Json(body): Json<SyncBody>) -> Response {
+    let now = match tokio::task::spawn_blocking(sync::plan).await {
+        Ok(Ok(p)) => p,
+        Ok(Err(e)) => return problem(StatusCode::INTERNAL_SERVER_ERROR, &e),
+        Err(e) => return problem(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    };
+    if now != body.plan {
+        return problem(
+            StatusCode::CONFLICT,
+            "the plan changed since it was shown: run dotbox sync again to see the new one",
+        );
+    }
+    if sync::targets(&now).is_empty() {
+        return problem(StatusCode::CONFLICT, "nothing to do");
+    }
+    // la CLI a déjà demandé la confirmation
+    start_job(
+        &jobs,
+        "dotbox sync".into(),
+        vec!["sync".into(), "--yes".into()],
+    )
 }
 
 async fn lifecycle(
@@ -276,6 +482,36 @@ async fn update(State(jobs): State<Shared>, Json(body): Json<UpdateBody>) -> Res
     }
     if body.rollback {
         args.push("--rollback".into());
+    }
+    let what = format!("dotbox {}", args.join(" "));
+    start_job(&jobs, what, args)
+}
+
+#[derive(Deserialize, Default)]
+struct BackupBody {
+    #[serde(default)]
+    app: Option<String>,
+    #[serde(default)]
+    to: Option<String>,
+}
+
+/// dotbox backup, en tâche (D97): une à la fois, comme le reste.
+async fn post_backup(State(jobs): State<Shared>, body: Option<Json<BackupBody>>) -> Response {
+    let body = body.map(|Json(b)| b).unwrap_or_default();
+    let mut args = vec!["backup".to_string()];
+    if let Some(app) = body.app {
+        if app != "dotbox" && !crate::catalog::valid_name(&app) {
+            return problem(StatusCode::BAD_REQUEST, "not an app name");
+        }
+        args.push("--app".into());
+        args.push(app);
+    }
+    if let Some(to) = body.to {
+        if let Err(e) = crate::backup::Dest::parse(&to) {
+            return problem(StatusCode::BAD_REQUEST, &e);
+        }
+        args.push("--to".into());
+        args.push(to);
     }
     let what = format!("dotbox {}", args.join(" "));
     start_job(&jobs, what, args)
@@ -614,6 +850,43 @@ pub fn setup() -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// La porte web (11.11, Q69): le secret, le groupe admins, l'origine pour un changement.
+    #[test]
+    fn web_gate() {
+        let ok = |given, groups, changes, origin| {
+            web_allowed("s3cret", given, groups, changes, origin, "example.com")
+        };
+        assert!(ok(Some("s3cret"), Some("admins"), false, None).is_ok());
+        assert!(ok(Some("s3cret"), Some("family, admins"), false, None).is_ok());
+        assert!(ok(None, Some("admins"), false, None).is_err());
+        assert!(ok(Some("s3cre"), Some("admins"), false, None).is_err());
+        assert!(ok(Some("s3cretX"), Some("admins"), false, None).is_err());
+        assert!(ok(Some("s3cret"), Some("family"), false, None).is_err());
+        assert!(ok(Some("s3cret"), None, false, None).is_err());
+        assert!(ok(Some("s3cret"), Some("admins"), true, None).is_err());
+        assert!(
+            ok(
+                Some("s3cret"),
+                Some("admins"),
+                true,
+                Some("https://evil.example.org")
+            )
+            .is_err()
+        );
+        assert!(
+            ok(
+                Some("s3cret"),
+                Some("admins"),
+                true,
+                Some("https://dotbox.example.com")
+            )
+            .is_ok()
+        );
+        // sans secret sur le serveur, rien ne passe
+        assert!(web_allowed("", Some(""), Some("admins"), false, None, "example.com").is_err());
+        assert!(same(b"abc", b"abc") && !same(b"abc", b"abd") && !same(b"abc", b"ab"));
+    }
 
     const GROUP_FILE: &str = "root:x:0:\nsudo:x:27:admin\ndotbox:x:990:admin,lea\nadmin:x:1000:\n";
     const PASSWD: &str = "root:x:0:0::/root:/bin/bash\nadmin:x:1000:1000::/home/admin:/bin/bash\nbob:x:1001:1001::/home/bob:/bin/bash\n";

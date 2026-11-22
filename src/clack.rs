@@ -75,6 +75,11 @@ pub fn close(text: &str) {
     crate::clack::put(&format!("{}  {text}", bar_char("└")));
 }
 
+/// La fin, sans ligne vide avant: après open quand il n'y a rien à lister.
+pub fn close_tight(text: &str) {
+    crate::clack::put(&format!("{}  {text}", bar_char("└")));
+}
+
 /// Le cadre seulement dans un terminal: un script ou une redirection reçoit du texte simple.
 pub fn fancy() -> bool {
     console::Term::stdout().is_term()

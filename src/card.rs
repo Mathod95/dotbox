@@ -182,6 +182,16 @@ pub fn render(info: &Info) -> Vec<String> {
         "Log",
         &format!("{}{}", cmd(&info.log), d("  root only")),
     ));
+    // la clé des sauvegardes (D97, #112): sans elle, les archives sont illisibles
+    out.push(labeled(
+        inner,
+        "Backup key",
+        &format!(
+            "{}{}",
+            cmd("sudo cat /opt/dotbox/secrets/backup.key"),
+            d("  save a copy")
+        ),
+    ));
 
     // les composants
     let j: Vec<(usize, char)> = comp_joints.iter().map(|p| (*p, '┬')).collect();

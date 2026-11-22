@@ -4,11 +4,13 @@ mod add;
 mod apps;
 mod authelia;
 mod authelia_cmd;
+mod backup;
 mod card;
 mod catalog;
 mod clack;
 mod client;
 mod config;
+mod config_cmd;
 mod crowdsec;
 mod docker;
 mod doctor;
@@ -20,10 +22,12 @@ mod log;
 mod manage;
 mod out;
 mod prompt;
+mod restore;
 mod rootcmd;
 mod secrets;
 mod serve;
 mod status;
+mod sync;
 mod system;
 mod traefik;
 mod ui;
@@ -43,7 +47,7 @@ struct Cli {
     #[arg(long, global = true)]
     local: bool,
 
-    /// JSON output, for scripts (list, info, status, doctor, diff, update, version)
+    /// JSON output, for scripts (list, info, status, doctor, diff, update, version, config)
     #[arg(long, global = true)]
     json: bool,
 
@@ -158,6 +162,42 @@ enum Command {
     /// The gap between what is wanted and what runs, without changing anything
     Diff,
 
+    /// Apply dotbox.yml: show the plan, ask, then apply (never changes a version)
+    Sync {
+        /// Show every sub-step as it happens (they are always in the log)
+        #[arg(long)]
+        verbose: bool,
+    },
+
+    /// Back up /opt/dotbox and each app, compressed and encrypted, app by app
+    Backup {
+        /// Only this app (or dotbox, the config)
+        #[arg(long)]
+        app: Option<String>,
+        /// A folder of the server instead of backup.destinations
+        #[arg(long, value_name = "DEST")]
+        to: Option<String>,
+        /// Show every sub-step as it happens (they are always in the log)
+        #[arg(long)]
+        verbose: bool,
+    },
+
+    /// Restore a backup: latest, a date, or an archive's path (root)
+    Restore {
+        /// latest, a date (2026-11-22 or 2026-11-22-0400), or the path of an archive
+        #[arg(value_name = "ARCHIVE")]
+        what: String,
+        /// Only this app
+        #[arg(long)]
+        app: Option<String>,
+        /// The backup key, when it is not /opt/dotbox/secrets/backup.key
+        #[arg(long, value_name = "FILE")]
+        key: Option<String>,
+        /// Show every sub-step as it happens (they are always in the log)
+        #[arg(long)]
+        verbose: bool,
+    },
+
     /// The version of this command and of the Dot Box service
     Version,
 
@@ -166,6 +206,12 @@ enum Command {
         /// Show every sub-step as it happens (they are always in the log)
         #[arg(long)]
         verbose: bool,
+    },
+
+    /// Read or change dotbox.yml, one key at a time: dotbox diff shows the plan, dotbox sync applies it
+    Config {
+        #[command(subcommand)]
+        action: ConfigAction,
     },
 
     /// The shell completion script (bash, zsh or fish), on standard output
@@ -181,6 +227,21 @@ enum Command {
     // Caché de l'aide: on ne la tape pas soi-même (choix de Mathod95 du 20 novembre 2026).
     #[command(hide = true)]
     Serve,
+}
+
+#[derive(Subcommand)]
+enum ConfigAction {
+    /// Every key and its value, or one key's value
+    Get {
+        /// domain, ca, apps.<app>.subdomain, apps.<app>.access
+        key: Option<String>,
+    },
+    /// Check a value, then write it to dotbox.yml (applies nothing)
+    Set {
+        /// domain, ca, apps.<app>.subdomain, apps.<app>.access
+        key: String,
+        value: String,
+    },
 }
 
 #[derive(clap::Args)]
@@ -313,15 +374,47 @@ fn main() -> ExitCode {
         Command::Edit(a) => rootcmd::edit(&a.app, a.verbose),
         Command::Add { file, name, port } => add::run(&file, &name, port),
         Command::Diff if local => local_root("diff").and_then(|_| {
-            let g = manage::diff()?;
-            json_or(json, &g, |g| manage::print_diff(g));
-            if g.is_empty() {
+            let g = sync::plan()?;
+            json_or(json, &g, |g| sync::print_diff(g));
+            if sync::differences(&g) == 0 {
                 Ok(())
             } else {
                 Err(String::new())
             }
         }),
         Command::Diff => client::diff(json),
+        Command::Sync { verbose } if local => sync::run(cli.yes, verbose),
+        Command::Sync { verbose } => client::sync(cli.yes, verbose),
+        Command::Config {
+            action: ConfigAction::Get { key },
+        } if local => local_root("config").and_then(|_| {
+            let l = config_cmd::get(key.as_deref())?;
+            json_or(json, &l, |l| config_cmd::print_get(l, key.is_some()));
+            Ok(())
+        }),
+        Command::Config {
+            action: ConfigAction::Get { key },
+        } => client::config_get(key.as_deref(), json),
+        Command::Config {
+            action: ConfigAction::Set { key, value },
+        } if local => {
+            config_cmd::set(&key, &value).map(|c| json_or(json, &c, config_cmd::print_set))
+        }
+        Command::Config {
+            action: ConfigAction::Set { key, value },
+        } => client::config_set(&key, &value, json),
+        Command::Backup { app, to, verbose } if local => {
+            backup::run(app.as_deref(), to.as_deref(), verbose)
+        }
+        Command::Backup { app, to, verbose } => {
+            client::backup(app.as_deref(), to.as_deref(), verbose, json)
+        }
+        Command::Restore {
+            what,
+            app,
+            key,
+            verbose,
+        } => restore::run(&what, app.as_deref(), key.as_deref(), cli.yes, verbose),
         Command::Version => client::version(json),
         Command::Upgrade { verbose } => upgrade::run(verbose),
         Command::Completion { shell } => {

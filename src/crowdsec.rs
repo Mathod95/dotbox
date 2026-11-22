@@ -26,7 +26,7 @@ use crate::{docker, secrets, system, traefik};
 const COLLECTIONS: &str = "crowdsecurity/linux crowdsecurity/sshd crowdsecurity/traefik crowdsecurity/whitelist-good-actors crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules";
 
 const DIR: &str = "/opt/crowdsec";
-const COMPOSE: &str = "/opt/crowdsec/compose.yml";
+pub const COMPOSE: &str = "/opt/crowdsec/compose.yml";
 const CONFIG: &str = "/opt/crowdsec/config";
 const DATA: &str = "/opt/crowdsec/data";
 const ACQUIS: &str = "/opt/crowdsec/config/acquis.d/dotbox.yaml";
@@ -50,7 +50,7 @@ const SET_V4: &str = "crowdsec-blacklists";
 const CHAIN: &str = "CROWDSEC_CHAIN";
 
 /// Le socket proxy de CrowdSec (10.9): il ne sert qu'à lire les logs des apps (D72).
-const PROXY: &str = "crowdsec-socket-proxy";
+pub const PROXY: &str = "crowdsec-socket-proxy";
 
 pub fn compose(image: &str, proxy_image: &str) -> String {
     format!(

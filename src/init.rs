@@ -10,7 +10,9 @@ use crate::card::{self, Component};
 use crate::catalog::{self, Core};
 use crate::config::{self, Config};
 use crate::out::say;
-use crate::{authelia, crowdsec, docker, github, log, prompt, secrets, serve, system, traefik, ui};
+use crate::{
+    authelia, backup, crowdsec, docker, github, log, prompt, secrets, serve, system, traefik, ui,
+};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -244,6 +246,8 @@ fn steps(args: &Args) -> Result<(), String> {
     if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
         say("write", config::PATH);
     }
+    // la porte web d'abord (11.13): Traefik la lit au démarrage
+    traefik::write_web_route(&domain)?;
     traefik::setup(&domain, &ca, &traefik_core, plugin)?;
     let traefik_image = traefik_core.image("traefik")?;
     let certs = if ca == "letsencrypt-staging" {
@@ -271,7 +275,14 @@ fn steps(args: &Args) -> Result<(), String> {
     // 8. le service de Dot Box, que la CLI appelle (D79, 11.7)
     ui::step("Service", "the Dot Box service, behind the dotbox command");
     let service = serve::setup()?;
-    ui::done(&service);
+    // la sauvegarde (16.2, 16.6, D97): sa clé, et le timer qui suit backup.schedule
+    if backup::ensure_key()? {
+        say("create", backup::KEY);
+    } else {
+        say("check", backup::KEY);
+    }
+    let planned = backup::setup_timer(&backup::Settings::of(&cfg)?)?;
+    ui::done(&format!("{service}, {planned}"));
 
     // la carte de fin (D26, D32, D37)
     let docker_state =
@@ -318,7 +329,7 @@ fn steps(args: &Args) -> Result<(), String> {
                     Ok(s) => s,
                     Err(_) => String::new(),
                 },
-                address: serve::SOCKET.into(),
+                address: format!("https://dotbox.{domain}"),
             },
         ],
         elapsed: ui::duration(ui::elapsed()),

@@ -10,8 +10,8 @@ use std::time::{Duration, Instant};
 
 // La version d'Authelia, fixée (D15), est dans le catalogue: catalog/core/authelia.yml (D64).
 
-const COMPOSE: &str = "/opt/authelia/compose.yml";
-const CONFIG: &str = "/opt/authelia/config/configuration.yml";
+pub const COMPOSE: &str = "/opt/authelia/compose.yml";
+pub const CONFIG: &str = "/opt/authelia/config/configuration.yml";
 const USERS: &str = "/opt/authelia/config/users_database.yml";
 
 /// Les secrets d'Authelia: nom du fichier dans /opt/dotbox/secrets, chemin dans le container,

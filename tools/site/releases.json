@@ -2,6 +2,76 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "next",
+      "title": {
+        "fr": "Sync, config, la sauvegarde et la porte web",
+        "en": "Sync, config, backups and the web gate"
+      },
+      "new": [
+        {
+          "fr": "CLI: `dotbox sync`: refait ce que font `init` et `install`, depuis `dotbox.yml` et le catalogue rangé, sans aller sur GitHub ni changer de version. Il montre le plan, demande une confirmation (`-y` pour la sauter), puis applique",
+          "en": "CLI: `dotbox sync`: does again what `init` and `install` do, from `dotbox.yml` and the stored catalog, without going to GitHub or changing versions. It shows the plan, asks for a confirmation (`-y` to skip it), then applies"
+        },
+        {
+          "fr": "CLI: `dotbox diff` montre le plan de `dotbox sync`, façon Terraform. Une app arrêtée par `dotbox stop` (`stopped: true` dans `dotbox.yml`) reste arrêtée",
+          "en": "CLI: `dotbox diff` shows the plan of `dotbox sync`, Terraform style. An app stopped with `dotbox stop` (`stopped: true` in `dotbox.yml`) stays stopped"
+        },
+        {
+          "fr": "CLI: `dotbox config get` et `dotbox config set`: une liste fermée de clés de `dotbox.yml`, chaque valeur vérifiée, appliquée ensuite par `dotbox sync`",
+          "en": "CLI: `dotbox config get` and `dotbox config set`: a closed list of `dotbox.yml` keys, each value checked, then applied by `dotbox sync`"
+        },
+        {
+          "fr": "CLI: `dotbox backup`, avec `--app` et `--to`: `/opt` sauvegardé app par app, chaque app arrêtée un court instant et attendue en marche avant la suivante, en archives `<app>-<date>.tar.zst.age` compressées (zstd) puis chiffrées (age), rien à installer",
+          "en": "CLI: `dotbox backup`, with `--app` and `--to`: `/opt` backed up app by app, each app stopped for a short moment and waited for before the next one, into `<app>-<date>.tar.zst.age` archives compressed (zstd) then encrypted (age), nothing to install"
+        },
+        {
+          "fr": "Moteur: destinations de sauvegarde `local` (`/backups` par défaut), `sftp:` (un compte SSH, la clé de Dot Box, l'empreinte du serveur gardée au premier envoi) et `rclone:` (`secrets/rclone.conf`), par l'image Docker de rclone. Rétention `keep`, par app et par destination",
+          "en": "Engine: backup destinations `local` (`/backups` by default), `sftp:` (an SSH account, Dot Box's key, the server fingerprint kept on the first upload) and `rclone:` (`secrets/rclone.conf`), through rclone's Docker image. `keep` retention, per app and per destination"
+        },
+        {
+          "fr": "Core: `dotbox init` crée la clé de sauvegarde (`/opt/dotbox/secrets/backup.key`) et programme la sauvegarde, chaque jour à 04:00 (`dotbox-backup.timer`), réglable par `backup.schedule` et `backup.keep`",
+          "en": "Core: `dotbox init` creates the backup key (`/opt/dotbox/secrets/backup.key`) and schedules the backup, every day at 04:00 (`dotbox-backup.timer`), set with `backup.schedule` and `backup.keep`"
+        },
+        {
+          "fr": "CLI: `sudo dotbox restore <archive|latest>`, avec `--app` et `--key`: une app ou tout le serveur, depuis une archive locale ou distante. L'ancien dossier est gardé à côté et remis si l'app ne repart pas",
+          "en": "CLI: `sudo dotbox restore <archive|latest>`, with `--app` and `--key`: one app or the whole server, from a local or remote archive. The old folder is kept aside and put back if the app does not start again"
+        },
+        {
+          "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia (groupe `admins`). Seul Traefik peut joindre le service (un secret, le port 8800 sur le réseau `dotbox` seulement). Une page d'attente, en attendant l'interface",
+          "en": "Core: the web gate, `dotbox.<domain>` behind Authelia (`admins` group). Only Traefik can reach the service (a secret, port 8800 on the `dotbox` network only). A waiting page, until the interface comes"
+        },
+        {
+          "fr": "CLI: `dotbox doctor` vérifie la sauvegarde (la clé, le timer, la dernière sauvegarde) et la porte web. `dotbox status` montre la dernière sauvegarde",
+          "en": "CLI: `dotbox doctor` checks the backup (the key, the timer, the last backup) and the web gate. `dotbox status` shows the last backup"
+        },
+        {
+          "fr": "Manifest: `backup_exclude`, les dossiers d'une app laissés hors de la sauvegarde",
+          "en": "Manifest: `backup_exclude`, an app's folders left out of the backup"
+        },
+        {
+          "fr": "Catalogue: rclone dans le core (`catalog/core/rclone.yml`), pour les destinations de sauvegarde",
+          "en": "Catalog: rclone in the core (`catalog/core/rclone.yml`), for the backup destinations"
+        }
+      ],
+      "changed": [
+        {
+          "fr": "Traefik: un fournisseur `file` (`/etc/traefik/dynamic`) en plus de Docker, pour la porte web",
+          "en": "Traefik: a `file` provider (`/etc/traefik/dynamic`) besides Docker, for the web gate"
+        },
+        {
+          "fr": "CLI: construit avec Rust 1.87 au minimum",
+          "en": "CLI: built with Rust 1.87 at least"
+        }
+      ],
+      "fixed": [
+        {
+          "fr": "Moteur: un container arrêté n'est plus vu « healthy » ou « unhealthy » d'après son dernier healthcheck, mais arrêté",
+          "en": "Engine: a stopped container is no longer seen as « healthy » or « unhealthy » from its last healthcheck, but as stopped"
+        }
+      ],
+      "removed": []
+    },
+    {
       "version": "v0.0.5",
       "date": "2026-11-20",
       "tagged": true,

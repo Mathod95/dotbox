@@ -207,7 +207,10 @@
       "domain": "core",
       "status": "planned",
       "fr": "Core: `install.sh`, pouvoir choisir une version précédente au lieu de la dernière (à décider)",
-      "en": "Core: `install.sh`, being able to pick an earlier version instead of the latest (to be decided)"
+      "en": "Core: `install.sh`, being able to pick an earlier version instead of the latest (to be decided)",
+      "journal": [
+        "Q49"
+      ]
     },
     {
       "stage": "core",
@@ -300,7 +303,8 @@
       "journal": [
         "D35",
         "D36",
-        "J74"
+        "J74",
+        "Q50"
       ]
     },
     {
@@ -405,8 +409,18 @@
       "stage": "core",
       "domain": "core",
       "status": "planned",
-      "fr": "Core: message d'accueil SSH (MOTD) Dot Box, au contenu encore à définir",
-      "en": "Core: Dot Box SSH welcome message (MOTD), contents still to be defined"
+      "fr": "Core: message d'accueil SSH (MOTD) Dot Box, `dotbox motd`: un état des lieux du serveur à chaque connexion, compact par défaut ou deux autres formes, installé par défaut et désactivable",
+      "en": "Core: Dot Box SSH welcome message (MOTD), `dotbox motd`: a look at the state of the server at each login, compact by default or two other styles, installed by default and can be turned off",
+      "journal": [
+        "17.1-17.3",
+        "D86",
+        "D87",
+        "D89",
+        "D90",
+        "D91",
+        "Q55"
+      ],
+      "doc": "motd"
     },
     {
       "stage": "apps",
@@ -480,7 +494,7 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "progress",
+      "status": "done",
       "fr": "Moteur: l'état voulu dans `dotbox.yml`, `dotbox diff` et `dotbox sync`",
       "en": "Engine: the desired state in `dotbox.yml`, `dotbox diff` and `dotbox sync`",
       "doc": "basics",
@@ -489,18 +503,35 @@
         "J206",
         "J209",
         "15",
-        "D81"
+        "D81",
+        "D93",
+        "D94",
+        "15.1-15.4"
       ]
     },
     {
       "stage": "apps",
       "domain": "access",
-      "status": "planned",
+      "status": "done",
       "fr": "Moteur: sous-domaine et niveau d'accès modifiables dans `dotbox.yml`, appliqués par `dotbox sync`",
       "en": "Engine: subdomain and access level set in `dotbox.yml`, applied by `dotbox sync`",
       "doc": "accessing-apps",
       "journal": [
-        "15.2"
+        "15.2",
+        "J220-J229"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox config get` et `dotbox config set`: une liste fermée de clés de `dotbox.yml`, vérifiées, appliquées par `dotbox sync`",
+      "en": "CLI: `dotbox config get` and `dotbox config set`: a closed list of `dotbox.yml` keys, checked, applied by `dotbox sync`",
+      "doc": "cli",
+      "journal": [
+        "15.5",
+        "D93",
+        "J230-J237"
       ]
     },
     {
@@ -538,7 +569,8 @@
       "doc": "post-installation",
       "journal": [
         "D25",
-        "D35"
+        "D35",
+        "D94"
       ]
     },
     {
@@ -881,29 +913,60 @@
     {
       "stage": "web",
       "domain": "web",
-      "status": "planned",
-      "fr": "Interface web: catalogue, états, logs d'installation en direct, import de compose",
-      "en": "Web interface: catalog, status, live install logs, compose import",
+      "status": "progress",
+      "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia, seul Traefik joint le service, une page d'attente",
+      "en": "Core: the web gate, `dotbox.<domain>` behind Authelia, only Traefik reaches the service, a waiting page",
+      "doc": "api",
       "journal": [
-        "11.1"
+        "11.9",
+        "11.11-11.18",
+        "D106",
+        "J277-J288"
+      ]
+    },
+    {
+      "stage": "web",
+      "domain": "web",
+      "status": "planned",
+      "fr": "Interface web: catalogue, états, logs d'installation en direct",
+      "en": "Web UI: catalog, states, live installation logs",
+      "journal": [
+        "11.1",
+        "11.10",
+        "D100",
+        "D102",
+        "D105",
+        "Q67"
+      ],
+      "doc": "web-ui"
+    },
+    {
+      "stage": "backup",
+      "domain": "backup",
+      "status": "done",
+      "fr": "Moteur: sauvegarde de `/opt` app par app, avec un arrêt court",
+      "en": "Engine: backup of `/opt` app by app, with a short stop",
+      "doc": "backup",
+      "journal": [
+        "16.3",
+        "J238-J253"
       ]
     },
     {
       "stage": "backup",
       "domain": "backup",
       "status": "planned",
-      "fr": "Moteur: sauvegarde de `/opt` app par app, arrêt court ou instantané btrfs/ZFS",
-      "en": "Engine: backup of `/opt` app by app, short stop or btrfs/ZFS snapshot",
+      "fr": "Moteur: sauvegarde par instantané btrfs ou ZFS, sans arrêter l'app",
+      "en": "Engine: backup through a btrfs or ZFS snapshot, without stopping the app",
       "doc": "backup",
       "journal": [
-        "16.3",
         "16.8"
       ]
     },
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "planned",
+      "status": "done",
       "fr": "Moteur: archives compressées (zstd) puis chiffrées (age), clé dans `secrets/backup.key`",
       "en": "Engine: archives compressed (zstd) then encrypted (age), key in `secrets/backup.key`",
       "doc": "backup",
@@ -916,39 +979,53 @@
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "planned",
+      "status": "done",
       "fr": "Moteur: destinations local, rclone et SFTP (par l'image Docker de rclone, rien à installer ni sur le serveur ni en face), rétention `keep`, timer systemd quotidien",
       "en": "Engine: local, rclone and SFTP destinations (through rclone's Docker image, nothing to install on the server or on the other side), `keep` retention, daily systemd timer",
       "doc": "backup",
       "journal": [
         "16.5",
         "16.6",
-        "D83"
+        "D83",
+        "D98",
+        "J254-J276"
+      ]
+    },
+    {
+      "stage": "backup",
+      "domain": "backup",
+      "status": "done",
+      "fr": "CLI: `dotbox backup` avec `--app` et `--to`",
+      "en": "CLI: `dotbox backup` with `--app` and `--to`",
+      "doc": "backup",
+      "journal": [
+        "16.3",
+        "16.5",
+        "J238-J276"
       ]
     },
     {
       "stage": "backup",
       "domain": "backup",
       "status": "planned",
-      "fr": "CLI: `dotbox backup` avec `--app`, `--to` et `--stream`",
-      "en": "CLI: `dotbox backup` with `--app`, `--to` and `--stream`",
+      "fr": "CLI: `dotbox backup --stream`, envoyer l'archive sans l'écrire sur le disque",
+      "en": "CLI: `dotbox backup --stream`, send the archive without writing it to disk",
       "doc": "backup",
       "journal": [
-        "16.3",
-        "16.5",
         "16.8"
       ]
     },
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "planned",
+      "status": "progress",
       "fr": "CLI: `sudo dotbox restore latest`, une app ou tout le serveur, en root",
       "en": "CLI: `sudo dotbox restore latest`, one app or the whole server, as root",
       "doc": "restore",
       "journal": [
         "16.4",
-        "16.7"
+        "16.7",
+        "J238-J253"
       ]
     },
     {
@@ -962,10 +1039,15 @@
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "planned",
+      "status": "progress",
       "fr": "CLI: changement de domaine avec `dotbox config set domain` puis `dotbox sync`",
       "en": "CLI: domain change with `dotbox config set domain` then `dotbox sync`",
-      "doc": "restore"
+      "doc": "restore",
+      "journal": [
+        "D93",
+        "15.5",
+        "D94"
+      ]
     },
     {
       "stage": "backup",

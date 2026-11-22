@@ -2,12 +2,13 @@
 name = "dotbox"
 version = "0.0.5"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 description = "Self-hosted apps on Docker Compose, behind Traefik and Authelia"
 repository = "https://github.com/Mathod95/dotbox"
 publish = false
 
 [dependencies]
+age = "0.12.1"
 argon2 = { version = "0.5.3", default-features = false, features = ["alloc", "password-hash"] }
 axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio", "json", "query"] }
 base64 = "0.23.1"
@@ -20,9 +21,11 @@ http-body-util = "0.1.5"
 hyper = { version = "1.12.0", features = ["client", "http1"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }
 indicatif = "0.18.6"
+ruzstd = "0.9.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 serde_yaml_ng = "0.10"
+tar = "0.4.46"
 tokio = { version = "1.54.1", features = ["rt", "rt-multi-thread", "net", "macros", "process", "io-util", "sync", "time"] }
 x509-parser = "0.18.1"
 

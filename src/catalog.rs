@@ -117,6 +117,10 @@ struct Raw {
     /// SYS_MODULE au container
     #[serde(default)]
     kernel_modules: Vec<String>,
+    /// ce que dotbox backup laisse de côté dans /opt/<app>, en plus des logs (D97): des caches
+    /// qui se refont seuls. Chemins relatifs au dossier de l'app, * pour n'importe quoi.
+    #[serde(default)]
+    backup_exclude: Vec<String>,
 }
 
 /// Ce qu'un manifest peut demander au noyau: une liste fermée, chaque entrée vérifiée.
@@ -247,6 +251,8 @@ pub struct Manifest {
     /// dans l'ordre du fichier
     pub sysctls: Vec<(String, String)>,
     pub kernel_modules: Vec<String>,
+    /// relatifs à /opt/<app> (D97)
+    pub backup_exclude: Vec<String>,
 }
 
 /// Un dossier du serveur dans /data (les médias et les téléchargements).
@@ -599,6 +605,13 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             return Err(format!("kernel_modules {m:?}: only {}", MODULES.join(", ")));
         }
     }
+    for e in &raw.backup_exclude {
+        if e.is_empty() || e.starts_with('/') || e.split('/').any(|p| p == "..") {
+            return Err(format!(
+                "backup_exclude {e:?}: a path inside the app's folder, like cache or config/log"
+            ));
+        }
+    }
     if !raw.authelia_paths.is_empty() && raw.access.behind_authelia() {
         return Err("authelia_paths: only for the levels app and public, the whole app is already behind Authelia".into());
     }
@@ -623,6 +636,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         cap_add: raw.cap_add,
         sysctls,
         kernel_modules: raw.kernel_modules,
+        backup_exclude: raw.backup_exclude,
     })
 }
 
@@ -1365,6 +1379,10 @@ mod tests {
         assert!(with("sysctls:\n  kernel.panic: \"1\"\n").is_err());
         assert!(with("kernel_modules:\n  - wireguard\n").is_ok());
         assert!(with("kernel_modules:\n  - overlay\n").is_err());
+        // backup_exclude: dans le dossier de l'app seulement (D97)
+        assert!(with("backup_exclude:\n  - cache\n  - config/log\n").is_ok());
+        assert!(with("backup_exclude:\n  - /etc\n").is_err());
+        assert!(with("backup_exclude:\n  - ../dotbox\n").is_err());
         // health_tool: curl ou wget, avec un chemin
         assert!(with("health: /ping\nhealth_tool: wget\n").is_ok());
         assert!(with("health: image\nhealth_tool: wget\n").is_err());

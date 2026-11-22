@@ -1,5 +1,5 @@
-//! Les autres commandes de la CLI (Journal, étape 13): list, info, start, stop, restart, logs,
-//! update et diff. Ce qui lit répond tout de suite (une route GET du service), ce qui agit est
+//! Les autres commandes de la CLI (Journal, étape 13): list, info, start, stop, restart, logs
+//! et update (diff est dans sync.rs). Ce qui lit répond tout de suite (une route GET du service), ce qui agit est
 //! une tâche du service, avec ses étapes en direct, comme install. Avec --local, en root, sans
 //! le service.
 
@@ -247,7 +247,7 @@ fn installed_app(app: &str) -> Result<(), String> {
 }
 
 /// Le container a-t-il un healthcheck (le sien ou celui de son image)?
-fn has_health(app: &str) -> bool {
+pub fn has_health(app: &str) -> bool {
     system::run(
         "docker",
         &["inspect", "-f", "{{if .Config.Healthcheck}}yes{{end}}", app],
@@ -260,7 +260,7 @@ pub fn lifecycle(action: &str, app: &str, verbose: bool) -> Result<(), String> {
     apps::begin(action, app, 1, verbose)?;
     ui::step(&apps::title(app), action);
     apps::finish((|| {
-        let cfg = Config::load()?;
+        let mut cfg = Config::load()?;
         if cfg.app(app).is_none() || !Path::new(&engine::compose_path(app)).exists() {
             return Err(format!("{app} is not installed: dotbox install {app}"));
         }
@@ -270,6 +270,22 @@ pub fn lifecycle(action: &str, app: &str, verbose: bool) -> Result<(), String> {
             _ => apps::compose(app, &["restart"])?,
         };
         say(action, app);
+        // arrêtée exprès: dotbox.yml le garde, diff et sync la laissent arrêtée (D81)
+        if cfg.set_stopped(app, action == "stop") {
+            system::write_if_changed(crate::config::PATH, &cfg.render()?, 0o644)?;
+            say(
+                "write",
+                &format!(
+                    "{} ({app}: {})",
+                    crate::config::PATH,
+                    if action == "stop" {
+                        "stopped: true"
+                    } else {
+                        "no longer stopped"
+                    }
+                ),
+            );
+        }
         if action == "stop" {
             ui::done("stopped");
         } else {
@@ -409,7 +425,8 @@ pub fn update(
             if let Some(c) = status::containers()?.iter().find(|c| c.name == t.app) {
                 system::write_if_changed(&previous_path(&t.app), &format!("{}\n", c.image), 0o644)?;
             }
-            apps::install_one(&dir, &t.app, &domain, &user, None)?;
+            // arrêtée exprès: la nouvelle version est prête, l'app reste arrêtée (D81)
+            apps::install_one(&dir, &t.app, &domain, &user, None, !cfg.app_stopped(&t.app))?;
         }
         report = versions(&dir, &cfg)?;
         Ok(())
@@ -431,7 +448,8 @@ fn roll_back(app: &str, verbose: bool) -> Result<(), String> {
             .map_err(|_| format!("no previous image for {app}: dotbox update keeps one"))?;
         let cfg = Config::load()?;
         let (domain, user) = apps::server(&cfg)?;
-        apps::install_one(&catalog_dir(), app, &domain, &user, Some(&image))?;
+        let start = !cfg.app_stopped(app);
+        apps::install_one(&catalog_dir(), app, &domain, &user, Some(&image), start)?;
         // une seule marche en arrière
         let _ = std::fs::remove_file(previous_path(app));
         Ok(())
@@ -494,90 +512,7 @@ pub fn print_versions(report: &[Version]) {
     }
 }
 
-// ---------- 13.7 dotbox diff
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct Gap {
-    pub app: String,
-    pub what: String,
-    pub hint: String,
-}
-
-/// L'écart entre ce qui est voulu et ce qui tourne, sans rien changer ni aller sur GitHub.
-pub fn diff() -> Result<Vec<Gap>, String> {
-    let dir = catalog_dir();
-    let cfg = Config::load()?;
-    let list = status::containers()?;
-    let mut gaps = Vec::new();
-    for app in cfg.app_names() {
-        let gap = |what: String, hint: String| Gap {
-            app: app.clone(),
-            what,
-            hint,
-        };
-        match list.iter().find(|c| c.name == app) {
-            None => gaps.push(gap(
-                "no container, wanted running".into(),
-                format!("dotbox install {app}"),
-            )),
-            Some(c) if c.state != "running" => gaps.push(gap(
-                format!("{}, wanted running", c.state),
-                format!("dotbox start {app}"),
-            )),
-            Some(c) => {
-                if let Ok(m) = catalog::load(&dir, &app) {
-                    let tag = status::tag(&c.image);
-                    if tag != m.version() {
-                        gaps.push(gap(
-                            format!("runs {tag}, the catalog has {}", m.version()),
-                            format!("dotbox update {app}"),
-                        ));
-                    }
-                }
-            }
-        }
-        // le compose écrit par dotbox, changé à la main depuis
-        if let Ok(kept) = std::fs::read_to_string(apps::compose_sum_path(&app)) {
-            let now = crate::crowdsec::sha256(&engine::compose_path(&app)).unwrap_or_default();
-            if kept.trim() != now {
-                gaps.push(gap(
-                    "compose.yml changed by hand".into(),
-                    format!(
-                        "dotbox install {app} writes it again: keep your changes in compose.override.yml"
-                    ),
-                ));
-            }
-        }
-    }
-    Ok(gaps)
-}
-
-pub fn print_diff(gaps: &[Gap]) {
-    if !clack::fancy() {
-        for g in gaps {
-            clack::put(&format!("~ {:<16}{}  → {}", g.app, g.what, g.hint));
-        }
-        let n = gaps.len();
-        clack::put(&format!(
-            "{n} {}",
-            if n == 1 { "difference" } else { "differences" }
-        ));
-        return;
-    }
-    clack::open("dotbox diff");
-    let width = gaps.iter().map(|g| g.app.len()).max().unwrap_or(0).max(4) + 3;
-    for g in gaps {
-        clack::item(Mark::Warn, &g.app, width, &g.what);
-        clack::sub(&format!("→ {}", g.hint));
-    }
-    match gaps.len() {
-        0 => clack::close(&Mark::Ok.paint("in sync: what runs is what is wanted")),
-        n => clack::close(&Mark::Warn.paint(&format!(
-            "{n} {}",
-            if n == 1 { "difference" } else { "differences" }
-        ))),
-    }
-}
+// ---------- 13.7 dotbox diff: dans sync.rs, avec dotbox sync (étape 15)
 
 #[cfg(test)]
 mod tests {

@@ -40,6 +40,11 @@ providers:
     endpoint: "tcp://socket-proxy:2375"
     exposedByDefault: false
     network: dotbox
+  # La porte web de Dot Box (11.13, D106): le service tourne sur le serveur, pas dans un
+  # container. dotbox écrit son routeur dans ce dossier, relu quand un fichier change.
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
 
 # Le plugin CrowdSec, pour AppSec (10.7): une copie locale vérifiée par dotbox, dans
 # /plugins-local, jamais téléchargée par Traefik.

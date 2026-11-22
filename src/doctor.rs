@@ -120,6 +120,65 @@ fn page(slug: &str) -> String {
     format!("see {}{slug}/", card::DOCS)
 }
 
+/// La sauvegarde (D97): ratée, trop vieille, le timer arrêté, ou seulement sur ce serveur.
+fn backup_checks(cfg: &crate::config::Config) -> Vec<Check> {
+    use crate::backup;
+    let mut out = Vec::new();
+    let settings = match backup::Settings::of(cfg) {
+        Ok(s) => s,
+        Err(e) => return vec![error(e, format!("fix {}", crate::config::PATH))],
+    };
+    match backup::last() {
+        None => out.push(warn("no backup yet", "dotbox backup")),
+        Some(r) if !r.ok => out.push(error(
+            format!(
+                "the last one failed ({}): {}",
+                backup::short_date(&r.started),
+                r.error.lines().next().unwrap_or_default()
+            ),
+            "dotbox backup, then its log in /opt/dotbox/logs",
+        )),
+        Some(r) => {
+            let age = system::run("date", &["-d", &r.ended, "+%s"])
+                .ok()
+                .zip(system::run("date", &["+%s"]).ok())
+                .and_then(|(t, n)| Some(n.parse::<i64>().ok()? - t.parse::<i64>().ok()?));
+            let total: u64 = r.archives.iter().map(|a| a.bytes).sum();
+            let text = format!(
+                "{}, {}, {}",
+                backup::short_date(&r.started),
+                backup::count(r.archives.len()),
+                backup::human(total)
+            );
+            if age.is_some_and(|a| a > 2 * 24 * 3600) {
+                out.push(warn(
+                    format!("{text}: more than two days ago"),
+                    "systemctl status dotbox-backup.timer",
+                ));
+            } else {
+                out.push(ok(text));
+            }
+        }
+    }
+    if settings.schedule != "off"
+        && system::run("systemctl", &["is-active", "dotbox-backup.timer"]).as_deref()
+            != Ok("active")
+    {
+        out.push(warn("dotbox-backup.timer is not running", "dotbox sync"));
+    }
+    if settings
+        .destinations
+        .iter()
+        .all(|d| matches!(d, backup::Dest::Local(_)))
+    {
+        out.push(warn(
+            "only on this server: a dead disk takes the backups with it",
+            format!("add a remote destination, {}", page("backup")),
+        ));
+    }
+    out
+}
+
 /// Le dernier résultat, s'il existe.
 pub fn last() -> Option<Report> {
     serde_json::from_str(&std::fs::read_to_string(PATH).ok()?).ok()
@@ -168,7 +227,8 @@ pub fn run() -> Result<Report, String> {
     add("Updates", update_checks());
     add("SSH", ssh_checks());
     add("Disk", disk_checks());
-    add("Service", vec![service_check()]);
+    add("Backup", backup_checks(&cfg));
+    add("Service", vec![service_check(), gate_check()]);
     let report = Report {
         date: system::run("date", &["-u", "+%Y-%m-%dT%H:%M:%SZ"])?,
         checks,
@@ -581,6 +641,54 @@ fn service_check() -> Check {
         ok("dotbox running")
     } else {
         error("dotbox is not running", "sudo systemctl restart dotbox")
+    }
+}
+
+/// Une requête à la porte web, en direct sur la passerelle: son code HTTP.
+fn gate_code(gateway: &str, headers: &str) -> Result<u16, String> {
+    use std::io::{Read, Write};
+    let addr = format!("{gateway}:{}", crate::serve::WEB_PORT);
+    let mut s = std::net::TcpStream::connect_timeout(
+        &addr.parse().map_err(|e| format!("{addr}: {e}"))?,
+        std::time::Duration::from_secs(3),
+    )
+    .map_err(|e| format!("{addr}: {e}"))?;
+    let _ = s.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+    s.write_all(
+        format!(
+            "GET /api/v1/version HTTP/1.1\r\nHost: dotbox\r\n{headers}Connection: close\r\n\r\n"
+        )
+        .as_bytes(),
+    )
+    .map_err(|e| e.to_string())?;
+    let mut head = [0u8; 12];
+    s.read_exact(&mut head).map_err(|e| e.to_string())?;
+    String::from_utf8_lossy(&head[9..12])
+        .parse()
+        .map_err(|_| "not an HTTP answer".to_string())
+}
+
+/// La porte web (11.15): elle refuse sans le secret de Traefik, et répond avec.
+fn gate_check() -> Check {
+    let hint = "dotbox sync, then sudo systemctl restart dotbox";
+    let gw = match crate::serve::gateway() {
+        Ok(g) => g,
+        Err(e) => return error(format!("the web gate: {e}"), hint),
+    };
+    let secret = crate::secrets::read(crate::serve::GATE_SECRET).unwrap_or_default();
+    let with = format!(
+        "{}: {}\r\nRemote-Groups: {}\r\n",
+        crate::serve::GATE_HEADER_NAME,
+        secret.trim(),
+        crate::serve::WEB_GROUP
+    );
+    match (gate_code(&gw, ""), gate_code(&gw, &with)) {
+        (Ok(403), Ok(200)) => ok("web gate: refuses without Traefik's secret, answers with it"),
+        (Ok(c), _) if c != 403 => {
+            error(format!("the web gate answers {c} without the secret"), hint)
+        }
+        (Err(e), _) | (_, Err(e)) => error(format!("the web gate does not answer: {e}"), hint),
+        (_, Ok(c)) => error(format!("the web gate answers {c} with the secret"), hint),
     }
 }
 

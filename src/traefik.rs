@@ -15,8 +15,8 @@ use std::time::{Duration, Instant};
 // Les versions de Traefik et du socket proxy sont dans le catalogue: catalog/core/traefik.yml
 // (D64). Ici, la façon de les installer.
 
-const COMPOSE: &str = "/opt/traefik/compose.yml";
-const STATIC: &str = "/opt/traefik/config/traefik.yml";
+pub const COMPOSE: &str = "/opt/traefik/compose.yml";
+pub const STATIC: &str = "/opt/traefik/config/traefik.yml";
 const LOGS: &str = "/opt/traefik/logs";
 const LOGROTATE: &str = "/etc/logrotate.d/dotbox-traefik";
 /// Les plugins locaux, montés en lecture seule sur /plugins-local (le dossier de travail de
@@ -163,6 +163,11 @@ providers:
     endpoint: "tcp://socket-proxy:2375"
     exposedByDefault: false
     network: dotbox
+  # La porte web de Dot Box (11.13, D106): le service tourne sur le serveur, pas dans un
+  # container. dotbox écrit son routeur dans ce dossier, relu quand un fichier change.
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
 
 # Le plugin CrowdSec, pour AppSec (10.7): une copie locale vérifiée par dotbox, dans
 # /plugins-local, jamais téléchargée par Traefik.
@@ -180,6 +185,64 @@ certificatesResolvers:
         entryPoint: web
 "#
     )
+}
+
+/// La porte web (11.13): le routeur de dotbox.<domaine>, vers le service sur la passerelle du
+/// réseau dotbox. Authelia d'abord (two_factor, admins), puis l'en-tête secret que le service
+/// exige: une app du réseau qui l'appelle en direct ne l'a pas.
+pub const DYNAMIC_DIR: &str = "/opt/traefik/config/dynamic";
+pub const WEB_ROUTE: &str = "/opt/traefik/config/dynamic/dotbox.yml";
+
+pub fn web_route(domain: &str, gateway: &str, secret: &str) -> String {
+    format!(
+        r#"# Écrit par dotbox (init, sync): la porte web de Dot Box (Journal, 11.13, D106).
+# Ne pas modifier: il est réécrit, et il porte un secret (root seulement).
+http:
+  routers:
+    dotbox:
+      rule: "Host(`dotbox.{domain}`)"
+      entryPoints:
+        - websecure
+      service: dotbox
+      middlewares:
+        - authelia@docker
+        - dotbox-gate
+      tls:
+        certResolver: letsencrypt
+  middlewares:
+    dotbox-gate:
+      headers:
+        customRequestHeaders:
+          {header}: "{secret}"
+  services:
+    dotbox:
+      loadBalancer:
+        servers:
+          - url: "http://{gateway}:{port}"
+"#,
+        header = crate::serve::GATE_HEADER_NAME,
+        port = crate::serve::WEB_PORT
+    )
+}
+
+/// Le fichier de la porte web voulu: le secret (créé s'il manque) et la passerelle du réseau.
+pub fn web_route_wanted(domain: &str) -> Result<String, String> {
+    crate::secrets::ensure(crate::serve::GATE_SECRET)?;
+    let secret = crate::secrets::read(crate::serve::GATE_SECRET)
+        .ok_or("cannot read the secret of the web gate")?;
+    Ok(web_route(domain, &crate::serve::gateway()?, secret.trim()))
+}
+
+/// Écrit le fichier de la porte web, en 0600: Traefik le relit seul, sans redémarrer.
+pub fn write_web_route(domain: &str) -> Result<bool, String> {
+    let text = web_route_wanted(domain)?;
+    std::fs::create_dir_all(DYNAMIC_DIR)
+        .map_err(|e| format!("cannot create {DYNAMIC_DIR}: {e}"))?;
+    let changed = system::write_if_changed(WEB_ROUTE, &text, 0o600)?;
+    if changed {
+        say("write", &format!("{WEB_ROUTE} (dotbox.{domain})"));
+    }
+    Ok(changed)
 }
 
 pub const LOGROTATE_CONF: &str = r#"# Généré par dotbox init: logs d'accès de Traefik.
@@ -346,19 +409,13 @@ pub fn check_ports() -> Result<(), String> {
     Ok(())
 }
 
-/// État d'un container: « healthy », « running »... vide s'il n'existe pas.
+/// État d'un container: « healthy », « running »... vide s'il n'existe pas. La santé seulement
+/// s'il tourne: un container arrêté garde la dernière (« unhealthy »), il est « exited » (15.6).
 pub fn container_state(name: &str) -> String {
-    system::run(
-        "docker",
-        &[
-            "inspect",
-            "-f",
-            "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
-            name,
-        ],
-    )
-    .unwrap_or_default()
+    system::run("docker", &["inspect", "-f", STATE_FORMAT, name]).unwrap_or_default()
 }
+
+pub const STATE_FORMAT: &str = "{{if and .State.Running .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}";
 
 pub fn setup(domain: &str, ca: &str, core: &Core, plugin: &CoreFile) -> Result<(), String> {
     let image = core.image("traefik")?;
@@ -376,6 +433,9 @@ pub fn setup(domain: &str, ca: &str, core: &Core, plugin: &CoreFile) -> Result<(
     if compose_changed {
         say("write", COMPOSE);
     }
+    // le dossier du fournisseur file existe avant que Traefik ne démarre (11.13, J280)
+    std::fs::create_dir_all(DYNAMIC_DIR)
+        .map_err(|e| format!("cannot create {DYNAMIC_DIR}: {e}"))?;
     let static_changed = system::write_if_changed(STATIC, &static_config(ca), 0o644)?;
     if static_changed {
         say("write", &format!("{STATIC} ({ca})"));
@@ -429,6 +489,21 @@ fn wait_healthy(name: &str, timeout: Duration) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// La porte web (11.13): le fournisseur file, et le routeur de dotbox.<domaine>.
+    #[test]
+    fn web_gate_route() {
+        assert!(
+            static_config("letsencrypt")
+                .contains("  file:\n    directory: /etc/traefik/dynamic\n    watch: true\n")
+        );
+        let r = web_route("example.com", "172.20.0.1", "s3cret");
+        assert!(r.contains("rule: \"Host(`dotbox.example.com`)\""));
+        assert!(r.contains("        - authelia@docker\n        - dotbox-gate\n"));
+        assert!(r.contains("          X-Dotbox-Gate: \"s3cret\"\n"));
+        assert!(r.contains("          - url: \"http://172.20.0.1:8800\"\n"));
+        assert!(r.contains("certResolver: letsencrypt"));
+    }
 
     #[test]
     fn compose_is_the_expected_one() {

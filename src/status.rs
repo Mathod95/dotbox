@@ -42,6 +42,9 @@ pub struct Status {
     pub apps: Vec<Entry>,
     /// le résumé du dernier doctor, s'il a déjà tourné
     pub doctor: Option<doctor::Summary>,
+    /// la dernière sauvegarde et la prochaine (D97)
+    #[serde(default)]
+    pub backup: Option<crate::backup::Summary>,
 }
 
 /// Une ligne de `docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.State}}\t{{.Status}}'`.
@@ -174,6 +177,7 @@ pub fn collect() -> Result<Status, String> {
         core,
         apps,
         doctor: doctor::last().map(|r| r.summary()),
+        backup: crate::backup::summary(),
     })
 }
 
@@ -251,6 +255,38 @@ fn doctor_line(d: &Option<doctor::Summary>) -> String {
     }
 }
 
+/// La ligne de la sauvegarde: la dernière, son résultat, la prochaine.
+fn backup_line(b: &Option<crate::backup::Summary>) -> (Mark, String) {
+    use crate::backup::{human, short_date};
+    let next = |b: &crate::backup::Summary| {
+        if b.next.is_empty() {
+            style(", no schedule").dim().to_string()
+        } else {
+            style(format!(", next {}", b.next)).dim().to_string()
+        }
+    };
+    match b {
+        None => (
+            Mark::Warn,
+            format!("none yet {}", style("dotbox backup").dim()),
+        ),
+        Some(b) if !b.ok => (
+            Mark::Error,
+            format!("{} failed: {}{}", short_date(&b.started), b.error, next(b)),
+        ),
+        Some(b) => (
+            Mark::Ok,
+            format!(
+                "{}, {}, {}{}",
+                short_date(&b.started),
+                crate::backup::count(b.archives),
+                human(b.bytes),
+                next(b)
+            ),
+        ),
+    }
+}
+
 fn print_fancy(st: &Status) {
     clack::open("dotbox status");
     let width = st
@@ -259,7 +295,7 @@ fn print_fancy(st: &Status) {
         .map(|a| a.name.len())
         .max()
         .unwrap_or(0)
-        .max(4)
+        .max(6)
         + 3;
     // le core en une ligne, ses versions dessous
     let bad: Vec<&Entry> = st.core.iter().filter(|e| mark(e) != Mark::Ok).collect();
@@ -318,6 +354,9 @@ fn print_fancy(st: &Status) {
         );
         clack::item(m, &e.name, width, &line);
     }
+    clack::bar();
+    let (m, text) = backup_line(&st.backup);
+    clack::item(m, "Backup", width, &text);
     clack::close(&doctor_line(&st.doctor));
 }
 
@@ -371,6 +410,9 @@ fn print_plain(st: &Status) {
         }
     }
     crate::clack::put("");
+    // la sauvegarde, comme dans la sortie en cadre
+    let (m, text) = backup_line(&st.backup);
+    crate::clack::put(&format!("  {} backup {text}", m.symbol()));
     match &st.doctor {
         Some(d) if d.problems == 0 => crate::clack::put(&format!(
             "  {} doctor {}: all good",

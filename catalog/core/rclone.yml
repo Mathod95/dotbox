@@ -1,0 +1,7 @@
+# rclone: envoie les archives de dotbox backup vers une destination distante (sftp, B2, S3...),
+# et les rapporte pour un restore. Lancé le temps de l'envoi, rien d'installé (Journal, D83, 16.5).
+# Le core (D64): dotbox lit cette version. Comment le lancer reste dans dotbox.
+name: rclone
+min_dotbox: 0.0.5
+images:
+  rclone: rclone/rclone:1.76.0

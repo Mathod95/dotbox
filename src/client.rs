@@ -261,15 +261,67 @@ pub fn diff(json_out: bool) -> Result<(), String> {
     let v = get("/api/v1/diff")?;
     if json_out {
         print_json(&v);
-        return Ok(());
     }
-    let g: Vec<crate::manage::Gap> = serde_json::from_value(v).map_err(|e| e.to_string())?;
-    crate::manage::print_diff(&g);
-    if g.is_empty() {
+    let g: Vec<crate::sync::Gap> = serde_json::from_value(v).map_err(|e| e.to_string())?;
+    if !json_out {
+        crate::sync::print_diff(&g);
+    }
+    if crate::sync::differences(&g) == 0 {
         Ok(())
     } else {
         Err(String::new())
     }
+}
+
+/// dotbox sync (D93): le plan, la confirmation, puis la tâche, avec le plan montré: le service
+/// refuse s'il a changé entre-temps.
+pub fn sync(yes: bool, verbose: bool) -> Result<(), String> {
+    let v = get("/api/v1/diff")?;
+    let plan: Vec<crate::sync::Gap> =
+        serde_json::from_value(v.clone()).map_err(|e| e.to_string())?;
+    crate::sync::print_plan(&plan);
+    if crate::sync::targets(&plan).is_empty() {
+        return Ok(());
+    }
+    crate::sync::confirm(yes)?;
+    runtime()?.block_on(job(
+        Method::POST,
+        "/api/v1/sync",
+        Some(json!({ "plan": v })),
+        verbose,
+    ))?;
+    Ok(())
+}
+
+pub fn config_get(key: Option<&str>, json_out: bool) -> Result<(), String> {
+    let path = match key {
+        Some(k) => format!("/api/v1/config/{}", encode(k)),
+        None => "/api/v1/config".into(),
+    };
+    let v = get(&path)?;
+    let list: Vec<crate::config_cmd::Entry> =
+        serde_json::from_value(v.clone()).map_err(|e| e.to_string())?;
+    if json_out {
+        print_json(&v);
+    } else {
+        crate::config_cmd::print_get(&list, key.is_some());
+    }
+    Ok(())
+}
+
+pub fn config_set(key: &str, value: &str, json_out: bool) -> Result<(), String> {
+    let v = runtime()?.block_on(call(
+        Method::PUT,
+        &format!("/api/v1/config/{}", encode(key)),
+        Some(json!({ "value": value })),
+    ))?;
+    if json_out {
+        print_json(&v);
+    } else {
+        let c: crate::config_cmd::Change = serde_json::from_value(v).map_err(|e| e.to_string())?;
+        crate::config_cmd::print_set(&c);
+    }
+    Ok(())
 }
 
 pub fn lifecycle(action: &str, app: &str, verbose: bool) -> Result<(), String> {
@@ -293,6 +345,25 @@ pub fn update(
         } else {
             let r: Vec<crate::manage::Version> = serde_json::from_value(v).unwrap_or_default();
             crate::manage::print_versions(&r);
+        }
+    }
+    Ok(())
+}
+
+pub fn backup(
+    app: Option<&str>,
+    to: Option<&str>,
+    verbose: bool,
+    json_out: bool,
+) -> Result<(), String> {
+    let body = json!({ "app": app, "to": to });
+    let result = runtime()?.block_on(job(Method::POST, "/api/v1/backup", Some(body), verbose))?;
+    if let Some(v) = result {
+        if json_out {
+            print_json(&v);
+        } else {
+            let r: crate::backup::Report = serde_json::from_value(v).unwrap_or_default();
+            crate::backup::print_report(&r);
         }
     }
     Ok(())
