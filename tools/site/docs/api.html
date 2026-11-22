@@ -27,32 +27,16 @@
     <li>Le service n'écoute jamais sur une adresse publique. Côté web, il écoute sur l'adresse du serveur dans le réseau <code>dotbox</code>, que seul Traefik doit joindre.</li>
     <li>Traefik ajoute à chaque requête un en-tête secret, tiré par <code>dotbox init</code> et gardé dans <code>/opt/dotbox/secrets/</code>. Le service refuse toute requête web sans lui: une app du réseau <code>dotbox</code> ne peut donc pas l'appeler en se faisant passer pour Traefik.</li>
     <li>Le service ne croit le nom envoyé par Authelia (<code>Remote-User</code>, <code>Remote-Groups</code>) qu'avec cet en-tête.</li>
-    <li>Les actions que seul root peut faire passent par <code>sudo</code>, sans le service: <code>dotbox init</code>, <code>dotbox upgrade</code>, <code>dotbox restore</code>, <code>dotbox authelia</code>, <span class="prop-old" data-prop="122"><span><code>dotbox add</code> et <code>--local</code>.</span></span><span class="prop-new" data-prop="122"><span><code>dotbox exec</code>, <code>dotbox edit</code>, <code>dotbox add</code> et <code>--local</code>. Ce sont celles qui donneraient root à qui les lance: une commande dans un container, un compose ou une archive qui peuvent monter n'importe quel dossier du serveur.</span></span></li>
+    <li>Les actions que seul root peut faire passent par <code>sudo</code>, sans le service: <code>dotbox init</code>, <code>dotbox upgrade</code>, <code>dotbox restore</code>, <code>dotbox authelia</code>, <code>dotbox exec</code>, <code>dotbox edit</code>, <code>dotbox add</code> et <code>--local</code>. Ce sont celles qui donneraient root à qui les lance: une commande dans un container, un compose ou une archive qui peuvent monter n'importe quel dossier du serveur.</li>
   </ul>
 
   <h2 id="fr-routes">Les routes</h2>
   <p>Du JSON en HTTP, sous <code>/api/v1</code>. Un changement qui casse les clients passera par <code>/api/v2</code>.</p>
-  <div class="prop-old" data-prop="102">
   <div class="table-scroll"><table>
     <thead><tr><th>Route</th><th>Ce qu'elle fait</th><th>Commande</th></tr></thead>
     <tbody>
       <tr><td><code>GET /api/v1/version</code></td><td>La version du service et l'empreinte de son binaire: <code>dotbox init</code> le redémarre quand le binaire a changé</td><td></td></tr>
-      <tr><td><code>GET /api/v1/status</code></td><td>Le core et les apps: version, état, adresse, accès, et le résumé du dernier doctor</td><td><code>dotbox status</code></td></tr>
-      <tr><td><code>GET /api/v1/doctor</code></td><td>Le résultat du dernier doctor</td><td></td></tr>
-      <tr><td><code>POST /api/v1/doctor</code></td><td>Lance les vérifications et rend leur résultat</td><td><code>dotbox doctor</code></td></tr>
-      <tr><td><code>POST /api/v1/apps</code></td><td>Installe des apps, <code>{"apps": ["radarr", "sonarr"]}</code>. Rend une tâche, qui se suit en direct</td><td><code>dotbox install</code></td></tr>
-      <tr><td><code>DELETE /api/v1/apps/{app}</code></td><td>Retire une app (<code>?purge=true</code> pour tout effacer). Rend une tâche</td><td><code>dotbox remove</code></td></tr>
-      <tr><td><code>GET /api/v1/jobs/{id}/events</code></td><td>Les étapes d'une tâche en direct (Server-Sent Events): ce que la CLI et l'interface affichent pendant une installation</td><td></td></tr>
-    </tbody>
-  </table></div>
-  <p>Une tâche à la fois: une seconde demande pendant une installation reçoit <code>409</code>, avec la tâche en cours. Les autres commandes de la page CLI viendront avec leur route.</p>
-  </div>
-  <div class="prop-new" data-prop="102">
-  <div class="table-scroll"><table>
-    <thead><tr><th>Route</th><th>Ce qu'elle fait</th><th>Commande</th></tr></thead>
-    <tbody>
-      <tr><td><code>GET /api/v1/version</code></td><td>La version du service et l'empreinte de son binaire: <code>dotbox init</code> le redémarre quand le binaire a changé</td><td></td></tr>
-      <tr><td><code>GET /api/v1/status</code></td><td>Le core et les apps: version, état, adresse, accès, et le résumé du dernier doctor</td><td><code>dotbox status</code></td></tr>
+      <tr><td><code>GET /api/v1/status</code></td><td><span class="prop-old" data-prop="146">Le core et les apps: version, état, adresse, accès, et le résumé du dernier doctor</span><span class="prop-new" data-prop="146">Le core et les apps: version, état, adresse, accès, le résumé du dernier doctor, et la dernière sauvegarde complète avec la prochaine (<code>backup</code>)</span></td><td><code>dotbox status</code></td></tr>
       <tr><td><code>GET /api/v1/doctor</code></td><td>Le résultat du dernier doctor</td><td></td></tr>
       <tr><td><code>POST /api/v1/doctor</code></td><td>Lance les vérifications et rend leur résultat</td><td><code>dotbox doctor</code></td></tr>
       <tr><td><code>POST /api/v1/apps</code></td><td>Installe des apps, <code>{"apps": ["radarr", "sonarr"]}</code>. Rend une tâche, qui se suit en direct</td><td><code>dotbox install</code></td></tr>
@@ -63,11 +47,15 @@
       <tr><td><code>POST /api/v1/apps/{app}/start</code>, <code>/stop</code>, <code>/restart</code></td><td>Démarre, arrête ou redémarre une app. Rend une tâche</td><td><code>dotbox start</code>, <code>stop</code>, <code>restart</code></td></tr>
       <tr><td><code>GET /api/v1/apps/{app}/logs?tail=&amp;follow=</code></td><td>Les logs d'une app ou d'un container du core, en flux</td><td><code>dotbox logs</code></td></tr>
       <tr><td><code>POST /api/v1/update</code></td><td>Relit le catalogue sur GitHub, puis met à jour les apps demandées, <code>{"apps": [...], "all": true, "rollback": false}</code>. Rend une tâche</td><td><code>dotbox update</code></td></tr>
-      <tr><td><code>GET /api/v1/diff</code></td><td>L'écart entre ce qui est voulu et ce qui tourne</td><td><code>dotbox diff</code></td></tr>
+      <tr><td><code>GET /api/v1/diff</code></td><td>Le plan: l'écart entre ce qui est voulu et ce qui tourne, une ligne par écart. Chacune dit ce que <code>dotbox sync</code> en fera (<code>sync</code>, vide s'il la laisse, une version par exemple) et si c'est une app arrêtée avec <code>dotbox stop</code> (<code>info</code>), qui n'est pas un écart</td><td><code>dotbox diff</code></td></tr>
+      <tr><td><code>POST /api/v1/sync</code></td><td>Applique le plan, <code>{"plan": [...]}</code>: celui que la CLI a montré, tel que <code>GET /api/v1/diff</code> l'a rendu. Le service le recalcule et répond <code>409</code> s'il a changé entre-temps, ou s'il n'y a rien à faire. Rend une tâche</td><td><code>dotbox sync</code></td></tr>
+      <tr><td><span class="prop-new" data-prop="146"><code>POST /api/v1/backup</code></span></td><td><span class="prop-new" data-prop="146">Lance une sauvegarde, <code>{"app": "radarr", "to": "/srv/backups"}</code> (les deux facultatifs). Rend une tâche. Son résultat: les archives, leur taille, les destinations. <code>restore</code> n'a pas de route: il se fait en root, sans le service</span></td><td><span class="prop-new" data-prop="146"><code>dotbox backup</code></span></td></tr>
+      <tr><td><code>GET /api/v1/config</code></td><td>Les clés de <code>dotbox.yml</code> que <code>dotbox config</code> connaît, avec leur valeur, <code>[{"key": "domain", "value": "example.com"}, ...]</code></td><td><code>dotbox config get</code></td></tr>
+      <tr><td><code>GET /api/v1/config/{key}</code></td><td>Une seule clé, au même format. Une clé inconnue, pas encore prise en charge ou d'une app qui n'est pas installée reçoit <code>400</code>, avec le motif</td><td><code>dotbox config get &lt;key&gt;</code></td></tr>
+      <tr><td><code>PUT /api/v1/config/{key}</code></td><td>Vérifie la valeur, <code>{"value": "example.org"}</code>, puis écrit <code>dotbox.yml</code>, sans rien appliquer. Rend l'ancienne et la nouvelle valeur, <code>changed</code> (faux quand c'était déjà la valeur: rien n'est écrit) et un avertissement s'il y en a un (les passkeys, pour le domaine). Une valeur refusée reçoit <code>400</code>, avec le motif. Pas une tâche: un fichier écrit</td><td><code>dotbox config set</code></td></tr>
     </tbody>
   </table></div>
   <p>Une tâche à la fois: une seconde demande pendant une installation reçoit <code>409</code>, avec la tâche en cours. <code>dotbox upgrade</code> et <code>dotbox completion</code> n'ont pas de route: la première remplace le binaire du service, la seconde ne regarde que la CLI. Les autres commandes de la page CLI viendront avec leur route.</p>
-  </div>
 
   <h2 id="fr-example">Un exemple</h2>
   <p>La CLI ne fait rien d'autre que cette requête, puis met la réponse en forme:</p>
@@ -112,32 +100,16 @@
     <li>The service never listens on a public address. On the web side, it listens on the server's address in the <code>dotbox</code> network, which only Traefik should reach.</li>
     <li>Traefik adds a secret header to each request, drawn by <code>dotbox init</code> and kept in <code>/opt/dotbox/secrets/</code>. The service refuses any web request without it: an app on the <code>dotbox</code> network cannot call it by posing as Traefik.</li>
     <li>The service only trusts the name sent by Authelia (<code>Remote-User</code>, <code>Remote-Groups</code>) along with that header.</li>
-    <li>Actions only root can do go through <code>sudo</code>, without the service: <code>dotbox init</code>, <code>dotbox upgrade</code>, <code>dotbox restore</code>, <code>dotbox authelia</code>, <span class="prop-old" data-prop="122"><span><code>dotbox add</code> and <code>--local</code>.</span></span><span class="prop-new" data-prop="122"><span><code>dotbox exec</code>, <code>dotbox edit</code>, <code>dotbox add</code> and <code>--local</code>. These are the ones that would give root to whoever runs them: a command in a container, a compose or an archive that can mount any folder of the server.</span></span></li>
+    <li>Actions only root can do go through <code>sudo</code>, without the service: <code>dotbox init</code>, <code>dotbox upgrade</code>, <code>dotbox restore</code>, <code>dotbox authelia</code>, <code>dotbox exec</code>, <code>dotbox edit</code>, <code>dotbox add</code> and <code>--local</code>. These are the ones that would give root to whoever runs them: a command in a container, a compose or an archive that can mount any folder of the server.</li>
   </ul>
 
   <h2 id="en-routes">Routes</h2>
   <p>JSON over HTTP, under <code>/api/v1</code>. A change that breaks clients will go through <code>/api/v2</code>.</p>
-  <div class="prop-old" data-prop="102">
   <div class="table-scroll"><table>
     <thead><tr><th>Route</th><th>What it does</th><th>Command</th></tr></thead>
     <tbody>
       <tr><td><code>GET /api/v1/version</code></td><td>The service's version and its binary's checksum: <code>dotbox init</code> restarts it when the binary has changed</td><td></td></tr>
-      <tr><td><code>GET /api/v1/status</code></td><td>The core and the apps: version, state, address, access, and the last doctor's summary</td><td><code>dotbox status</code></td></tr>
-      <tr><td><code>GET /api/v1/doctor</code></td><td>The last doctor's result</td><td></td></tr>
-      <tr><td><code>POST /api/v1/doctor</code></td><td>Runs the checks and returns their result</td><td><code>dotbox doctor</code></td></tr>
-      <tr><td><code>POST /api/v1/apps</code></td><td>Installs apps, <code>{"apps": ["radarr", "sonarr"]}</code>. Returns a job, which can be followed live</td><td><code>dotbox install</code></td></tr>
-      <tr><td><code>DELETE /api/v1/apps/{app}</code></td><td>Removes an app (<code>?purge=true</code> to delete everything). Returns a job</td><td><code>dotbox remove</code></td></tr>
-      <tr><td><code>GET /api/v1/jobs/{id}/events</code></td><td>A job's steps, live (Server-Sent Events): what the CLI and the interface show during an install</td><td></td></tr>
-    </tbody>
-  </table></div>
-  <p>One job at a time: a second request during an install gets <code>409</code>, with the running job. The other commands of the CLI page will come with their route.</p>
-  </div>
-  <div class="prop-new" data-prop="102">
-  <div class="table-scroll"><table>
-    <thead><tr><th>Route</th><th>What it does</th><th>Command</th></tr></thead>
-    <tbody>
-      <tr><td><code>GET /api/v1/version</code></td><td>The service's version and its binary's checksum: <code>dotbox init</code> restarts it when the binary has changed</td><td></td></tr>
-      <tr><td><code>GET /api/v1/status</code></td><td>The core and the apps: version, state, address, access, and the last doctor's summary</td><td><code>dotbox status</code></td></tr>
+      <tr><td><code>GET /api/v1/status</code></td><td><span class="prop-old" data-prop="146">The core and the apps: version, state, address, access, and the last doctor's summary</span><span class="prop-new" data-prop="146">The core and the apps: version, state, address, access, the last doctor's summary, and the last full backup with the next one (<code>backup</code>)</span></td><td><code>dotbox status</code></td></tr>
       <tr><td><code>GET /api/v1/doctor</code></td><td>The last doctor's result</td><td></td></tr>
       <tr><td><code>POST /api/v1/doctor</code></td><td>Runs the checks and returns their result</td><td><code>dotbox doctor</code></td></tr>
       <tr><td><code>POST /api/v1/apps</code></td><td>Installs apps, <code>{"apps": ["radarr", "sonarr"]}</code>. Returns a job, which can be followed live</td><td><code>dotbox install</code></td></tr>
@@ -148,11 +120,15 @@
       <tr><td><code>POST /api/v1/apps/{app}/start</code>, <code>/stop</code>, <code>/restart</code></td><td>Starts, stops or restarts an app. Returns a job</td><td><code>dotbox start</code>, <code>stop</code>, <code>restart</code></td></tr>
       <tr><td><code>GET /api/v1/apps/{app}/logs?tail=&amp;follow=</code></td><td>The logs of an app or a core container, streamed</td><td><code>dotbox logs</code></td></tr>
       <tr><td><code>POST /api/v1/update</code></td><td>Reads the catalog on GitHub again, then updates the apps asked for, <code>{"apps": [...], "all": true, "rollback": false}</code>. Returns a job</td><td><code>dotbox update</code></td></tr>
-      <tr><td><code>GET /api/v1/diff</code></td><td>The gap between what is wanted and what runs</td><td><code>dotbox diff</code></td></tr>
+      <tr><td><code>GET /api/v1/diff</code></td><td>The plan: the gap between what is wanted and what runs, one line per gap. Each says what <code>dotbox sync</code> will do with it (<code>sync</code>, empty if it leaves it, a version for example) and whether it is an app stopped with <code>dotbox stop</code> (<code>info</code>), which is not a gap</td><td><code>dotbox diff</code></td></tr>
+      <tr><td><code>POST /api/v1/sync</code></td><td>Applies the plan, <code>{"plan": [...]}</code>: the one the CLI showed, as <code>GET /api/v1/diff</code> returned it. The service computes it again and answers <code>409</code> if it changed in between, or if there is nothing to do. Returns a job</td><td><code>dotbox sync</code></td></tr>
+      <tr><td><span class="prop-new" data-prop="146"><code>POST /api/v1/backup</code></span></td><td><span class="prop-new" data-prop="146">Runs a backup, <code>{"app": "radarr", "to": "/srv/backups"}</code> (both optional). Returns a job. Its result: the archives, their size, the destinations. <code>restore</code> has no route: it runs as root, without the service</span></td><td><span class="prop-new" data-prop="146"><code>dotbox backup</code></span></td></tr>
+      <tr><td><code>GET /api/v1/config</code></td><td>The keys of <code>dotbox.yml</code> that <code>dotbox config</code> knows, with their value, <code>[{"key": "domain", "value": "example.com"}, ...]</code></td><td><code>dotbox config get</code></td></tr>
+      <tr><td><code>GET /api/v1/config/{key}</code></td><td>A single key, in the same format. An unknown key, one not handled yet or one of an app that is not installed gets <code>400</code>, with the reason</td><td><code>dotbox config get &lt;key&gt;</code></td></tr>
+      <tr><td><code>PUT /api/v1/config/{key}</code></td><td>Checks the value, <code>{"value": "example.org"}</code>, then writes <code>dotbox.yml</code>, applying nothing. Returns the old and the new value, <code>changed</code> (false when it already was the value: nothing is written) and a warning if there is one (passkeys, for the domain). A refused value gets <code>400</code>, with the reason. Not a job: a file written</td><td><code>dotbox config set</code></td></tr>
     </tbody>
   </table></div>
   <p>One job at a time: a second request during an install gets <code>409</code>, with the running job. <code>dotbox upgrade</code> and <code>dotbox completion</code> have no route: the first replaces the service's binary, the second only concerns the CLI. The other commands of the CLI page will come with their route.</p>
-  </div>
 
   <h2 id="en-example">An example</h2>
   <p>The CLI does nothing more than this request, then formats the answer:</p>

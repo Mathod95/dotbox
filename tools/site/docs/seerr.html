@@ -10,7 +10,7 @@
       <tr><td>Adresse</td><td><code>https://seerr.example.com</code></td></tr>
       <tr><td>Accès</td><td>app: la connexion de Seerr, par ton compte Jellyfin ou Plex, avec AppSec devant. Derrière Authelia jusqu'à la fin de son assistant de premier démarrage.</td></tr>
       <tr><td>Image</td><td><code>ghcr.io/seerr-team/seerr:v3.5.2</code></td></tr>
-      <tr><td>Installer</td><td><code>sudo dotbox install seerr</code></td></tr>
+      <tr><td>Installer</td><td><code>dotbox install seerr</code></td></tr>
     </tbody>
   </table></div>
 
@@ -25,13 +25,13 @@
   <h2 id="fr-install">L'installation, pas à pas</h2>
   <p>Comme <a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a>: tant que son assistant n'est pas fini, n'importe qui pourrait le faire à ta place. Seerr reste donc derrière Authelia jusque-là. Installe d'abord ton serveur média: l'assistant de Seerr s'y connecte.</p>
   <h3 id="fr-step1">1. Installer</h3>
-  <pre><span class="p">$</span> sudo dotbox install seerr
+  <pre><span class="p">$</span> dotbox install seerr
 <span class="ok">✓</span> [1/1] Seerr         v3.5.2, two_factor until set up
 
   seerr         https://seerr.example.com  two_factor for now
 
   → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install seerr again: Authelia steps aside (app).</pre>
+    Then run dotbox install seerr again: Authelia steps aside (app).</pre>
   <ul>
     <li>Elle crée <code>/opt/seerr/config</code> à ton utilisateur, écrit <code>compose.yml</code> et démarre Seerr derrière Authelia.</li>
     <li>Seerr crée <code>settings.json</code> à son premier démarrage. dotbox attend qu'il existe, y active la confiance dans Traefik (voir plus bas), puis relance Seerr.</li>
@@ -45,7 +45,7 @@
     <li>Radarr et Sonarr: <code>http://radarr:7878</code> et <code>http://sonarr:8989</code>, avec leur clé d'API (dans leurs réglages, Général). Tu peux aussi les ajouter plus tard.</li>
   </ul>
   <h3 id="fr-step3">3. Ouvrir Seerr à tes proches</h3>
-  <pre><span class="p">$</span> sudo dotbox install seerr
+  <pre><span class="p">$</span> dotbox install seerr
 <span class="ok">✓</span> [1/1] Seerr         v3.5.2, app
 
   seerr         https://seerr.example.com  app</pre>
@@ -89,7 +89,7 @@
       <tr><td>Address</td><td><code>https://seerr.example.com</code></td></tr>
       <tr><td>Access</td><td>app: Seerr's login, with your Jellyfin or Plex account, and AppSec in front. Behind Authelia until its first-run setup is done.</td></tr>
       <tr><td>Image</td><td><code>ghcr.io/seerr-team/seerr:v3.5.2</code></td></tr>
-      <tr><td>Install</td><td><code>sudo dotbox install seerr</code></td></tr>
+      <tr><td>Install</td><td><code>dotbox install seerr</code></td></tr>
     </tbody>
   </table></div>
 
@@ -104,13 +104,13 @@
   <h2 id="en-install">The install, step by step</h2>
   <p>Like <a href="__DOC_JELLYFIN__"__DOC_JELLYFIN_TARGET__>Jellyfin</a>: until its setup is done, anyone could do it in your place. So Seerr stays behind Authelia until then. Install your media server first: Seerr's setup connects to it.</p>
   <h3 id="en-step1">1. Install</h3>
-  <pre><span class="p">$</span> sudo dotbox install seerr
+  <pre><span class="p">$</span> dotbox install seerr
 <span class="ok">✓</span> [1/1] Seerr         v3.5.2, two_factor until set up
 
   seerr         https://seerr.example.com  two_factor for now
 
   → Open https://seerr.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install seerr again: Authelia steps aside (app).</pre>
+    Then run dotbox install seerr again: Authelia steps aside (app).</pre>
   <ul>
     <li>It creates <code>/opt/seerr/config</code>, owned by your user, writes <code>compose.yml</code> and starts Seerr behind Authelia.</li>
     <li>Seerr creates <code>settings.json</code> on its first start. dotbox waits for it, turns on trust in Traefik (see below), then restarts Seerr.</li>
@@ -124,7 +124,7 @@
     <li>Radarr and Sonarr: <code>http://radarr:7878</code> and <code>http://sonarr:8989</code>, with their API key (in their settings, General). You can also add them later.</li>
   </ul>
   <h3 id="en-step3">3. Open Seerr to your family and friends</h3>
-  <pre><span class="p">$</span> sudo dotbox install seerr
+  <pre><span class="p">$</span> dotbox install seerr
 <span class="ok">✓</span> [1/1] Seerr         v3.5.2, app
 
   seerr         https://seerr.example.com  app</pre>

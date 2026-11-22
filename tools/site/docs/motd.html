@@ -1,0 +1,163 @@
+<!-- LEDE -->
+<p class="lede">MOTD<i>●</i>the message you see each time you connect to the server over SSH, a quick look at the state of the server.</p>
+
+<!-- CONTENT -->
+<article class="prose">
+  <p class="note"><b>Being defined.</b> This page gathers what has been decided about the MOTD and what is still open (<a href="__DOC_JOURNAL__#d86"__DOC_JOURNAL_TARGET__>Journal, D86</a> , D89 and D90, Q55 still open). It comes after the Backup step, which it needs. It is the specification for the code, which is not written yet. Debian only for now (D87).</p>
+
+  <h2 id="what">What it is</h2>
+  <p>Each time you open an SSH session, Dot Box prints a short summary of the server: the system, the apps, the core, and what needs your attention. <code>dotbox init</code> installs it by default, and one line in <code>dotbox.yml</code> turns it off.</p>
+  <p>It is written by Dot Box itself, in the binary, in the spirit of fastfetch: nothing to install, and it shows Dot Box, not only the machine.</p>
+
+  <h2 id="today">What Debian shows today</h2>
+  <pre><span class="p">$</span> ssh admin@203.0.113.10
+Linux dotbox 6.12.117+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.117-1 (2026-11-12) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
+  <p>Dot Box replaces it with its own message, and only its own:</p>
+  <ul>
+    <li>The kernel line comes from <code>/etc/update-motd.d/10-uname</code>. Dot Box makes it non-executable.</li>
+    <li>The license text is the static file <code>/etc/motd</code>. Dot Box empties it.</li>
+    <li>The <code>Last login</code> line is printed by sshd itself (<code>PrintLastLog</code>), and Dot Box never changes the SSH configuration on its own: it stays (see <a href="#lines">What it shows</a>).</li>
+  </ul>
+  <p>Dot Box keeps a copy of what it changes, so turning the MOTD off puts Debian's message back.</p>
+
+  <h2 id="how">How it works on Debian</h2>
+  <ul>
+    <li>At each SSH login, <code>pam_motd</code> runs the scripts in <code>/etc/update-motd.d/</code>, one after the other, as root. It does not run for <code>su</code>.</li>
+    <li>The login waits for them: a slow MOTD slows down every login. That is why some lines may come from a cache (see <a href="#live">Live or cached</a>).</li>
+    <li>Dot Box adds one script there, which runs <code>dotbox motd</code>.</li>
+  </ul>
+
+  <h2 id="styles">Styles</h2>
+  <div class="prop-old" data-prop="148"><p>Three styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
+  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>, except <b>ascii</b>, which only uses plain ASCII.</p></div>
+
+  <h3 id="compact">compact (default)</h3>
+  <pre><span class="c">┌</span>  Dot Box 0.0.5 · example.com
+<span class="c">│</span>
+<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
+<span class="ok">◇</span>  Memory    2.1 / 8 GB · /opt 12 % · /data 61 %
+<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
+<span class="ok">◇</span>  CrowdSec  37 IPs banned in 24 h
+<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
+<span class="c">│</span>
+<span class="c">└</span>  dotbox status · dotbox --help</pre>
+
+  <h3 id="fastfetch">fastfetch</h3>
+  <p>The 7 × 7 dot pictogram on the left, the lines on the right.</p>
+  <pre><span class="ok">● ● ● ● ● ● ●</span>   Dot Box 0.0.5 · example.com
+<span class="ok">●           ●</span>   System    Debian 13 · up 3 days · load 0.42
+<span class="ok">●   ● ● ●   ●</span>   Memory    2.1 / 8 GB · /opt 12 % · /data 61 %
+<span class="ok">●   ●   ●   ●</span>   Apps      14 running · 1 stopped (sonarr)
+<span class="ok">●   ● ● ●   ●</span>   CrowdSec  37 IPs banned in 24 h
+<span class="ok">●           ●</span>   Doctor    ✓ nothing to report, 2 h ago
+<span class="ok">● ● ● ● ● ● ●</span>   <span class="w">▲ 2 apps behind: dotbox update --all</span></pre>
+
+  <h3 id="banner">banner</h3>
+  <p>« DOT BOX » in dot letters, the 5 × 7 font of the site's page titles, above the lines.</p>
+  <pre><span class="ok">●●●●   ●●●  ●●●●●   ●●●●   ●●●  ●   ●
+●   ● ●   ●   ●     ●   ● ●   ● ●   ●
+●   ● ●   ●   ●     ●   ● ●   ●  ● ●
+●   ● ●   ●   ●     ●●●●  ●   ●   ●
+●   ● ●   ●   ●     ●   ● ●   ●  ● ●
+●   ● ●   ●   ●     ●   ● ●   ● ●   ●
+●●●●   ●●●    ●     ●●●●   ●●●  ●   ●</span>
+0.0.5 · example.com
+
+<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
+<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
+<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span></pre>
+
+  <div class="prop-new" data-prop="148">
+  <h3 id="ascii">ascii</h3>
+  <p>« dotbox » in the <a href="https://patorjk.com/software/taag/#p=display&amp;f=Standard&amp;t=dotbox">Standard</a> figlet font, and lines with plain ASCII marks. Nothing but ASCII: it shows the same on any terminal, even without Unicode or with a font that lacks the dots of <b>banner</b>.</p>
+  <pre><span class="ok">     _       _   _
+  __| | ___ | |_| |__   _____  __
+ / _` |/ _ \| __| '_ \ / _ \ \/ /
+| (_| | (_) | |_| |_) | (_) &gt;  &lt;
+ \__,_|\___/ \__|_.__/ \___/_/\_\</span>
+0.0.5 - example.com
+
+<span class="ok">+</span>  System    Debian 13 - up 3 days - load 0.42
+<span class="ok">+</span>  Apps      14 running - 1 stopped (sonarr)
+<span class="w">!</span>  <span class="w">2 apps behind: dotbox update --all</span></pre>
+  </div>
+
+  <h2 id="command">The command</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>dotbox motd</code></td><td>Prints the message, the same as at login.</td></tr>
+      <tr><td><code>dotbox motd --refresh</code></td><td>Runs the cached checks again now (doctor, the catalog, CrowdSec) and rewrites their files.</td></tr>
+      <tr><td><code>dotbox motd --style &lt;style&gt;</code></td><td><span class="prop-old" data-prop="148">Shows another style once (<code>compact</code>, <code>fastfetch</code> or <code>banner</code>), without changing <code>dotbox.yml</code>.</span><span class="prop-new" data-prop="148">Shows another style once (<code>compact</code>, <code>fastfetch</code>, <code>banner</code> or <code>ascii</code>), without changing <code>dotbox.yml</code>.</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>It goes in the SERVER group of <code>dotbox --help</code>. The settings, as proposed:</p>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+motd:
+  enabled: true      <span class="c"># false: Debian's message comes back</span>
+  style: compact     <span class="c"># compact, fastfetch, banner or ascii (#148)</span></pre>
+
+  <h2 id="live">Live or cached</h2>
+  <p>Some lines cost nothing to compute. Others take seconds, or need the Internet, and would slow down every login.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Line</th><th>Cost</th><th>Where it comes from</th></tr></thead>
+    <tbody>
+      <tr><td>System, uptime, load</td><td>Instant</td><td><code>/proc</code></td></tr>
+      <tr><td>Memory, disks</td><td>Instant</td><td><code>/proc</code>, the file systems</td></tr>
+      <tr><td>Core and apps</td><td>A few tens of milliseconds</td><td>Docker</td></tr>
+      <tr><td>CrowdSec bans</td><td>Hundreds of milliseconds</td><td><code>cscli</code>, in the CrowdSec container</td></tr>
+      <tr><td>Doctor's problems</td><td>Several seconds</td><td><code>dotbox doctor</code> (DNS, certificates, apt), kept in <code>/opt/dotbox/doctor.json</code></td></tr>
+      <tr><td>Apps behind, a new Dot Box</td><td>The Internet</td><td>The catalog and the releases on GitHub</td></tr>
+      <tr><td>Last backup</td><td>Instant</td><td>The backup log (to come, Backup)</td></tr>
+    </tbody>
+  </table></div>
+  <p>The fast lines are computed live at each login: the system, the load, the memory, the disks, the state of the containers. The slow ones are read from files that other jobs write:</p>
+  <ul>
+    <li>Doctor runs every night, from a systemd timer, after the 04:00 backup. The MOTD reads <code>/opt/dotbox/doctor.json</code>.</li>
+    <li>The apps behind come from the last <code>dotbox diff</code> or <code>dotbox update</code>.</li>
+    <li>The CrowdSec bans are cached.</li>
+  </ul>
+  <p>Each cached line says how old it is (« 2 h ago »), so old news never looks fresh. <code>dotbox motd --refresh</code> runs the cached checks again now and rewrites their files.</p>
+
+<h2 id="lines">What it shows</h2>
+  <p>The same lines in all three styles, only the drawing changes. Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Line</th><th>Content</th><th>Shown</th><th>Yellow when</th></tr></thead>
+    <tbody>
+      <tr><td>Header</td><td>Dot Box and its version, the domain</td><td>Always</td><td>Never</td></tr>
+      <tr><td>System</td><td>Debian's version, uptime, load</td><td>Always</td><td>The 5-minute load is above the number of CPUs</td></tr>
+      <tr><td>Memory</td><td>Used and total, and swap when it is used</td><td>Always</td><td>Above 90 %</td></tr>
+      <tr><td>Disks</td><td>Each file system once (often <code>/</code> and <code>/data</code>, <code>/opt</code> being on <code>/</code>)</td><td>Always</td><td>Above 90 %, with the biggest folder (cached)</td></tr>
+      <tr><td>Core</td><td>Traefik, Authelia, CrowdSec, the Dot Box service</td><td>When one is not running</td><td>Always, with <code>dotbox logs &lt;name&gt;</code></td></tr>
+      <tr><td>Apps</td><td>Running, stopped on purpose (<code>dotbox stop</code>, in grey), others</td><td>Always</td><td>An app that should run does not, with <code>dotbox start &lt;app&gt;</code></td></tr>
+      <tr><td>Doctor</td><td>The problems of its last run, and its age</td><td>Always</td><td>A problem, or a last run older than 2 days</td></tr>
+      <tr><td>Updates</td><td>Apps behind, a new Dot Box, Debian packages, a reboot asked for</td><td>When there is one</td><td>Always, each with its command</td></tr>
+      <tr><td>Certificates</td><td>The closest expiry</td><td>When under 14 days</td><td>Always, with the subdomain</td></tr>
+      <tr><td>Backup</td><td>The last backup</td><td>Once backups exist</td><td>Failed, or older than 2 days</td></tr>
+      <tr><td>CrowdSec</td><td>IPs banned in the last 24 h</td><td>Always</td><td>Never (its state is in Core)</td></tr>
+      <tr><td>Footer</td><td><code>dotbox status · dotbox --help</code>, later the web interface's address</td><td>Always</td><td>Never</td></tr>
+    </tbody>
+  </table></div>
+  <p>The <code>Last login</code> line printed by sshd stays as it is, under the message: Dot Box does not touch the SSH configuration on its own. The SSH hardening option may bring it into the message later.</p>
+
+  <h2 id="never">What it never shows (open, Q55)</h2>
+  <p>Every account that logs in over SSH sees it. Passwords, keys and tokens never appear. The rest is still to discuss: the versions (useful to an attacker who already has an account?), the IP addresses of logins, the names of the apps.</p>
+
+  <h2 id="look">Look and width</h2>
+  <ul>
+    <li>The colors and symbols of the CLI: <code>┌ │ └</code> for the frame, <code>◇</code> for a line, <code>▲</code> in yellow for what needs you, <code>■</code> in red for an error.</li>
+    <li>No width limit for now. To see later, once real output is on screen.</li>
+  </ul>
+</article>
+
+<!-- CSS -->
+
+<!-- JS -->

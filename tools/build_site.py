@@ -39,6 +39,8 @@ DOCS_LAYOUT = DOCS_SRC / "layout.html"
 # la documentation : une section (Getting Started), ses pages dans l'ordre de la barre de gauche
 DOCS_SECTION = "Getting Started"
 # "group" : sous-groupe de la barre de gauche (comme Backup/Restore chez Saltbox)
+# FOLD: les groupes repliables de la barre de gauche (demande de Mathod95, 22 novembre 2026)
+FOLD = {"Apps"}
 DOCS = [
     {"slug": "basics", "name": "Basics", "dots": "BASICS"},
     {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES"},
@@ -71,6 +73,8 @@ DOCS = [
     {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "group": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI"},
     {"slug": "api", "name": "API", "dots": "API"},
+    {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI"},
+    {"slug": "motd", "name": "MOTD", "dots": "MOTD", "group": "References"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},
     {"slug": "en-vrac", "name": "En vrac", "dots": "EN-VRAC"},
@@ -145,8 +149,15 @@ def doc(slug, urls, target, title):
     for d in DOCS:
         key = "__DOC_" + ukey(d["slug"]) + "__"
         if d.get("group") != group:
+            if group in FOLD:
+                nav.append("        </ul></details></li>")
             group = d.get("group")
-            if group:
+            if group in FOLD:
+                # un groupe repliable: ouvert seulement quand la page en cours en fait partie
+                is_open = " open" if page_def.get("group") == group else ""
+                nav.append('        <li class="fold"><details' + is_open + '><summary class="grp">' + group.replace("&", "&amp;")
+                           + '</summary><ul class="nav-sub">')
+            elif group:
                 nav.append('        <li class="grp">' + group.replace("&", "&amp;") + "</li>")
         li = '<li class="sub">' if group else "<li>"
         name = d["name"].replace("&", "&amp;")
@@ -154,6 +165,8 @@ def doc(slug, urls, target, title):
             nav.append("        " + li + '<a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
         else:
             nav.append("        " + li + '<a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
+    if group in FOLD:
+        nav.append("        </ul></details></li>")
     nav.append("      </ul>")
     pn = []
     if i > 0:

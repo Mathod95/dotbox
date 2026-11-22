@@ -10,7 +10,7 @@
       <tr><td>Adresse</td><td><code>https://plex.example.com</code></td></tr>
       <tr><td>Accès</td><td>app: la connexion par ton compte Plex (plex.tv), avec AppSec devant. Derrière Authelia jusqu'à ce que ton compte réclame le serveur.</td></tr>
       <tr><td>Image</td><td><code>plexinc/pms-docker:1.43.5.11079-b3b13e506</code></td></tr>
-      <tr><td>Installer</td><td><code>sudo dotbox install plex</code></td></tr>
+      <tr><td>Installer</td><td><code>dotbox install plex</code></td></tr>
     </tbody>
   </table></div>
 
@@ -25,13 +25,13 @@
   <h2 id="fr-install">L'installation, pas à pas</h2>
   <p>Un serveur Plex neuf appartient au premier compte Plex qui le réclame. Plex reste donc derrière Authelia jusque-là.</p>
   <h3 id="fr-step1">1. Installer</h3>
-  <pre><span class="p">$</span> sudo dotbox install plex
+  <pre><span class="p">$</span> dotbox install plex
 <span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, two_factor until set up
 
   plex          https://plex.example.com  two_factor for now
 
   → Open https://plex.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install plex again: Authelia steps aside (app).</pre>
+    Then run dotbox install plex again: Authelia steps aside (app).</pre>
   <ul>
     <li>Elle crée <code>/opt/plex/config</code> et <code>/opt/plex/transcode</code> à ton utilisateur, et prépare <code>/data/media</code> s'il n'existe pas encore.</li>
     <li>Elle démarre Plex derrière Authelia. Au premier démarrage, l'image écrit l'adresse que Plex annonce à ses apps: <code>https://plex.example.com:443</code>.</li>
@@ -43,7 +43,7 @@
     <li>Ajoute les bibliothèques: Films sur <code>/data/media/movies</code>, Séries sur <code>/data/media/tv</code>.</li>
   </ul>
   <h3 id="fr-step3">3. Ouvrir Plex à ses apps</h3>
-  <pre><span class="p">$</span> sudo dotbox install plex
+  <pre><span class="p">$</span> dotbox install plex
 <span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, app
 
   plex          https://plex.example.com  app</pre>
@@ -87,7 +87,7 @@
       <tr><td>Address</td><td><code>https://plex.example.com</code></td></tr>
       <tr><td>Access</td><td>app: login with your Plex account (plex.tv), with AppSec in front. Behind Authelia until your account claims the server.</td></tr>
       <tr><td>Image</td><td><code>plexinc/pms-docker:1.43.5.11079-b3b13e506</code></td></tr>
-      <tr><td>Install</td><td><code>sudo dotbox install plex</code></td></tr>
+      <tr><td>Install</td><td><code>dotbox install plex</code></td></tr>
     </tbody>
   </table></div>
 
@@ -102,13 +102,13 @@
   <h2 id="en-install">The install, step by step</h2>
   <p>A new Plex server belongs to the first Plex account that claims it. So Plex stays behind Authelia until then.</p>
   <h3 id="en-step1">1. Install</h3>
-  <pre><span class="p">$</span> sudo dotbox install plex
+  <pre><span class="p">$</span> dotbox install plex
 <span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, two_factor until set up
 
   plex          https://plex.example.com  two_factor for now
 
   → Open https://plex.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install plex again: Authelia steps aside (app).</pre>
+    Then run dotbox install plex again: Authelia steps aside (app).</pre>
   <ul>
     <li>It creates <code>/opt/plex/config</code> and <code>/opt/plex/transcode</code>, owned by your user, and prepares <code>/data/media</code> if it does not exist yet.</li>
     <li>It starts Plex behind Authelia. On the first start, the image writes the address Plex advertises to its apps: <code>https://plex.example.com:443</code>.</li>
@@ -120,7 +120,7 @@
     <li>Add the libraries: Movies on <code>/data/media/movies</code>, Shows on <code>/data/media/tv</code>.</li>
   </ul>
   <h3 id="en-step3">3. Open Plex to its apps</h3>
-  <pre><span class="p">$</span> sudo dotbox install plex
+  <pre><span class="p">$</span> dotbox install plex
 <span class="ok">✓</span> [1/1] Plex          1.43.5.11079-b3b13e506, app
 
   plex          https://plex.example.com  app</pre>

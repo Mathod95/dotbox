@@ -48,6 +48,83 @@
     <h4>Ce que fait Saltbox</h4>
     <p>Radarr vient de hotio, en <code>release</code>, sans version fixée: la dernière version au moment de l'installation. qBittorrent vient de sa propre image, <code>saltydk/qbittorrent</code> (code de Saltbox lu le 17 novembre 2026).</p>
   </section>
+
+  <section class="vrac" id="v2">
+    <div class="vrac-head"><span class="vrac-n">V2</span><h2 id="v2-ssh">Durcir SSH: ce que disent les guides, et des pistes pour Dot Box</h2></div>
+    <dl class="vrac-meta">
+      <dt>Ira dans</dt><dd>Security (la couche SSH), Post-installation et CLI (la commande), une fois Q9 tranchée (Journal, D12, Q9)</dd>
+      <dt>Sources</dt><dd><a href="https://cyber.gouv.fr/sites/default/files/2014/01/NT_OpenSSH.pdf" target="_blank" rel="noopener">ANSSI ↗</a> <a href="https://infosec.mozilla.org/guidelines/openssh" target="_blank" rel="noopener">Mozilla ↗</a> <a href="https://www.ssh-audit.com/hardening_guides.html" target="_blank" rel="noopener">ssh-audit ↗</a> <a href="https://www.openssh.com/txt/release-10.0" target="_blank" rel="noopener">OpenSSH 10.0 ↗</a> <a href="https://www.virtua.cloud/learn/en/tutorials/ssh-security-config-linux-vps" target="_blank" rel="noopener">Virtua ↗</a> <a href="https://github.com/imthenachoman/How-To-Secure-A-Linux-Server" target="_blank" rel="noopener">How To Secure A Linux Server ↗</a> <a href="https://github.com/dev-sec/ansible-collection-hardening/tree/master/roles/ssh_hardening" target="_blank" rel="noopener">DevSec ↗</a> · lus le 21 novembre 2026</dd>
+    </dl>
+
+    <h4>Ce qui est déjà en place</h4>
+    <ul>
+      <li>OpenSSH 10.0 sur Debian 13: l'échange de clés post-quantique <code>mlkem768x25519-sha256</code> par défaut, DSA supprimé, et le serveur ne propose plus les échanges Diffie-Hellman « modp ». Les listes d'algorithmes et le tri du fichier <code>moduli</code> que recopient les guides, écrits pour OpenSSH 9, n'apportent presque plus rien ici.</li>
+      <li>CrowdSec lit les logs de SSH et bannit au pare-feu qui devine les mots de passe. Pas besoin de fail2ban ni des règles iptables de limitation que proposent ssh-audit et How To Secure A Linux Server.</li>
+      <li><code>dotbox doctor</code> signale déjà un mot de passe accepté et root autorisé en SSH (lus dans <code>sshd -T</code>).</li>
+    </ul>
+
+    <h4>Ce que recommandent les guides</h4>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Réglage</th><th>Valeur</th><th>Pourquoi</th><th>Guides</th></tr></thead>
+      <tbody>
+        <tr><td><code>PasswordAuthentication</code>, <code>KbdInteractiveAuthentication</code></td><td><code>no</code></td><td>Des clés seulement. Le second compte aussi: par PAM, il peut encore accepter un mot de passe (Mozilla).</td><td>Tous</td></tr>
+        <tr><td><code>PermitRootLogin</code></td><td><code>no</code></td><td>On sait qui a fait quoi: on entre avec son compte, puis <code>sudo</code>.</td><td>ANSSI, Mozilla, Virtua, How To</td></tr>
+        <tr><td><code>AuthenticationMethods</code></td><td><code>publickey</code></td><td>Une seule façon d'entrer, dite clairement.</td><td>Virtua</td></tr>
+        <tr><td><code>AllowUsers</code> ou <code>AllowGroups</code></td><td>Ton compte, ou un groupe</td><td>Un compte créé par un paquet, même avec une clé, ne peut pas entrer.</td><td>ANSSI, Virtua, How To, DevSec</td></tr>
+        <tr><td><code>MaxAuthTries</code>, <code>LoginGraceTime</code></td><td><code>3</code>, <code>20</code> à <code>30</code></td><td>Moins d'essais par connexion, moins de temps pour se connecter (120 s par défaut).</td><td>Virtua, How To</td></tr>
+        <tr><td><code>ClientAliveInterval</code>, <code>ClientAliveCountMax</code></td><td><code>300</code>, <code>2</code></td><td>Une session oubliée se ferme après 10 minutes.</td><td>Virtua</td></tr>
+        <tr><td><code>X11Forwarding</code></td><td><code>no</code></td><td>Aucun affichage graphique sur un serveur. Debian le met à <code>yes</code>.</td><td>Virtua, How To</td></tr>
+        <tr><td><code>AllowAgentForwarding</code></td><td><code>no</code></td><td>Un root du serveur pourrait se servir de tes clés pendant ta session.</td><td>Virtua, How To</td></tr>
+        <tr><td><code>AllowTcpForwarding</code>, <code>PermitTunnel</code>, <code>GatewayPorts</code></td><td><code>no</code></td><td>Le serveur ne sert pas de tunnel vers ailleurs.</td><td>Virtua, How To</td></tr>
+        <tr><td><code>LogLevel</code></td><td><code>VERBOSE</code></td><td>L'empreinte de la clé utilisée est écrite dans les logs.</td><td>Mozilla, Virtua</td></tr>
+        <tr><td><code>RequiredRSASize</code></td><td><code>3072</code></td><td>Refuse les clés RSA trop courtes.</td><td>ssh-audit, How To</td></tr>
+        <tr><td>Algorithmes, <code>moduli</code></td><td>Listes courtes, groupes d'au moins 3072 bits</td><td>Retirer les vieux algorithmes. Utile sur OpenSSH 9 (Debian 12, Ubuntu 24.04).</td><td>Mozilla, ssh-audit, Virtua</td></tr>
+        <tr><td>Un fichier à part</td><td><code>/etc/ssh/sshd_config.d/00-….conf</code></td><td>Facile à retirer. Le <code>00-</code> passe avant les autres fichiers, car sshd garde la première valeur lue.</td><td>Virtua, ssh-audit</td></tr>
+        <tr><td>Double authentification</td><td>Code TOTP par PAM</td><td>Une clé et un code. Demande un paquet en plus (<code>libpam-google-authenticator</code>).</td><td>Mozilla, How To</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Les pièges</h4>
+    <ul>
+      <li>Se fermer la porte: une clé qui ne marche pas, un <code>AllowUsers</code> au mauvais nom, et plus personne n'entre. Tous les guides disent la même chose: garder la session ouverte, vérifier avec <code>sshd -t</code> avant de relancer, et en dernier recours, la console de l'hébergeur.</li>
+      <li>La première valeur gagne: un autre fichier de <code>sshd_config.d</code> peut défaire le durcissement. Les images de beaucoup d'hébergeurs en posent un (souvent <code>50-cloud-init.conf</code>, avec <code>PasswordAuthentication yes</code>). Seul <code>sshd -T</code> montre les valeurs vraiment appliquées.</li>
+      <li>Des algorithmes trop stricts: un vieux client ne se connecte plus (« no matching cipher »).</li>
+      <li><code>RequiredRSASize 3072</code> refuse une clé RSA de 2048 bits, encore courante.</li>
+      <li>Changer le port SSH: peu utile avec CrowdSec, et une source d'erreurs (déjà noté dans Q9).</li>
+    </ul>
+
+    <h4>Piste 1. Une commande, jamais d'office</h4>
+    <p><code>sudo dotbox ssh harden</code>, en root et sans le service, comme <code>exec</code> et <code>edit</code> (D80). <code>sudo dotbox ssh unharden</code> retire le fichier. <code>dotbox doctor</code> la propose quand il trouve un mot de passe accepté. Pas de question dans <code>dotbox init</code>: au moment de l'installation, l'utilisateur n'a souvent pas encore de clé sur son compte.</p>
+
+    <h4>Piste 2. Vérifier avant de toucher</h4>
+    <ul>
+      <li>Une clé dans <code>~/.ssh/authorized_keys</code> de l'utilisateur de <code>dotbox.yml</code>, sinon la commande refuse et dit comment en ajouter une (<code>ssh-copy-id</code>).</li>
+      <li>L'utilisateur dans le groupe <code>sudo</code>, pour qu'il puisse encore passer root sans <code>PermitRootLogin</code>.</li>
+      <li>Une clé RSA de moins de 3072 bits: <code>RequiredRSASize</code> n'est pas posé, et doctor conseille une clé ed25519.</li>
+    </ul>
+
+    <h4>Piste 3. Un seul fichier, vérifié</h4>
+    <p><code>/etc/ssh/sshd_config.d/00-dotbox.conf</code>, puis <code>sshd -t</code>, puis un <code>reload</code> (les sessions ouvertes restent), puis <code>sshd -T</code> pour voir que chaque valeur est bien appliquée, sans qu'un autre fichier l'ait défaite.</p>
+
+    <h4>Piste 4. Le filet: revenir en arrière tout seul</h4>
+    <p>Comme <code>netplan try</code>. Après le reload, Dot Box demande d'ouvrir une <b>nouvelle</b> connexion SSH et d'y taper <code>sudo dotbox ssh confirm</code>, dans les 5 minutes. Sans cette confirmation, un minuteur systemd (<code>systemd-run --on-active=5min</code>) retire le fichier et relance sshd. Personne ne reste enfermé dehors, même si la session en cours coupe.</p>
+
+    <h4>Piste 5. Le contenu, en deux niveaux</h4>
+    <ul>
+      <li>De base: <code>PasswordAuthentication no</code>, <code>KbdInteractiveAuthentication no</code>, <code>PermitRootLogin no</code>, <code>AuthenticationMethods publickey</code>, <code>MaxAuthTries 3</code>, <code>LoginGraceTime 30</code>, <code>ClientAliveInterval 300</code> et <code>ClientAliveCountMax 2</code>, <code>X11Forwarding no</code>, <code>AllowAgentForwarding no</code>, <code>LogLevel VERBOSE</code> (à vérifier avec le parser SSH de CrowdSec).</li>
+      <li>En option: <code>AllowUsers</code> avec l'utilisateur de <code>dotbox.yml</code>, <code>AllowTcpForwarding no</code> (casse les tunnels <code>ssh -L</code>, que certains utilisent pour joindre une app), les listes d'algorithmes sur OpenSSH 9 seulement.</li>
+      <li>Pas fait: changer le port, fail2ban, des règles iptables, le code TOTP par PAM (un paquet en plus, et une clé avec CrowdSec suffit pour un serveur Dot Box).</li>
+    </ul>
+
+    <h4>Piste 6. Un doctor plus complet</h4>
+    <p>En plus du mot de passe et de root: <code>X11Forwarding</code> et <code>AllowAgentForwarding</code>, un fichier de <code>sshd_config.d</code> qui défait <code>00-dotbox.conf</code>, des clés DSA ou RSA trop courtes dans <code>authorized_keys</code>, et la version d'OpenSSH.</p>
+
+    <h4>Piste 7. Plus tard</h4>
+    <ul>
+      <li>SSH réservé au VPN (WireGuard ou NetBird, comme prévu pour ne pas se bannir soi-même): plus aucune connexion SSH depuis Internet.</li>
+      <li>Les clés matérielles FIDO2 (<code>sk-ssh-ed25519</code>, une YubiKey par exemple): une double authentification gérée par OpenSSH lui-même, sans rien installer, à la place du code TOTP.</li>
+    </ul>
+  </section>
 </article>
 
 <!-- CSS -->

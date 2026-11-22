@@ -8,7 +8,7 @@
   <h2 id="fr-authelia">Te connecter à Authelia</h2>
   <p>À faire en premier: tant que ta double authentification n'est pas enregistrée, aucune app derrière Authelia ne s'ouvre. Ton compte existe déjà, au nom de l'utilisateur choisi pendant <code>init</code>, dans le groupe <code>admins</code>.</p>
   <h3 id="fr-authelia-login">1. Te connecter</h3>
-  <p>Relis ton mot de passe sur le serveur:</p>
+  <p>Ton mot de passe est celui que tu as choisi pendant <code>init</code>, ou celui que sa carte de fin a affiché si tu l'as laissé tirer au hasard. Pour le relire sur le serveur:</p>
   <pre><span class="p">$</span> sudo dotbox authelia password
   password ••••••••••••••••   (admin, set by dotbox init)</pre>
   <p>Ouvre <code>https://auth.example.com</code>, ou n'importe quelle app derrière Authelia, puis entre ton nom d'utilisateur et ce mot de passe.</p>
@@ -48,31 +48,51 @@
   </div>
   <div class="prop-new" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
-<span class="ok">  ok    Debian GNU/Linux 13 (trixie) amd64</span>
-<span class="ok">  ok    docker 29.10.0, network dotbox, local logs, live-restore</span>
-<span class="ok">  ok    *.example.com points to this server</span>
-<span class="ok">  ok    18 containers running</span>
-<span class="ok">  ok    15 certificates valid, the first ends in 87 days</span>
-<span class="ok">  ok    crowdsec running, bouncer rules in INPUT and DOCKER-USER</span>
-<span class="w">  warn  3 system updates pending (1 security)</span>
-<span class="c">        sudo apt update &amp;&amp; sudo apt full-upgrade</span>
-<span class="w">  warn  automatic security updates are off</span>
-<span class="w">  warn  reboot required</span>
-<span class="w">  warn  ssh accepts passwords</span>
-<span class="w">  warn  ssh allows root login</span>
-<span class="ok">  ok    / 11% used</span>
-<span class="ok">  ok    dotbox service running</span>
-
-<span class="w">  ! 5 problems</span></pre>
+<span class="c">┌</span>  dotbox doctor
+<span class="c">│</span>
+<span class="ok">◇</span>  System         Debian GNU/Linux 13 (trixie) amd64
+<span class="ok">◇</span>  Docker         29.10.0, network dotbox, local logs, live-restore
+<span class="ok">◇</span>  DNS            *.example.com points to this server
+<span class="ok">◇</span>  Containers     18 running
+<span class="ok">◇</span>  Certificates   15 valid, the first ends in 87 days
+<span class="ok">◇</span>  CrowdSec       running, bouncer rules in INPUT and DOCKER-USER
+<span class="ok">◇</span>  Apps           none waiting for their first-run setup
+<span class="w">▲</span>  Updates        3 to look at
+<span class="c">│</span><span class="w">    3 system updates pending (1 security)</span>
+<span class="c">│    → sudo apt update &amp;&amp; sudo apt full-upgrade</span>
+<span class="c">│</span><span class="w">    automatic security updates are off</span>
+<span class="c">│    → sudo apt install unattended-upgrades &amp;&amp; sudo dpkg-reconfigure unattended-upgrades</span>
+<span class="c">│</span><span class="w">    reboot required</span>
+<span class="c">│    → sudo reboot, when it suits you</span>
+<span class="w">▲</span>  SSH            2 to look at
+<span class="c">│</span><span class="w">    accepts passwords</span>
+<span class="c">│    → see https://mathod95.github.io/dotbox/getting-started/post-installation/</span>
+<span class="c">│</span><span class="w">    allows root login</span>
+<span class="c">│    → see https://mathod95.github.io/dotbox/getting-started/post-installation/</span>
+<span class="ok">◇</span>  Disk           / 11% used
+<span class="w">▲</span>  Backup         only on this server: a dead disk takes the backups with it
+<span class="c">│    → add a remote destination, see https://mathod95.github.io/dotbox/getting-started/backup/</span>
+<span class="ok">◇</span>  Service        dotbox running
+<span class="c">│</span>
+<span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
   </div>
 
   <h2 id="fr-updates">Mettre le système à jour</h2>
   <p>Dot Box ne met pas à jour le système et ne redémarre jamais le serveur: c'est toi qui choisis le moment. <code>doctor</code> signale:</p>
+  <div class="prop-old" data-prop="135">
   <ul>
     <li><b>les mises à jour en attente</b>, dont celles de sécurité;</li>
     <li><b>les mises à jour de sécurité automatiques</b> (<code>unattended-upgrades</code>) si elles sont désactivées;</li>
     <li><b>un redémarrage nécessaire</b>, par exemple après une mise à jour du noyau.</li>
   </ul>
+  </div>
+  <div class="prop-new" data-prop="135">
+  <ul>
+    <li><b>Les mises à jour en attente</b>, dont celles de sécurité.</li>
+    <li><b>Les mises à jour de sécurité automatiques</b> (<code>unattended-upgrades</code>), si elles sont désactivées.</li>
+    <li><b>Un redémarrage nécessaire</b>, par exemple après une mise à jour du noyau.</li>
+  </ul>
+  </div>
   <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
 <span class="p">$</span> sudo reboot</pre>
   <p>Après un redémarrage, Docker relance toutes les apps.</p>
@@ -87,14 +107,15 @@
   <p>CrowdSec, installé avec le core, bloque déjà les adresses qui enchaînent les tentatives de connexion SSH, sans toucher à cette configuration.</p>
 
   <h2 id="fr-backup">Sortir les sauvegardes du serveur</h2>
-  <p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
+  <div class="prop-old" data-prop="134"><p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
+  <div class="prop-new" data-prop="134"><p>À venir. La sauvegarde quotidienne sera active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
 
   <h2 id="fr-users">Créer les comptes</h2>
   <div class="prop-old" data-prop="57">
   <p>Ton compte existe déjà: <code>init</code> l'a créé dans le groupe <code>admins</code>. Son mot de passe se relit avec <code>sudo dotbox authelia password</code>. Pour les autres:</p>
   </div>
   <div class="prop-new" data-prop="57">
-  <p>Ton compte existe déjà (Te connecter à Authelia, plus haut). Pour les autres:</p>
+  <p>Ton compte existe déjà (Te connecter à Authelia, plus haut). Pour les autres, à venir:</p>
   </div>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Les groupes décident des apps accessibles: <code>family</code> voit le serveur média et Seerr, <code>admins</code> voit tout. Le compte reçoit un lien d'invitation valable 48 heures pour choisir son mot de passe et sa double authentification.</p>
@@ -111,7 +132,7 @@
   <h2 id="en-authelia">Log in to Authelia</h2>
   <p>Do this first: until your two-factor method is registered, no app behind Authelia opens. Your account already exists, named after the user chosen during <code>init</code>, in the <code>admins</code> group.</p>
   <h3 id="en-authelia-login">1. Log in</h3>
-  <p>Read your password again on the server:</p>
+  <p>Your password is the one you chose during <code>init</code>, or the one its final card showed if you let it pick a random one. To read it again on the server:</p>
   <pre><span class="p">$</span> sudo dotbox authelia password
   password ••••••••••••••••   (admin, set by dotbox init)</pre>
   <p>Open <code>https://auth.example.com</code>, or any app behind Authelia, then enter your user name and this password.</p>
@@ -151,31 +172,51 @@
   </div>
   <div class="prop-new" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
-<span class="ok">  ok    Debian GNU/Linux 13 (trixie) amd64</span>
-<span class="ok">  ok    docker 29.10.0, network dotbox, local logs, live-restore</span>
-<span class="ok">  ok    *.example.com points to this server</span>
-<span class="ok">  ok    18 containers running</span>
-<span class="ok">  ok    15 certificates valid, the first ends in 87 days</span>
-<span class="ok">  ok    crowdsec running, bouncer rules in INPUT and DOCKER-USER</span>
-<span class="w">  warn  3 system updates pending (1 security)</span>
-<span class="c">        sudo apt update &amp;&amp; sudo apt full-upgrade</span>
-<span class="w">  warn  automatic security updates are off</span>
-<span class="w">  warn  reboot required</span>
-<span class="w">  warn  ssh accepts passwords</span>
-<span class="w">  warn  ssh allows root login</span>
-<span class="ok">  ok    / 11% used</span>
-<span class="ok">  ok    dotbox service running</span>
-
-<span class="w">  ! 5 problems</span></pre>
+<span class="c">┌</span>  dotbox doctor
+<span class="c">│</span>
+<span class="ok">◇</span>  System         Debian GNU/Linux 13 (trixie) amd64
+<span class="ok">◇</span>  Docker         29.10.0, network dotbox, local logs, live-restore
+<span class="ok">◇</span>  DNS            *.example.com points to this server
+<span class="ok">◇</span>  Containers     18 running
+<span class="ok">◇</span>  Certificates   15 valid, the first ends in 87 days
+<span class="ok">◇</span>  CrowdSec       running, bouncer rules in INPUT and DOCKER-USER
+<span class="ok">◇</span>  Apps           none waiting for their first-run setup
+<span class="w">▲</span>  Updates        3 to look at
+<span class="c">│</span><span class="w">    3 system updates pending (1 security)</span>
+<span class="c">│    → sudo apt update &amp;&amp; sudo apt full-upgrade</span>
+<span class="c">│</span><span class="w">    automatic security updates are off</span>
+<span class="c">│    → sudo apt install unattended-upgrades &amp;&amp; sudo dpkg-reconfigure unattended-upgrades</span>
+<span class="c">│</span><span class="w">    reboot required</span>
+<span class="c">│    → sudo reboot, when it suits you</span>
+<span class="w">▲</span>  SSH            2 to look at
+<span class="c">│</span><span class="w">    accepts passwords</span>
+<span class="c">│    → see https://mathod95.github.io/dotbox/getting-started/post-installation/</span>
+<span class="c">│</span><span class="w">    allows root login</span>
+<span class="c">│    → see https://mathod95.github.io/dotbox/getting-started/post-installation/</span>
+<span class="ok">◇</span>  Disk           / 11% used
+<span class="w">▲</span>  Backup         only on this server: a dead disk takes the backups with it
+<span class="c">│    → add a remote destination, see https://mathod95.github.io/dotbox/getting-started/backup/</span>
+<span class="ok">◇</span>  Service        dotbox running
+<span class="c">│</span>
+<span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
   </div>
 
   <h2 id="en-updates">Update the system</h2>
   <p>Dot Box does not update the system and never reboots the server: you choose when. <code>doctor</code> reports:</p>
+  <div class="prop-old" data-prop="135">
   <ul>
     <li><b>pending updates</b>, including security ones;</li>
     <li><b>automatic security updates</b> (<code>unattended-upgrades</code>) if they are turned off;</li>
     <li><b>a required reboot</b>, for example after a kernel update.</li>
   </ul>
+  </div>
+  <div class="prop-new" data-prop="135">
+  <ul>
+    <li><b>Pending updates</b>, including security ones.</li>
+    <li><b>Automatic security updates</b> (<code>unattended-upgrades</code>), if they are turned off.</li>
+    <li><b>A required reboot</b>, for example after a kernel update.</li>
+  </ul>
+  </div>
   <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
 <span class="p">$</span> sudo reboot</pre>
   <p>After a reboot, Docker starts every app again.</p>
@@ -190,14 +231,15 @@
   <p>CrowdSec, installed with the core, already blocks addresses that keep trying to log in over SSH, without touching this configuration.</p>
 
   <h2 id="en-backup">Move backups off the server</h2>
-  <p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
+  <div class="prop-old" data-prop="134"><p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
+  <div class="prop-new" data-prop="134"><p>Coming later. The daily backup will be on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
 
   <h2 id="en-users">Create accounts</h2>
   <div class="prop-old" data-prop="57">
   <p>Your account already exists: <code>init</code> created it in the <code>admins</code> group. Its password can be read again with <code>sudo dotbox authelia password</code>. For the others:</p>
   </div>
   <div class="prop-new" data-prop="57">
-  <p>Your account already exists (Log in to Authelia, above). For the others:</p>
+  <p>Your account already exists (Log in to Authelia, above). For the others, coming later:</p>
   </div>
   <pre><span class="p">$</span> dotbox user add lea --group family</pre>
   <p>Groups decide which apps are reachable: <code>family</code> sees the media server and Seerr, <code>admins</code> sees everything. The account gets an invite link, valid for 48 hours, to choose its password and two-factor method.</p>

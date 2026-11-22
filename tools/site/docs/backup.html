@@ -10,7 +10,12 @@
     <li><b><code>/opt/&lt;app&gt;</code></b>, pour chaque app installée.</li>
     <li><b>Pas <code>/data</code></b>: les médias se re-téléchargent et pèsent trop lourd pour une archive quotidienne. Pour eux, un rsync ou un NAS fait mieux l'affaire.</li>
   </ul>
+  <div class="prop-old" data-prop="137">
   <p>Les caches et les transcodes de Jellyfin et Plex, ainsi que les logs, sont exclus d'office.</p>
+  </div>
+  <div class="prop-new" data-prop="137">
+  <p>Les logs sont laissés de côté d'office: les dossiers <code>logs</code> (vidés, pas retirés) et les fichiers <code>*.log</code>. Chaque app peut en écarter davantage dans son manifest, comme les caches et les transcodes de Jellyfin et de Plex, qui se refont seuls. <code>backup.exclude</code> ajoute tes propres motifs.</p>
+  </div>
 
   <h2 id="fr-how">Comment ça se passe</h2>
   <div class="prop-old" data-prop="113">
@@ -23,25 +28,58 @@
   </div>
   <div class="prop-new" data-prop="113">
   <ol>
-    <li><b>App par app</b>: Dot Box arrête une app, archive son dossier, la redémarre et attend qu'elle soit <i><b>Running</b></i>, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive, quelques secondes pour la plupart. Une app qui ne repart pas arrête la série, et Dot Box le dit.</li>
+    <li><b><code>/opt/dotbox</code> d'abord</b>, sans rien arrêter: la config, les manifests, les secrets.</li>
+    <li><b>Puis app par app</b>: Dot Box arrête une app, archive son dossier, la redémarre et attend qu'elle soit <i><b>Running</b></i>, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive: quelques secondes, plus l'attente de son healthcheck, jusqu'à une minute pour certaines. Une app qui ne repart pas arrête la série, et Dot Box le dit. Une app arrêtée avec <code>dotbox stop</code> est archivée telle quelle et reste arrêtée.</li>
+    <li><b>Compressée et chiffrée</b> au fil de l'eau: rien n'est écrit en clair sur le disque, l'archive arrive déjà chiffrée.</li>
+    <li><b>Envoyée</b> à la fin, en une fois, à chaque destination distante. <code>keep</code> fait le ménage, ici et là-bas.</li>
     <li><b>Instantané</b>: plus tard, sur btrfs ou ZFS, un instantané remplacera l'arrêt.</li>
-    <li><b>Compressée et chiffrée</b>: chaque archive est compressée (zstd) puis chiffrée (age), et s'appelle <code>&lt;app&gt;-&lt;date&gt;.tar.zst.age</code>. Une destination distante ne voit jamais tes secrets en clair.</li>
-    <li><b>Envoyée</b> à chaque destination, puis les plus anciennes sont supprimées selon <code>keep</code>.</li>
   </ol>
   </div>
-  <div class="prop-old" data-prop="112">
-  <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles.</p>
-  </div>
-  <div class="prop-new" data-prop="112">
   <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>, lisible par root seulement. <code>dotbox init</code> la crée, ou la première sauvegarde sur un serveur déjà installé. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles. La carte de fin de <code>init</code> et la première sauvegarde te le rappellent.</p>
-  </div>
 
   <div class="prop-new" data-prop="110">
   <h2 id="fr-nothing">Rien à installer</h2>
   <ul>
-    <li><b>Sur le serveur</b>: la compression (zstd) et le chiffrement (age) sont dans le binaire <code>dotbox</code>. rclone, pour les destinations distantes, tourne depuis son image Docker officielle, le temps de l'envoi.</li>
+    <li><b>Sur le serveur</b>: la compression (zstd) et le chiffrement (age) sont dans le binaire <code>dotbox</code>. rclone, pour les destinations distantes, tourne depuis son image Docker officielle, à une version fixée dans le catalogue, le temps de l'envoi. Il ne voit que <code>/backups</code>, en lecture seule, et les quelques fichiers dont il a besoin.</li>
     <li><b>En face</b>: la destination ne fait que stocker des fichiers chiffrés, qu'elle ne sait pas lire. Pour B2, S3 ou Google Drive, un compte suffit. Pour <code>sftp</code>, une machine avec un serveur SSH, ce qu'ont tout Linux et la plupart des NAS (Synology, TrueNAS...). Elle n'a jamais besoin de rclone, de zstd ni d'age.</li>
-    <li><b>Relire une archive ailleurs</b>, sur ton PC par exemple: <code>dotbox</code> sait le faire, et les formats sont standards, les outils officiels <code>zstd</code> et <code>age</code> les ouvrent aussi, avec la clé.</li>
+    <li><b>Relire une archive ailleurs</b>, sur ton PC par exemple: <code>dotbox</code> sait le faire, et les formats sont standards. Avec la clé, <code>age -d -i backup.key radarr-2026-11-22-0400.tar.zst.age | zstd -d | tar -x</code>.</li>
+  </ul>
+  </div>
+
+  <div class="prop-new" data-prop="138">
+  <h2 id="fr-where">Où sont les archives</h2>
+  <p>Une archive par dossier et par sauvegarde, rangées à plat dans <code>/backups</code>:</p>
+  <pre><span class="p">$</span> sudo ls -l /backups
+-rw------- 1 root root   11K dotbox-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  1.0M prowlarr-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  6.1M qbittorrent-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  1.0M prowlarr-2026-11-21-0400.tar.zst.age</pre>
+  <ul>
+    <li><b>Le nom</b>: l'app, puis la date et l'heure du début de la sauvegarde (<code>AAAA-MM-JJ-HHMM</code>). Toutes les archives d'une même sauvegarde ont la même date, <code>dotbox</code> pour la config. Deux sauvegardes dans la même minute: la seconde remplace la première.</li>
+    <li><b>Les droits</b>: le dossier en 700 et les archives en 600, à root. Même chiffrées, elles ne regardent que root.</li>
+    <li><b><code>keep</code></b> compte par app et par destination: avec <code>keep: 7</code>, les 7 dernières archives de chaque app restent dans chaque destination. Une sauvegarde d'une seule app (<code>--app</code>) ne fait pas disparaître les autres.</li>
+    <li><b>Une archive en cours</b> s'écrit d'abord sous un nom caché (<code>.radarr-....partial</code>), renommée à la fin: une archive à moitié écrite ne se confond jamais avec une vraie.</li>
+  </ul>
+  </div>
+
+  <div class="prop-new" data-prop="139">
+  <h2 id="fr-sftp">Une destination SFTP</h2>
+  <p>Sur l'autre machine (un NAS, un autre serveur), un compte à Dot Box, enfermé dans son dossier: il ne peut que déposer et reprendre des archives. Par exemple avec OpenSSH, en root:</p>
+  <pre><span class="p">#</span> useradd --system --home-dir /var/lib/dotbox-backup --shell /usr/sbin/nologin dotbox-backup
+<span class="p">#</span> usermod -p '*' dotbox-backup
+<span class="p">#</span> install -d -m 755 /var/lib/dotbox-backup /var/lib/dotbox-backup/.ssh
+<span class="p">#</span> install -d -m 700 -o dotbox-backup -g dotbox-backup /var/lib/dotbox-backup/backups
+<span class="p">#</span> nano /etc/ssh/sshd_config.d/50-dotbox-backup.conf
+<span class="c">Match User dotbox-backup
+    ChrootDirectory /var/lib/dotbox-backup
+    ForceCommand internal-sftp -d /backups
+    AllowTcpForwarding no
+    PermitTTY no</span>
+<span class="p">#</span> sshd -t &amp;&amp; systemctl reload ssh</pre>
+  <ul>
+    <li><b>Le dossier enfermant</b>, et chacun de ses parents, doit appartenir à root et n'être modifiable que par lui, sinon SSH refuse la connexion. Sur certaines machines, <code>/srv</code> appartient à un utilisateur: d'où <code>/var/lib</code>.</li>
+    <li><b>Dans <code>dotbox.yml</code></b>, le chemin est celui que voit le compte enfermé: <code>- sftp: dotbox-backup@nas.example.com:/backups</code>.</li>
+    <li><b>La première sauvegarde</b> crée la clé SSH de Dot Box (<code>/opt/dotbox/secrets/backup_ssh</code>) et affiche la ligne à mettre dans <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>, précédée de <code>restrict</code>. Elle relève aussi l'empreinte de l'autre machine et l'affiche: compare-la avec <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> là-bas. Ensuite, une machine qui n'a plus cette empreinte est refusée, et rien n'est envoyé.</li>
   </ul>
   </div>
 
@@ -60,25 +98,49 @@
   <div class="prop-new" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
-  keep: 7                          <span class="c"># archives gardées par destination</span>
-  exclude: ["*/logs/*"]
+  keep: 7                          <span class="c"># archives gardées, par app et par destination</span>
+  exclude: ["*/cache/*"]           <span class="c"># en plus des logs</span>
   destinations:
-    - local: /backups              <span class="c"># sur le serveur</span>
-    - rclone: b2:dotbox-backups    <span class="c"># un remote de rclone.conf</span>
-    - sftp: backup@nas.local:/volume1/dotbox   <span class="c"># par rclone aussi</span></pre>
-  <p>Par défaut: <code>daily 04:00</code>, <code>keep: 7</code>, vers <code>/backups</code>. La planification est un timer systemd, <code>dotbox-backup.timer</code>, écrit par <code>init</code> et par <code>dotbox sync</code>. <code>dotbox status</code> montre la dernière sauvegarde, son résultat et la prochaine.</p>
-  <p><code>rclone</code> et <code>sftp</code> passent tous les deux par rclone. Ses remotes (ton compte B2, ton NAS) sont dans <code>/opt/dotbox/secrets/rclone.conf</code>, lisible par root seulement.</p>
+    - local: /backups              <span class="c"># sur le serveur, toujours la première</span>
+    - sftp: dotbox-backup@nas.example.com:/backups
+    - rclone: b2:dotbox-backups    <span class="c"># un remote de rclone.conf</span></pre>
+  <p>Sans section <code>backup</code>, les valeurs par défaut: <code>daily 04:00</code>, <code>keep: 7</code>, vers <code>/backups</code>. Elles ne sont pas écrites dans le fichier, <code>dotbox config get</code> les montre.</p>
+  <ul>
+    <li><b>L'heure</b>: <code>dotbox config set backup.schedule "daily 02:30"</code>, puis <code>dotbox sync</code>, qui réécrit le timer systemd (<code>dotbox-backup.timer</code>). Une sauvegarde manquée, serveur éteint, est faite au démarrage.</li>
+    <li><b><code>keep</code></b>: <code>dotbox config set backup.keep 14</code>, pris en compte dès la sauvegarde suivante.</li>
+    <li><b>Les destinations et les exclusions</b>, des listes, s'écrivent à la main dans <code>dotbox.yml</code> (<code>sudo nano</code>). Les archives se font toujours d'abord dans un dossier local, puis partent aux destinations distantes.</li>
+    <li><b><code>rclone:</code></b> lit ses remotes (ton compte B2, S3...) dans <code>/opt/dotbox/secrets/rclone.conf</code>, lisible par root seulement. <code>sftp:</code> n'en a pas besoin: Dot Box gère sa clé et l'empreinte de l'autre machine.</li>
+  </ul>
   </div>
 
   <h2 id="fr-manual">Lancer une sauvegarde</h2>
   <pre><span class="p">$</span> dotbox backup
 <span class="p">$</span> dotbox backup --app radarr
 <span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
+  <div class="prop-old" data-prop="140">
   <p>La sauvegarde tourne sur le serveur, pas dans ton terminal: tu peux fermer la session SSH, <code>dotbox status</code> suit l'avancement.</p>
+  </div>
+  <div class="prop-new" data-prop="140">
+  <p>Sans <code>sudo</code>: la sauvegarde tourne dans le service de Dot Box, une tâche à la fois comme une installation, et ton terminal la suit étape par étape. Fermer le terminal ne l'arrête pas.</p>
+  <pre><span class="p">$</span> dotbox backup
+<span class="ok">  ✓ [1/5] Key           backup.key                                  0.0 s
+  ✓ [2/5] Dotbox        11 kB                                       0.0 s
+  ✓ [3/5] Prowlarr      1 MB, healthy                                19 s
+  ✓ [4/5] Qbittorrent   6 MB, healthy                                16 s
+  ✓ [5/5] Sftp          3 archives sent, keep 7                     5.2 s</span>
+
+  3 archives, 7 MB, in /backups and sftp:dotbox-backup@nas.example.com:/backups, keep 7</pre>
+  <p><code>dotbox status</code> montre la dernière sauvegarde complète et la prochaine. <code>dotbox doctor</code> signale une sauvegarde ratée, une sauvegarde de plus de deux jours, un timer arrêté, et des sauvegardes qui ne quittent pas le serveur.</p>
+  </div>
 
   <h2 id="fr-stream">Sauvegarde en flux</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
+  <div class="prop-old" data-prop="141">
   <p>Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
+  </div>
+  <div class="prop-new" data-prop="141">
+  <p>À venir. Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
+  </div>
 </article>
 
 <article class="prose" data-l="en">
@@ -88,7 +150,12 @@
     <li><b><code>/opt/&lt;app&gt;</code></b>, for every installed app.</li>
     <li><b>Not <code>/data</code></b>: media can be downloaded again and is too heavy for a daily archive. For media, rsync or a NAS does a better job.</li>
   </ul>
+  <div class="prop-old" data-prop="137">
   <p>Jellyfin and Plex caches and transcodes, and logs, are always excluded.</p>
+  </div>
+  <div class="prop-new" data-prop="137">
+  <p>Logs are always left out: <code>logs</code> folders (emptied, not removed) and <code>*.log</code> files. Each app can leave out more in its manifest, like the caches and transcodes of Jellyfin and Plex, which rebuild themselves. <code>backup.exclude</code> adds your own patterns.</p>
+  </div>
 
   <h2 id="en-how">How it works</h2>
   <div class="prop-old" data-prop="113">
@@ -101,25 +168,58 @@
   </div>
   <div class="prop-new" data-prop="113">
   <ol>
-    <li><b>App by app</b>: Dot Box stops an app, archives its folder, restarts it and waits for it to be <i><b>Running</b></i>, then moves to the next one. Each app is down only for its own archive, a few seconds for most. An app that does not come back stops the series, and Dot Box says so.</li>
+    <li><b><code>/opt/dotbox</code> first</b>, without stopping anything: the config, manifests and secrets.</li>
+    <li><b>Then app by app</b>: Dot Box stops an app, archives its folder, restarts it and waits for it to be <i><b>Running</b></i>, then moves to the next one. Each app is down only for its own archive: a few seconds, plus the wait for its healthcheck, up to a minute for some. An app that does not come back stops the series, and Dot Box says so. An app stopped with <code>dotbox stop</code> is archived as it is and stays stopped.</li>
+    <li><b>Compressed and encrypted</b> on the fly: nothing is written in clear on the disk, the archive lands already encrypted.</li>
+    <li><b>Sent</b> at the end, in one go, to each remote destination. <code>keep</code> cleans up, here and there.</li>
     <li><b>Snapshot</b>: later, on btrfs or ZFS, a snapshot will replace the stop.</li>
-    <li><b>Compressed and encrypted</b>: each archive is compressed (zstd), then encrypted (age), and is named <code>&lt;app&gt;-&lt;date&gt;.tar.zst.age</code>. A remote destination never sees your secrets in clear.</li>
-    <li><b>Sent</b> to each destination, then the oldest are deleted according to <code>keep</code>.</li>
   </ol>
   </div>
-  <div class="prop-old" data-prop="112">
-  <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>. Keep a copy off the server, in a password manager: without it, archives cannot be read.</p>
-  </div>
-  <div class="prop-new" data-prop="112">
   <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>, readable by root only. <code>dotbox init</code> creates it, or the first backup on a server already installed. Keep a copy off the server, in a password manager: without it, archives cannot be read. The card at the end of <code>init</code> and the first backup remind you.</p>
-  </div>
 
   <div class="prop-new" data-prop="110">
   <h2 id="en-nothing">Nothing to install</h2>
   <ul>
-    <li><b>On the server</b>: compression (zstd) and encryption (age) are in the <code>dotbox</code> binary. rclone, for remote destinations, runs from its official Docker image, for the time of the upload.</li>
+    <li><b>On the server</b>: compression (zstd) and encryption (age) are in the <code>dotbox</code> binary. rclone, for remote destinations, runs from its official Docker image, at a version pinned in the catalog, for the time of the upload. It only sees <code>/backups</code>, read-only, and the few files it needs.</li>
     <li><b>On the other side</b>: the destination only stores encrypted files, which it cannot read. For B2, S3 or Google Drive, an account is enough. For <code>sftp</code>, a machine with an SSH server, which every Linux and most NAS have (Synology, TrueNAS...). It never needs rclone, zstd or age.</li>
-    <li><b>Reading an archive elsewhere</b>, on your PC for example: <code>dotbox</code> can do it, and the formats are standard, the official <code>zstd</code> and <code>age</code> tools open them too, with the key.</li>
+    <li><b>Reading an archive elsewhere</b>, on your PC for example: <code>dotbox</code> can do it, and the formats are standard. With the key, <code>age -d -i backup.key radarr-2026-11-22-0400.tar.zst.age | zstd -d | tar -x</code>.</li>
+  </ul>
+  </div>
+
+  <div class="prop-new" data-prop="138">
+  <h2 id="en-where">Where the archives are</h2>
+  <p>One archive per folder and per backup, stored flat in <code>/backups</code>:</p>
+  <pre><span class="p">$</span> sudo ls -l /backups
+-rw------- 1 root root   11K dotbox-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  1.0M prowlarr-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  6.1M qbittorrent-2026-11-22-0400.tar.zst.age
+-rw------- 1 root root  1.0M prowlarr-2026-11-21-0400.tar.zst.age</pre>
+  <ul>
+    <li><b>The name</b>: the app, then the date and time the backup started (<code>YYYY-MM-DD-HHMM</code>). All the archives of one backup share the same date, <code>dotbox</code> for the config. Two backups in the same minute: the second replaces the first.</li>
+    <li><b>Permissions</b>: the folder in 700 and the archives in 600, owned by root. Even encrypted, they are root's business only.</li>
+    <li><b><code>keep</code></b> counts per app and per destination: with <code>keep: 7</code>, the last 7 archives of each app stay in each destination. Backing up a single app (<code>--app</code>) never makes the others disappear.</li>
+    <li><b>An archive in progress</b> is first written under a hidden name (<code>.radarr-....partial</code>), renamed at the end: a half-written archive is never mistaken for a real one.</li>
+  </ul>
+  </div>
+
+  <div class="prop-new" data-prop="139">
+  <h2 id="en-sftp">An SFTP destination</h2>
+  <p>On the other machine (a NAS, another server), an account for Dot Box, locked in its folder: it can only drop and fetch archives. For example with OpenSSH, as root:</p>
+  <pre><span class="p">#</span> useradd --system --home-dir /var/lib/dotbox-backup --shell /usr/sbin/nologin dotbox-backup
+<span class="p">#</span> usermod -p '*' dotbox-backup
+<span class="p">#</span> install -d -m 755 /var/lib/dotbox-backup /var/lib/dotbox-backup/.ssh
+<span class="p">#</span> install -d -m 700 -o dotbox-backup -g dotbox-backup /var/lib/dotbox-backup/backups
+<span class="p">#</span> nano /etc/ssh/sshd_config.d/50-dotbox-backup.conf
+<span class="c">Match User dotbox-backup
+    ChrootDirectory /var/lib/dotbox-backup
+    ForceCommand internal-sftp -d /backups
+    AllowTcpForwarding no
+    PermitTTY no</span>
+<span class="p">#</span> sshd -t &amp;&amp; systemctl reload ssh</pre>
+  <ul>
+    <li><b>The locking folder</b>, and each of its parents, must be owned by root and writable only by it, or SSH refuses the connection. On some machines, <code>/srv</code> belongs to a user: hence <code>/var/lib</code>.</li>
+    <li><b>In <code>dotbox.yml</code></b>, the path is the one the locked account sees: <code>- sftp: dotbox-backup@nas.example.com:/backups</code>.</li>
+    <li><b>The first backup</b> creates Dot Box's SSH key (<code>/opt/dotbox/secrets/backup_ssh</code>) and shows the line to put in <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>, preceded by <code>restrict</code>. It also records the other machine's fingerprint and shows it: compare it with <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> over there. From then on, a machine that no longer has that fingerprint is refused, and nothing is sent.</li>
   </ul>
   </div>
 
@@ -138,23 +238,47 @@
   <div class="prop-new" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
-  keep: 7                          <span class="c"># archives kept per destination</span>
-  exclude: ["*/logs/*"]
+  keep: 7                          <span class="c"># archives kept, per app and per destination</span>
+  exclude: ["*/cache/*"]           <span class="c"># on top of the logs</span>
   destinations:
-    - local: /backups              <span class="c"># on the server</span>
-    - rclone: b2:dotbox-backups    <span class="c"># a remote from rclone.conf</span>
-    - sftp: backup@nas.local:/volume1/dotbox   <span class="c"># through rclone too</span></pre>
-  <p>By default: <code>daily 04:00</code>, <code>keep: 7</code>, to <code>/backups</code>. Scheduling is a systemd timer, <code>dotbox-backup.timer</code>, written by <code>init</code> and by <code>dotbox sync</code>. <code>dotbox status</code> shows the last backup, its result and the next one.</p>
-  <p><code>rclone</code> and <code>sftp</code> both go through rclone. Its remotes (your B2 account, your NAS) are in <code>/opt/dotbox/secrets/rclone.conf</code>, readable by root only.</p>
+    - local: /backups              <span class="c"># on the server, always the first one</span>
+    - sftp: dotbox-backup@nas.example.com:/backups
+    - rclone: b2:dotbox-backups    <span class="c"># a remote from rclone.conf</span></pre>
+  <p>Without a <code>backup</code> section, the defaults: <code>daily 04:00</code>, <code>keep: 7</code>, to <code>/backups</code>. They are not written in the file, <code>dotbox config get</code> shows them.</p>
+  <ul>
+    <li><b>The time</b>: <code>dotbox config set backup.schedule "daily 02:30"</code>, then <code>dotbox sync</code>, which rewrites the systemd timer (<code>dotbox-backup.timer</code>). A backup missed while the server was off runs at boot.</li>
+    <li><b><code>keep</code></b>: <code>dotbox config set backup.keep 14</code>, used from the next backup.</li>
+    <li><b>Destinations and exclusions</b>, lists, are written by hand in <code>dotbox.yml</code> (<code>sudo nano</code>). Archives are always made in a local folder first, then sent to the remote destinations.</li>
+    <li><b><code>rclone:</code></b> reads its remotes (your B2, S3... account) from <code>/opt/dotbox/secrets/rclone.conf</code>, readable by root only. <code>sftp:</code> does not need it: Dot Box handles its key and the other machine's fingerprint.</li>
+  </ul>
   </div>
 
   <h2 id="en-manual">Run a backup</h2>
   <pre><span class="p">$</span> dotbox backup
 <span class="p">$</span> dotbox backup --app radarr
 <span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
+  <div class="prop-old" data-prop="140">
   <p>The backup runs on the server, not in your terminal: you can close the SSH session, <code>dotbox status</code> follows its progress.</p>
+  </div>
+  <div class="prop-new" data-prop="140">
+  <p>No <code>sudo</code>: the backup runs in the Dot Box service, one job at a time like an install, and your terminal follows it step by step. Closing the terminal does not stop it.</p>
+  <pre><span class="p">$</span> dotbox backup
+<span class="ok">  ✓ [1/5] Key           backup.key                                  0.0 s
+  ✓ [2/5] Dotbox        11 kB                                       0.0 s
+  ✓ [3/5] Prowlarr      1 MB, healthy                                19 s
+  ✓ [4/5] Qbittorrent   6 MB, healthy                                16 s
+  ✓ [5/5] Sftp          3 archives sent, keep 7                     5.2 s</span>
+
+  3 archives, 7 MB, in /backups and sftp:dotbox-backup@nas.example.com:/backups, keep 7</pre>
+  <p><code>dotbox status</code> shows the last full backup and the next one. <code>dotbox doctor</code> reports a failed backup, a backup older than two days, a stopped timer, and backups that never leave the server.</p>
+  </div>
 
   <h2 id="en-stream">Streamed backup</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
+  <div class="prop-old" data-prop="141">
   <p>If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
+  </div>
+  <div class="prop-new" data-prop="141">
+  <p>Coming later. If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
+  </div>
 </article>

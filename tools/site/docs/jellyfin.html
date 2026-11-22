@@ -10,7 +10,7 @@
       <tr><td>Adresse</td><td><code>https://jellyfin.example.com</code></td></tr>
       <tr><td>Accès</td><td>app: la connexion de Jellyfin, avec AppSec devant. Derrière Authelia jusqu'à la fin de son assistant de premier démarrage.</td></tr>
       <tr><td>Image</td><td><code>jellyfin/jellyfin:12.4</code></td></tr>
-      <tr><td>Installer</td><td><code>sudo dotbox install jellyfin</code></td></tr>
+      <tr><td>Installer</td><td><code>dotbox install jellyfin</code></td></tr>
     </tbody>
   </table></div>
 
@@ -25,13 +25,13 @@
   <h2 id="fr-install">L'installation, pas à pas</h2>
   <p>Jellyfin a sa propre connexion: ses apps TV et mobiles ne savent pas passer par Authelia. Mais tant que son assistant de premier démarrage n'est pas fini, n'importe qui peut y créer le compte admin. Dot Box le garde donc derrière Authelia jusque-là, et l'installation se fait en trois temps.</p>
   <h3 id="fr-step1">1. Installer</h3>
-  <pre><span class="p">$</span> sudo dotbox install jellyfin
+  <pre><span class="p">$</span> dotbox install jellyfin
 <span class="ok">✓</span> [1/1] Jellyfin      12.4, two_factor until set up
 
   jellyfin      https://jellyfin.example.com  two_factor for now
 
   → Open https://jellyfin.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install jellyfin again: Authelia steps aside (app).</pre>
+    Then run dotbox install jellyfin again: Authelia steps aside (app).</pre>
   <ul>
     <li>Elle crée <code>/opt/jellyfin/config</code> et <code>/opt/jellyfin/cache</code> à ton utilisateur, et prépare <code>/data/media</code> s'il n'existe pas encore.</li>
     <li>Elle écrit <code>network.xml</code> avant le premier démarrage (voir plus bas), puis <code>compose.yml</code>.</li>
@@ -48,7 +48,7 @@
     <li>L'accès à distance: laisse-le activé, c'est lui qui laisse passer tes apps depuis Internet.</li>
   </ul>
   <h3 id="fr-step3">3. Ouvrir Jellyfin à ses apps</h3>
-  <pre><span class="p">$</span> sudo dotbox install jellyfin
+  <pre><span class="p">$</span> dotbox install jellyfin
 <span class="ok">✓</span> [1/1] Jellyfin      12.4, app
 
   jellyfin      https://jellyfin.example.com  app</pre>
@@ -103,7 +103,7 @@
       <tr><td>Address</td><td><code>https://jellyfin.example.com</code></td></tr>
       <tr><td>Access</td><td>app: Jellyfin's own login, with AppSec in front. Behind Authelia until its first-run setup is done.</td></tr>
       <tr><td>Image</td><td><code>jellyfin/jellyfin:12.4</code></td></tr>
-      <tr><td>Install</td><td><code>sudo dotbox install jellyfin</code></td></tr>
+      <tr><td>Install</td><td><code>dotbox install jellyfin</code></td></tr>
     </tbody>
   </table></div>
 
@@ -118,13 +118,13 @@
   <h2 id="en-install">The install, step by step</h2>
   <p>Jellyfin has its own login: its TV and mobile apps cannot go through Authelia. But until its first-run setup is done, anyone can create the admin account. So Dot Box keeps it behind Authelia until then, and the install takes three steps.</p>
   <h3 id="en-step1">1. Install</h3>
-  <pre><span class="p">$</span> sudo dotbox install jellyfin
+  <pre><span class="p">$</span> dotbox install jellyfin
 <span class="ok">✓</span> [1/1] Jellyfin      12.4, two_factor until set up
 
   jellyfin      https://jellyfin.example.com  two_factor for now
 
   → Open https://jellyfin.example.com and finish its first-run setup (Authelia asks you to log in first).
-    Then run sudo dotbox install jellyfin again: Authelia steps aside (app).</pre>
+    Then run dotbox install jellyfin again: Authelia steps aside (app).</pre>
   <ul>
     <li>It creates <code>/opt/jellyfin/config</code> and <code>/opt/jellyfin/cache</code>, owned by your user, and prepares <code>/data/media</code> if it does not exist yet.</li>
     <li>It writes <code>network.xml</code> before the first start (see below), then <code>compose.yml</code>.</li>
@@ -141,7 +141,7 @@
     <li>Remote access: leave it on, it lets your apps in from the Internet.</li>
   </ul>
   <h3 id="en-step3">3. Open Jellyfin to its apps</h3>
-  <pre><span class="p">$</span> sudo dotbox install jellyfin
+  <pre><span class="p">$</span> dotbox install jellyfin
 <span class="ok">✓</span> [1/1] Jellyfin      12.4, app
 
   jellyfin      https://jellyfin.example.com  app</pre>

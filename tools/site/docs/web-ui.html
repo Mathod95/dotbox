@@ -1,0 +1,319 @@
+<!-- LEDE -->
+<p class="lede">The web interface<i>●</i>Dot Box in the browser, on dotbox.example.com.</p>
+
+<!-- CONTENT -->
+<div class="prop-new" data-prop="147">
+  <section class="showcase" aria-labelledby="wui-mock">
+    <div class="bar">
+      <h2 id="wui-mock" data-i18n="mockK"></h2>
+      <p class="hint" data-i18n="mockHint"></p>
+    </div>
+    <div class="edge">
+      <div class="wui">
+        <div class="wui-top">
+          <span class="dot">DOT BOX</span>
+          <span class="url">https://dotbox.example.com</span>
+          <span class="who">admin · <span data-i18n="sample"></span></span>
+        </div>
+        <div class="wui-body">
+          <nav class="wui-nav" id="wuiNav" aria-label="Dot Box"></nav>
+          <div class="wui-main" id="wuiMain" aria-live="polite"></div>
+        </div>
+        <div class="wui-job" id="wuiJob" hidden>
+          <div class="job-h"><span>JOB</span><b id="jobWhat"></b><button type="button" class="wbtn" id="jobClose">Close</button></div>
+          <ol id="jobList"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<article class="prose">
+  <h2 id="where">Where and for whom</h2>
+  <ul>
+    <li><b>At <code>https://dotbox.example.com</code></b>, through Traefik, with its certificate, like an app.</li>
+    <li><b>Behind Authelia</b>, at <code>two_factor</code>, for the <code>admins</code> group: the interface has no login of its own. Once past Authelia, you are home.</li>
+    <li><b>The Dot Box service only answers Traefik</b>: it listens on the <code>dotbox</code> network, never on a public address, and refuses a request without the secret header Traefik adds. An app on the network cannot pass itself off as Traefik.</li>
+  </ul>
+
+  <h2 id="screens">What you do there</h2>
+  <p>What the CLI does without <code>sudo</code>, through the same API. Every long action (install, update, back up, apply) is a job of the service, followed live, one at a time, like in the terminal.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>View</th><th>What it shows and does</th><th>Route</th><th>Command</th></tr></thead>
+    <tbody>
+      <tr><td>Overview</td><td>The core, the apps, the last doctor (run again in one click), the last backup, and the gap with <code>dotbox.yml</code></td><td><code>GET /status</code>, <code>/doctor</code>, <code>/diff</code></td><td><code>status</code>, <code>doctor</code></td></tr>
+      <tr><td>Apps</td><td>Each app: version, state, access, address. Start it, stop it, restart it, read its logs live, remove it</td><td><code>/apps/{app}</code>, <code>/logs</code></td><td><code>info</code>, <code>start</code>, <code>stop</code>, <code>restart</code>, <code>logs</code>, <code>remove</code></td></tr>
+      <tr><td>Catalog</td><td>The catalog's apps, a search, and installing in one click</td><td><code>GET /catalog</code>, <code>POST /apps</code></td><td><code>list</code>, <code>install</code></td></tr>
+      <tr><td>Updates</td><td>What is behind the catalog, one app or all, and going back</td><td><code>POST /update</code></td><td><code>update</code></td></tr>
+      <tr><td>Backup</td><td>The last backup, the next one, the archives, a backup on demand</td><td><code>POST /backup</code></td><td><code>backup</code></td></tr>
+      <tr><td>Settings</td><td>The keys of <code>dotbox.yml</code>, checked before writing, then the plan and its confirmation before applying</td><td><code>/config</code>, <code>/diff</code>, <code>/sync</code></td><td><code>config</code>, <code>diff</code>, <code>sync</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="not">What it does not do</h2>
+  <p>What would give root to whoever uses it stays in the terminal, with <code>sudo</code>: <code>init</code>, <code>upgrade</code>, <code>restore</code>, <code>authelia</code>, <code>exec</code>, <code>edit</code> and <code>add</code>. A stolen <code>admins</code> account must not be enough to take the server. The interface shows the command to run, without running it.</p>
+  <p>Importing your own <code>compose.yml</code> for an app outside the catalog (<code>sudo dotbox add</code>) would be easier from the interface. It is kept for later: a compose file can mount any folder of the server, so it would need guards first.</p>
+
+  <h2 id="how">How it is made</h2>
+  <ul>
+    <li><b>Served by the <code>dotbox</code> binary</b>, the same service as the CLI: nothing else to install, no container, no Node.js, and always the same version as the API.</li>
+    <li><b>Plain pages</b>: HTML, CSS and a little JavaScript, no framework and no build step (no npm, no Node.js), in the style of this site. The pages call the same JSON API as the CLI (<code>/api/v1</code>): one API for both. It works on a phone too.</li>
+    <li><b>Live</b>: jobs and logs come through Server-Sent Events, like for the CLI.</li>
+    <li><b>Nothing is kept in the browser</b>, except the chosen language. The state is on the server.</li>
+  </ul>
+</article>
+</div>
+
+<!-- CSS -->
+/* la maquette de l'interface web: les mêmes valeurs que la Showcase de l'accueil */
+.showcase { display: grid; gap: 16px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.bar h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.hint { margin: 0; color: var(--label); font-size: 14px; }
+.prop-new .hint { color: var(--accent); }
+.edge { padding: clamp(8px, 1.2vw, 18px); border-radius: clamp(12px, 1.6vw, 24px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
+.wui { position: relative; display: grid; grid-template-rows: auto 1fr; border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; overflow: hidden; color: var(--label); }
+.wui-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; padding: 12px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--line); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
+.wui-top .dot { display: inline-flex; align-items: center; gap: 8px; color: var(--lit); font-weight: 600; }
+.wui-top .dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.wui-top .url { color: var(--muted); letter-spacing: .06em; text-transform: none; }
+.wui-top .who { color: var(--muted); }
+.wui-body { display: grid; grid-template-columns: 170px minmax(0, 1fr); min-height: 520px; }
+.wui-nav { display: grid; align-content: start; gap: 2px; padding: 14px 10px; border-right: 1px solid var(--line); }
+.wui-nav button { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--label); font: inherit; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; text-align: left; cursor: pointer; }
+.wui-nav button::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #2a2a2a; }
+.wui-nav button:hover { color: var(--lit); }
+.wui-nav button[aria-current="page"] { color: var(--accent); background: #0d0d0d; }
+.wui-nav button[aria-current="page"]::before { background: var(--accent); }
+.wui-main { display: grid; align-content: start; gap: 16px; padding: clamp(14px, 2vw, 24px); min-width: 0; font-size: 12.5px; }
+.wui-main h3 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.card { display: grid; gap: 8px; padding: 12px 14px; border: 1.5px solid #1d1d1d; border-radius: 12px; min-width: 0; }
+.card .n { color: var(--lit); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .v { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .wbtn { justify-self: start; }
+.st2 { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+.st2::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--muted)); }
+.st2.ok { --c: var(--accent); color: var(--accent); }
+.st2.warn { --c: var(--wip); color: var(--wip); }
+.st2.off { --c: #555; color: var(--muted); }
+.rows { display: grid; gap: 0; border: 1.5px solid #1d1d1d; border-radius: 12px; overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(90px, 1.1fr) minmax(90px, 1.3fr) 110px 100px auto; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid #161616; min-width: 0; }
+.row:first-child { border-top: 0; }
+.row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .n { color: var(--lit); }
+.row .acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 14px; border: 1.5px solid #1d1d1d; border-radius: 12px; }
+.line b { color: var(--lit); font-weight: 500; }
+.line .grow { flex: 1; min-width: 0; }
+.wbtn { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line2); background: var(--bg); color: var(--label); cursor: pointer; }
+.wbtn:hover { color: var(--lit); border-color: #3a3a3a; }
+.wbtn.go { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.wbtn:disabled { opacity: .4; cursor: default; }
+.sudo { color: var(--muted); font-size: 11.5px; }
+.sudo code { color: var(--lit); }
+.logs { margin: 0; padding: 12px 14px; border: 1.5px solid #1d1d1d; border-radius: 12px; background: #030303; color: var(--label); font-size: 11.5px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.kv { display: grid; grid-template-columns: minmax(140px, auto) 1fr; gap: 8px 16px; align-items: center; padding: 12px 14px; border: 1.5px solid #1d1d1d; border-radius: 12px; }
+.kv label { color: var(--label); }
+.kv input, .kv select { font: inherit; font-size: 12px; color: var(--lit); background: #0b0b0b; border: 1px solid var(--line2); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+.plan { margin: 0; padding: 12px 14px; list-style: none; display: grid; gap: 4px; border: 1.5px solid #3a2f12; border-radius: 12px; color: var(--wip); }
+.wui-job { position: absolute; right: 14px; bottom: 14px; width: min(380px, calc(100% - 28px)); display: grid; gap: 8px; padding: 14px; border: 1.5px solid var(--accent); border-radius: 12px; background: #07130e; box-shadow: 0 20px 40px -20px #000; }
+.wui-job[hidden] { display: none; }
+.job-h { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.job-h b { flex: 1; color: var(--lit); font-weight: 500; letter-spacing: .06em; text-transform: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wui-job ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 11.5px; color: var(--label); }
+.wui-job li.ok { color: var(--accent); }
+@media (max-width: 760px) {
+  .wui-body { grid-template-columns: minmax(0, 1fr); }
+  .wui-nav { display: flex; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--line); }
+  .row { grid-template-columns: minmax(0, 1fr) auto; }
+  .row > span:nth-child(2), .row > span:nth-child(4) { display: none; }
+  .row .acts { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+<!-- JS -->
+(function () {
+  "use strict";
+  var STR = {
+    en: { mockK: "The mockup", mockHint: "Sample data: click the views and the buttons, nothing touches a server.", sample: "sample" }
+  };
+  // English only (D103)
+  function t(k) { return STR.en[k]; }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function btn(label, cls, fn) { var b = el("button", "wbtn" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); return b; }
+
+  // ---------- les données d'exemple (les vraies viendront de l'API)
+  var CORE = [["traefik", "v3.7.19"], ["authelia", "4.39.28"], ["crowdsec", "v1.8.2"]];
+  var APPS = [
+    { n: "prowlarr", v: "3.0.2.5780-ls169", st: "healthy", a: "two_factor", latest: "3.0.2.5780-ls169" },
+    { n: "radarr", v: "7.0.3.10918-ls328", st: "healthy", a: "two_factor", latest: "7.0.4.10950-ls329" },
+    { n: "sonarr", v: "4.0.20.3014-ls329", st: "stopped", a: "two_factor", latest: "4.0.21.3030-ls330" },
+    { n: "qbittorrent", v: "5.3.0_v2.1.2-ls487", st: "healthy", a: "two_factor", latest: "5.3.0_v2.1.2-ls487" },
+    { n: "jellyfin", v: "12.4", st: "healthy", a: "app", latest: "12.4" },
+    { n: "seerr", v: "v3.5.2", st: "healthy", a: "app", latest: "v3.5.2" }
+  ];
+  var CATALOG = [["autobrr", "New releases, as soon as they are announced"], ["maintainerr", "Cleans up the library"], ["plex", "Media server"], ["tautulli", "Plex statistics"], ["uptime-kuma", "Watches the apps"], ["vaultwarden", "Password manager"], ["wizarr", "Invites to the media server"], ["code-server", "VS Code in the browser"]];
+  var CONFIG = { domain: "example.com", ca: "letsencrypt", "backup.schedule": "daily 04:00", "backup.keep": "7", "apps.radarr.subdomain": "radarr", "apps.radarr.access": "two_factor" };
+  var lastBackup = "2026-11-22 04:00, 14 archives, 14 MB";
+  var plan = [];
+  var busy = false;
+
+  function stClass(st) { return st === "healthy" || st === "running" ? "ok" : st === "stopped" ? "off" : "warn"; }
+  function state(st) { return el("span", "st2 " + stClass(st), st); }
+
+  // ---------- une tâche: les étapes arrivent une à une, comme par GET /jobs/{id}/events
+  function job(what, steps, done) {
+    if (busy) return;
+    busy = true;
+    var box = document.getElementById("wuiJob"), list = document.getElementById("jobList");
+    document.getElementById("jobWhat").textContent = what;
+    list.innerHTML = ""; box.hidden = false;
+    var i = 0;
+    (function next() {
+      if (i < steps.length) {
+        list.appendChild(el("li", "ok", "✓ [" + (i + 1) + "/" + steps.length + "] " + steps[i]));
+        i++; setTimeout(next, 450);
+      } else {
+        busy = false;
+        if (done) done();
+        render();
+      }
+    })();
+  }
+
+  // ---------- les vues
+  var VIEWS = {
+    Overview: function (m) {
+      m.appendChild(el("h3", "", "Core"));
+      var cards = el("div", "cards");
+      CORE.forEach(function (c) { var k = el("div", "card"); k.appendChild(el("span", "n", c[0])); k.appendChild(el("span", "v", c[1])); k.appendChild(state("healthy")); cards.appendChild(k); });
+      m.appendChild(cards);
+      m.appendChild(el("h3", "", "Apps"));
+      var a = el("div", "cards");
+      APPS.forEach(function (x) { var k = el("div", "card"); k.appendChild(el("span", "n", x.n)); k.appendChild(el("span", "v", x.n + ".example.com")); k.appendChild(state(x.st)); a.appendChild(k); });
+      m.appendChild(a);
+      var d = el("div", "line"); d.appendChild(el("b", "", "Doctor")); d.appendChild(el("span", "grow", "22 Nov 04:30: 1 section to look at (SSH accepts passwords)"));
+      d.appendChild(btn("Run doctor", "", function () { job("dotbox doctor", ["System", "Docker", "DNS", "Containers", "Certificates", "CrowdSec", "Updates", "SSH", "Disk", "Backup", "Service"]); }));
+      m.appendChild(d);
+      var b = el("div", "line"); b.appendChild(el("b", "", "Backup")); b.appendChild(el("span", "grow", lastBackup + ", next 23 Nov 04:00")); m.appendChild(b);
+      var g = el("div", "line"); g.appendChild(el("b", "", "dotbox.yml")); g.appendChild(el("span", "grow", plan.length ? plan.length + " difference(s): see Settings" : "0 differences, all as wanted")); m.appendChild(g);
+    },
+    Apps: function (m) {
+      m.appendChild(el("h3", "", "Installed apps"));
+      var rows = el("div", "rows");
+      APPS.forEach(function (x) {
+        var r = el("div", "row");
+        r.appendChild(el("span", "n", x.n)); r.appendChild(el("span", "", x.v)); r.appendChild(state(x.st)); r.appendChild(el("span", "", x.a));
+        var acts = el("span", "acts");
+        if (x.st === "stopped") acts.appendChild(btn("Start", "go", function () { job("dotbox start " + x.n, [x.n + "  healthy"], function () { x.st = "healthy"; }); }));
+        else {
+          acts.appendChild(btn("Stop", "", function () { job("dotbox stop " + x.n, [x.n + "  stopped (dotbox stop)"], function () { x.st = "stopped"; }); }));
+          acts.appendChild(btn("Restart", "", function () { job("dotbox restart " + x.n, [x.n + "  healthy"]); }));
+        }
+        acts.appendChild(btn("Logs", "", function () { showLogs(x.n); }));
+        r.appendChild(acts); rows.appendChild(r);
+      });
+      m.appendChild(rows);
+      var pre = el("pre", "logs"); pre.id = "wuiLogs"; pre.textContent = "Logs: click Logs on an app, they follow live (GET /apps/{app}/logs?follow=true).";
+      m.appendChild(pre);
+    },
+    Catalog: function (m) {
+      m.appendChild(el("h3", "", "Catalog, " + CATALOG.length + " apps not installed"));
+      var cards = el("div", "cards");
+      CATALOG.forEach(function (c) {
+        var k = el("div", "card"); k.appendChild(el("span", "n", c[0])); k.appendChild(el("span", "v", c[1]));
+        k.appendChild(btn("Install", "go", function () {
+          job("dotbox install " + c[0], ["Catalog  90161a8 of 2026-11-19", c[0].charAt(0).toUpperCase() + c[0].slice(1) + "  two_factor, healthy"], function () {
+            CATALOG = CATALOG.filter(function (z) { return z !== c; });
+            APPS.push({ n: c[0], v: "latest of the catalog", st: "healthy", a: "two_factor", latest: "latest of the catalog" });
+          });
+        }));
+        cards.appendChild(k);
+      });
+      m.appendChild(cards);
+    },
+    Updates: function (m) {
+      var behind = APPS.filter(function (x) { return x.v !== x.latest; });
+      m.appendChild(el("h3", "", behind.length + " app(s) behind the catalog"));
+      var rows = el("div", "rows");
+      APPS.forEach(function (x) {
+        var r = el("div", "row");
+        r.appendChild(el("span", "n", x.n)); r.appendChild(el("span", "", x.v)); r.appendChild(el("span", "", x.v === x.latest ? "up to date" : "→ " + x.latest)); r.appendChild(el("span", "", ""));
+        var acts = el("span", "acts");
+        if (x.v !== x.latest) acts.appendChild(btn("Update", "go", function () { job("dotbox update " + x.n, ["Catalog  90161a8 of 2026-11-19", x.n + "  " + x.latest + (x.st === "stopped" ? ", stopped (dotbox stop)" : ", healthy")], function () { x.v = x.latest; }); }));
+        r.appendChild(acts); rows.appendChild(r);
+      });
+      m.appendChild(rows);
+      if (behind.length) m.appendChild(btn("Update all", "go", function () {
+        job("dotbox update --all", ["Catalog  90161a8 of 2026-11-19"].concat(behind.map(function (x) { return x.n + "  " + x.latest; })), function () { behind.forEach(function (x) { x.v = x.latest; }); });
+      }));
+    },
+    Backup: function (m) {
+      var b = el("div", "line"); b.appendChild(el("b", "", "Last")); b.appendChild(el("span", "grow", lastBackup)); m.appendChild(b);
+      var n = el("div", "line"); n.appendChild(el("b", "", "Next")); n.appendChild(el("span", "grow", "Mon 2026-11-23 04:00 (backup.schedule: " + CONFIG["backup.schedule"] + ", keep " + CONFIG["backup.keep"] + ")")); m.appendChild(n);
+      m.appendChild(btn("Back up now", "go", function () {
+        job("dotbox backup", ["Key  backup.key", "Dotbox  11 kB"].concat(APPS.map(function (x) { return x.n + (x.st === "stopped" ? "  stopped" : "  healthy"); })).concat(["Sftp  " + (APPS.length + 1) + " archives sent, keep 7"]), function () { lastBackup = "2026-11-22 10:12, " + (APPS.length + 1) + " archives, 14 MB"; });
+      }));
+      var s = el("p", "sudo"); s.innerHTML = "Restoring stays in the terminal, as root: <code>sudo dotbox restore latest --app radarr</code>";
+      m.appendChild(s);
+    },
+    Settings: function (m) {
+      m.appendChild(el("h3", "", "dotbox.yml"));
+      var kv = el("div", "kv");
+      Object.keys(CONFIG).forEach(function (k) {
+        var l = el("label", "", k), inp = el("input"); inp.value = CONFIG[k]; inp.id = "cfg-" + k.replace(/\./g, "-"); l.htmlFor = inp.id;
+        if (k === "domain") inp.disabled = true;
+        inp.addEventListener("change", function () {
+          if (inp.value === CONFIG[k]) return;
+          plan = plan.filter(function (p) { return p.k !== k; });
+          plan.push({ k: k, old: CONFIG[k], v: inp.value });
+          render();
+        });
+        kv.appendChild(l); kv.appendChild(inp);
+      });
+      m.appendChild(kv);
+      if (!plan.length) { m.appendChild(el("p", "sudo", "Change a value: it is checked, written to dotbox.yml, and the plan shows what dotbox sync will do.")); return; }
+      m.appendChild(el("h3", "", "The plan, " + plan.length + " difference(s)"));
+      var ul = el("ul", "plan");
+      plan.forEach(function (p) {
+        var what = p.k === "backup.schedule" ? "dotbox-backup.timer out of date: written again" : p.k.indexOf("apps.") === 0 ? p.k.split(".")[1] + "  compose.yml out of date: written again" : p.k + ": used from the next backup";
+        ul.appendChild(el("li", "", "~ " + p.k + ": " + p.old + " → " + p.v + "   " + what));
+      });
+      m.appendChild(ul);
+      var row = el("div", "line");
+      row.appendChild(btn("Apply this plan", "go", function () {
+        var steps = plan.map(function (p) { return p.k.indexOf("apps.") === 0 ? p.k.split(".")[1] + "  written again, healthy" : "Backup  " + p.k + " " + p.v; });
+        job("dotbox sync", steps, function () { plan.forEach(function (p) { CONFIG[p.k] = p.v; }); plan = []; });
+      }));
+      row.appendChild(btn("Cancel", "", function () { plan = []; render(); }));
+      m.appendChild(row);
+    }
+  };
+
+  function showLogs(app) {
+    var pre = document.getElementById("wuiLogs"); if (!pre) return;
+    pre.textContent = "";
+    var lines = ["[Info] Bootstrap: Starting " + app, "[Info] Microsoft.Hosting.Lifetime: Now listening on: http://[::]:8080", "[Info] Database: Migrations done", "[Info] Lifetime: Application started"];
+    var i = 0;
+    (function next() { if (i < lines.length) { pre.textContent += "2026-11-22 10:0" + i + "  " + lines[i] + "\n"; i++; setTimeout(next, 300); } })();
+  }
+
+  var current = "Overview";
+  function render() {
+    var nav = document.getElementById("wuiNav"), main = document.getElementById("wuiMain");
+    nav.innerHTML = ""; main.innerHTML = "";
+    Object.keys(VIEWS).forEach(function (v) {
+      var b = el("button", "", v); b.type = "button";
+      if (v === current) b.setAttribute("aria-current", "page");
+      b.addEventListener("click", function () { current = v; render(); });
+      nav.appendChild(b);
+    });
+    VIEWS[current](main);
+  }
+  document.getElementById("jobClose").addEventListener("click", function () { if (!busy) document.getElementById("wuiJob").hidden = true; });
+
+  function applyLang() {
+    document.querySelectorAll(".doc [data-i18n]").forEach(function (e) { e.textContent = t(e.getAttribute("data-i18n")); });
+    render();
+  }
+  window.DotBox.onLang(applyLang);
+})();

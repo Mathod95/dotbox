@@ -53,9 +53,10 @@
   </table></div>
 
   <h2 id="fr-move">Changer l'emplacement des données</h2>
-  <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1
+  <pre><span class="p">$</span> sudo dotbox config set paths.data /mnt/disk1
+<span class="p">$</span> dotbox diff
 <span class="p">$</span> dotbox sync</pre>
-  <p>Seul le chemin sur le serveur change: dans les containers, les données restent sur <code>/data</code>, rien à modifier dans les apps.</p>
+  <p>Dot Box ne déplace aucune donnée: copie d'abord le contenu de <code>/data</code> vers <code>/mnt/disk1</code>, en gardant les hardlinks (<code>rsync -aH</code>). Le changement demande <code>sudo</code>: un chemin mal choisi, monté dans les containers, donnerait accès à tout le serveur. <code>diff</code> montre le plan, <code>sync</code> le remontre, demande une confirmation, puis applique. Seul le chemin sur le serveur change: dans les containers, les données restent sur <code>/data</code>, rien à modifier dans les apps.</p>
 </article>
 
 <article class="prose" data-l="en">
@@ -108,7 +109,8 @@
   </table></div>
 
   <h2 id="en-move">Move the data</h2>
-  <pre><span class="p">$</span> dotbox config set paths.data /mnt/disk1
+  <pre><span class="p">$</span> sudo dotbox config set paths.data /mnt/disk1
+<span class="p">$</span> dotbox diff
 <span class="p">$</span> dotbox sync</pre>
-  <p>Only the path on the server changes: inside containers the data stays on <code>/data</code>, nothing to change in the apps.</p>
+  <p>Dot Box moves no data: first copy the content of <code>/data</code> to <code>/mnt/disk1</code>, keeping the hardlinks (<code>rsync -aH</code>). The change needs <code>sudo</code>: a badly chosen path, mounted in the containers, would give access to the whole server. <code>diff</code> shows the plan, <code>sync</code> shows it again, asks for a confirmation, then applies. Only the path on the server changes: inside containers the data stays on <code>/data</code>, nothing to change in the apps.</p>
 </article>

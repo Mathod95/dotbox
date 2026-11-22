@@ -28,6 +28,11 @@
 }
 * { box-sizing: border-box; }
 html { background: var(--bg); scrollbar-gutter: stable; }
+/* la barre de défilement de la page, dans l'accent du site (D96) */
+html { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg); }
+html::-webkit-scrollbar { width: 10px; }
+html::-webkit-scrollbar-track { background: var(--bg); }
+html::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; border: 3px solid var(--bg); }
 body {
   margin: 0; background: var(--bg); color: var(--lit);
   font-family: var(--brand); font-size: 16px; line-height: 1.55;
@@ -37,7 +42,7 @@ body {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 48px; }
+.wrap { max-width: 1440px; margin: 0 auto; display: grid; gap: 48px; }
 a { color: inherit; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; color: var(--lit); }

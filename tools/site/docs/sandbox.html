@@ -10,23 +10,16 @@
     <tbody>
       <tr><td>Catalogue</td><td>Dossier <code>catalog/</code> du repo <code>Mathod95/dotbox</code>, tenu à jour par <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> et testé par la CI, rafraîchi par <code>dotbox update</code></td><td><code>dotbox install radarr</code></td></tr>
       <tr><td>Sandbox</td><td>Dépôt communautaire <code>Mathod95/dotbox-sandbox</code>, lu au moment de l'installation</td><td><code>dotbox install sandbox/kometa</code></td></tr>
-      <tr><td>Tes apps</td><td><code>/opt/dotbox/apps/</code>, créées avec <code>dotbox add</code></td><td><span class="prop-old" data-prop="117"><span><code>dotbox install immich</code></span></span><span class="prop-new" data-prop="117"><span><code>dotbox install it-tools</code></span></span></td></tr>
+      <tr><td>Tes apps</td><td><code>/opt/dotbox/apps/</code>, créées avec <code>dotbox add</code></td><td><code>dotbox install it-tools</code></td></tr>
     </tbody>
   </table></div>
   <p>Les trois utilisent le même format de manifest: une app du Sandbox ou une des tiennes suit les mêmes chemins, le même réseau et les mêmes règles d'accès que le reste, et elle est sauvegardée de la même façon.</p>
 
   <h2 id="fr-add">Ajouter ta propre app</h2>
-  <div class="prop-old" data-prop="118">
-  <pre><span class="p">$</span> dotbox add ./docker-compose.yml --name immich
-<span class="p">$</span> dotbox install immich</pre>
-  <p><code>add</code> lit le fichier compose du projet et en fait un manifest: sous-domaine, niveau d'accès, volumes rangés dans <code>/opt/immich</code> et <code>/data</code>, réseau <code>dotbox</code>, version d'image fixée. Relis <code>/opt/dotbox/apps/immich.yml</code> avant d'installer.</p>
-  </div>
-  <div class="prop-new" data-prop="118">
   <pre><span class="p">$</span> sudo dotbox add ./compose.yml --name it-tools
 <span class="p">$</span> dotbox install it-tools</pre>
   <p><code>add</code> lit le fichier compose du projet et en fait un manifest, dans <code>/opt/dotbox/apps/it-tools.yml</code>. Il reprend du compose l'image, le port web (le premier exposé, ou <code>--port</code>), les dossiers et l'environnement, et ajoute ce que Dot Box met à chaque app: sous-domaine, accès <code>two_factor</code>, réseau <code>dotbox</code>, <code>PUID</code> et <code>PGID</code>, dossiers rangés dans <code>/opt/it-tools</code> et <code>/data</code>. L'image doit avoir une version fixée, jamais <code>latest</code>. Relis le manifest avant d'installer: <code>dotbox install</code> cherche d'abord dans tes apps, puis dans le catalogue.</p>
   <p class="note"><b>Un seul container pour l'instant</b>: le moteur ne sait pas encore installer une app à plusieurs containers (une base de données à côté, par exemple). Un compose à plusieurs services, comme celui d'Immich, est refusé, avec ce motif. <code>add</code> passe par <code>sudo</code>: un compose peut monter n'importe quel dossier du serveur.</p>
-  </div>
 
   <h2 id="fr-contribute">Proposer une app au Sandbox</h2>
   <p>Une app qui marche chez toi peut rejoindre le Sandbox par une pull request sur <code>Mathod95/dotbox-sandbox</code>. Son manifest doit:</p>
@@ -48,23 +41,16 @@
     <tbody>
       <tr><td>Catalog</td><td><code>catalog/</code> folder of the <code>Mathod95/dotbox</code> repository, kept up to date by <a href="__DOC_RENOVATE__"__DOC_RENOVATE_TARGET__>Renovate</a> and tested by CI, refreshed by <code>dotbox update</code></td><td><code>dotbox install radarr</code></td></tr>
       <tr><td>Sandbox</td><td>Community repository <code>Mathod95/dotbox-sandbox</code>, read at install time</td><td><code>dotbox install sandbox/kometa</code></td></tr>
-      <tr><td>Your apps</td><td><code>/opt/dotbox/apps/</code>, created with <code>dotbox add</code></td><td><span class="prop-old" data-prop="117"><span><code>dotbox install immich</code></span></span><span class="prop-new" data-prop="117"><span><code>dotbox install it-tools</code></span></span></td></tr>
+      <tr><td>Your apps</td><td><code>/opt/dotbox/apps/</code>, created with <code>dotbox add</code></td><td><code>dotbox install it-tools</code></td></tr>
     </tbody>
   </table></div>
   <p>All three use the same manifest format: a Sandbox app or one of yours follows the same paths, network and access rules as the rest, and is backed up the same way.</p>
 
   <h2 id="en-add">Add your own app</h2>
-  <div class="prop-old" data-prop="118">
-  <pre><span class="p">$</span> dotbox add ./docker-compose.yml --name immich
-<span class="p">$</span> dotbox install immich</pre>
-  <p><code>add</code> reads the project's compose file and turns it into a manifest: subdomain, access level, volumes placed in <code>/opt/immich</code> and <code>/data</code>, <code>dotbox</code> network, pinned image version. Review <code>/opt/dotbox/apps/immich.yml</code> before installing.</p>
-  </div>
-  <div class="prop-new" data-prop="118">
   <pre><span class="p">$</span> sudo dotbox add ./compose.yml --name it-tools
 <span class="p">$</span> dotbox install it-tools</pre>
   <p><code>add</code> reads the project's compose file and turns it into a manifest, in <code>/opt/dotbox/apps/it-tools.yml</code>. It takes the image, the web port (the first one exposed, or <code>--port</code>), the folders and the environment from the compose, and adds what Dot Box gives every app: subdomain, <code>two_factor</code> access, <code>dotbox</code> network, <code>PUID</code> and <code>PGID</code>, folders placed in <code>/opt/it-tools</code> and <code>/data</code>. The image must have a pinned version, never <code>latest</code>. Review the manifest before installing: <code>dotbox install</code> looks in your apps first, then in the catalog.</p>
   <p class="note"><b>One container for now</b>: the engine cannot install an app with several containers yet (a database alongside, for example). A compose with several services, like Immich's, is refused, with that reason. <code>add</code> goes through <code>sudo</code>: a compose can mount any folder of the server.</p>
-  </div>
 
   <h2 id="en-contribute">Submit an app to the Sandbox</h2>
   <p>An app that works for you can join the Sandbox through a pull request on <code>Mathod95/dotbox-sandbox</code>. Its manifest must:</p>

@@ -5,7 +5,7 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-install">Installer une app</h2>
-  <pre><span class="p">$</span> sudo dotbox install radarr</pre>
+  <pre><span class="p">$</span> dotbox install radarr</pre>
   <p>Chaque app du catalogue est décrite par un manifest, un petit fichier YAML: son image, son port, son niveau d'accès, ses dossiers. <code>dotbox install</code> en fait une app qui tourne:</p>
   <ul>
     <li>Un dossier <code>/opt/&lt;app&gt;</code>, avec <code>compose.yml</code> (généré, réécrit à chaque install) et <code>config/</code> (les réglages et la base de l'app).</li>
@@ -18,8 +18,8 @@
   <p>Relancé, <code>dotbox install</code> ne refait que ce qui manque. L'app n'est redémarrée que si quelque chose a changé. Les apps installées ne savent rien les unes des autres: les relier (qBittorrent dans Radarr, par exemple) est une étape à part.</p>
 
   <h2 id="fr-remove">Retirer une app</h2>
-  <pre><span class="p">$</span> sudo dotbox remove radarr
-<span class="p">$</span> sudo dotbox remove radarr --purge</pre>
+  <pre><span class="p">$</span> dotbox remove radarr
+<span class="p">$</span> dotbox remove radarr --purge</pre>
   <p><code>remove</code> arrête l'app et garde sa configuration dans <code>/opt/&lt;app&gt;/config</code>: une nouvelle installation la reprend. <code>--purge</code> efface aussi <code>/opt/&lt;app&gt;</code> et l'image, après une confirmation.</p>
 
   <h2 id="fr-images">D'où viennent les images</h2>
@@ -41,25 +41,13 @@
       <tr><td>Traefik, Authelia, CrowdSec, qui, Uptime Kuma, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr, Maintainerr, wg-easy</td><td>officielles</td><td>Les projets publient leur image.</td></tr>
       <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>Le projet Servarr ne publie pas d'image officielle. Son wiki renvoie vers linuxserver et hotio.</td></tr>
       <tr><td>qBittorrent, code-server</td><td>linuxserver</td><td>Pour les mêmes conventions que Radarr et Sonarr. Leurs projets publient aussi une image officielle: le choix sera revu.</td></tr>
-      <tr><td>Socket proxy de Traefik</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
+      <tr><td>Socket proxy de Traefik et de CrowdSec</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
     </tbody>
   </table></div>
   </div>
   <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
 
   <h2 id="fr-catalog">Les apps du catalogue</h2>
-  <div class="prop-old" data-prop="50">
-  <div class="table-scroll"><table>
-    <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
-    <tbody>
-      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Les indexeurs, pour Radarr et Sonarr</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>Une interface web pour qBittorrent</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Les films</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>Les séries</td><td>two_factor</td></tr>
-    </tbody>
-  </table></div>
-  </div>
-  <div class="prop-new" data-prop="50">
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Rôle</th><th>Accès</th></tr></thead>
     <tbody>
@@ -81,13 +69,13 @@
       <tr><td><a href="__DOC_CODE_SERVER__"__DOC_CODE_SERVER_TARGET__>code-server</a></td><td>VS Code dans le navigateur, sur <code>/opt</code></td><td>two_factor</td></tr>
     </tbody>
   </table></div>
-  </div>
   <p>Une app a sa page quand elle entre dans le catalogue. Celles qui viendront ensuite sont dans la <a href="__ROADMAP__">Roadmap</a>.</p>
+
 </article>
 
 <article class="prose" data-l="en">
   <h2 id="en-install">Installing an app</h2>
-  <pre><span class="p">$</span> sudo dotbox install radarr</pre>
+  <pre><span class="p">$</span> dotbox install radarr</pre>
   <p>Each app of the catalog is described by a manifest, a small YAML file: its image, its port, its access level, its folders. <code>dotbox install</code> turns it into a running app:</p>
   <ul>
     <li>A folder <code>/opt/&lt;app&gt;</code>, with <code>compose.yml</code> (generated, rewritten on every install) and <code>config/</code> (the app's settings and database).</li>
@@ -100,8 +88,8 @@
   <p>Run again, <code>dotbox install</code> only does what is missing. The app is restarted only if something changed. Installed apps know nothing about each other: connecting them (qBittorrent in Radarr, for example) is a separate step.</p>
 
   <h2 id="en-remove">Removing an app</h2>
-  <pre><span class="p">$</span> sudo dotbox remove radarr
-<span class="p">$</span> sudo dotbox remove radarr --purge</pre>
+  <pre><span class="p">$</span> dotbox remove radarr
+<span class="p">$</span> dotbox remove radarr --purge</pre>
   <p><code>remove</code> stops the app and keeps its configuration in <code>/opt/&lt;app&gt;/config</code>: a new install picks it up. <code>--purge</code> also deletes <code>/opt/&lt;app&gt;</code> and the image, after a confirmation.</p>
 
   <h2 id="en-images">Where the images come from</h2>
@@ -123,25 +111,13 @@
       <tr><td>Traefik, Authelia, CrowdSec, qui, Uptime Kuma, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr, Maintainerr, wg-easy</td><td>official</td><td>The projects publish their image.</td></tr>
       <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>The Servarr project does not publish an official image. Its wiki points to linuxserver and hotio.</td></tr>
       <tr><td>qBittorrent, code-server</td><td>linuxserver</td><td>For the same conventions as Radarr and Sonarr. Their projects also publish an official image: the choice will be reviewed.</td></tr>
-      <tr><td>Traefik's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
+      <tr><td>Traefik's and CrowdSec's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
     </tbody>
   </table></div>
   </div>
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
-  <div class="prop-old" data-prop="50">
-  <div class="table-scroll"><table>
-    <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
-    <tbody>
-      <tr><td><a href="__DOC_PROWLARR__"__DOC_PROWLARR_TARGET__>Prowlarr</a></td><td>Indexers, for Radarr and Sonarr</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_QUI__"__DOC_QUI_TARGET__>qui</a></td><td>A web interface for qBittorrent</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_RADARR__"__DOC_RADARR_TARGET__>Radarr</a></td><td>Movies</td><td>two_factor</td></tr>
-      <tr><td><a href="__DOC_SONARR__"__DOC_SONARR_TARGET__>Sonarr</a></td><td>TV shows</td><td>two_factor</td></tr>
-    </tbody>
-  </table></div>
-  </div>
-  <div class="prop-new" data-prop="50">
   <div class="table-scroll"><table>
     <thead><tr><th>App</th><th>Role</th><th>Access</th></tr></thead>
     <tbody>
@@ -163,6 +139,267 @@
       <tr><td><a href="__DOC_CODE_SERVER__"__DOC_CODE_SERVER_TARGET__>code-server</a></td><td>VS Code in the browser, on <code>/opt</code></td><td>two_factor</td></tr>
     </tbody>
   </table></div>
-  </div>
   <p>An app gets its page when it joins the catalog. Those coming next are in the <a href="__ROADMAP__">Roadmap</a>.</p>
+
+</article>
+
+<article class="prose">
+  <h2 id="spotted">Spotted apps</h2>
+  <p>Lists from Mathod95, of November 22, 2026: apps spotted for a possible addition to the catalog. It is optional: they are neither planned nor studied for now. 251 apps, grouped by category, so that apps doing the same thing sit together. The link on a name goes to its GitHub repository (234 found, searched by exact name, then checked by hand). The role is the repository's own description.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>App</th><th>Category</th><th>Role</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/mtrogman/harassarr">harassarr</a></td><td>Invites &amp; users</td><td>Automation around subscriptions to plex ending</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/hrfee/jfa-go">jfa-go</a></td><td>Invites &amp; users</td><td>a bit-of-everything user management app for Jellyfin</td><td></td></tr>
+      <tr><td><a href="https://github.com/Yoruio/Membarr">Membarr</a></td><td>Invites &amp; users</td><td>Discord Bot to invite a user to a Plex or Jellyfin server</td><td></td></tr>
+      <tr><td><a href="https://github.com/Waterboy1602/Addarr">addarr</a></td><td>Requests &amp; chat bots</td><td>Telegram bot for adding series/movies to Sonarr/Radarr or for changing the download speed of Transmission/Sabnzbd</td><td></td></tr>
+      <tr><td><a href="https://github.com/DanCue44/Allseerr">Allseerr</a></td><td>Requests &amp; chat bots</td><td>Request management for movies, series, music, books and audiobooks, based on Seerr</td><td></td></tr>
+      <tr><td><a href="https://github.com/openVESSL/Anchorr">Anchorr</a></td><td>Requests &amp; chat bots</td><td>Discord bot for requesting movies/TV and receiving notifications when items are added to your media server</td><td></td></tr>
+      <tr><td><a href="https://github.com/shayaantx/botdarr">botdarr</a></td><td>Requests &amp; chat bots</td><td>Slack/Discord/Telegram/Matrix bot for accessing radarr, sonarr, and lidarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/windoze95/cantinarr">Cantinarr</a></td><td>Requests &amp; chat bots</td><td>Media requests and server management in one app. Browse movies, shows, books, and music, manage your self-hosted media stack from phone or browser</td><td></td></tr>
+      <tr><td><a href="https://github.com/activexray/Doplarr">doplarr</a></td><td>Requests &amp; chat bots</td><td>An *arr request bot for Discord</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/Jamisonfitz/fliparr">Fliparr</a></td><td>Requests &amp; chat bots</td><td>Swipe through Radarr's Discover recommendations. Right adds and searches, left writes a permanent exclusion</td><td></td></tr>
+      <tr><td><a href="https://github.com/varthe/Redirecterr">Redirecterr</a></td><td>Requests &amp; chat bots</td><td>Filter and redirect media requests based on requester, keywords, age ratings, and more. Supports routing to multiple instances simultaneously</td><td></td></tr>
+      <tr><td><a href="https://github.com/mtrogman/regrabarr">regrabarr</a></td><td>Requests &amp; chat bots</td><td>A discord bot to delete and search for media</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/darkalfx/requestrr">requestrr</a></td><td>Requests &amp; chat bots</td><td>Requestrr is a chatbot used to simplify using services like Sonarr/Radarr/Ombi via the use of chat. Current platform is Discord only, but the bot was built around the...</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/toddrob99/searcharr">searcharr</a></td><td>Requests &amp; chat bots</td><td>Sonarr &amp; Radarr &amp; Readarr Telegram Bot</td><td></td></tr>
+      <tr><td><a href="https://github.com/giuseppe99barchetta/SuggestArr">SuggestArr</a></td><td>Requests &amp; chat bots</td><td>Effortlessly request recommended movies, TV shows and anime to Jellyseer/Overseer based on your recently watched content on Jellyfin, Plex or Emby, let SuggestArr...</td><td></td></tr>
+      <tr><td><a href="https://github.com/GeiserX/vettarr">vettarr</a></td><td>Requests &amp; chat bots</td><td>Send a link, a post, a magnet, a torrent or a Seerr request to your bot, rules decide what downloads</td><td></td></tr>
+      <tr><td><a href="https://github.com/sirrobot01/decypharr">decypharr</a></td><td>Indexers &amp; download sources</td><td>Media gateway for Debrid &amp; Usenet</td><td></td></tr>
+      <tr><td><a href="https://github.com/FlareSolverr/FlareSolverr">flaresolverr</a></td><td>Indexers &amp; download sources</td><td>Proxy server to bypass Cloudflare protection</td><td></td></tr>
+      <tr><td><a href="https://github.com/Nikorag/iplayarr">iPlayarr</a></td><td>Indexers &amp; download sources</td><td>iPlayarr is a companion tool for Sonarr and Radarr, making it easy to integrate get_iplayer for searching and downloading iPlayer content directly. It acts as both an...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Jackett/Jackett">jackett</a></td><td>Indexers &amp; download sources</td><td>API Support for your favorite torrent trackers</td><td></td></tr>
+      <tr><td><a href="https://github.com/PCJones/MediathekArr">MediathekArr</a></td><td>Indexers &amp; download sources</td><td>Integrate ARD&amp;ZDF Mediathek in Prowlarr, Sonarr and Radarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/drumandbytes/momentarr">momentarr</a></td><td>Indexers &amp; download sources</td><td>Caching, serialising proxy for FlareSolverr-compatible Cloudflare solvers: reuses cf_clearance over plain HTTP and runs one browser solve at a time</td><td></td></tr>
+      <tr><td><a href="https://github.com/JackDallas/Premiumizearr">premiumizearr</a></td><td>Indexers &amp; download sources</td><td>Bridge your *Arr clients (Sonarr, Radarr) to your premiumize.me (upload/download manager)</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/rix1337/Quasarr">Quasarr</a></td><td>Indexers &amp; download sources</td><td>Quasarr connects JDownloader with Radarr, Sonarr, Lidarr and Magazarr. It also decrypts links protected by CAPTCHAs</td><td></td></tr>
+      <tr><td><a href="https://github.com/florianjs/trackarr">Trackarr</a></td><td>Indexers &amp; download sources</td><td>Run your own private tracker in less than 5min</td><td></td></tr>
+      <tr><td><a href="https://github.com/PCJones/UmlautAdaptarr">umlautadaptarr</a></td><td>Indexers &amp; download sources</td><td>A tool to work around Sonarr, Radarr, Lidarr and Readarrs problems with foreign languages</td><td></td></tr>
+      <tr><td><a href="https://github.com/calrock27/grabarr">grabarr</a></td><td>Download clients &amp; speed</td><td>A self-hosted, agentless file transfer orchestration platform with Arr-Style UI</td><td></td></tr>
+      <tr><td><a href="https://github.com/kinopeer/kinopeer">kinopeer</a></td><td>Download clients &amp; speed</td><td>A qBittorrent web UI built around movies and TV series: find a title, pick a release through Prowlarr, download it. A PWA for umbrelOS</td><td></td></tr>
+      <tr><td><a href="https://github.com/Entree3k/qbithelparr">qbithelparr</a></td><td>Download clients &amp; speed</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/Feramance/qBitrr">qBitrr</a></td><td>Download clients &amp; speed</td><td>qBitrr keeps qBittorrent, Radarr, Sonarr, and your request tools chatting happily so downloads finish, import, and clean up without babysitting</td><td></td></tr>
+      <tr><td><a href="https://github.com/speedarr/Speedarr">speedarr</a></td><td>Download clients &amp; speed</td><td>Smooth streams first, downloads and seeding with what's left</td><td></td></tr>
+      <tr><td><a href="https://github.com/itschasa/speedrr">speedrr</a></td><td>Download clients &amp; speed</td><td>Dynamically manage speeds on torrent clients, with Plex/Jellyfin/Emby intergration</td><td></td></tr>
+      <tr><td><a href="https://github.com/aon082910/throttlearr">Throttlearr</a></td><td>Download clients &amp; speed</td><td>A gate between Sonarr/Radarr and SABnzbd: holds grabs and feeds the download client a few at a time</td><td></td></tr>
+      <tr><td><a href="https://github.com/YouROK/TorrServer">TorrServer</a></td><td>Download clients &amp; speed</td><td>Torrent stream server</td><td></td></tr>
+      <tr><td><a href="https://github.com/Unpackerr/unpackerr">unpackerr</a></td><td>Download clients &amp; speed</td><td>Extracts downloads for Radarr, Sonarr, Lidarr, Readarr, and/or a Watch folder - Deletes extracted files after import</td><td></td></tr>
+      <tr><td><a href="https://github.com/tommyvange/ArrStalledHandler">ArrStalledHandler</a></td><td>Search &amp; queue automation</td><td>ArrStalledHandler is a Python script to manage stalled downloads in Radarr and Sonarr. It identifies stalled downloads, tracks them in a database, and performs...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Cleanuparr/Cleanuparr">Cleanuparr</a></td><td>Search &amp; queue automation</td><td>Advanced download manager for the Servarr ecosystem</td><td></td></tr>
+      <tr><td><a href="https://github.com/ManiMatter/decluttarr">Decluttarr</a></td><td>Search &amp; queue automation</td><td>Watches radarr, sonarr, lidarr, readarr, whisparr and sportarr download queues and removes downloads if they become stalled or no longer needed</td><td></td></tr>
+      <tr><td><a href="https://github.com/egg82/fetcharr">Fetcharr</a></td><td>Search &amp; queue automation</td><td>hunts for missing or upgradable media in your *arr stack</td><td></td></tr>
+      <tr><td>huntarr</td><td>Search &amp; queue automation</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/kroeberd/mediastarr">Mediastarr</a></td><td>Search &amp; queue automation</td><td>Automated media search for Sonarr &amp; Radarr: finds missing content and quality upgrades on a configurable schedule. Web dashboard, first-run wizard, SQLite history,...</td><td></td></tr>
+      <tr><td><a href="https://github.com/nickshanks347/monitarr">monitarr</a></td><td>Search &amp; queue automation</td><td>A very simple tool to monitor downloads from Sonarr/Radarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/elfhosted/newtarr">NewtArr</a></td><td>Search &amp; queue automation</td><td>A sane fork of Huntarr v6.6.3 from simpler times</td><td>A fork of Huntarr</td></tr>
+      <tr><td><a href="https://github.com/rpatterson/prunerr">Prunerr</a></td><td>Search &amp; queue automation</td><td>Perma-seed Servarr media libraries</td><td></td></tr>
+      <tr><td><a href="https://github.com/JudoChinX/rangarr">Rangarr</a></td><td>Search &amp; queue automation</td><td>Rangarr automates and staggers media searches across your Radarr, Sonarr, Lidarr, Readarr, and Whisparr instances</td><td></td></tr>
+      <tr><td><a href="https://github.com/SuFxGIT/scoutarr">scoutarr</a></td><td>Search &amp; queue automation</td><td>Automate media upgrades in Radarr, Sonarr, Lidarr, and Readarr with smart filtering, scheduling, and a modern web UI</td><td></td></tr>
+      <tr><td><a href="https://github.com/unmonitarr/unmonitarr">unmonitarr</a></td><td>Search &amp; queue automation</td><td>Wait for real releases, skip the fakes. Intelligent monitoring automation for Sonarr &amp; Radarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/ProphetSe7en/clonarr">clonarr</a></td><td>Profiles &amp; config sync</td><td>Sync, build and manage quality profiles and custom formats for Radarr and Sonarr: powered by TRaSH Guides</td><td></td></tr>
+      <tr><td><a href="https://github.com/raydak-labs/configarr">Configarr</a></td><td>Profiles &amp; config sync</td><td>Sync TRaSH Guides + custom configs with Sonarr/Radarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/Dictionarry-Hub/profilarr">Profilarr</a></td><td>Profiles &amp; config sync</td><td>Configuration Management Platform for Radarr/Sonarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/recyclarr/recyclarr">recyclarr</a></td><td>Profiles &amp; config sync</td><td>Automatically sync TRaSH Guides to your Sonarr and Radarr instances</td><td></td></tr>
+      <tr><td><a href="https://github.com/suuhm/Setuparr">setuparr</a></td><td>Profiles &amp; config sync</td><td>Easy to use tool for manage and installing the arr stack like Sonarr, Radarr, Prowlarr, Readarr etc included a Tor with Killswitch function</td><td></td></tr>
+      <tr><td><a href="https://github.com/syncarr/syncarr">syncarr</a></td><td>Profiles &amp; config sync</td><td>one/two way sync of Radarr, Sonarr, or Lidarr instances</td><td></td></tr>
+      <tr><td><a href="https://github.com/iongpt/boxarr">Boxarr</a></td><td>Lists &amp; watchlists</td><td>Boxarr is an automated box office tracking application that integrates with Radarr to monitor, add, and manage the latest theatrical releases. It provides a beautiful...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Poag/buffarr">buffarr</a></td><td>Lists &amp; watchlists</td><td>Buffarr prefetches media as users catch up to whats available and manages monitoring of unaired episodes</td><td></td></tr>
+      <tr><td><a href="https://github.com/jpjoseph12/courarr">Courarr</a></td><td>Lists &amp; watchlists</td><td>Seasonal anime lists from AniList as Custom Lists for Sonarr &amp; Radarr: web UI, daily refresh, Unraid template</td><td></td></tr>
+      <tr><td><a href="https://github.com/skulltrail/imdbarr">imdbarr</a></td><td>Lists &amp; watchlists</td><td>Local API to support IMDb Watchlists in Sonarr</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/christophercatt/listarr">listarr</a></td><td>Lists &amp; watchlists</td><td>A Trakt.tv list -&gt; Sonarr implementation, emulating the list functionality found within Radarr</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/linaspurinis/mdblistarr">mdblistarr</a></td><td>Lists &amp; watchlists</td><td>Companion app for mdblist.com for Radarr and Sonarr integration</td><td></td></tr>
+      <tr><td><a href="https://github.com/binhex/movarr">movarr</a></td><td>Lists &amp; watchlists</td><td>Automated movie downloader based on IMDb criteria filtering</td><td></td></tr>
+      <tr><td><a href="https://github.com/p-hueber/prefetcharr">prefetcharr</a></td><td>Lists &amp; watchlists</td><td>Let Sonarr fetch episodes on demand for a show you are watching on Jellyfin/Emby/Plex</td><td></td></tr>
+      <tr><td><a href="https://github.com/jamcalli/Pulsarr">Pulsarr</a></td><td>Lists &amp; watchlists</td><td>Pulsarr: Real-time Plex watchlist monitoring and content acquisition tool. Seamlessly sync Plex watchlists with Sonarr and Radarr, featuring intelligent predicated...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Ferdinand99/Tofarr">Tofarr</a></td><td>Lists &amp; watchlists</td><td>Unofficial companion for Tofa: build and auto-update collections from TMDB, Trakt and IMDb lists, browse Discover, and request missing titles via Seerr</td><td>Archived</td></tr>
+      <tr><td>TopTenarr</td><td>Lists &amp; watchlists</td><td>No repository found</td><td></td></tr>
+      <tr><td>UMTK (Upcoming Movies and TV Shows for Kometa)</td><td>Lists &amp; watchlists</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/sbondCo/Watcharr">Watcharr</a></td><td>Lists &amp; watchlists</td><td>Open source, self-hostable watched list for all your content (movies, tv series, anime, games) with user authentication, modern and clean UI and a very simple setup</td><td></td></tr>
+      <tr><td><a href="https://github.com/nylonee/watchlistarr">Watchlistarr</a></td><td>Lists &amp; watchlists</td><td>Customizable sync of Plex Watchlist to Sonarr/Radarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/jolbol1/auditarr">Auditarr</a></td><td>Library cleanup &amp; health</td><td>Compare Plex and Radarr databases to find missing/corrupt files</td><td></td></tr>
+      <tr><td><a href="https://github.com/se1exin/Cleanarr">Cleanarr</a></td><td>Library cleanup &amp; health</td><td>A simple UI to help find and delete duplicate and sample files from your Plex server</td><td></td></tr>
+      <tr><td><a href="https://github.com/chrizantoz/dedupearr">Dedupearr</a></td><td>Library cleanup &amp; health</td><td>Finds what wastes space in a Sonarr/Radarr library: hardlinks vs second copies, leftover torrents, orphans and usenet leftovers, per file with the evidence. Dry-run...</td><td></td></tr>
+      <tr><td><a href="https://github.com/rfsbraz/deleterr">Deleterr</a></td><td>Library cleanup &amp; health</td><td>Automated Plex media cleanup with watch-based rules, smart exclusions, and "Leaving Soon" notifications via Radarr, Sonarr &amp; Tautulli</td><td></td></tr>
+      <tr><td><a href="https://github.com/sl0wz3r/dupearr">dupearr</a></td><td>Library cleanup &amp; health</td><td>Find and safely remove duplicate movies and TV episodes in Plex, with Radarr/Sonarr awareness. An *arr-style web app for Unraid and Docker</td><td></td></tr>
+      <tr><td><a href="https://github.com/evictarr/evictarr">evictarr</a></td><td>Library cleanup &amp; health</td><td>Media stack cleanup companion for Jellyfin, Seerr, Radarr and Sonarr. It scans your library for watched movies/seasons and stale requests, stages matches for deletion...</td><td></td></tr>
+      <tr><td><a href="https://github.com/mescon/Healarr">Healarr</a></td><td>Library cleanup &amp; health</td><td>Health Evaluation And Library Auto-Recovery for *arr - Media library corruption detection and automatic remediation</td><td></td></tr>
+      <tr><td><a href="https://github.com/tophat17/Mediacleanuparr">mediacleanuparr</a></td><td>Library cleanup &amp; health</td><td>Purge low-rated, oversized, and empty media from your local disk and Radarr/Sonarr libraries to reclaim disk space</td><td></td></tr>
+      <tr><td><a href="https://github.com/steveharsant/purgarr">Purgarr</a></td><td>Library cleanup &amp; health</td><td>Plunder the best, purge the rest!</td><td></td></tr>
+      <tr><td><a href="https://github.com/Okhr/reclaimarr">Reclaimarr</a></td><td>Library cleanup &amp; health</td><td>A tool to automatically reclaim disk space on your media server by intelligently deleting content from Jellyfin, Sonarr, and Radarr based on watch history and age</td><td></td></tr>
+      <tr><td><a href="https://github.com/OFark/Compressarr">Compressarr</a></td><td>Media processing</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/KirovAir/muxarr">Muxarr</a></td><td>Media processing</td><td>Quick and easy way to strip unwanted audio and subtitle tracks from your media files</td><td></td></tr>
+      <tr><td><a href="https://github.com/Jellman86/optimisarr">Optimisarr</a></td><td>Media processing</td><td>Safety-first self-hosted FFmpeg media-library optimiser for Plex, Jellyfin, and Emby, with verified CPU/GPU transcoding and rollback</td><td></td></tr>
+      <tr><td><a href="https://github.com/thetvliam/remuxarr">Remuxarr</a></td><td>Media processing</td><td>Clean up your Sonarr/Radarr library for Plex Direct Play without transcoding. Remuxes MKV to MP4, strips audio and subtitle tracks you don't need and fixes language...</td><td></td></tr>
+      <tr><td><a href="https://github.com/BassHous3/taggarr">Taggarr</a></td><td>Media processing</td><td>Dub analysis &amp; tagging</td><td></td></tr>
+      <tr><td><a href="https://github.com/HaveAGitGat/Tdarr">tdarr</a></td><td>Media processing</td><td>Tdarr - Distributed transcode automation using FFmpeg/HandBrake + Audio/Video library analytics + video health checking (Windows, macOS, Linux &amp; Docker)</td><td></td></tr>
+      <tr><td><a href="https://github.com/binhex/trimarr">trimarr</a></td><td>Media processing</td><td>Removes (trims) unwanted audio and subtitles from matroska container format video files</td><td></td></tr>
+      <tr><td><a href="https://github.com/morpheus65535/bazarr">bazarr</a></td><td>Subtitles &amp; translation</td><td>Bazarr is a companion application to Sonarr and Radarr. It manages and downloads subtitles based on your requirements. You define your preferences by TV show or movie...</td><td></td></tr>
+      <tr><td><a href="https://github.com/amanofvaly/crowbarr">Crowbarr</a></td><td>Subtitles &amp; translation</td><td>Audit-first subtitle synchronization and speech-aligned transcription for self hosted media library. Non-destructive sidecars powered by Whisper</td><td></td></tr>
+      <tr><td><a href="https://github.com/lingarr-translate/lingarr">Lingarr</a></td><td>Subtitles &amp; translation</td><td>Lingarr is an application that supports both local and SaaS translation services to translate subtitle files into a specified target language. With automated...</td><td></td></tr>
+      <tr><td><a href="https://github.com/gssariev/overr-syncerr">Overr-Syncerr</a></td><td>Subtitles &amp; translation</td><td>Webhook handler for subtitle management with Bazarr, Radarr, and Sonarr integration. Supports both Overseerr and Jellyseerr</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/Abrechen2/sublarr">Sublarr</a></td><td>Subtitles &amp; translation</td><td>Subtitle manager for Sonarr and Radarr: finds, checks and repairs subtitles, with anime support and local AI translation (alternative to Bazarr)</td><td></td></tr>
+      <tr><td><a href="https://github.com/GerardUmbert/Subtitlarr">Subtitlarr</a></td><td>Subtitles &amp; translation</td><td>Fills gaps in your Bazarr subtitle library by translating subtitles you already have into languages you're missing, using a local or cloud LLM</td><td></td></tr>
+      <tr><td><a href="https://github.com/binhex/arch-readarr">binhex-readarr</a></td><td>Music, books &amp; audiobooks</td><td>Docker build script for Arch Linux base with Readarr</td><td>Readarr in a binhex image</td></tr>
+      <tr><td><a href="https://github.com/Chaptarr/chaptarr">Chaptarr</a></td><td>Music, books &amp; audiobooks</td><td>An audiobook and eBook collection manager</td><td></td></tr>
+      <tr><td><a href="https://github.com/iuliandita/digarr">Digarr</a></td><td>Music, books &amp; audiobooks</td><td>Self-hosted music discovery for your library. Find artists and albums, review recommendations, and send them to Lidarr, slskd, or playlists. Bring your own AI...</td><td></td></tr>
+      <tr><td><a href="https://github.com/TheWicklowWolf/eBookBuddy">ebookbuddy</a></td><td>Music, books &amp; audiobooks</td><td>Book discovery tool that provides recommendations based on selected Readarr books, using Goodreads</td><td></td></tr>
+      <tr><td><a href="https://github.com/Kareadita/Kavita">Kavita</a></td><td>Music, books &amp; audiobooks</td><td>Kavita is a fast, feature rich, cross platform reading server. Built with the goal of being a full solution for all your reading needs. Setup your own server and...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Lidarr/Lidarr">lidarr</a></td><td>Music, books &amp; audiobooks</td><td>Looks and smells like Sonarr but made for music</td><td></td></tr>
+      <tr><td><a href="https://github.com/Listenarrs/Listenarr">listenarr</a></td><td>Music, books &amp; audiobooks</td><td>Listenarr automates audiobook collection management similar to Sonarr or Radarr, but for audiobooks. It can search, download, and organize your library automatically...</td><td></td></tr>
+      <tr><td><a href="https://github.com/rix1337/Magazarr">Magazarr</a></td><td>Music, books &amp; audiobooks</td><td>Tiny magazine manager for Quasarr with OPDS output</td><td></td></tr>
+      <tr><td><a href="https://github.com/Shadowalker125/recommendarr">Recommendarr</a></td><td>Music, books &amp; audiobooks</td><td>Adds artists on Listenbrainz created for playlists to lidarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/Dodelidoo-Labs/sonobarr">sonobarr</a></td><td>Music, books &amp; audiobooks</td><td>Music discovery tool that integrates with Lidarr and provides recommendations using Last.fm</td><td></td></tr>
+      <tr><td><a href="https://github.com/mrusse/soularr">soularr</a></td><td>Music, books &amp; audiobooks</td><td>A Python script that connects Lidarr with Soulseek!</td><td></td></tr>
+      <tr><td>SpotDL-WebGUI</td><td>Music, books &amp; audiobooks</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/DanCue44/Talearr">Talearr</a></td><td>Music, books &amp; audiobooks</td><td>Ebook and audiobook collection manager. A drop-in fork of Chaptarr with Hardcover metadata, recordings done right, comics and manga, and Allseerr requests</td><td></td></tr>
+      <tr><td><a href="https://github.com/frankieramirez/comicarr">comicarr</a></td><td>Comics &amp; manga</td><td>Automated comic book and manga downloader and library manager with a modern React UI</td><td></td></tr>
+      <tr><td><a href="https://github.com/issuarr/issuarr">issuarr</a></td><td>Comics &amp; manga</td><td>Updated and upgraded maintained fork of Mylar3 (MylarComics/mylar3) with import/scan status UI, ComicVine rate-limit handling and bug fixes</td><td></td></tr>
+      <tr><td><a href="https://github.com/Casvt/Kapowarr">kapowarr</a></td><td>Comics &amp; manga</td><td>Kapowarr is a software to build and manage a comic book library, fitting in the *arr suite of software</td><td></td></tr>
+      <tr><td><a href="https://github.com/Snd-R/komf">Komf</a></td><td>Comics &amp; manga</td><td>Komga and Kavita metadata fetcher</td><td></td></tr>
+      <tr><td><a href="https://github.com/gotson/komga">Komga</a></td><td>Comics &amp; manga</td><td>Media server for comics/mangas/BDs/magazines/eBooks with API, OPDS, Kobo Sync and KOReader Sync support</td><td></td></tr>
+      <tr><td><a href="https://github.com/KiranTheRam/mangarr">Mangarr</a></td><td>Comics &amp; manga</td><td>Self-hosted manga library manager</td><td></td></tr>
+      <tr><td><a href="https://github.com/FenrisSkoll/Pullarr">Pullarr</a></td><td>Comics &amp; manga</td><td>A self-hosted comic library manager in the *arr suite with monitoring, acquisition, reading orders, quality upgrades and archive maintenance</td><td></td></tr>
+      <tr><td><a href="https://github.com/Phalcode/gamevault-backend">GameVault</a></td><td>Games</td><td>Backend for the self-hosted gaming platform for drm-free games</td><td></td></tr>
+      <tr><td><a href="https://github.com/Doezer/Questarr">Questarr</a></td><td>Games</td><td>Questarr is an *Arr-inspired game manager that helps you discover, track, and automatically download the games you want</td><td></td></tr>
+      <tr><td><a href="https://github.com/BlizzHacker/romarr">ROMarr</a></td><td>Games</td><td>Find, verify and organize your game library. Native Windows and Docker, DAT checks, ROM Hub plugins, and optional RomM/Cartridge integration</td><td></td></tr>
+      <tr><td><a href="https://github.com/rommapp/romm">romm</a></td><td>Games</td><td>A beautiful, powerful, self-hosted ROM manager and player</td><td></td></tr>
+      <tr><td><a href="https://github.com/robtme/satisfactory-server">satisfactory-server</a></td><td>Games</td><td>A Dockerized version of the Satisfactory dedicated server</td><td></td></tr>
+      <tr><td><a href="https://github.com/Masutayunikon/FanKarr">FanKarr</a></td><td>Other media</td><td>Self-hosted anime Fankai catalogue with qBittorrent integration. Browse and download fansub kai edits directly from your ARR stack. Built with Vue 3 + Vite,...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Materialious/Materialious">Materialious</a></td><td>Other media</td><td>Materialious is a modern material design frontend for YouTube &amp; Invidious, focused on a clean, privacy-friendly YouTube experience. It supports local video fallback...</td><td></td></tr>
+      <tr><td><a href="https://github.com/shedman214/preludarr">Preludarr</a></td><td>Other media</td><td>Theme songs for your media library. Self-hosted management for anime, TV shows, and movies</td><td></td></tr>
+      <tr><td><a href="https://github.com/Sportarr/Sportarr">Sportarr</a></td><td>Other media</td><td>Sportarr - Sports PVR for usenet and torrents. Like Sonarr &amp; Radarr but for sports events</td><td></td></tr>
+      <tr><td><a href="https://github.com/derekantrican/subarr">subarr</a></td><td>Other media</td><td>"Sonarr for YouTube" - a tool to periodically check various YouTube playlists and take actions when new videos are posted</td><td></td></tr>
+      <tr><td><a href="https://github.com/nandyalu/trailarr">trailarr</a></td><td>Other media</td><td>Trailarr is a self-hosted app to download and manage trailers for your media libraries</td><td></td></tr>
+      <tr><td><a href="https://github.com/Whisparr/Whisparr">whisparr</a></td><td>Other media</td><td>Adult content collection manager, from the *arr family</td><td></td></tr>
+      <tr><td><a href="https://github.com/Dispatcharr/Dispatcharr">Dispatcharr</a></td><td>Live TV &amp; IPTV</td><td>Your Ultimate IPTV &amp; Stream Management Companion</td><td></td></tr>
+      <tr><td><a href="https://github.com/haydenw22/DVarr">DVarr</a></td><td>Live TV &amp; IPTV</td><td>Self-hosted IPTV sports DVR: league-aware auto-recording that never misses the moment. .NET 8 + SQLite + ffmpeg, single Docker container</td><td></td></tr>
+      <tr><td><a href="https://github.com/Headendarr/Headendarr">Headendarr</a></td><td>Live TV &amp; IPTV</td><td>A user-friendly management layer for TVHeadend that simplifies IPTV playlist integration, EPG mapping, and DVR scheduling</td><td></td></tr>
+      <tr><td><a href="https://github.com/TheBinaryNinja/masqueradarr">masqueradarr</a></td><td>Live TV &amp; IPTV</td><td>Aggregating scattered IPTV sources behind a single, trusted identity. Self-hosted IPTV aggregator: ingests M3U/EPG sources, proxies streams, and serves a management...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Pharaoh-Labs/teamarr">teamarr</a></td><td>Live TV &amp; IPTV</td><td>Custom EPG generator for Sports Team channels</td><td></td></tr>
+      <tr><td><a href="https://github.com/Threadfin/Threadfin">Threadfin</a></td><td>Live TV &amp; IPTV</td><td>an M3U proxy for Kernel/Plex/Jellyfin/Emby based on xTeVe</td><td></td></tr>
+      <tr><td><a href="https://github.com/chrisbenincasa/tunarr">Tunarr</a></td><td>Live TV &amp; IPTV</td><td>Create a classic TV experience using your own media - IPTV backed by Plex/Jellyfin/Emby/NFO</td><td></td></tr>
+      <tr><td>Jellyfin-vue-ssr</td><td>Media clients</td><td>No repository found</td><td></td></tr>
+      <tr><td>Jellyfin-vue-static</td><td>Media clients</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/PelagicaApp/pelagica">Pelagica</a></td><td>Media clients</td><td>A modern web, desktop and TV client for Jellyfin</td><td></td></tr>
+      <tr><td><a href="https://github.com/agregarr/agregarr">agregarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Agregarr is a Plex Collections manager that keeps your Home and Recommended fresh by frequently updating it with collections from various sources</td><td></td></tr>
+      <tr><td><a href="https://github.com/Cloudbox/autoscan">Autoscan</a></td><td>Plex &amp; Jellyfin extras</td><td>Autoscan replaces the default Plex and Emby behaviour for picking up changes on the file system</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/OrchestratedChaos/curatarr">curatarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Multi-user Plex recommendation system with streaming service integration</td><td></td></tr>
+      <tr><td><a href="https://github.com/ohmzi/Immaculaterr">Immaculaterr</a></td><td>Plex &amp; Jellyfin extras</td><td>Plex autopilot: curated recommendations, collections, and library cleanup (optional Radarr/Sonarr integration)</td><td></td></tr>
+      <tr><td><a href="https://github.com/luigi311/JellyPlex-Watched">jellyplex-watched</a></td><td>Plex &amp; Jellyfin extras</td><td>Sync watched status between jellyfin, plex and emby locally</td><td></td></tr>
+      <tr><td><a href="https://github.com/Kometa-Team/Kometa">Kometa</a></td><td>Plex &amp; Jellyfin extras</td><td>Python script to update metadata information for items in plex as well as automatically build collections and playlists. The Wiki Documentation is linked below</td><td></td></tr>
+      <tr><td><a href="https://github.com/Kometa-Team/Overlay-Reset">Kometa-Overlay-Reset</a></td><td>Plex &amp; Jellyfin extras</td><td>Python3 Script to Remove all Overlays Generated by Kometa</td><td></td></tr>
+      <tr><td><a href="https://github.com/AradD7/lightarr">Lightarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Lightarr is used to automate smart lighting with Plex webhooks. Built with Go, supports Wiz via UDP</td><td></td></tr>
+      <tr><td><a href="https://github.com/gillberg1111/linearr">linearr</a></td><td>Plex &amp; Jellyfin extras</td><td>The missing show sequencer for Plex, Jellyfin, and Emby. Shows, genres, franchises: Automated. Sequenced. Yours</td><td></td></tr>
+      <tr><td><a href="https://github.com/chadwpalm/Lumunarr">Lumunarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Connector application for using Plex Webhooks with Philips Hue Bridges</td><td></td></tr>
+      <tr><td><a href="https://github.com/stevezau/media_preview_generator">media-preview-generator</a></td><td>Plex &amp; Jellyfin extras</td><td>Self-hosted previews, intro/credits detection and cross-server reuse for Plex, Emby and Jellyfin, with GPU acceleration and remote processing. Includes Plex chapter...</td><td></td></tr>
+      <tr><td><a href="https://github.com/JFLXCLOUD/NeXroll">NeXroll</a></td><td>Plex &amp; Jellyfin extras</td><td>A Management System for Media Server Prerolls</td><td></td></tr>
+      <tr><td><a href="https://github.com/Kometa-Team/Kometa">plex-meta-manager</a></td><td>Plex &amp; Jellyfin extras</td><td>Python script to update metadata information for items in plex as well as automatically build collections and playlists. The Wiki Documentation is linked below</td><td>Former name of Kometa</td></tr>
+      <tr><td><a href="https://github.com/dervish666/PlexPrerolls">Plex-Prerolls</a></td><td>Plex &amp; Jellyfin extras</td><td>Small, self contained plex pre-roll animation generator</td><td></td></tr>
+      <tr><td><a href="https://github.com/jkirkcaldy/plex-utills">plex-utills</a></td><td>Plex &amp; Jellyfin extras</td><td>Manage your Plex library automatically</td><td></td></tr>
+      <tr><td><a href="https://github.com/mdhiggins/PlexAutoSkip">plexautoskip</a></td><td>Plex &amp; Jellyfin extras</td><td>Automatically skip content in Plex</td><td></td></tr>
+      <tr><td><a href="https://github.com/StudioNirin/PlexCache-D">Plexcache-D</a></td><td>Plex &amp; Jellyfin extras</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/petersem/posterr">posterr</a></td><td>Plex &amp; Jellyfin extras</td><td>A digital poster app for Plex, Sonarr, Radarr, and Readarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/Reaparr/Reaparr">Reaparr</a></td><td>Plex &amp; Jellyfin extras</td><td>Plex downloader that brings content from any server to yours!</td><td></td></tr>
+      <tr><td><a href="https://github.com/Ehnkode/rotatarr">Rotatarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Keeps your Plex home screen fresh: rotates and shuffles collection rows, with seasonal collections and a web UI. Docker and Unraid</td><td></td></tr>
+      <tr><td><a href="https://github.com/alien4u/travelarr">travelarr</a></td><td>Plex &amp; Jellyfin extras</td><td>Copy original files from your home Plex server to a travel NAS (Unraid)</td><td></td></tr>
+      <tr><td><a href="https://github.com/SEC844/Analysarr">Analysarr</a></td><td>Statistics</td><td>Self-hosted health dashboard for your media stack (Emby/Jellyfin, Sonarr, Radarr, qBittorrent, Seer): duplicates, orphan torrents, hardlinks, watch activity and safe...</td><td></td></tr>
+      <tr><td><a href="https://github.com/Chaphasilor/jellyfin-rewind">Jellyfin-Rewind</a></td><td>Statistics</td><td>Review Your Music of 2025. A "Spotify Wrapped"-like app made for people who use Jellyfin for listening to music!</td><td></td></tr>
+      <tr><td><a href="https://github.com/CyferShepard/Jellystat">Jellystat</a></td><td>Statistics</td><td>Jellystat is a free and open source Statistics App for Jellyfin</td><td>Planned (Roadmap)</td></tr>
+      <tr><td><a href="https://github.com/edbfi/obzorarr">Obzorarr</a></td><td>Statistics</td><td>Obzorarr is a "Wrapped for Plex" application that syncs viewing history from your Plex Media Server and generates yearly statistics with an animated slideshow...</td><td></td></tr>
+      <tr><td><a href="https://github.com/RaunoT/rewindarr">rewindarr</a></td><td>Statistics</td><td>Present Plex/Jellyfin user statistics and habits in a beautiful and organized manner</td><td></td></tr>
+      <tr><td><a href="https://github.com/connorgallopo/Tracearr">tracearr</a></td><td>Statistics</td><td>Real-time monitoring for Plex, Jellyfin, and Emby servers. Track streams, analyze playback, and detect account sharing from a single dashboard</td><td>Planned (Roadmap)</td></tr>
+      <tr><td><a href="https://github.com/aunefyren/wrapperr">wrapperr</a></td><td>Statistics</td><td>Website based application that summarizes Plex statistics from a given period and displays it in a nice format. Similar to the Spotify Wrapped concept</td><td></td></tr>
+      <tr><td><a href="https://github.com/caronc/apprise">apprise</a></td><td>Notifications</td><td>Apprise - Push Notifications that work with just about every platform!</td><td></td></tr>
+      <tr><td>noti</td><td>Notifications</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/Notifiarr/notifiarr">Notifiarr</a></td><td>Notifications</td><td>Client for Notifiarr.com</td><td></td></tr>
+      <tr><td><a href="https://github.com/binwiederhier/ntfy">Ntfy</a></td><td>Notifications</td><td>Send push notifications to your phone or desktop using PUT/POST</td><td></td></tr>
+      <tr><td><a href="https://github.com/tenasi/plexannouncer">PlexAnnouncer</a></td><td>Notifications</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/Spydie88/Tauticord">Tauticord</a></td><td>Notifications</td><td>A Discord bot that displays live data from Tautulli</td><td></td></tr>
+      <tr><td><a href="https://github.com/Kha-kis/arr-dashboard">arr-dashboard</a></td><td>Dashboards &amp; monitoring</td><td>Unified dashboard for managing multiple Sonarr, Radarr, and Prowlarr instances</td><td></td></tr>
+      <tr><td><a href="https://github.com/willfarrell/docker-autoheal">autoheal</a></td><td>Dashboards &amp; monitoring</td><td>Monitor and restart unhealthy docker containers</td><td></td></tr>
+      <tr><td><a href="https://github.com/brq-ae/boltarr">boltarr</a></td><td>Dashboards &amp; monitoring</td><td>Self-hosted network dashboard: topology, scanning, VLANs, AI analysis</td><td></td></tr>
+      <tr><td><a href="https://github.com/FrenchGithubUser/Dasharr">Dasharr</a></td><td>Dashboards &amp; monitoring</td><td>Dashboard of your indexers' usage</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/RenzoBeux/Dashboarr">dashboarr</a></td><td>Dashboards &amp; monitoring</td><td>A mobile app to manage your self-hosted media stack from a single interface. Built with Expo &amp; React Native</td><td></td></tr>
+      <tr><td><a href="https://github.com/lissy93/dashy">dashy</a></td><td>Dashboards &amp; monitoring</td><td>A self-hostable personal dashboard built for you. Includes status-checking, widgets, themes, icon packs, a UI editor and tons more!</td><td></td></tr>
+      <tr><td><a href="https://github.com/iregados/deckarr">Deckarr</a></td><td>Dashboards &amp; monitoring</td><td>KMP Radarr, Sonarr and Transmission/QBitTorrent controller</td><td></td></tr>
+      <tr><td><a href="https://github.com/onedr0p/exportarr">exportarr</a></td><td>Dashboards &amp; monitoring</td><td>AIO Prometheus Exporter for Sabnzbd, Bazarr, Prowlarr, Lidarr, Readarr, Radarr, and Sonarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/glanceapp/glance">Glance</a></td><td>Dashboards &amp; monitoring</td><td>A self-hosted dashboard that puts all your feeds in one place</td><td></td></tr>
+      <tr><td><a href="https://github.com/ajnart/homarr">homarr</a></td><td>Dashboards &amp; monitoring</td><td>Customizable browser's home page to interact with your homeserver's Docker containers (e.g. Sonarr/Radarr)</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/Monitorr/logarr">Logarr</a></td><td>Dashboards &amp; monitoring</td><td>"Logarr" is a self-hosted PHP web app that consolidates, formats, and displays log and text files for easy analysis and monitoring</td><td></td></tr>
+      <tr><td><a href="https://github.com/ntop/ntopng">ntopng</a></td><td>Dashboards &amp; monitoring</td><td>Web-based Traffic and Cybersecurity Network Traffic Monitoring</td><td></td></tr>
+      <tr><td><a href="https://github.com/xSpylon/orchestrarr">orchestrarr</a></td><td>Dashboards &amp; monitoring</td><td>A local-first control center for self-hosted Plex and *arr media stacks</td><td></td></tr>
+      <tr><td><a href="https://github.com/Shoshuo/Prismarr">Prismarr</a></td><td>Dashboards &amp; monitoring</td><td>A self-hosted media dashboard unifying Radarr, Sonarr, Prowlarr, Jellyseerr, qBittorrent and TMDb in a single Symfony 8 interface. One search bar across the local...</td><td></td></tr>
+      <tr><td><a href="https://github.com/thecfu/scraparr">Scraparr</a></td><td>Dashboards &amp; monitoring</td><td>Codeberg mirror --- Scraparr is a Prometheus Exporter for various components of the *arr Suite</td><td></td></tr>
+      <tr><td><a href="https://github.com/Dsopinka/sleutharr">Sleutharr</a></td><td>Dashboards &amp; monitoring</td><td>Traces a media request across Seerr/Overseerr/Jellyseerr/Ombi, Sonarr/Radarr, your download client and Plex/Jellyfin/Emby, then tells you where it died and what to do...</td><td></td></tr>
+      <tr><td><a href="https://github.com/syslog-ng/syslog-ng">syslog-ng</a></td><td>Dashboards &amp; monitoring</td><td>syslog-ng is an enhanced log daemon, supporting a wide range of input and output methods: syslog, unstructured text, queueing, SQL &amp; NoSQL</td><td></td></tr>
+      <tr><td><a href="https://github.com/sirk123au/ArrTools">Arr-Tools</a></td><td>All-in-one platforms</td><td>A collection of tools for Radarr, Sonarr &amp; Lidarr</td><td></td></tr>
+      <tr><td><a href="https://github.com/OliTechFR/Discovarr">Discovarr</a></td><td>All-in-one platforms</td><td>A list of all the *arr apps that are out there in the world, like Sonarr, Radarr, etc</td><td></td></tr>
+      <tr><td><a href="https://github.com/HolyArrs/HolyArrs">HolyArrs</a></td><td>All-in-one platforms</td><td>One self-hosted app for your shows, movies and music</td><td></td></tr>
+      <tr><td><a href="https://github.com/imogenlabs/homelabarr-ce">Homelabarr</a></td><td>All-in-one platforms</td><td>Your homelab, one dashboard. 100+ self-hosted apps, one click each. Free and open source</td><td>To look at more closely (Mathod95). The original repository is archived, continued as homelabarr-ce</td></tr>
+      <tr><td><a href="https://github.com/AdguardTeam/AdGuardHome">AdGuard-Home</a></td><td>Network &amp; DNS</td><td>Network-wide ads &amp; trackers blocking DNS server</td><td></td></tr>
+      <tr><td><a href="https://github.com/netbirdio/netbird">NetBird</a></td><td>Network &amp; DNS</td><td>NetBird securely connects people, machines and AI agents across any network with one identity-based Zero Trust platform. Powered by peer-to-peer WireGuard®</td><td>Planned (Roadmap)</td></tr>
+      <tr><td><a href="https://github.com/testdasi/pihole-dot-doh">Pihole-DoT-DoH</a></td><td>Network &amp; DNS</td><td>Official pihole docker both DoT (DNS over TLS) and DoH (DNS over HTTPS). Built for both Raspberry Pi and AMD64</td><td></td></tr>
+      <tr><td><a href="https://github.com/nirui/sshwifty">sshwifty</a></td><td>Network &amp; DNS</td><td>Web SSH &amp; Telnet (WebSSH &amp; WebTelnet client)</td><td></td></tr>
+      <tr><td><a href="https://github.com/binhex/arch-syncthing">binhex-syncthing</a></td><td>Storage, sync &amp; databases</td><td>Docker build script for Arch Linux base with Syncthing</td><td>Syncthing in a binhex image</td></tr>
+      <tr><td><a href="https://github.com/libredb/libredb-studio">LibreDB-Studio</a></td><td>Storage, sync &amp; databases</td><td>One browser tab for PostgreSQL, MySQL, Oracle, SQL Server, MongoDB, Redis, SQLite, Couchbase, ClickHouse, Druid, DuckDB, Turso and more. An open-source SQL IDE with...</td><td></td></tr>
+      <tr><td><a href="https://github.com/proxmox/proxmox-backup">Proxmox-Backup-Client</a></td><td>Storage, sync &amp; databases</td><td>Proxmox Backup Server and Client, read only mirror</td><td></td></tr>
+      <tr><td><a href="https://github.com/proxmox/proxmox-backup">proxmox-backup-server</a></td><td>Storage, sync &amp; databases</td><td>Proxmox Backup Server and Client, read only mirror</td><td></td></tr>
+      <tr><td><a href="https://github.com/proxmox/proxmox-datacenter-manager">proxmox-datacenter-manager</a></td><td>Storage, sync &amp; databases</td><td>Read-Only Mirror of the Proxmox Datacenter Manager project</td><td></td></tr>
+      <tr><td><a href="https://github.com/questdb/questdb">QuestDB</a></td><td>Storage, sync &amp; databases</td><td>QuestDB is a high performance, open-source, time-series database</td><td></td></tr>
+      <tr><td><a href="https://github.com/seaweedfs/seaweedfs">SeaweedFS</a></td><td>Storage, sync &amp; databases</td><td>SeaweedFS is a distributed storage system for object storage (S3), file systems, Iceberg table buckets, and Lance vector buckets, designed to handle billions of files...</td><td></td></tr>
+      <tr><td><a href="https://github.com/cryptpad/cryptpad">cryptpad</a></td><td>Productivity &amp; notes</td><td>Collaborative office suite, end-to-end encrypted and open-source</td><td></td></tr>
+      <tr><td><a href="https://github.com/docmost/docmost">Docmost</a></td><td>Productivity &amp; notes</td><td>Docmost is an open-source collaborative wiki and documentation software. It is an open-source alternative to Confluence and Notion</td><td></td></tr>
+      <tr><td><a href="https://github.com/Dolibarr/dolibarr">dolibarr</a></td><td>Productivity &amp; notes</td><td>Dolibarr ERP CRM is a modern software package to manage your company or foundation's activity (contacts, suppliers, invoices, orders, stocks, agenda, accounting,...</td><td></td></tr>
+      <tr><td><a href="https://github.com/jgraph/drawio">Draw.io</a></td><td>Productivity &amp; notes</td><td>draw.io is a JavaScript, client-side editor for general diagramming</td><td></td></tr>
+      <tr><td><a href="https://github.com/kanboard/kanboard">kanboard</a></td><td>Productivity &amp; notes</td><td>Kanban project management software</td><td></td></tr>
+      <tr><td><a href="https://github.com/notea-org/notea">Notea</a></td><td>Productivity &amp; notes</td><td>Self hosted note taking app stored on S3</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/vrtmrz/obsidian-livesync">Obsidian-Livesync</a></td><td>Productivity &amp; notes</td><td>Self-hosted live sync for Obsidian notes, through CouchDB</td><td></td></tr>
+      <tr><td><a href="https://github.com/oleduc/docker-obsidian-livesync-couchdb">Obsidian-LiveSync-CouchDB</a></td><td>Productivity &amp; notes</td><td>A docker container for the CouchDB instance required by obsidian-livesync</td><td></td></tr>
+      <tr><td><a href="https://github.com/mrmn2/PdfDing">PdfDing</a></td><td>Productivity &amp; notes</td><td>NOW MANAGED ON CODEBERG</td><td>Archived. Now on Codeberg</td></tr>
+      <tr><td><a href="https://github.com/BaldissaraMatheus/Tasks.md">tasks.md</a></td><td>Productivity &amp; notes</td><td>A self-hosted, Markdown file based task management board</td><td></td></tr>
+      <tr><td><a href="https://github.com/AronMarinelli/bitwarden-secure-sync">bitwarden-secure-sync</a></td><td>Home &amp; personal</td><td>A simple tool that can be used to export your Bitwarden vault to a local file periodically</td><td></td></tr>
+      <tr><td><a href="https://github.com/Freika/dawarich">Dawarich</a></td><td>Home &amp; personal</td><td>Your favorite self-hostable alternative to Google Timeline (Google Location History)</td><td></td></tr>
+      <tr><td><a href="https://github.com/cioraneanu/firefly-pico">Firefly-Pico</a></td><td>Home &amp; personal</td><td>A delightful Firefly III companion web app for effortless transaction tracking</td><td></td></tr>
+      <tr><td><a href="https://github.com/home-assistant/core">HomeAssistant</a></td><td>Home &amp; personal</td><td>Open source home automation that puts local control and privacy first</td><td></td></tr>
+      <tr><td><a href="https://github.com/benjaminjonard/koillection">Koillection</a></td><td>Home &amp; personal</td><td>Koillection is a self-hosted service allowing users to manage any kind of collections</td><td></td></tr>
+      <tr><td><a href="https://github.com/monicahq/monica">Monica</a></td><td>Home &amp; personal</td><td>Personal CRM. Remember everything about your friends, family and business relationships</td><td></td></tr>
+      <tr><td><a href="https://github.com/onetimesecret/onetimesecret">OneTimeSecret</a></td><td>Home &amp; personal</td><td>Read-only mirror of https://gitlab.com/onetimesecret/onetimesecret (development, issues and merge requests are there). Keep passwords and other sensitive information...</td><td></td></tr>
+      <tr><td><a href="https://github.com/murtaza-nasir/speakr">Speakr</a></td><td>Home &amp; personal</td><td>Speakr is a personal, self-hosted web application designed for transcribing audio recordings</td><td></td></tr>
+      <tr><td><a href="https://github.com/sassanix/Warracker">Warracker</a></td><td>Home &amp; personal</td><td>Warracker is an open source, self-hostable warranty tracker to monitor expirations, store receipts, files. You own the data, your rules!</td><td></td></tr>
+      <tr><td><a href="https://github.com/openai/whisper">Whisper</a></td><td>Home &amp; personal</td><td>Robust Speech Recognition via Large-Scale Weak Supervision</td><td></td></tr>
+      <tr><td><a href="https://github.com/thedevs-network/kutt">kutt</a></td><td>Web &amp; social</td><td>Free Modern URL Shortener</td><td></td></tr>
+      <tr><td><a href="https://github.com/mastodon/mastodon">mastodon</a></td><td>Web &amp; social</td><td>Your self-hosted, globally interconnected microblogging community</td><td></td></tr>
+      <tr><td><a href="https://github.com/jaypyles/Scraperr">Scraperr</a></td><td>Web &amp; social</td><td>Self-hosted webscraper</td><td>Archived</td></tr>
+      <tr><td><a href="https://github.com/towfiqi/serpbear">SerpBear</a></td><td>Web &amp; social</td><td>Search Engine Position Rank Tracking App</td><td></td></tr>
+      <tr><td><a href="https://github.com/CordlessWool/shrtn">shrtn</a></td><td>Web &amp; social</td><td>Shorten your links on your own instance</td><td></td></tr>
+      <tr><td><a href="https://github.com/myoung34/docker-github-actions-runner">Docker-Github-Actions-Runner</a></td><td>Dev tools</td><td>This will run the new self-hosted github actions runners with docker-in-docker</td><td></td></tr>
+      <tr><td><a href="https://github.com/go-gitea/gitea">Gitea</a></td><td>Dev tools</td><td>Git with a cup of tea! Painless self-hosted all-in-one software development service, including Git hosting, code review, team collaboration, package registry and CI/CD</td><td>Planned (Roadmap)</td></tr>
+      <tr><td>intellij</td><td>Dev tools</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/CorentinTh/it-tools">IT-Tools</a></td><td>Dev tools</td><td>Collection of handy online tools for developers, with great UX</td><td></td></tr>
+      <tr><td>AuthPortal</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/BMJ812/Batcharr">Batcharr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/EverettIV/borrowarr">BorrowArr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>Cens-Arr</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/cloudbyday90/Classifarr">Classifarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/Playerz93/Correctarr">Correctarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/agonbar/cruncharr">Cruncharr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>dashboard</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/p1zzm1ssile/Dubarr">dubarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/p1zzm1ssile/Duplicatearr">duplicatearr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/p1zzm1ssile/Investigatarr">investigatarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>jellyglance-db</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/drohack/Keeparr">keeparr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/kkodecs/livrarr">Livrarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>Lunarr</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/p1zzm1ssile/Notifyarr">notifyarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/MMagTech/nudgarr">nudgarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>PlexLibrarian</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td>Starr</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/Ulisses1478/teleradarr">Teleradarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td><a href="https://github.com/jivandabeast/ticketarr">ticketarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+      <tr><td>trackly</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td>Warden</td><td>Unclassified</td><td>No repository found</td><td></td></tr>
+      <tr><td><a href="https://github.com/WoosArr/woosarr">WooSarr</a></td><td>Unclassified</td><td>No description on GitHub</td><td></td></tr>
+    </tbody>
+  </table></div>
 </article>
