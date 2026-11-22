@@ -3360,7 +3360,19 @@ git push origin main`,
       effect: "GitHub: main (le test, maintainerr 3.33.0, code-server 4.146.0-ls378). Le catalogue de main est lu par les serveurs à leur prochain update ou init.",
       result: `166 tests passent, aussi avec qui v1.36.1
 push de main: voir J294 dans le chat du 22 novembre 2026`,
-      undo: "git revert des commits de fusion, puis push." }
+      undo: "git revert des commits de fusion, puis push." },
+    { id: "J295", time: "22:22", status: "fait", where: "Serveur", kind: "lecture",
+      title: "17.6: le MOTD absent après sudo dotbox upgrade",
+      cmd: `dotbox --version ; systemctl is-active dotbox
+ls -la /etc/update-motd.d/ ; wc -c /etc/motd ; ls /etc/systemd/system/dotbox-doctor.*
+dotbox diff --local`,
+      does: "Mathod95 a passé le serveur de test en v0.0.6 par sudo dotbox upgrade (pas de réinstallation): dotbox motd marche à la main, mais une nouvelle connexion SSH montre encore le message de Debian. Lecture seule.",
+      effect: "Aucun.",
+      result: `dotbox 0.0.6, le service actif
+/etc/update-motd.d: seulement 10-uname, encore exécutable. /etc/motd: 286 octets (la licence). Pas de dotbox-doctor.timer
+dotbox diff: 5 différences, toutes « → dotbox sync »: dotbox-doctor.service et .timer manquants, 60-dotbox manquant, 10-uname, /etc/motd
+La cause: upgrade ne change que le binaire, ce qu'une version ajoute au serveur est posé par init ou sync (Q74)`,
+      undo: "Rien à annuler." }
   ];
 
   var PLAN = [
@@ -5495,6 +5507,18 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Corriger le test qui(): il vérifie la forme de la version (un v puis des chiffres), plus la version elle-même, comme les autres tests du catalogue. Renovate relance alors la CI de #6.", "Fusionner #7 et #8 depuis GitHub (le catalogue sur main est lu par les serveurs à leur prochain update ou init).", "Effacer la branche renovate/configure."],
       reco: "Proposé par Claude: les trois. Pas encore tranché.",
       refs: "D64, D65, 7.14" },
+    { n: 74,
+      t: "dotbox upgrade: dire, ou faire, ce que la nouvelle version ajoute au serveur?",
+      p: "J295, le 22 novembre 2026: après sudo dotbox upgrade vers la v0.0.6, le MOTD ne s'affiche pas à la connexion. upgrade ne remplace que le binaire et redémarre le service (13.8: il ne touche ni aux apps ni au core). Le script du MOTD, le timer de nuit et le retrait du message de Debian sont posés par init ou sync: dotbox diff les montre (5 différences), dotbox sync les pose. Rien ne le disait à Mathod95.",
+      l: ["À la fin d'upgrade, le nouveau binaire lance son dotbox diff et, s'il y a des différences, l'affiche avec « dotbox sync pour les appliquer ». upgrade reste sans effet sur le reste.", "upgrade lance lui-même dotbox sync -y après le binaire.", "Rien dans le binaire: une ligne dans les notes de chaque release et la page Update."],
+      reco: "Proposé par Claude: la première, qui garde la règle « sync montre le plan, demande, puis applique » (D93). Pas encore tranchée. En attendant, sur le serveur de test: dotbox diff, puis dotbox sync.",
+      refs: "J295, 13.8, D93, 17.6" },
+    { n: 75,
+      t: "GitHub: protéger main, et les branches qui restent",
+      p: "Mathod95, le 22 novembre 2026: « La branche par défaut main n'est pas protégée non plus. Les autres branches sont toujours là, il faut faire un truc pour que tout soit sur main? ». Lu par l'API publique: restent renovate/configure (la pull request d'accueil #1, fermée le 19 novembre) et renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte). Les branches de #7 et #8 ont déjà été effacées par Renovate après la fusion. Une branche de Renovate n'est qu'une proposition: tout ce qui compte est déjà sur main, il n'y a rien à y ramener. Protéger main: Claude pousse directement sur main avec sa clé de déploiement (D110), et Renovate fusionne seul les correctifs. Exiger une pull request pour main bloquerait ces deux-là, sauf à les mettre en exception.",
+      l: ["Une règle (Settings, Rules, Rulesets) sur main: interdire le force push et l'effacement. Rien d'autre: les push directs et Renovate continuent.", "La même, plus exiger les vérifications de la CI avant toute fusion, avec la clé de déploiement en exception.", "Settings, General: « Automatically delete head branches », pour que GitHub efface la branche d'une pull request fusionnée.", "Effacer renovate/configure à la main (la corbeille de la page des branches). Laisser celle de #6: elle disparaîtra à sa fusion."],
+      reco: "Proposé par Claude: la première, la troisième et la quatrième, à faire par Mathod95 dans GitHub (la CLI gh n'est pas connectée sur le PC, et Claude n'a que la clé de déploiement). Pas encore tranchée.",
+      refs: "D65, D110, D116, Q73" },
   ];
 
 
@@ -5686,7 +5710,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292, 293, 294],
+    "17": [291, 292, 293, 294, 295],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
@@ -5709,7 +5733,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
-    "6": [22, 23, 27], "7": [4, 28, 34, 73], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55], "sans": [9, 43, 51]
+    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51]
   };
   var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
   var placed = {};
