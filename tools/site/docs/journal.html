@@ -3372,6 +3372,17 @@ dotbox diff --local`,
 /etc/update-motd.d: seulement 10-uname, encore exécutable. /etc/motd: 286 octets (la licence). Pas de dotbox-doctor.timer
 dotbox diff: 5 différences, toutes « → dotbox sync »: dotbox-doctor.service et .timer manquants, 60-dotbox manquant, 10-uname, /etc/motd
 La cause: upgrade ne change que le binaire, ce qu'une version ajoute au serveur est posé par init ou sync (Q74)`,
+      undo: "Rien à annuler." },
+    { id: "J296", time: "22:40", status: "fait", where: "PC", kind: "lecture",
+      title: "Q75: les branches qui restent sur GitHub, et la mise à jour de qui (#6)",
+      cmd: `curl https://api.github.com/repos/Mathod95/dotbox/branches, /pulls, /compare/main...<branche>, /commits/d4b4b51/check-runs
+git worktree add (main + la branche de #6) ; cargo test ; git worktree remove`,
+      does: "Mathod95 a lancé dotbox sync sur le serveur (« C'est bon ! ») et demande de regarder les branches. Lecture par l'API publique, puis la branche de #6 fusionnée dans un dossier à part, hors de main, pour lancer les tests.",
+      effect: "Aucun: le dossier à part est effacé, main ne bouge pas.",
+      result: `Branches: main (non protégée), renovate/configure, renovate/ghcr.io-autobrr-qui-1.x. « Automatically delete head branches » n'est pas activé
+renovate/configure: la pull request d'accueil #1, fermée. 2 commits, seulement un ancien renovate.json, celui de main le remplace: rien à garder
+renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte): qui v1.35.0 vers v1.36.1, une mise à jour mineure, qui attend Mathod95 (D65). Sa CI a échoué sur « fmt, clippy et tests »: elle date d'avant la correction du test de qui (Q73, D116), et Renovate ne refait pas la branche d'une mineure tout seul
+Fusionnée sur le main d'aujourd'hui: 166 tests passent`,
       undo: "Rien à annuler." }
   ];
 
@@ -5518,7 +5529,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 22 novembre 2026: « La branche par défaut main n'est pas protégée non plus. Les autres branches sont toujours là, il faut faire un truc pour que tout soit sur main? ». Lu par l'API publique: restent renovate/configure (la pull request d'accueil #1, fermée le 19 novembre) et renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte). Les branches de #7 et #8 ont déjà été effacées par Renovate après la fusion. Une branche de Renovate n'est qu'une proposition: tout ce qui compte est déjà sur main, il n'y a rien à y ramener. Protéger main: Claude pousse directement sur main avec sa clé de déploiement (D110), et Renovate fusionne seul les correctifs. Exiger une pull request pour main bloquerait ces deux-là, sauf à les mettre en exception.",
       l: ["Une règle (Settings, Rules, Rulesets) sur main: interdire le force push et l'effacement. Rien d'autre: les push directs et Renovate continuent.", "La même, plus exiger les vérifications de la CI avant toute fusion, avec la clé de déploiement en exception.", "Settings, General: « Automatically delete head branches », pour que GitHub efface la branche d'une pull request fusionnée.", "Effacer renovate/configure à la main (la corbeille de la page des branches). Laisser celle de #6: elle disparaîtra à sa fusion."],
       reco: "Proposé par Claude: la première, la troisième et la quatrième, à faire par Mathod95 dans GitHub (la CLI gh n'est pas connectée sur le PC, et Claude n'a que la clé de déploiement). Pas encore tranchée.",
-      refs: "D65, D110, D116, Q73" },
+      refs: "D65, D110, D116, Q73, J296" },
   ];
 
 
@@ -5710,7 +5721,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292, 293, 294, 295],
+    "17": [291, 292, 293, 294, 295, 296],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
