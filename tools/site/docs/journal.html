@@ -3383,7 +3383,18 @@ git worktree add (main + la branche de #6) ; cargo test ; git worktree remove`,
 renovate/configure: la pull request d'accueil #1, fermée. 2 commits, seulement un ancien renovate.json, celui de main le remplace: rien à garder
 renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte): qui v1.35.0 vers v1.36.1, une mise à jour mineure, qui attend Mathod95 (D65). Sa CI a échoué sur « fmt, clippy et tests »: elle date d'avant la correction du test de qui (Q73, D116), et Renovate ne refait pas la branche d'une mineure tout seul
 Fusionnée sur le main d'aujourd'hui: 166 tests passent`,
-      undo: "Rien à annuler." }
+      undo: "Rien à annuler." },
+    { id: "J297", time: "22:50", status: "fait", where: "PC", kind: "écriture",
+      title: "D117: #6 fusionnée, les branches de Renovate effacées, il ne reste que main",
+      cmd: `git merge --no-ff origin/renovate/ghcr.io-autobrr-qui-1.x ; cargo fmt --check ; cargo clippy ; cargo test
+git push origin main
+git push origin --delete renovate/configure ; git push origin --delete renovate/ghcr.io-autobrr-qui-1.x`,
+      does: "Mathod95 veut seulement main, et main protégée (D117).",
+      effect: "main sur GitHub contient qui v1.36.1 (catalog/qui.yml): les serveurs la voient à leur prochain dotbox diff ou update. Les deux branches de Renovate n'existent plus.",
+      result: `166 tests passent (après un cargo clean -p dotbox: le dossier à part de J296 partageait target/ et les tests gardaient son chemin)
+#6: closed, merged. Branches sur GitHub: main seulement
+La protection de main reste à poser par Mathod95 (D117)`,
+      undo: "git revert du commit de fusion. Les branches se recréent seules si Renovate le juge utile." }
   ];
 
   var PLAN = [
@@ -5060,6 +5071,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Q73 proposait trois choses. Mathod95, le 22 novembre 2026: « Fait! » (rien n'avait bougé sur GitHub: pris comme « fais-le »).",
       reco: "Choix de Mathod95 du 22 novembre 2026. (1) Le test qui() vérifie la forme de la version (v puis x.y.z), plus la version elle-même: une mise à jour de Renovate ne le casse plus, la CI de #6 repasse. (2) #7 (maintainerr 3.33.0) et #8 (code-server 4.146.0-ls378) fusionnées dans main par Claude, en commits de fusion, pour que GitHub les marque fusionnées. (3) La branche renovate/configure: son effacement par Claude (git push --delete) a été refusé par les permissions de Claude Code, Mathod95 l'efface depuis GitHub (la corbeille de la page des branches). #6 (qui v1.36.1) reste à Mathod95 une fois sa CI verte, comme toute version mineure (D65). Règle pour la suite: un test du binaire ne fige jamais la version d'une image du catalogue.",
       refs: "Q73, D65, J294" },
+    { t: "GitHub: seulement main, et main protégée (ancienne Q75)",
+      p: "Mathod95, le 22 novembre 2026: « Fais ce qu'il y a à faire, je veux que la branche main! Et je veux qu'elle soit protégée ».",
+      reco: "Choix de Mathod95 du 22 novembre 2026. (1) #6 (qui v1.36.1) fusionnée dans main par Claude, en commit de fusion, après les vérifications (166 tests): GitHub l'a marquée fusionnée. (2) renovate/configure et la branche de #6 effacées par Claude (git push --delete, J297): il ne reste que main. (3) La protection de main, à poser par Mathod95 dans GitHub (Claude n'a que la clé de déploiement, qui ne peut pas changer les réglages du repo): une règle (Settings, Rules, Rulesets) sur la branche par défaut qui interdit le force push et l'effacement, sans exiger de pull request (les push directs de Claude, D110, et les fusions automatiques de Renovate continuent). (4) Settings, General: « Automatically delete head branches », pour que la branche d'une pull request fusionnée parte seule.",
+      refs: "Q75, D65, D110, D116, J296, J297" },
   ];
 
   var QUESTIONS = [
@@ -5524,7 +5539,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["À la fin d'upgrade, le nouveau binaire lance son dotbox diff et, s'il y a des différences, l'affiche avec « dotbox sync pour les appliquer ». upgrade reste sans effet sur le reste.", "upgrade lance lui-même dotbox sync -y après le binaire.", "Rien dans le binaire: une ligne dans les notes de chaque release et la page Update."],
       reco: "Proposé par Claude: la première, qui garde la règle « sync montre le plan, demande, puis applique » (D93). Pas encore tranchée. En attendant, sur le serveur de test: dotbox diff, puis dotbox sync.",
       refs: "J295, 13.8, D93, 17.6" },
-    { n: 75,
+    { n: 75, done: "D117",
       t: "GitHub: protéger main, et les branches qui restent",
       p: "Mathod95, le 22 novembre 2026: « La branche par défaut main n'est pas protégée non plus. Les autres branches sont toujours là, il faut faire un truc pour que tout soit sur main? ». Lu par l'API publique: restent renovate/configure (la pull request d'accueil #1, fermée le 19 novembre) et renovate/ghcr.io-autobrr-qui-1.x (#6, ouverte). Les branches de #7 et #8 ont déjà été effacées par Renovate après la fusion. Une branche de Renovate n'est qu'une proposition: tout ce qui compte est déjà sur main, il n'y a rien à y ramener. Protéger main: Claude pousse directement sur main avec sa clé de déploiement (D110), et Renovate fusionne seul les correctifs. Exiger une pull request pour main bloquerait ces deux-là, sauf à les mettre en exception.",
       l: ["Une règle (Settings, Rules, Rulesets) sur main: interdire le force push et l'effacement. Rien d'autre: les push directs et Renovate continuent.", "La même, plus exiger les vérifications de la CI avant toute fusion, avec la clé de déploiement en exception.", "Settings, General: « Automatically delete head branches », pour que GitHub efface la branche d'une pull request fusionnée.", "Effacer renovate/configure à la main (la corbeille de la page des branches). Laisser celle de #6: elle disparaîtra à sa fusion."],
@@ -5721,7 +5736,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292, 293, 294, 295, 296],
+    "17": [291, 292, 293, 294, 295, 296, 297],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
@@ -5740,7 +5755,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116], "sans": [12, 91]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
