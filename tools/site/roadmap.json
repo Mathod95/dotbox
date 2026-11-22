@@ -466,6 +466,19 @@
       ]
     },
     {
+      "stage": "core",
+      "domain": "access",
+      "status": "planned",
+      "fr": "Accès: des réseaux de confiance (la maison, le VPN), en `one_factor` ou en `bypass`, désactivés par défaut, proposés par `dotbox init` (nom de la clé à trouver)",
+      "en": "Access: trusted networks (home, VPN), at `one_factor` or `bypass`, off by default, offered by `dotbox init` (key name to be found)",
+      "journal": [
+        "Q71",
+        "D111",
+        "Q72",
+        "D112"
+      ]
+    },
+    {
       "stage": "apps",
       "domain": "engine",
       "status": "planned",
@@ -928,7 +941,7 @@
     {
       "stage": "web",
       "domain": "web",
-      "status": "planned",
+      "status": "progress",
       "fr": "Interface web: catalogue, états, logs d'installation en direct",
       "en": "Web UI: catalog, states, live installation logs",
       "journal": [
@@ -937,7 +950,8 @@
         "D100",
         "D102",
         "D105",
-        "Q67"
+        "Q67",
+        "11.19-11.27"
       ],
       "doc": "web-ui"
     },

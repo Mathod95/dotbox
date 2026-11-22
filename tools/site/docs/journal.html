@@ -3277,6 +3277,19 @@ la fin du journal d'accès de Traefik, les erreurs de Traefik depuis 2 min`,
       result: `PC: / 200 (« Dot Box », « test »), GET /api/v1/status 200, POST sans Origin 403
 serveur: / 302 vers Authelia, /api/v1/status 302, routeur dotbox@file
 erreurs de Traefik: 0`,
+      undo: "Rien à défaire." },
+    { id: "J289", time: "19:28", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "11.19: les réponses de l'API, pour coder le front",
+      cmd: `ssh dotbox-test 'dotbox --json status'   (puis list, diff, config get, info prowlarr, version)
+ssh dotbox-test 'cat /opt/dotbox/doctor.json'`,
+      does: "Des exemples réels de chaque réponse de l'API (/api/v1), sans sudo, par le socket, pour que le front lise les vrais champs. Gardés sur le PC dans le dossier de travail de Claude (hors repo), domaine et adresses masqués à l'affichage.",
+      effect: "Aucun.",
+      result: `status: core (5), apps (13), doctor (8 problèmes, 4 sections), backup (14 archives, prochaine lun. 04:00)
+list: 16 apps du catalogue, installed vrai ou faux
+diff: [] (rien à faire)
+config get: 31 clés
+info prowlarr, version: ok
+doctor.json: Permission denied (root seulement, normal: l'API le lit par GET /api/v1/doctor)`,
       undo: "Rien à défaire." }
   ];
 
@@ -4384,7 +4397,34 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           effect: "Serveur: dotbox-test.yml, relu par Traefik sans redémarrer." },
         { id: "11.18", kind: "ecriture", where: "PC → Serveur", title: "Effacer le routeur de test",
           does: "Dès que Mathod95 a fini de tester dans son navigateur (le test 8 de 11.16, sans Authelia), ou au plus tard à la réinstallation du serveur: rm /opt/traefik/config/dynamic/dotbox-test.yml. Puis vérifier depuis le PC que dotbox.<domaine> renvoie de nouveau vers Authelia. Le passage par Authelia lui-même (la double authentification, puis la page au nom de Mathod95) reste à tester, à la réinstallation.",
-          effect: "Serveur: le fichier retiré." }
+          effect: "Serveur: le fichier retiré." },
+        { id: "11.19", status: "valide", kind: "ecriture", where: "PC (code)", title: "Le front: les fichiers et leur service",
+          does: "Demandé par Mathod95 le 22 novembre 2026 (« Code la webui, je pense que tu as tout ce qu'il te faut », D112). Suit la maquette de la page Web UI (#147) et les choix de D102: du HTML, du CSS et du JavaScript simple, sans framework ni compilation, rangés dans le binaire (include_str!), dans web/: index.html, app.css, app.js. Le service les sert à /, /app.css et /app.js, à la place de la page d'attente (11.14). L'utilisateur vu par Authelia (Remote-User) et la version sont écrits dans la page par le service, échappés. En-têtes de sécurité sur ces pages: Content-Security-Policy (rien d'autre que dotbox.<domaine>: pas de police ni de script venus d'ailleurs), frame-ancestors none (pas d'iframe), nosniff, no-referrer. Le style du site (le vert, les points, la police mono du système). En anglais (D103).",
+          effect: "PC: web/ (index.html, app.css, app.js), serve.rs. web/waiting.html retiré." },
+        { id: "11.20", status: "valide", kind: "ecriture", where: "PC (code)", title: "Les tâches en direct",
+          does: "Une action longue (installer, retirer, démarrer, arrêter, redémarrer, mettre à jour, sauvegarder, appliquer le plan) est une tâche du service: POST, puis ses événements par GET /api/v1/jobs/{id}/events (EventSource, Server-Sent Events). Un panneau montre les étapes comme la CLI (✓ [n/N] nom résumé, ✗ et l'erreur, la fin). Une tâche à la fois (409 du service: « another job is running »). À la fin, la vue se recharge.",
+          effect: "PC: web/app.js." },
+        { id: "11.21", status: "valide", kind: "ecriture", where: "PC (code)", title: "Overview",
+          does: "GET /api/v1/status, /doctor et /diff. Le core et les apps en cartes (état, adresse, accès, assistant à finir). Le dernier doctor, ses problèmes par section, et « Run doctor » (POST /doctor). La dernière sauvegarde et la prochaine. L'écart avec dotbox.yml, avec un lien vers Settings.",
+          effect: "PC: web/app.js." },
+        { id: "11.22", status: "valide", kind: "ecriture", where: "PC (code)", title: "Apps",
+          does: "Une ligne par app installée: version, état, accès, adresse. Start, Stop, Restart, Remove (une confirmation, et --purge à cocher, avec une deuxième confirmation), Logs: GET /apps/{app}/logs?follow=true lu en flux (fetch et ReadableStream), arrêté en fermant le panneau.",
+          effect: "PC: web/app.js." },
+        { id: "11.23", status: "valide", kind: "ecriture", where: "PC (code)", title: "Catalog",
+          does: "GET /api/v1/catalog: les apps pas encore installées, leur rôle et leur version, une recherche, et Install (POST /apps).",
+          effect: "PC: web/app.js." },
+        { id: "11.24", status: "valide", kind: "ecriture", where: "PC (code)", title: "Updates",
+          does: "La version qui tourne (status) face à celle du catalogue rangé (catalog). Update par app, Update all, et Roll back (POST /update avec rollback). La mise à jour relit d'abord le catalogue sur GitHub, comme la CLI.",
+          effect: "PC: web/app.js." },
+        { id: "11.25", status: "valide", kind: "ecriture", where: "PC (code)", title: "Backup",
+          does: "La dernière sauvegarde (date, archives, taille, erreur) et la prochaine (status). Back up now, pour tout ou une app (POST /backup). La restauration reste au terminal, en root (D79): la page montre la commande.",
+          effect: "PC: web/app.js." },
+        { id: "11.26", status: "valide", kind: "ecriture", where: "PC (code)", title: "Settings",
+          does: "GET /api/v1/config: les clés de dotbox.yml. Une valeur changée est envoyée (PUT /config/{key}), vérifiée par le service (le motif d'un refus s'affiche sous la clé), puis le plan se recharge (GET /diff). « Apply this plan » envoie le plan montré (POST /sync): le service refuse s'il a changé entre-temps (D93). user et domain en lecture seule dans la page (domain: une migration, page Restore).",
+          effect: "PC: web/app.js." },
+        { id: "11.27", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Les tests",
+          does: "Sur le PC: cargo fmt, clippy, test, le binaire, node --check sur app.js, et le front ouvert dans le navigateur contre une fausse API (un petit serveur Python du dossier de travail, qui rejoue les réponses de J289 et simule les tâches): chaque vue, chaque bouton, sur un écran étroit aussi. Puis sur le serveur de test, avec l'accord de Mathod95: le binaire, et Mathod95 dans son navigateur, par le routeur de test (11.17): chaque vue, une vraie tâche (redémarrer une app, une sauvegarde), les logs en direct.",
+          effect: "Serveur, au test: le binaire, le service redémarré." }
       ] },
     { phase: "12", group: "avenir", title: "dotbox status et dotbox doctor",
       intro: "Plan du 20 novembre 2026 (D78): deux commandes séparées, reliées. status dit ce qui tourne et où, en un instant. doctor cherche ce qui cloche, plus lentement, et dit quoi faire. Après le service de l'étape 11 (D79): le travail se fait dans le service, en root (Docker, acme.json et sshd -T le demandent), et la CLI l'appelle sans sudo. Les deux ne modifient rien sur le serveur, sauf le fichier du dernier résultat de doctor. Spécification: page CLI (status, doctor) et Post-installation (doctor). Le code d'abord sur le PC, puis les tests sur le serveur, en lecture seule.",
@@ -4896,6 +4936,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Commiter au fil de l'eau, Releases et Roadmap avec, pas de push sans demander",
       p: "Mathod95, le 22 novembre 2026: « Tu peux commit les changements que tu fais et update la roadmap et la release petit à petit, je veux juste pas que tu push sans me demander et que tu me harcèles pas pour push toutes les 2 features minimum qu'on développe! ».",
       reco: "Choix de Mathod95 du 22 novembre 2026, qui assouplit D85. Claude commite sur main en local, au fil du travail, en Conventional Commits. À chaque commit qui change le produit, la ligne va dans next de Releases et la feature se coche dans la Roadmap (la règle de CLAUDE.md, enfin applicable). Le push reste à Mathod95: Claude ne pousse jamais sans qu'il le demande, et ne le lui propose pas à tout bout de champ. Il le rappelle seulement quand c'est nécessaire (une release à taguer, un fichier du catalogue que les serveurs doivent lire sur GitHub). Les autres règles ne changent pas: rien n'est modifié sans validation, les propositions dans les pages, rien ne se perd." },
+    { t: "Des réseaux de confiance, posés à l'installation (ancienne Q71)",
+      p: "Mathod95, le 22 novembre 2026, aux quatre points de Q71: « 1 les deux. 2 maison et VPN, les deux aussi. 3 Toutes les apps ?? 4 C'est mon IP perso, elle ne changera pas! C'est un truc qu'on pourra faire passer dans l'installation de Dot Box par la suite! Pouvoir permettre aux gens de créer un secure_networks etc! On se le note! Dans le Journal, et on lui trouvera une place dans la doc plus tard! ». Puis: « on verra pour ajouter le secure_networks (le nom sera à changer pour un truc plus propre) ».",
+      reco: "Choix de Mathod95 du 22 novembre 2026. Dot Box saura déclarer des réseaux de confiance (des adresses ou des plages: la maison, le VPN), chacun avec sa politique, one_factor (le mot de passe sans le code) ou bypass (sans connexion), pour toutes les apps. Désactivé par défaut. Une clé de dotbox.yml, appelée pour l'instant secure_networks (le nom est à changer), posée par dotbox config et sync, et proposée par dotbox init, à l'installation. Sa place dans la doc: plus tard. Reste ouvert: l'interface web de Dot Box face à bypass (Q72). Après l'interface web et dotbox user (D112). Une feature dans la Roadmap." },
+    { t: "L'ordre: l'interface web, la CLI, les réseaux de confiance, puis le push et un tag",
+      p: "Mathod95, le 22 novembre 2026: « Code la webui, je pense que tu as tout ce qu'il te faut à présent! Par la suite, tu coderas la CLI!! Et enfin on verra pour ajouter le secure_networks. Et à la fin, on pourra tout pousser avec un tag ».",
+      reco: "Choix de Mathod95 du 22 novembre 2026. (1) L'interface web, sur la maquette de la page Web UI (#147): plan 11.19 à 11.27. (2) Ce qui reste de la CLI: dotbox user (comptes et groupes Authelia). (3) Les réseaux de confiance (D111). (4) Le push de main et un tag, quand Mathod95 le dira (v0.0.6, avec les points de N15 et N18 à régler avant: min_dotbox 0.0.6 dans les manifests de Jellyfin, Plex et rclone, backup_exclude de Jellyfin et Plex)." },
   ];
 
   var QUESTIONS = [
@@ -5336,12 +5382,18 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Un routeur de test, à part et temporaire: /opt/traefik/config/dynamic/dotbox-test.yml, sur le même dotbox.<domaine>, réservé à l'adresse IP de Mathod95 (une règle ClientIP, plus prioritaire que le routeur normal), sans Authelia, et qui pose lui-même le secret, Remote-User et Remote-Groups: admins. Tout autre visiteur reste derrière Authelia. Effacé après les tests (Traefik le relit seul, sans redémarrer). L'adresse IP vient de la connexion SSH, gardée sur le serveur seulement, jamais dans le repo.", "Enregistrer tout de suite la double authentification d'Authelia (quelques minutes, page Post-installation): le vrai chemin, rien de temporaire.", "Attendre la réinstallation du serveur."],
       reco: "Proposé par Claude: la première pour tester maintenant, puisque Mathod95 veut garder Authelia pour la réinstallation. Tranchée par Mathod95 le 22 novembre 2026: la première (D109).",
       refs: "D106, D109, 11.16, 11.17, 11.18, Q69" },
-    { n: 71,
+    { n: 71, done: "D111",
       t: "Des réseaux de confiance (l'IP de la maison, le VPN) qui passent sans la double authentification?",
       p: "Mathod95, le 22 novembre 2026, après le routeur de test (D109): « Normalement tout passe par Authelia, mais on peut dire qu'une certaine IP ne passe pas par Authelia, genre l'IP de ma box ou l'IP fournie par le VPN? Si mon IP est fixe chez moi, il y a quasi zéro risque, par contre en dehors de mon IP ça demanderait l'authentification Authelia. Pareil pour le VPN: si j'ai mon VPN WireGuard, dans la logique on sait que c'est moi et je pourrais bypasser les restrictions d'Authelia? Il faut qu'on parle de ça! ». Authelia le fait de lui-même: une règle d'accès peut porter networks (des adresses ou des plages), avec sa propre politique, bypass (pas de connexion du tout) ou one_factor (le mot de passe, sans le code). Ce que Claude a relevé. (1) bypass casse l'interface web: sans connexion, Authelia ne donne ni Remote-User ni Remote-Groups, et le service les exige (D106). Pour l'ouvrir quand même, il faudrait que Traefik pose lui-même admins, comme le routeur de test: celui qui vient de cette adresse est admin de tout le serveur sans rien prouver. (2) L'adresse de la maison n'identifie pas une personne, mais un lieu: tout ce qui est sur le réseau de la box passe (invités, wifi, un appareil piraté). Une IP « fixe » peut changer (changement d'offre, de box), et repartir chez un autre abonné, qui passerait sans rien. Certains fournisseurs partagent une même IPv4 entre plusieurs abonnés: tous passeraient. (3) Le VPN identifie un appareil, par sa clé: bien plus solide qu'une adresse, mais chaque appareil du VPN passe (un ami à qui on donne un accès, un téléphone perdu), d'où l'intérêt de ne faire confiance qu'à certains pairs. Et si le VPN tourne sur le même serveur (wg-easy), Traefik ne verra peut-être pas l'adresse du VPN (10.8.0.x), mais celle du container ou du serveur: à tester avant de promettre quoi que ce soit. (4) Personne ne peut se faire passer pour une adresse: Traefik ne fait confiance à aucun X-Forwarded-For venu d'Internet (pas de trustedIPs), Authelia voit donc la vraie adresse. À vérifier par un test le jour venu.",
       l: ["Rien: tout le monde passe par Authelia, comme aujourd'hui. Le confort vient d'Authelia lui-même (une session longue, « se souvenir de moi », une passkey plus rapide qu'un code).", "Des réseaux de confiance en one_factor (recommandé): depuis la maison ou le VPN, le mot de passe seul, sans le code. Authelia sait toujours qui est là, l'interface web marche, une adresse qui change ou qui est partagée ne suffit pas à entrer. Désactivé par défaut, une clé de dotbox.yml (par exemple access.trusted_networks, une liste d'adresses ou de plages), posée par dotbox config et sync, signalée par doctor.", "Des réseaux de confiance en bypass, pour les apps seulement, au choix app par app, jamais pour l'interface web de Dot Box ni pour les apps qui touchent au serveur (code-server, wg-easy, Uptime Kuma...).", "bypass partout, interface web comprise (comme le routeur de test, en permanent): Claude le déconseille, une adresse n'est pas une identité."],
-      reco: "Proposé par Claude: la deuxième, one_factor pour des réseaux choisis, éteinte par défaut, le VPN de préférence à l'adresse de la maison (une clé par appareil plutôt qu'un lieu). La troisième en plus, si Mathod95 la veut, pour des apps choisies. Pas encore tranchée. À trancher avec: quels réseaux (la maison, le VPN, les deux), pour quelles apps, et l'adresse de la maison est-elle vraiment fixe et à lui seul.",
-      refs: "D106, D109, Q4, 5.3, 7.3, wg-easy (8)" },
+      reco: "Proposé par Claude: la deuxième, one_factor pour des réseaux choisis, éteinte par défaut, le VPN de préférence à l'adresse de la maison (une clé par appareil plutôt qu'un lieu). La troisième en plus, si Mathod95 la veut, pour des apps choisies. Pas encore tranchée. À trancher avec: quels réseaux (la maison, le VPN, les deux), pour quelles apps, et l'adresse de la maison est-elle vraiment fixe et à lui seul. Tranchée par Mathod95 le 22 novembre 2026 (D111).",
+      refs: "D106, D109, D111, Q72, Q4, 5.3, 7.3, wg-easy (8)" },
+    { n: 72,
+      t: "Réseaux de confiance en bypass: et l'interface web de Dot Box?",
+      p: "D111: Mathod95 veut les deux politiques (one_factor et bypass), pour toutes les apps (« Toutes les apps ?? »). Un point reste: en bypass, Authelia ne dit pas qui est là, et l'interface web de Dot Box en a besoin (Remote-User, le groupe admins, D106). Elle refuserait toute requête.",
+      l: ["L'interface web de Dot Box n'est jamais en bypass: depuis un réseau de confiance en bypass, elle demande quand même le mot de passe (one_factor). Les apps, elles, passent sans rien.", "Traefik pose lui-même admins pour ce réseau, comme le routeur de test (D109), en permanent: celui qui vient de cette adresse est admin de tout le serveur sans rien prouver."],
+      reco: "Proposé par Claude: la première. Pas encore tranchée. À trancher avec le nom de la clé (D111) et sa place dans dotbox init.",
+      refs: "D106, D109, D111, Q71" },
   ];
 
 
@@ -5529,7 +5581,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Chaque J est rangée une seule fois. Une J oubliée ici apparaît dans « Non rangées ».
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
-    "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288],
+    "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
@@ -5547,11 +5599,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
-    "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107], "sans": [12, 91]
+    "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111], "6": [26, 30, 32, 33, 34, 37, 38, 39],
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107], "sans": [12, 91]
   };
   var QHOME = {
-    "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71],
+    "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55], "sans": [9, 43, 51]
   };
   var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18] };
