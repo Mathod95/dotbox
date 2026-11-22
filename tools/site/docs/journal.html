@@ -3290,7 +3290,26 @@ diff: [] (rien à faire)
 config get: 31 clés
 info prowlarr, version: ok
 doctor.json: Permission denied (root seulement, normal: l'API le lit par GET /api/v1/doctor)`,
-      undo: "Rien à défaire." }
+      undo: "Rien à défaire." },
+    { id: "J290", time: "19:35", status: "fait", where: "PC", kind: "ecriture",
+      title: "11.19 à 11.26: le front codé et essayé sur le PC",
+      cmd: `web/index.html, web/app.css, web/app.js (nouveaux), src/serve.rs (/, /app.css, /app.js, la CSP), web/waiting.html retiré
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test && cargo build --release --target x86_64-unknown-linux-musl
+node --check web/app.js
+une fausse API (dossier de travail de Claude, hors repo): les réponses de J289, domaine et nom remplacés par example.com et admin, des tâches simulées
+Chromium sans écran (Playwright): chaque vue en 1366 px et en 390 px, puis les boutons`,
+      does: "Le front de la maquette #147, sur la vraie API. Six vues (Overview, Apps, Catalog, Updates, Backup, Settings), la navigation par #overview, #apps... (rien de gardé dans le navigateur, D105). Les tâches suivies en direct (EventSource), une à la fois. Les logs en flux, arrêtés en fermant le panneau. Settings: chaque clé vérifiée par le service, le motif d'un refus sous la clé, puis le plan, renvoyé tel quel à POST /sync (D93). Une session Authelia finie: un message et « Reload ». Le service sert les trois fichiers avec une CSP qui n'admet rien d'ailleurs, sans iframe, sans cache pour la page (elle porte le nom de l'utilisateur). Un test vérifie: l'utilisateur échappé, aucun style ni script en ligne, chaque route appelée par le front présente dans l'API.",
+      effect: "PC: web/, src/serve.rs. Rien sur le serveur.",
+      result: `cargo test: 153 passed, clippy: rien, binaire 05793e2f
+Chromium: six vues, aucune erreur de script (seule erreur de la console: le 400 attendu d'une valeur refusée)
+installer qui: la tâche suivie, ✓ [1/2] ✓ [2/2], Done, qui quitte Catalog
+logs: 10 794 caractères reçus en flux
+backup.keep 999: « a number from 1 to 365 », la valeur revient à 7
+wizarr en two_factor: le plan montre 1 écart, Apply this plan, le plan est vide après
+Run doctor: la date et « 3 things to look at »
+en 390 px: aucune vue plus large que l'écran
+corrigés en chemin: un clic qui visait le titre (le test), les colonnes d'Apps et d'Updates décalées par un bouton de plus, les problèmes de doctor en majuscules, le plan sans espacement`,
+      undo: "git revert du commit." }
   ];
 
   var PLAN = [
@@ -4398,31 +4417,31 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "11.18", kind: "ecriture", where: "PC → Serveur", title: "Effacer le routeur de test",
           does: "Dès que Mathod95 a fini de tester dans son navigateur (le test 8 de 11.16, sans Authelia), ou au plus tard à la réinstallation du serveur: rm /opt/traefik/config/dynamic/dotbox-test.yml. Puis vérifier depuis le PC que dotbox.<domaine> renvoie de nouveau vers Authelia. Le passage par Authelia lui-même (la double authentification, puis la page au nom de Mathod95) reste à tester, à la réinstallation.",
           effect: "Serveur: le fichier retiré." },
-        { id: "11.19", status: "valide", kind: "ecriture", where: "PC (code)", title: "Le front: les fichiers et leur service",
+        { id: "11.19", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Le front: les fichiers et leur service",
           does: "Demandé par Mathod95 le 22 novembre 2026 (« Code la webui, je pense que tu as tout ce qu'il te faut », D112). Suit la maquette de la page Web UI (#147) et les choix de D102: du HTML, du CSS et du JavaScript simple, sans framework ni compilation, rangés dans le binaire (include_str!), dans web/: index.html, app.css, app.js. Le service les sert à /, /app.css et /app.js, à la place de la page d'attente (11.14). L'utilisateur vu par Authelia (Remote-User) et la version sont écrits dans la page par le service, échappés. En-têtes de sécurité sur ces pages: Content-Security-Policy (rien d'autre que dotbox.<domaine>: pas de police ni de script venus d'ailleurs), frame-ancestors none (pas d'iframe), nosniff, no-referrer. Le style du site (le vert, les points, la police mono du système). En anglais (D103).",
           effect: "PC: web/ (index.html, app.css, app.js), serve.rs. web/waiting.html retiré." },
-        { id: "11.20", status: "valide", kind: "ecriture", where: "PC (code)", title: "Les tâches en direct",
+        { id: "11.20", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Les tâches en direct",
           does: "Une action longue (installer, retirer, démarrer, arrêter, redémarrer, mettre à jour, sauvegarder, appliquer le plan) est une tâche du service: POST, puis ses événements par GET /api/v1/jobs/{id}/events (EventSource, Server-Sent Events). Un panneau montre les étapes comme la CLI (✓ [n/N] nom résumé, ✗ et l'erreur, la fin). Une tâche à la fois (409 du service: « another job is running »). À la fin, la vue se recharge.",
           effect: "PC: web/app.js." },
-        { id: "11.21", status: "valide", kind: "ecriture", where: "PC (code)", title: "Overview",
+        { id: "11.21", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Overview",
           does: "GET /api/v1/status, /doctor et /diff. Le core et les apps en cartes (état, adresse, accès, assistant à finir). Le dernier doctor, ses problèmes par section, et « Run doctor » (POST /doctor). La dernière sauvegarde et la prochaine. L'écart avec dotbox.yml, avec un lien vers Settings.",
           effect: "PC: web/app.js." },
-        { id: "11.22", status: "valide", kind: "ecriture", where: "PC (code)", title: "Apps",
+        { id: "11.22", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Apps",
           does: "Une ligne par app installée: version, état, accès, adresse. Start, Stop, Restart, Remove (une confirmation, et --purge à cocher, avec une deuxième confirmation), Logs: GET /apps/{app}/logs?follow=true lu en flux (fetch et ReadableStream), arrêté en fermant le panneau.",
           effect: "PC: web/app.js." },
-        { id: "11.23", status: "valide", kind: "ecriture", where: "PC (code)", title: "Catalog",
+        { id: "11.23", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Catalog",
           does: "GET /api/v1/catalog: les apps pas encore installées, leur rôle et leur version, une recherche, et Install (POST /apps).",
           effect: "PC: web/app.js." },
-        { id: "11.24", status: "valide", kind: "ecriture", where: "PC (code)", title: "Updates",
+        { id: "11.24", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Updates",
           does: "La version qui tourne (status) face à celle du catalogue rangé (catalog). Update par app, Update all, et Roll back (POST /update avec rollback). La mise à jour relit d'abord le catalogue sur GitHub, comme la CLI.",
           effect: "PC: web/app.js." },
-        { id: "11.25", status: "valide", kind: "ecriture", where: "PC (code)", title: "Backup",
+        { id: "11.25", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Backup",
           does: "La dernière sauvegarde (date, archives, taille, erreur) et la prochaine (status). Back up now, pour tout ou une app (POST /backup). La restauration reste au terminal, en root (D79): la page montre la commande.",
           effect: "PC: web/app.js." },
-        { id: "11.26", status: "valide", kind: "ecriture", where: "PC (code)", title: "Settings",
+        { id: "11.26", status: "fait", ref: "J290", kind: "ecriture", where: "PC (code)", title: "Settings",
           does: "GET /api/v1/config: les clés de dotbox.yml. Une valeur changée est envoyée (PUT /config/{key}), vérifiée par le service (le motif d'un refus s'affiche sous la clé), puis le plan se recharge (GET /diff). « Apply this plan » envoie le plan montré (POST /sync): le service refuse s'il a changé entre-temps (D93). user et domain en lecture seule dans la page (domain: une migration, page Restore).",
           effect: "PC: web/app.js." },
-        { id: "11.27", status: "valide", kind: "ecriture", where: "PC → Serveur", title: "Les tests",
+        { id: "11.27", status: "valide", ref: "J290 (le PC)", kind: "ecriture", where: "PC → Serveur", title: "Les tests",
           does: "Sur le PC: cargo fmt, clippy, test, le binaire, node --check sur app.js, et le front ouvert dans le navigateur contre une fausse API (un petit serveur Python du dossier de travail, qui rejoue les réponses de J289 et simule les tâches): chaque vue, chaque bouton, sur un écran étroit aussi. Puis sur le serveur de test, avec l'accord de Mathod95: le binaire, et Mathod95 dans son navigateur, par le routeur de test (11.17): chaque vue, une vraie tâche (redémarrer une app, une sauvegarde), les logs en direct.",
           effect: "Serveur, au test: le binaire, le service redémarré." }
       ] },
@@ -5581,7 +5600,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   // Chaque J est rangée une seule fois. Une J oubliée ici apparaît dans « Non rangées ».
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
-    "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289],
+    "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],

@@ -928,14 +928,14 @@
       "stage": "web",
       "domain": "web",
       "status": "progress",
-      "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia, seul Traefik joint le service, une page d'attente",
-      "en": "Core: the web gate, `dotbox.<domain>` behind Authelia, only Traefik reaches the service, a waiting page",
+      "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia, seul Traefik joint le service",
+      "en": "Core: the web gate, `dotbox.<domain>` behind Authelia, only Traefik reaches the service",
       "doc": "api",
       "journal": [
         "11.9",
         "11.11-11.18",
         "D106",
-        "J277-J288"
+        "J277-J290"
       ]
     },
     {
@@ -951,7 +951,8 @@
         "D102",
         "D105",
         "Q67",
-        "11.19-11.27"
+        "11.19-11.27",
+        "J290"
       ],
       "doc": "web-ui"
     },

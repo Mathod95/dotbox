@@ -195,26 +195,58 @@ async fn check_web(req: Request, next: Next) -> Response {
     }
 }
 
-/// La page d'attente (11.14): la porte marche, l'interface viendra vue par vue.
-async fn waiting(headers: axum::http::HeaderMap) -> axum::response::Html<String> {
+/// Le front (11.19, D102): trois fichiers rangés dans le binaire, servis par la porte web.
+const INDEX: &str = include_str!("../web/index.html");
+const APP_CSS: &str = include_str!("../web/app.css");
+const APP_JS: &str = include_str!("../web/app.js");
+
+/// Rien d'autre que dotbox.<domaine>: ni script, ni police, ni style venus d'ailleurs, et pas
+/// d'iframe (11.19).
+pub const CSP: &str = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+
+pub fn html_escape(t: &str) -> String {
+    t.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
+
+/// La page, avec l'utilisateur vu par Authelia et la version.
+pub fn index_page(user: &str) -> String {
+    INDEX
+        .replace("{user}", &html_escape(user))
+        .replace("{version}", env!("CARGO_PKG_VERSION"))
+}
+
+fn web_file(body: String, kind: &str, cache: &str) -> Response {
+    Response::builder()
+        .header("content-type", kind)
+        .header("cache-control", cache)
+        .header("content-security-policy", CSP)
+        .header("x-content-type-options", "nosniff")
+        .header("referrer-policy", "no-referrer")
+        .header("x-frame-options", "DENY")
+        .body(axum::body::Body::from(body))
+        .unwrap_or_else(|e| problem(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))
+}
+
+async fn web_index(headers: axum::http::HeaderMap) -> Response {
     let user = headers
         .get("Remote-User")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("?");
-    let esc = |t: &str| {
-        t.replace('&', "&amp;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;")
-            .replace('"', "&quot;")
-    };
-    axum::response::Html(
-        WAITING
-            .replace("{user}", &esc(user))
-            .replace("{version}", env!("CARGO_PKG_VERSION")),
-    )
+    // la page porte le nom de l'utilisateur: jamais gardée en cache
+    web_file(index_page(user), "text/html; charset=utf-8", "no-store")
 }
 
-const WAITING: &str = include_str!("../web/waiting.html");
+async fn web_css() -> Response {
+    web_file(APP_CSS.into(), "text/css; charset=utf-8", "no-cache")
+}
+
+async fn web_js() -> Response {
+    web_file(APP_JS.into(), "text/javascript; charset=utf-8", "no-cache")
+}
 
 /// L'écoute web: sur la passerelle du réseau dotbox, réessayée tant que Docker n'est pas prêt.
 async fn web_listen(app: Router) {
@@ -310,10 +342,12 @@ async fn serve() -> Result<(), String> {
         .route("/api/v1/config", get(config_all))
         .route("/api/v1/config/{key}", get(config_one).put(config_set))
         .route("/api/v1/jobs/{id}/events", get(events));
-    // la porte web: les mêmes routes, plus la page, derrière check_web (11.11)
+    // la porte web: les mêmes routes, plus le front, derrière check_web (11.11, 11.19)
     let web = api
         .clone()
-        .route("/", get(waiting))
+        .route("/", get(web_index))
+        .route("/app.css", get(web_css))
+        .route("/app.js", get(web_js))
         .layer(middleware::from_fn(check_web))
         .with_state(jobs.clone());
     tokio::spawn(web_listen(web));
@@ -886,6 +920,37 @@ mod tests {
         // sans secret sur le serveur, rien ne passe
         assert!(web_allowed("", Some(""), Some("admins"), false, None, "example.com").is_err());
         assert!(same(b"abc", b"abc") && !same(b"abc", b"abd") && !same(b"abc", b"ab"));
+    }
+
+    /// Le front (11.19): l'utilisateur échappé, la version, les fichiers que la page appelle.
+    #[test]
+    fn the_front() {
+        let page = index_page("<b>\"x\"</b>");
+        assert!(page.contains("data-user=\"&lt;b&gt;&quot;x&quot;&lt;/b&gt;\""));
+        assert!(!page.contains("{user}") && !page.contains("{version}"));
+        assert!(page.contains(env!("CARGO_PKG_VERSION")));
+        assert!(page.contains("app.css?v=") && page.contains("app.js?v="));
+        // rien de chargé ailleurs, rien en ligne (la CSP le refuserait)
+        for f in [INDEX, APP_CSS, APP_JS] {
+            assert!(!f.contains("http://"), "no plain http");
+        }
+        assert!(!INDEX.contains("<style") && !INDEX.contains("style=\""));
+        assert!(!INDEX.contains("<script>"));
+        assert!(CSP.contains("frame-ancestors 'none'") && CSP.contains("script-src 'self'"));
+        // chaque route que le front appelle existe dans l'API
+        for route in [
+            "\"/status\"",
+            "\"/doctor\"",
+            "\"/diff\"",
+            "\"/catalog\"",
+            "\"/config\"",
+            "\"/update\"",
+            "\"/backup\"",
+            "\"/sync\"",
+            "\"/apps\"",
+        ] {
+            assert!(APP_JS.contains(route), "{route}");
+        }
     }
 
     const GROUP_FILE: &str = "root:x:0:\nsudo:x:27:admin\ndotbox:x:990:admin,lea\nadmin:x:1000:\n";

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Dot Box</title>
+<link rel="stylesheet" href="app.css?v={version}">
+<script src="app.js?v={version}" defer></script>
+</head>
+<body data-user="{user}" data-version="{version}">
+<div class="shell">
+  <header class="top">
+    <a class="brand" href="#overview">DOT BOX</a>
+    <span class="who"><span id="who"></span> · <span id="ver"></span></span>
+  </header>
+  <div class="body">
+    <nav class="nav" id="nav" aria-label="Dot Box"></nav>
+    <main class="main" id="main" aria-live="polite"></main>
+  </div>
+  <footer class="foot"><a href="https://mathod95.github.io/dotbox/getting-started/web-ui/" target="_blank" rel="noopener noreferrer">Docs ↗</a></footer>
+</div>
+<section class="panel" id="job" hidden aria-live="polite">
+  <div class="panel-h"><span class="tag">JOB</span><b id="jobWhat"></b><button type="button" class="btn" id="jobClose">Close</button></div>
+  <ol class="steps" id="jobSteps"></ol>
+  <p class="end" id="jobEnd"></p>
+</section>
+<section class="panel logs-panel" id="logs" hidden>
+  <div class="panel-h"><span class="tag">LOGS</span><b id="logsWhat"></b><button type="button" class="btn" id="logsClose">Close</button></div>
+  <pre class="logs" id="logsText"></pre>
+</section>
+</body>
+</html>

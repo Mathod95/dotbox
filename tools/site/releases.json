@@ -37,8 +37,12 @@
           "en": "CLI: `sudo dotbox restore <archive|latest>`, with `--app` and `--key`: one app or the whole server, from a local or remote archive. The old folder is kept aside and put back if the app does not start again"
         },
         {
-          "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia (groupe `admins`). Seul Traefik peut joindre le service (un secret, le port 8800 sur le réseau `dotbox` seulement). Une page d'attente, en attendant l'interface",
-          "en": "Core: the web gate, `dotbox.<domain>` behind Authelia (`admins` group). Only Traefik can reach the service (a secret, port 8800 on the `dotbox` network only). A waiting page, until the interface comes"
+          "fr": "Core: la porte web, `dotbox.<domaine>` derrière Authelia (groupe `admins`). Seul Traefik peut joindre le service (un secret, le port 8800 sur le réseau `dotbox` seulement)",
+          "en": "Core: the web gate, `dotbox.<domain>` behind Authelia (`admins` group). Only Traefik can reach the service (a secret, port 8800 on the `dotbox` network only)"
+        },
+        {
+          "fr": "Interface web: six vues sur `dotbox.<domaine>` (Overview, Apps, Catalog, Updates, Backup, Settings), par la même API que la CLI. Installer, démarrer, arrêter, mettre à jour, sauvegarder, régler `dotbox.yml` puis appliquer le plan, chaque tâche suivie en direct, les logs d'une app en direct",
+          "en": "Web UI: six views on `dotbox.<domain>` (Overview, Apps, Catalog, Updates, Backup, Settings), through the same API as the CLI. Install, start, stop, update, back up, set `dotbox.yml` then apply the plan, each job followed live, an app's logs live"
         },
         {
           "fr": "CLI: `dotbox doctor` vérifie la sauvegarde (la clé, le timer, la dernière sauvegarde) et la porte web. `dotbox status` montre la dernière sauvegarde",
