@@ -55,6 +55,7 @@ DOCS = [
     {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "group": "Backup / Restore"},
     {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX"},
     {"slug": "apps", "name": "Overview", "dots": "APPS", "group": "Apps"},
+    {"slug": "your-own-apps", "name": "Your own apps", "dots": "YOUR-APPS", "group": "Apps"},
     {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "group": "Apps"},
     {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "group": "Apps"},
     {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "group": "Apps"},

@@ -1,0 +1,82 @@
+<!-- LEDE -->
+<p class="lede">Your own apps<i>●</i>an app that is in neither the catalog nor the Sandbox, turned into a Dot Box app from its compose file.</p>
+
+<!-- CONTENT -->
+<article class="prose">
+  <div class="prop-new" data-prop="154">
+  <p>Most projects publish a <code>compose.yml</code>. <code>dotbox add</code> reads it and writes a manifest, the same small file the catalog uses. From then on, the app lives like the others: its own subdomain, behind Authelia, on the <code>dotbox</code> network, in <code>/opt/&lt;app&gt;</code>, and in the nightly backup.</p>
+
+  <h2 id="steps">Step by step</h2>
+  <p>Say a project gives this compose file:</p>
+  <pre><span class="c"># compose.yml, as the project publishes it</span>
+services:
+  notes:
+    image: ghcr.io/example/notes:1.4.2
+    container_name: notes
+    restart: unless-stopped
+    ports:
+      - "8080:3000"
+    environment:
+      - NOTES_TITLE=My notes
+    volumes:
+      - ./data:/app/data</pre>
+  <p>Turn it into an app, and choose its name:</p>
+  <pre><span class="p">$</span> sudo dotbox add ./compose.yml --name notes
+  read     1 service: notes (ghcr.io/example/notes:1.4.2)
+  folder   ./data → data (in /opt/notes)
+  ignored  container_name, restart, ports (Dot Box sets them)
+  write    /opt/dotbox/apps/notes.yml (subdomain notes, access two_factor, port 3000)
+<span class="ok">  ready    dotbox install notes</span></pre>
+  <p>Read the manifest it wrote. This is what will run:</p>
+  <pre><span class="c"># /opt/dotbox/apps/notes.yml</span>
+name: notes
+description: "Added with dotbox add (notes)"
+min_dotbox: 0.0.6
+image: "ghcr.io/example/notes:1.4.2"
+port: 3000
+access: two_factor
+env:
+  NOTES_TITLE: "My notes"
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+volumes:
+  - "data:/app/data"</pre>
+  <p>The <code>{{...}}</code> values are filled in at install time. <code>data:/app/data</code> becomes <code>/opt/notes/data</code> on the server. Then install it, like any app:</p>
+  <pre><span class="p">$</span> dotbox install notes</pre>
+  <p>The app answers on <code>https://notes.example.com</code>, behind Authelia with two-factor authentication. <code>dotbox install</code> looks in your apps first, then in the catalog.</p>
+
+  <h2 id="rules">What add takes from the compose</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>In the compose</th><th>What add does</th></tr></thead>
+    <tbody>
+      <tr><td><code>image</code></td><td>Kept. It must have a pinned version, never <code>latest</code>. Without <code>image</code> (a <code>build:</code> instead), the compose is refused.</td></tr>
+      <tr><td><code>environment</code></td><td>Kept, as a list or a mapping. <code>PUID</code>, <code>PGID</code> and <code>TZ</code> are added when missing. A value that reads a <code>.env</code> file (<code>${VAR}</code>) is refused: write the value itself.</td></tr>
+      <tr><td><code>volumes</code></td><td>A folder under <code>/data</code>, with the same path inside the container, stays as it is (hardlinks keep working). Every other folder moves to <code>/opt/&lt;app&gt;/&lt;folder&gt;</code>, named after its last part (<code>./data</code> becomes <code>data</code>). The path inside the container must be absolute.</td></tr>
+      <tr><td><code>ports</code>, <code>expose</code></td><td>The first one gives the web port, the container side (<code>3000</code> in <code>8080:3000</code>). Nothing is published: Traefik reaches the app on the <code>dotbox</code> network. No port in the compose: give it with <code>--port</code>.</td></tr>
+      <tr><td><code>container_name</code>, <code>restart</code>, <code>networks</code>, <code>labels</code>, <code>hostname</code>, <code>logging</code></td><td>Ignored: Dot Box sets them for every app.</td></tr>
+      <tr><td>Anything else (<code>command</code>, <code>healthcheck</code>, <code>depends_on</code>...)</td><td>Refused for now, with the name of the key.</td></tr>
+      <tr><td>Several services</td><td>Refused: one container per app for now.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The name you give must be free. It cannot be a catalog app (install that one instead), a name Dot Box keeps for itself (<code>authelia</code>, <code>auth</code>...), or an app you already added.</p>
+  <p class="note"><b>Root only.</b> A compose file can mount any folder of the server, so <code>dotbox add</code> runs with <code>sudo</code>. Installing the app afterwards does not need it.</p>
+
+  <h2 id="after">After the install</h2>
+  <ul>
+    <li><b>Address and access.</b> Change the subdomain or the access level in <code>apps:</code> of <code>dotbox.yml</code>, then run <code>dotbox sync</code>, as for any app (<a href="__DOC_ACCESSING_APPS__#en-change"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</li>
+    <li><b>A new version.</b> Renovate follows the catalog, not your apps, and <code>dotbox update</code> only knows the catalog's versions. Change <code>image:</code> in <code>/opt/dotbox/apps/&lt;app&gt;.yml</code> (with <code>sudo</code>), then run <code>dotbox install &lt;app&gt;</code> again.</li>
+    <li><b>Settings the manifest cannot hold.</b> Write them in <code>/opt/&lt;app&gt;/compose.override.yml</code> with <code>sudo dotbox edit &lt;app&gt;</code>. Dot Box checks the file, restarts the app, and puts the old file back if the app does not start.</li>
+    <li><b>Backup.</b> Your app is backed up like the others, in its own archive. Its manifest is in <code>/opt/dotbox/apps/</code>, saved with the <code>dotbox</code> archive.</li>
+    <li><b>Remove.</b> <code>dotbox remove &lt;app&gt;</code> stops it and keeps its <code>config</code>, <code>--purge</code> erases <code>/opt/&lt;app&gt;</code>. The manifest stays in <code>/opt/dotbox/apps/</code>: delete it with <code>sudo</code> to add the app again from a new compose.</li>
+  </ul>
+
+  <h2 id="not-yet">Not possible yet</h2>
+  <ul>
+    <li><b>Several containers.</b> An app with a database alongside, like Immich, needs an engine that installs several containers. It comes later.</li>
+    <li><b>Tools without a web page.</b> A command-line tool run now and then (a downloader, a converter) has no web port, and <code>add</code> refuses it.</li>
+    <li><b>Part of an app without Authelia.</b> The access level applies to the whole subdomain. A path left open for an API, the rest behind Authelia, is not possible.</li>
+  </ul>
+  <p>To share an app that works for you with others, submit it to the <a href="__DOC_SANDBOX__#en-contribute"__DOC_SANDBOX_TARGET__>Sandbox</a>.</p>
+  </div>
+</article>
