@@ -5683,6 +5683,9 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Le MOTD sur Debian 13: qui écrit quoi (J291)",
       p: "Ce que montre le serveur de test, le 22 novembre 2026. /etc/pam.d/sshd appelle pam_motd deux fois: d'abord avec motd=/run/motd.dynamic, qui lance en root les scripts exécutables de /etc/update-motd.d/ (run-parts, dans l'ordre des noms) et garde leur sortie dans /run/motd.dynamic, puis avec noupdate, qui affiche /etc/motd. La sortie des scripts n'est pas un terminal: dotbox motd --login force les couleurs. Debian n'a qu'un script, 10-uname (la ligne du noyau), un fichier de configuration du paquet base-files: une mise à jour de base-files peut le remettre exécutable, dotbox diff le montre alors et dotbox sync le refait. /etc/motd (le texte de licence) n'appartient à aucun paquet: Dot Box le vide et garde sa copie dans /opt/dotbox/motd/etc-motd. La ligne Last login vient de sshd (PrintLastLog), pas de pam_motd: elle reste (D90). CrowdSec: cscli alerts list --since 24h -l 0 -o json rend une alerte par détection, avec l'IP (source.value) et ses décisions. Une IP qui revient compte une fois. 144 alertes et 47 IP bannies en 24 h sur le serveur de test, sans aucune app connue du grand public: le bruit habituel d'Internet.",
       refs: "D86, D89, D90, J291, 17.3" },
+    { t: "Un sous-domaine qui n'existe pas (carotte.<domaine>)",
+      p: "Mathod95, le 22 novembre 2026: « C'est normal que si je tape des trucs loufoques, genre carotte.<domaine>, j'ai un parcours? ». Vérifié depuis le PC (curl et openssl, lecture): le DNS *.<domaine> envoie tout nom vers le serveur (c'est le prérequis), Traefik n'a aucun routeur pour ce nom, il répond avec son certificat par défaut (CN=TRAEFIK DEFAULT CERT, signé par lui-même), d'où l'avertissement du navigateur, puis 404 page not found. Authelia n'entre pas en jeu, aucune app ni aucun fichier n'est atteint: c'est normal et sans risque. Aucun routeur attrape-tout dans le code. Un vrai certificat pour n'importe quel nom demanderait un wildcard, donc le défi DNS-01, écarté (HTTP-01 seulement, décision du 9 novembre 2026). Améliorations possibles, aucune décidée: (1) sur le port 80, répondre 404 aux noms inconnus au lieu de rediriger vers 443, pour éviter l'avertissement en http. (2) Remplacer le texte brut 404 par une petite page Dot Box, l'avertissement du certificat restant en https.",
+      refs: "D16, D17, 4, J296" },
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -5761,7 +5764,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51]
   };
-  var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
+  var NHOME = { "0": [5, 19], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];
