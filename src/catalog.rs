@@ -1053,7 +1053,13 @@ mod tests {
         assert_eq!(m.port, 7476);
         assert_eq!(m.health.as_deref(), Some("image"));
         assert!(!m.uses_data());
-        assert_eq!(m.version(), "v1.35.0");
+        // la forme seulement: Renovate change la version (Q73)
+        let v = m.version().strip_prefix('v').unwrap_or_default();
+        assert!(
+            parse_version(v).is_some(),
+            "qui: {} is not v<x.y.z>",
+            m.version()
+        );
     }
 
     #[test]
