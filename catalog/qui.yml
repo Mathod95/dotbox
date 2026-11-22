@@ -3,7 +3,7 @@
 name: qui
 description: Web interface for qBittorrent
 min_dotbox: 0.0.3
-image: ghcr.io/autobrr/qui:v1.35.0
+image: ghcr.io/autobrr/qui:v1.36.1
 port: 7476
 access: two_factor
 # l'image a son propre healthcheck (wget sur /health)
