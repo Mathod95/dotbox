@@ -2,7 +2,7 @@
 # Format: Journal, étape 7 (7.1, 7.11) et 8.6. Les {{...}} sont remplis par dotbox à l'installation.
 name: jellyfin
 description: Media server
-min_dotbox: 0.0.4
+min_dotbox: 0.0.6
 image: jellyfin/jellyfin:12.4
 port: 8096
 # sa propre connexion, pour les apps TV et mobiles; AppSec devant (10.7)
@@ -38,3 +38,7 @@ setup:
 crowdsec:
   collection: LePresidente/jellyfin
   type: jellyfin
+# laissés hors de la sauvegarde: ce qui se recrée tout seul (D97, N15)
+backup_exclude:
+  - "cache"
+  - "config/log"

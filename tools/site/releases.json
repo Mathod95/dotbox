@@ -2,10 +2,11 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
-      "version": "next",
+      "version": "v0.0.6",
+      "date": "2026-11-22",
       "title": {
-        "fr": "Sync, config, la sauvegarde et la porte web",
-        "en": "Sync, config, backups and the web gate"
+        "fr": "Sync, la sauvegarde, l'interface web et le MOTD",
+        "en": "Sync, backups, the web UI and the MOTD"
       },
       "new": [
         {
@@ -63,6 +64,10 @@
         {
           "fr": "Catalogue: rclone dans le core (`catalog/core/rclone.yml`), pour les destinations de sauvegarde",
           "en": "Catalog: rclone in the core (`catalog/core/rclone.yml`), for the backup destinations"
+        },
+        {
+          "fr": "Jellyfin, Plex: leurs caches, leur dossier de transcodage et leurs logs laissés hors de la sauvegarde (`backup_exclude`). Ils demandent Dot Box 0.0.6",
+          "en": "Jellyfin, Plex: their caches, transcoding folder and logs left out of the backup (`backup_exclude`). They need Dot Box 0.0.6"
         }
       ],
       "changed": [
