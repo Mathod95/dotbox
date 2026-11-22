@@ -3348,7 +3348,19 @@ main 6a94d84..748c4ba, tag v0.0.6
 CI Site: réussie. CI Release: réussie (run 45068693724), publiée à 20:53 UTC
 dotbox-linux-amd64: decfc04b
 releases.json: tagged true`,
-      undo: "Une release publiée ne se retire pas: une v0.0.7 corrige." }
+      undo: "Une release publiée ne se retire pas: une v0.0.7 corrige." },
+    { id: "J294", time: "22:06", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "Q73: le test de qui, #7 et #8 fusionnées (D116)",
+      cmd: `src/catalog.rs: le test qui() vérifie la forme de la version
+git merge --no-ff origin/renovate/ghcr.io-maintainerr-maintainerr-3.x (#7)
+git merge --no-ff origin/renovate/lscr.io-linuxserver-code-server-4.x (#8)
+cargo fmt, clippy, cargo test --locked, puis le même avec le qui.yml de #6 (v1.36.1)
+git push origin main`,
+      does: "Les points de Q73, demandés par Mathod95. Lu avant par l'API publique de GitHub: la CI de #6 échouait sur fmt, clippy et tests (exit 101), à cause de l'assertion v1.35.0 de qui(). #7 et #8: leurs trois vérifications passaient. L'effacement de renovate/configure, refusé par les permissions de Claude Code, reste à Mathod95.",
+      effect: "GitHub: main (le test, maintainerr 3.33.0, code-server 4.146.0-ls378). Le catalogue de main est lu par les serveurs à leur prochain update ou init.",
+      result: `166 tests passent, aussi avec qui v1.36.1
+push de main: voir J294 dans le chat du 22 novembre 2026`,
+      undo: "git revert des commits de fusion, puis push." }
   ];
 
   var PLAN = [
@@ -5021,6 +5033,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 22 novembre 2026: « La 1, on push et on tague v0.0.6. Parle-moi de N15 et N18, s'il faut les régler avant la release ».",
       reco: "Choix de Mathod95 du 22 novembre 2026: push de main et tag v0.0.6. Ce que Claude a répondu sur N15 et N18: oui, ils se règlent dans le commit de la release, pas avant (un catalogue poussé sur main est lu tout de suite par les serveurs en 0.0.5) ni après (la release les attend). (1) N15: jellyfin.yml et plex.yml passent à min_dotbox: 0.0.6 avec leur backup_exclude (Jellyfin: cache et config/log. Plex: transcode, et Cache, Codecs, Crash Reports et Logs de son dossier de config). Un serveur en 0.0.5 ne casse pas: il lit min_dotbox avant le reste du manifest (déjà le cas dans la v0.0.5) et dit « install a newer Dot Box first ». (2) N18 (6): catalog/core/rclone.yml passe à min_dotbox: 0.0.6, seul un dotbox 0.0.6 le lit. Une 0.0.5 ne charge jamais rclone. Le reste de N18 est de la doc (la page Backup) ou réglé. (3) Avec eux, dans le même commit: version = 0.0.6 dans Cargo.toml (la CI compare au tag), next de Releases qui devient v0.0.6, les deux lignes de Jellyfin et Plex dans Releases. Puis les vérifications, le push de main, le tag v0.0.6, la CI de release, et tagged: true une fois la release publiée. (4) Signalé par Claude avant la réinstallation: les archives déjà envoyées au Saltbox ne se relisent qu'avec /opt/dotbox/secrets/backup.key du serveur de test. Une copie sur le PC (dans ~/.config/dotbox-test, jamais dans le repo) les garde lisibles, et permettrait d'essayer aussi 16.7 (restaurer sur un serveur neuf). À décider par Mathod95.",
       refs: "D114, N15, N18, D97, 16.7" },
+    { t: "Les pull requests de Renovate: le test de qui corrigé, #7 et #8 fusionnées (ancienne Q73)",
+      p: "Q73 proposait trois choses. Mathod95, le 22 novembre 2026: « Fait! » (rien n'avait bougé sur GitHub: pris comme « fais-le »).",
+      reco: "Choix de Mathod95 du 22 novembre 2026. (1) Le test qui() vérifie la forme de la version (v puis x.y.z), plus la version elle-même: une mise à jour de Renovate ne le casse plus, la CI de #6 repasse. (2) #7 (maintainerr 3.33.0) et #8 (code-server 4.146.0-ls378) fusionnées dans main par Claude, en commits de fusion, pour que GitHub les marque fusionnées. (3) La branche renovate/configure: son effacement par Claude (git push --delete) a été refusé par les permissions de Claude Code, Mathod95 l'efface depuis GitHub (la corbeille de la page des branches). #6 (qui v1.36.1) reste à Mathod95 une fois sa CI verte, comme toute version mineure (D65). Règle pour la suite: un test du binaire ne fige jamais la version d'une image du catalogue.",
+      refs: "Q73, D65, J294" },
   ];
 
   var QUESTIONS = [
@@ -5473,7 +5489,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["L'interface web de Dot Box n'est jamais en bypass: depuis un réseau de confiance en bypass, elle demande quand même le mot de passe (one_factor). Les apps, elles, passent sans rien.", "Traefik pose lui-même admins pour ce réseau, comme le routeur de test (D109), en permanent: celui qui vient de cette adresse est admin de tout le serveur sans rien prouver."],
       reco: "Proposé par Claude: la première. Pas encore tranchée. À trancher avec le nom de la clé (D111) et sa place dans dotbox init.",
       refs: "D106, D109, D111, Q71" },
-    { n: 73,
+    { n: 73, done: "D116",
       t: "Les pull requests de Renovate ouvertes sur GitHub: que faire?",
       p: "Mathod95, le 22 novembre 2026, sur la page des branches du repo: « Regarde sur le repo, y'a plusieurs branches ». Ce que Claude a lu par l'API publique de GitHub. #6, qui v1.35.0 vers v1.36.1: la CI échoue, à cause de nous et pas de qui. Le test qui() de src/catalog.rs vérifie que la version du manifest est exactement v1.35.0: toute mise à jour de qui le casse. #7, maintainerr 3.32.0 vers 3.33.0, et #8, code-server 4.145.2-ls377 vers 4.146.0-ls378: la CI passe (fmt, clippy, tests, les images existent, les empreintes du core). Ce sont des versions mineures: renovate.json ne fusionne seul que les correctifs, le reste attend Mathod95 (D65). La branche renovate/configure reste de la pull request d'accueil #1, fermée le 19 novembre 2026: elle ne sert plus, elle peut être effacée.",
       l: ["Corriger le test qui(): il vérifie la forme de la version (un v puis des chiffres), plus la version elle-même, comme les autres tests du catalogue. Renovate relance alors la CI de #6.", "Fusionner #7 et #8 depuis GitHub (le catalogue sur main est lu par les serveurs à leur prochain update ou init).", "Effacer la branche renovate/configure."],
@@ -5670,7 +5686,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292, 293],
+    "17": [291, 292, 293, 294],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218],
@@ -5689,7 +5705,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115], "sans": [12, 91]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116], "sans": [12, 91]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
