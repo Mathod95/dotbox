@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::config::Config;
 use crate::doctor::{self, Level};
 use crate::out::say;
-use crate::{backup, catalog, github, status, system, upgrade};
+use crate::{backup, github, status, system, upgrade};
 
 pub const SCRIPT: &str = "/etc/update-motd.d/60-dotbox";
 pub const UNAME: &str = "/etc/update-motd.d/10-uname";
@@ -586,7 +586,7 @@ pub fn behind(cfg: &Config, list: &[status::Container], dir: &Path) -> Vec<Strin
     cfg.app_names()
         .into_iter()
         .filter(|app| {
-            let Ok(m) = catalog::load(dir, app) else {
+            let Ok(m) = crate::add::load(dir, app) else {
                 return false;
             };
             list.iter()

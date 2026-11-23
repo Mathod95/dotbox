@@ -409,11 +409,16 @@ fn app_gaps(
     }
 
     // la version: sync n'y touche pas
-    if let (Some(c), Ok(m)) = (c, catalog::load(dir, app)) {
+    if let (Some(c), Ok(m)) = (c, crate::add::load(dir, app)) {
         let tag = status::tag(&c.image);
         if tag != m.version() {
+            let from = if crate::add::is_yours(app) {
+                "its manifest"
+            } else {
+                "the catalog"
+            };
             gaps.push(gap(
-                format!("runs {tag}, the catalog has {}", m.version()),
+                format!("runs {tag}, {from} has {}", m.version()),
                 format!("dotbox update {app}"),
                 "",
             ));

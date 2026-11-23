@@ -2,6 +2,35 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "next",
+      "title": {
+        "fr": "Tes propres apps",
+        "en": "Your own apps"
+      },
+      "new": [],
+      "changed": [
+        {
+          "fr": "CLI: `dotbox list` montre aussi les apps ajoutées avec `dotbox add`, marquées yours",
+          "en": "CLI: `dotbox list` also shows the apps added with `dotbox add`, marked yours"
+        },
+        {
+          "fr": "CLI: le manifest écrit par `dotbox add` commence par des commentaires en anglais",
+          "en": "CLI: the manifest written by `dotbox add` starts with comments in English"
+        }
+      ],
+      "fixed": [
+        {
+          "fr": "CLI: `dotbox update` met à jour une app ajoutée avec `dotbox add` selon son manifest, au lieu de répondre qu'elle n'est pas installée",
+          "en": "CLI: `dotbox update` updates an app added with `dotbox add` from its manifest, instead of saying it is not installed"
+        },
+        {
+          "fr": "CLI: `dotbox diff` et le MOTD signalent une app ajoutée avec `dotbox add` qui tourne une autre version que son manifest",
+          "en": "CLI: `dotbox diff` and the MOTD show an app added with `dotbox add` that runs another version than its manifest"
+        }
+      ],
+      "removed": []
+    },
+    {
       "version": "v0.0.6",
       "date": "2026-11-22",
       "tagged": true,

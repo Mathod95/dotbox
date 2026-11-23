@@ -15,17 +15,8 @@
   </table></div>
   <p>Les trois utilisent le même format de manifest: une app du Sandbox ou une des tiennes suit les mêmes chemins, le même réseau et les mêmes règles d'accès que le reste, et elle est sauvegardée de la même façon.</p>
 
-  <div class="prop-old" data-prop="155">
-  <h2 id="fr-add">Ajouter ta propre app</h2>
-  <pre><span class="p">$</span> sudo dotbox add ./compose.yml --name it-tools
-<span class="p">$</span> dotbox install it-tools</pre>
-  <p><code>add</code> lit le fichier compose du projet et en fait un manifest, dans <code>/opt/dotbox/apps/it-tools.yml</code>. Il reprend du compose l'image, le port web (le premier exposé, ou <code>--port</code>), les dossiers et l'environnement, et ajoute ce que Dot Box met à chaque app: sous-domaine, accès <code>two_factor</code>, réseau <code>dotbox</code>, <code>PUID</code> et <code>PGID</code>, dossiers rangés dans <code>/opt/it-tools</code> et <code>/data</code>. L'image doit avoir une version fixée, jamais <code>latest</code>. Relis le manifest avant d'installer: <code>dotbox install</code> cherche d'abord dans tes apps, puis dans le catalogue.</p>
-  <p class="note"><b>Un seul container pour l'instant</b>: le moteur ne sait pas encore installer une app à plusieurs containers (une base de données à côté, par exemple). Un compose à plusieurs services, comme celui d'Immich, est refusé, avec ce motif. <code>add</code> passe par <code>sudo</code>: un compose peut monter n'importe quel dossier du serveur.</p>
-  </div>
-  <div class="prop-new" data-prop="155">
   <h2 id="fr-own">Add your own app</h2>
   <p>An app that is in neither the catalog nor the Sandbox becomes a Dot Box app from its compose file, with <code>sudo dotbox add</code>. Everything about it is in <a href="__DOC_YOUR_OWN_APPS__"__DOC_YOUR_OWN_APPS_TARGET__>Your own apps</a>.</p>
-  </div>
 
   <h2 id="fr-contribute">Proposer une app au Sandbox</h2>
   <p>Une app qui marche chez toi peut rejoindre le Sandbox par une pull request sur <code>Mathod95/dotbox-sandbox</code>. Son manifest doit:</p>
@@ -52,17 +43,8 @@
   </table></div>
   <p>All three use the same manifest format: a Sandbox app or one of yours follows the same paths, network and access rules as the rest, and is backed up the same way.</p>
 
-  <div class="prop-old" data-prop="155">
-  <h2 id="en-add">Add your own app</h2>
-  <pre><span class="p">$</span> sudo dotbox add ./compose.yml --name it-tools
-<span class="p">$</span> dotbox install it-tools</pre>
-  <p><code>add</code> reads the project's compose file and turns it into a manifest, in <code>/opt/dotbox/apps/it-tools.yml</code>. It takes the image, the web port (the first one exposed, or <code>--port</code>), the folders and the environment from the compose, and adds what Dot Box gives every app: subdomain, <code>two_factor</code> access, <code>dotbox</code> network, <code>PUID</code> and <code>PGID</code>, folders placed in <code>/opt/it-tools</code> and <code>/data</code>. The image must have a pinned version, never <code>latest</code>. Review the manifest before installing: <code>dotbox install</code> looks in your apps first, then in the catalog.</p>
-  <p class="note"><b>One container for now</b>: the engine cannot install an app with several containers yet (a database alongside, for example). A compose with several services, like Immich's, is refused, with that reason. <code>add</code> goes through <code>sudo</code>: a compose can mount any folder of the server.</p>
-  </div>
-  <div class="prop-new" data-prop="155">
   <h2 id="en-own">Add your own app</h2>
   <p>An app that is in neither the catalog nor the Sandbox becomes a Dot Box app from its compose file, with <code>sudo dotbox add</code>. Everything about it is in <a href="__DOC_YOUR_OWN_APPS__"__DOC_YOUR_OWN_APPS_TARGET__>Your own apps</a>.</p>
-  </div>
 
   <h2 id="en-contribute">Submit an app to the Sandbox</h2>
   <p>An app that works for you can join the Sandbox through a pull request on <code>Mathod95/dotbox-sandbox</code>. Its manifest must:</p>

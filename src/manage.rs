@@ -32,6 +32,9 @@ pub struct CatalogApp {
     pub role: String,
     pub version: String,
     pub installed: bool,
+    /// ajoutée avec dotbox add (Q80)
+    #[serde(default)]
+    pub yours: bool,
 }
 
 /// Le catalogue rangé par le dernier init, filtré sur le nom ou le rôle.
@@ -43,20 +46,33 @@ pub fn list(search: &str) -> Result<Vec<CatalogApp>, String> {
     }
     let cfg = Config::load()?;
     let s = search.to_lowercase();
+    let names = with_yours(names, catalog::app_names(Path::new(crate::add::LOCAL)));
     Ok(names
         .into_iter()
         .filter_map(|n| {
             // un manifest pour un Dot Box plus récent est passé, pas une erreur
-            let m = catalog::load(&dir, &n).ok()?;
+            let m = crate::add::load(&dir, &n).ok()?;
             let hit = s.is_empty() || n.contains(&s) || m.description.to_lowercase().contains(&s);
             hit.then(|| CatalogApp {
                 installed: cfg.app(&n).is_some(),
                 version: m.version().to_string(),
                 role: m.description.clone(),
+                yours: crate::add::is_yours(&n),
                 name: n,
             })
         })
         .collect())
+}
+
+/// Le catalogue et les apps ajoutées avec dotbox add (Q80), chaque nom une fois, triés.
+fn with_yours(mut names: Vec<String>, yours: Vec<String>) -> Vec<String> {
+    for y in yours {
+        if !names.contains(&y) {
+            names.push(y);
+        }
+    }
+    names.sort();
+    names
 }
 
 pub fn print_list(list: &[CatalogApp]) {
@@ -64,7 +80,11 @@ pub fn print_list(list: &[CatalogApp]) {
     let installed = list.iter().filter(|a| a.installed).count();
     if !clack::fancy() {
         for a in list {
-            let state = if a.installed { "installed" } else { "-" };
+            let state = match (a.installed, a.yours) {
+                (true, _) => "installed",
+                (false, true) => "yours",
+                (false, false) => "-",
+            };
             clack::put(&format!(
                 "{:<width$}{:<20}{:<11}{}",
                 a.name,
@@ -80,7 +100,12 @@ pub fn print_list(list: &[CatalogApp]) {
         clack::sub("no app matches");
     }
     for a in list {
-        let text = format!("{:<20}{}", ui::fit(&a.version, 19), ui::fit(&a.role, 48));
+        let role = if a.yours {
+            format!("{} (yours)", a.role)
+        } else {
+            a.role.clone()
+        };
+        let text = format!("{:<20}{}", ui::fit(&a.version, 19), ui::fit(&role, 48));
         if a.installed {
             clack::item(Mark::Ok, &a.name, width, &text);
         } else {
@@ -358,7 +383,8 @@ pub fn versions(dir: &Path, cfg: &Config) -> Result<Vec<Version>, String> {
         .app_names()
         .into_iter()
         .filter_map(|app| {
-            let m = catalog::load(dir, &app).ok()?;
+            // une app à soi se compare à son manifest (Q80)
+            let m = crate::add::load(dir, &app).ok()?;
             let current = list
                 .iter()
                 .find(|c| c.name == app)
@@ -517,6 +543,13 @@ pub fn print_versions(report: &[Version]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn list_with_your_apps() {
+        let cat = vec!["radarr".to_string(), "sonarr".to_string()];
+        let yours = vec!["notes".to_string(), "radarr".to_string()];
+        assert_eq!(with_yours(cat, yours), ["notes", "radarr", "sonarr"]);
+    }
 
     #[test]
     fn versions_behind() {

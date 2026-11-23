@@ -219,8 +219,8 @@ pub fn manifest(compose: &str, name: &str, port: Option<u16>, from: &str) -> Res
     }
     let q = |t: &str| serde_json::to_string(t).unwrap_or_default();
     let mut y = format!(
-        "# Ajoutée par dotbox add depuis {from}. Relis-la avant dotbox install {name}.\n\
-         # Même format que le catalogue (Journal, étape 7): les {{{{...}}}} sont remplis à l'installation.\n\
+        "# Added by dotbox add from {from}. Read it before dotbox install {name}.\n\
+         # Same format as the catalog: the {{{{...}}}} values are filled in at install time.\n\
          name: {name}\n\
          description: {}\n\
          min_dotbox: {}\n\
@@ -253,6 +253,17 @@ pub fn manifest(compose: &str, name: &str, port: Option<u16>, from: &str) -> Res
         moved,
         ignored,
     })
+}
+
+/// Le manifest d'une app, là où install le trouve: ses apps à soi d'abord, puis le catalogue
+/// (Q80: update, diff et le MOTD le lisent au même endroit).
+pub fn load(catalog: &Path, app: &str) -> Result<catalog::Manifest, String> {
+    catalog::load(&manifest_dir(catalog, app), app)
+}
+
+/// Une app ajoutée avec dotbox add (son manifest est dans /opt/dotbox/apps).
+pub fn is_yours(app: &str) -> bool {
+    Path::new(LOCAL).join(format!("{app}.yml")).exists()
 }
 
 /// Le dossier où lire le manifest d'une app: ses apps à soi d'abord, puis le catalogue.
@@ -327,6 +338,10 @@ mod tests {
         assert_eq!(a.port, 80);
         assert_eq!(a.service, "it-tools");
         assert_eq!(a.ignored, vec!["container_name", "restart", "ports"]);
+        // en anglais, comme le reste du produit (Q80)
+        assert!(a.manifest.starts_with(
+            "# Added by dotbox add from ./compose.yml. Read it before dotbox install it-tools.\n"
+        ));
         assert!(
             a.manifest
                 .contains("image: \"corentinth/it-tools:2024.10.22-7ca5933\"\n")
