@@ -120,10 +120,6 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
   <div class="top">
     <a class="brand" href="__HOME__"__HOME_TARGET__>DOT BOX</a>
     <div class="topr">
-      <div class="lang" role="group" aria-label="Language">
-        <button type="button" class="chip" data-lang="fr" aria-pressed="false">FR</button>
-        <button type="button" class="chip" data-lang="en" aria-pressed="false">EN</button>
-      </div>
       <a class="ext" href="__GS__"__GS_TARGET__>Getting Started</a>
       <a class="ext" href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap</a>
       <a class="ext" href="#" aria-current="page">Releases</a>
@@ -147,7 +143,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
 
   <footer class="footer">
     <span class="red">Self-hosted · Rust · Docker Compose</span>
-    <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">Mathod95/dotbox</a>
+    <span><a href="https://github.com/Mathod95/dotbox/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a> · <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">Mathod95/dotbox</a></span>
   </footer>
 </div>
 
@@ -179,10 +175,7 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
     }
   };
   var lang = "en";
-  try {
-    var q = new URLSearchParams(location.search).get("lang");
-    lang = q === "en" || q === "fr" ? q : localStorage.getItem("dotbox-lang") || ((navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"); // français pour un navigateur en français, anglais sinon
-  } catch (e) { lang = (navigator.language || "en").slice(0, 2) === "fr" ? "fr" : "en"; }
+  // le site en anglais seulement, sans choix de langue (D103, D123)
   if (!STR[lang]) lang = "en";
   function t(k) { return STR[lang][k]; }
   function tr(o) { return o && (o[lang] || o.fr) || ""; }
