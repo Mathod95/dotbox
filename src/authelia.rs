@@ -188,8 +188,7 @@ pub fn password_secret(user: &str) -> String {
 /// Le hash argon2id d'un mot de passe, avec les réglages par défaut d'Authelia
 /// (m=65536, t=3, p=4, 32 octets): calculé par dotbox, sans lancer de container.
 pub fn hash_password(password: &str) -> Result<String, String> {
-    use argon2::password_hash::{PasswordHasher, SaltString};
-    use argon2::{Algorithm, Argon2, Params, Version};
+    use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
     use std::io::Read;
     let params = Params::new(65536, 3, 4, Some(32)).map_err(|e| e.to_string())?;
     // un sel de 16 octets tirés de /dev/urandom, comme les secrets
@@ -197,9 +196,8 @@ pub fn hash_password(password: &str) -> Result<String, String> {
     std::fs::File::open("/dev/urandom")
         .and_then(|mut f| f.read_exact(&mut bytes))
         .map_err(|e| format!("cannot read /dev/urandom: {e}"))?;
-    let salt = SaltString::encode_b64(&bytes).map_err(|e| e.to_string())?;
     Argon2::new(Algorithm::Argon2id, Version::V0x13, params)
-        .hash_password(password.as_bytes(), &salt)
+        .hash_password_with_salt(password.as_bytes(), &bytes)
         .map(|h| h.to_string())
         .map_err(|e| format!("cannot hash the password: {e}"))
 }
@@ -423,7 +421,7 @@ mod tests {
 
     #[test]
     fn password_hash_is_argon2id_for_authelia() {
-        use argon2::password_hash::{PasswordHash, PasswordVerifier};
+        use argon2::{PasswordHash, PasswordVerifier};
         let h = hash_password("correct horse battery").unwrap();
         assert!(h.starts_with("$argon2id$v=19$m=65536,t=3,p=4$"), "{h}");
         let parsed = PasswordHash::new(&h).unwrap();
