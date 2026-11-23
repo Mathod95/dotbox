@@ -101,10 +101,18 @@ ARTIFACT_DOCS = {
     "cli-output": "https://claude.ai/artifact/KxU39np5ruPo9QJ6ciEXTz",
 }
 BLANK = ' target="_blank" rel="noopener"'
+# Les pages de travail, en français (D123, D125): dans le repo, mais seulement dans le site local
+# (--private). Sur GitHub Pages, ni ces pages, ni les liens qui y mènent.
+PRIVATE = {"journal", "cli-output", "en-vrac"}
+REMOVED = set()
 
 
 def links(page, urls, target):
     """Liens entre les pages : adresses des artefacts, ou liens relatifs sur le site."""
+    for slug in REMOVED:
+        # un lien vers une page de travail absente: on garde son texte, sans le lien
+        k = "DOC_" + ukey(slug)
+        page = re.sub(r'<a href="__' + k + r'__[^"]*"(?:__' + k + r'_TARGET__)?>(.*?)</a>', r"\1", page, flags=re.S)
     for k, u in urls.items():
         page = page.replace("__" + k + "_TARGET__", target).replace("__" + k + "__", u)
     return page
@@ -239,7 +247,11 @@ def main():
     ap.add_argument("--releases-fragment")
     ap.add_argument("--roadmap-fragment")
     ap.add_argument("--docs-fragments")
+    ap.add_argument("--private", action="store_true", help="avec le Journal, CLI Output et En vrac (le site local)")
     args = ap.parse_args()
+    if not args.private:
+        REMOVED.update(PRIVATE)
+        DOCS[:] = [d for d in DOCS if d["slug"] not in PRIVATE]
     if not (args.fragment or args.releases_fragment or args.roadmap_fragment or args.docs_fragments):
         site()
         return

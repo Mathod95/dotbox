@@ -234,7 +234,8 @@ code { font-family: var(--mono); font-size: .88em; color: var(--lit); background
         var meta = el("span", "meta");
         meta.appendChild(el("span", "tag", tr(DOM[f.domain].name)));
         // J commandes, D décisions, Q questions ouvertes, 2.3 étapes proposées : lien vers l'entrée du Journal (#j6, #d8, #q2, #e2-3)
-        (f.journal || []).forEach(function (r) {
+        // le Journal n'est que dans le site local (build_site.py --private, D125): pas de renvoi sur GitHub Pages
+        if (DOCS.journal) (f.journal || []).forEach(function (r) {
           var first = r.split("-")[0], anchor = first.indexOf(".") > -1 ? "e" + first.replace(/\./g, "-") : first;
           var j = el("a", "jr", r); j.href = DOCS.journal + "#" + anchor.toLowerCase(); j.title = t("journal");
           if (BLANK) { j.target = "_blank"; j.rel = "noopener"; }
