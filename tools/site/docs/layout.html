@@ -66,6 +66,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .side::-webkit-scrollbar { width: 6px; }
 .side::-webkit-scrollbar-track { background: transparent; }
 .side::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
+.side .nav + h2 { margin-top: 12px; }
 .side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
 .nav { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
 :is(.nav, .nav-sub) > li > a { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); text-decoration: none; }
@@ -190,7 +191,7 @@ __PAGE_CSS__
   <div class="top">
     <a class="brand" href="__HOME__"__HOME_TARGET__>DOT BOX</a>
     <div class="topr">
-      <a class="ext" href="__GS__"__GS_TARGET__ aria-current="page">Getting Started</a>
+      <a class="ext" href="__GS__"__GS_TARGET__ aria-current="page">Docs</a>
       <a class="ext" href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap</a>
       <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
       <a class="ext" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
@@ -204,7 +205,7 @@ __NAV__
 
     <main class="doc">
       <section class="hero" aria-labelledby="title">
-        <p class="crumb">Getting Started</p>
+        <p class="crumb">__SECTION__</p>
         <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">__H1__</h1>
         <canvas id="titleDots" width="700" height="252" data-title="__DOTS__" data-all="__DOTS_ALL__" aria-hidden="true"></canvas>
 __LEDE__

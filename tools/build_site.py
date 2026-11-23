@@ -36,49 +36,47 @@ ROADMAP_DATA = SITE_SRC / "roadmap.json"
 DOCS_SRC = SITE_SRC / "docs"
 DOCS_LAYOUT = DOCS_SRC / "layout.html"
 
-# la documentation : une section (Getting Started), ses pages dans l'ordre de la barre de gauche
-DOCS_SECTION = "Getting Started"
-# "group" : sous-groupe de la barre de gauche (comme Backup/Restore chez Saltbox)
-# FOLD: les groupes repliables de la barre de gauche (demande de Mathod95, 22 novembre 2026)
-FOLD = {"Apps"}
+# la documentation (D127, 23 novembre 2026): des sections, comme Getting Started, chacune titrée
+# dans la barre de gauche, ses pages dans l'ordre. « Travail »: les pages de travail en français,
+# seulement dans le site local (D125).
 DOCS = [
-    {"slug": "basics", "name": "Basics", "dots": "BASICS"},
-    {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES"},
-    {"slug": "installation", "name": "Installation", "dots": "INSTALL"},
-    {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL"},
-    {"slug": "update", "name": "Update", "dots": "UPDATE"},
-    {"slug": "renovate", "name": "Renovate", "dots": "RENOVATE"},
-    {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS"},
-    {"slug": "security", "name": "Security", "dots": "SECURITY"},
-    {"slug": "paths", "name": "Paths", "dots": "PATHS"},
-    {"slug": "backup", "name": "Backup", "dots": "BACKUP", "group": "Backup / Restore"},
-    {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "group": "Backup / Restore"},
-    {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX"},
-    {"slug": "apps", "name": "Overview", "dots": "APPS", "group": "Apps"},
-    {"slug": "your-own-apps", "name": "Your own apps", "dots": "YOUR-APPS", "group": "Apps"},
-    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "group": "Apps"},
-    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "group": "Apps"},
-    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "group": "Apps"},
-    {"slug": "qui", "name": "qui", "dots": "QUI", "group": "Apps"},
-    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "group": "Apps"},
-    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "group": "Apps"},
-    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "group": "Apps"},
-    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "group": "Apps"},
-    {"slug": "plex", "name": "Plex", "dots": "PLEX", "group": "Apps"},
-    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "group": "Apps"},
-    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "group": "Apps"},
-    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "group": "Apps"},
-    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "group": "Apps"},
-    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "group": "Apps"},
-    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "group": "Apps"},
-    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "group": "Apps"},
-    {"slug": "cli", "name": "CLI", "dots": "CLI"},
-    {"slug": "api", "name": "API", "dots": "API"},
-    {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI"},
-    {"slug": "motd", "name": "MOTD", "dots": "MOTD", "group": "References"},
-    {"slug": "journal", "name": "Journal", "dots": "JOURNAL"},
-    {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT"},
-    {"slug": "en-vrac", "name": "En vrac", "dots": "EN-VRAC"},
+    {"slug": "basics", "name": "Basics", "dots": "BASICS", "section": "Getting Started"},
+    {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES", "section": "Getting Started"},
+    {"slug": "installation", "name": "Installation", "dots": "INSTALL", "section": "Getting Started"},
+    {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL", "section": "Getting Started"},
+    {"slug": "update", "name": "Update", "dots": "UPDATE", "section": "Getting Started"},
+    {"slug": "renovate", "name": "Renovate", "dots": "RENOVATE", "section": "Getting Started"},
+    {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS", "section": "Getting Started"},
+    {"slug": "security", "name": "Security", "dots": "SECURITY", "section": "Getting Started"},
+    {"slug": "paths", "name": "Paths", "dots": "PATHS", "section": "Getting Started"},
+    {"slug": "backup", "name": "Backup", "dots": "BACKUP", "section": "Backup / Restore"},
+    {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "section": "Backup / Restore"},
+    {"slug": "apps", "name": "Overview", "dots": "APPS", "section": "Apps"},
+    {"slug": "your-own-apps", "name": "Your own apps", "dots": "YOUR-APPS", "section": "Apps"},
+    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "section": "Apps"},
+    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "section": "Apps"},
+    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "section": "Apps"},
+    {"slug": "qui", "name": "qui", "dots": "QUI", "section": "Apps"},
+    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "section": "Apps"},
+    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "section": "Apps"},
+    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "section": "Apps"},
+    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "section": "Apps"},
+    {"slug": "plex", "name": "Plex", "dots": "PLEX", "section": "Apps"},
+    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "section": "Apps"},
+    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "section": "Apps"},
+    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "section": "Apps"},
+    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "section": "Apps"},
+    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Apps"},
+    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Apps"},
+    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Apps"},
+    {"slug": "cli", "name": "CLI", "dots": "CLI", "section": "References"},
+    {"slug": "api", "name": "API", "dots": "API", "section": "References"},
+    {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI", "section": "References"},
+    {"slug": "motd", "name": "MOTD", "dots": "MOTD", "section": "References"},
+    {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX", "section": "References"},
+    {"slug": "journal", "name": "Journal", "dots": "JOURNAL", "section": "Travail"},
+    {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT", "section": "Travail"},
+    {"slug": "en-vrac", "name": "En vrac", "dots": "EN-VRAC", "section": "Travail"},
 ]
 
 # artefacts claude.ai : les pages se répondent par leurs boutons
@@ -153,29 +151,21 @@ def doc(slug, urls, target, title):
     i = [d["slug"] for d in DOCS].index(slug)
     page_def = DOCS[i]
     part = sections((DOCS_SRC / (slug + ".html")).read_text(encoding="utf-8"))
-    nav = ['      <h2>' + DOCS_SECTION + '</h2>', '      <ul class="nav">']
-    group = None
+    nav = []
+    section = None
     for d in DOCS:
         key = "__DOC_" + ukey(d["slug"]) + "__"
-        if d.get("group") != group:
-            if group in FOLD:
-                nav.append("        </ul></details></li>")
-            group = d.get("group")
-            if group in FOLD:
-                # un groupe repliable: ouvert seulement quand la page en cours en fait partie
-                is_open = " open" if page_def.get("group") == group else ""
-                nav.append('        <li class="fold"><details' + is_open + '><summary class="grp">' + group.replace("&", "&amp;")
-                           + '</summary><ul class="nav-sub">')
-            elif group:
-                nav.append('        <li class="grp">' + group.replace("&", "&amp;") + "</li>")
-        li = '<li class="sub">' if group else "<li>"
+        if d["section"] != section:
+            if section is not None:
+                nav.append("      </ul>")
+            section = d["section"]
+            nav.append('      <h2>' + section.replace("&", "&amp;") + '</h2>')
+            nav.append('      <ul class="nav">')
         name = d["name"].replace("&", "&amp;")
         if d["slug"] == slug:
-            nav.append("        " + li + '<a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
+            nav.append('        <li><a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
         else:
-            nav.append("        " + li + '<a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
-    if group in FOLD:
-        nav.append("        </ul></details></li>")
+            nav.append('        <li><a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
     nav.append("      </ul>")
     pn = []
     if i > 0:
@@ -187,6 +177,7 @@ def doc(slug, urls, target, title):
     page = (DOCS_LAYOUT.read_text(encoding="utf-8")
             .replace("__TITLE__", title.replace("&", "&amp;"))
             .replace("__H1__", page_def["name"].replace("&", "&amp;"))
+            .replace("__SECTION__", page_def["section"].replace("&", "&amp;"))
             .replace("__DOTS__", page_def["dots"])
             .replace("__DOTS_ALL__", "|".join(d["dots"] for d in DOCS))
             .replace("__NAV__", "\n".join(nav))
