@@ -1290,6 +1290,18 @@
       ]
     },
     {
+      "stage": "core",
+      "domain": "cli",
+      "status": "planned",
+      "fr": "CLI: le raccourci `db`, un lien vers `dotbox` posé par `dotbox init` seulement si `db` est libre, avec la complétion pour les deux noms",
+      "en": "CLI: the `db` shortcut, a link to `dotbox` set up by `dotbox init` only if `db` is free, with completion for both names",
+      "doc": "cli",
+      "journal": [
+        "Q90",
+        "D143"
+      ]
+    },
+    {
       "stage": "updates",
       "domain": "catalog",
       "status": "planned",
