@@ -92,3 +92,17 @@ motd:
   <p>Passwords and keys never go in <code>dotbox.yml</code>. They live in <code>/opt/dotbox/secrets/</code>, readable by root only: the keys of Authelia and CrowdSec, your Authelia password kept for root, the backup key (<code>backup.key</code>), the SSH key of SFTP destinations, and <code>rclone.conf</code>. The whole <code>/opt/dotbox</code> folder is readable by root only: <code>dotbox config get</code> reads the settings without <code>sudo</code>, through the Dot Box service.</p>
 </article>
 </div>
+<div class="prop-new" data-prop="169">
+<article class="prose">
+  <h2 id="later">Coming later</h2>
+  <p>These settings are planned but not coded yet: <code>dotbox config set</code> refuses them for now.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>paths.data</code></td><td><code>/data</code></td><td>Where the media and downloads are on the server. Inside the containers, they stay on <code>/data</code> (see <a href="__DOC_PATHS__"__DOC_PATHS_TARGET__>Paths</a>).</td><td><code>sudo dotbox config set</code>, then <code>sync</code>. Dot Box moves no data: copy it first, keeping the hardlinks.</td></tr>
+      <tr><td><code>update.schedule</code></td><td><code>off</code></td><td>When apps update on their own, like <code>sunday 05:00</code>. Each app is backed up just before (see <a href="__DOC_UPDATE__"__DOC_UPDATE_TARGET__>Update</a>).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>update.apps</code></td><td>none</td><td>The apps concerned: a list (<code>[radarr, sonarr]</code>), or <code>all</code>.</td><td>By hand, then <code>sync</code>.</td></tr>
+    </tbody>
+  </table></div>
+</article>
+</div>
