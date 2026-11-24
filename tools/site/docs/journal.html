@@ -5201,6 +5201,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 24 novembre 2026: « Tu me retires toutes les occurrences à Ubuntu dans la doc également! ».",
       reco: "Dicté par Mathod95, appliqué par Claude le même jour, dans la suite de D87 (Debian seulement pour l'instant). « Debian ou Ubuntu » devient « Debian » dans Basics, Installation (le dépôt de Docker), Security (iptables-nft), CLI (premiers pas), la page d'accueil (deux fois) et deux features de la Roadmap. Prerequisites: « Debian 12 or 13, fresh install », sans « LTS releases only » qui parlait d'Ubuntu. En anglais et dans les blocs français cachés. Laissés: Releases (les notes de la v0.0.1, qui acceptait Ubuntu), les pages figées de pages/v1 (jamais modifiées), les workflows de GitHub (leurs machines tournent sous ubuntu-latest, rien à voir avec le produit), le Journal, En vrac et CLAUDE.md. Le code accepte toujours Ubuntu (src/system.rs, src/docker.rs): pas touché, c'est du code, pas de la doc.",
       refs: "D87, D133" },
+    { t: "Basics: les grands titres en vert émeraude",
+      p: "Mathod95, le 24 novembre 2026: « Sur la page Basics uniquement! Tous les titres comme What is Dot Box? sont peu visibles, comparés au sous-titre Subdomains and HTTPS. Tu peux faire en sorte qu'ils ressortent mieux? Peut-être utiliser le vert émeraude en plus pour les titres? ».",
+      reco: "Dicté par Mathod95, appliqué par Claude le même jour, sur Basics seulement (la partie CSS de basics.html, layout.html inchangé): les h2 en vert émeraude (--accent, #10b981), en 15 px au lieu de 13, plus gras (600), un peu plus d'espace au-dessus (28 px). Toujours en capitales espacées, comme les autres pages. La taille, la graisse et l'espace sont des choix de Claude, à corriger si besoin.",
+      refs: "D127" },
   ];
 
   var QUESTIONS = [
@@ -5947,7 +5951,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
