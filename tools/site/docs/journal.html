@@ -5647,6 +5647,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Un repo privé à côté (Mathod95/dotbox-notes, créé par Mathod95 sur GitHub, avec sa propre clé de déploiement pour Claude), cloné dans tools/site/private/, ignoré par le repo public. build_site.py prend les pages de ce dossier s'il existe: en local, le site complet. Sur GitHub Pages, seulement la doc, et les liens vers le Journal (Roadmap, doc) n'apparaissent qu'en local. Versionné et sauvegardé sur GitHub, invisible du public. CLAUDE.md pourrait y aller aussi (Claude Code lit CLAUDE.local.md, ignoré par Git).", "Garder les fichiers dans le repo public, mais ne plus les publier sur le site (build_site.py --private en local). Simple, mais toujours lisibles sur GitHub.", "Un dossier local ignoré par Git, sans repo: rien de public, mais aucune sauvegarde ni historique (le PC qui lâche, et tout est perdu).", "Laisser comme c'est."],
       reco: "Proposé par Claude: la première. Le dépôt privé et sa clé sont à créer par Mathod95 sur GitHub (Claude n'a pas d'accès connecté). Pas encore tranchée.",
       refs: "D53, D85, D103, D123" },
+    { n: 83,
+      t: "Getting Started, vraiment le chemin de l'installation: ce qui part dans References",
+      p: "Mathod95, le 24 novembre 2026, après D127: « Renovate irait dans References? Le Getting Started devrait être vraiment lié à l'installation, l'update, etc. ». Ce que Claude a vu: Getting Started a neuf pages (Basics, Prerequisites, Installation, Post-installation, Update, Renovate, Accessing Apps, Security, Paths). Certaines suivent le chemin d'un nouvel utilisateur, de zéro à un serveur qui tourne puis tenu à jour: Basics, Prerequisites, Installation, Post-installation, Accessing Apps (atteindre ses apps, changer un sous-domaine ou un accès), Update. Les autres se consultent au besoin, sans être une étape: Renovate (comment le catalogue suit les nouvelles versions, côté projet, rien à faire pour l'utilisateur), Security (les protections en place et prévues), Paths (où sont les fichiers).",
+      l: ["Getting Started: Basics, Prerequisites, Installation, Post-installation, Accessing Apps, Update. References: CLI, API, Web UI, MOTD, Paths, Security, Renovate, Sandbox. Seul le champ section de DOCS change, les adresses restent les mêmes.", "Seulement Renovate dans References, le reste comme aujourd'hui.", "Laisser comme D127."],
+      reco: "Proposé par Claude: la première. Accessing Apps reste dans Getting Started, c'est la première chose qu'on fait après l'installation. Pas encore tranchée.",
+      refs: "D127, D88" },
   ];
 
 
@@ -5867,7 +5873,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
-    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81]
+    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83]
   };
   var NHOME = { "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
   var placed = {};
