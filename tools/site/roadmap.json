@@ -870,6 +870,20 @@
     {
       "stage": "apps",
       "domain": "catalog",
+      "status": "planned",
+      "fr": "Catalogue: qBittorrent et code-server sur l'image officielle de leur projet, comme Traefik et Authelia",
+      "en": "Catalog: qBittorrent and code-server on their project's official image, like Traefik and Authelia",
+      "doc": "apps",
+      "journal": [
+        "D130",
+        "Q84",
+        "8.4",
+        "8.9"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
       "status": "done",
       "fr": "Uptime Kuma: surveille que les apps et les sites répondent, sans root, en `two_factor`",
       "en": "Uptime Kuma: checks that apps and sites answer, without root, in `two_factor`",
