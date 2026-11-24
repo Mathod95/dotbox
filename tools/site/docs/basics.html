@@ -125,5 +125,7 @@
 
 <!-- CSS -->
 /* Basics: les grands titres en vert émeraude, plus grands, pour qu'ils ressortent au-dessus des sous-titres */
-.prose h2 { margin-top: 28px; font-size: 18px; font-weight: 600; color: var(--accent); }
+.prose h2 { margin: 28px 0 -8px; font-size: 18px; font-weight: 600; color: var(--accent); }
+/* le premier titre colle à l'accroche, sans l'espace des titres suivants */
+.prose > h2:first-child { margin-top: 0; }
 .prose h3 { font-size: 15px; }
