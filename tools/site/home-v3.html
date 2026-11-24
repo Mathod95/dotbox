@@ -5,9 +5,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
 <style>
-/* homePage de Dot Box, v3 proposée (#180): la v2, avec une bannière en tête (une pastille, un grand titre
-   sur deux lignes, la seconde en accent, une phrase, deux boutons, une note) et GitHub en logo seul.
-   Montrée en local seulement (/home-v3/) tant qu'elle n'est pas validée. Un seul thème sombre. */
+/* homePage de Dot Box, v2: gabarit docs/design/homePage.html (repris de xeneon), mêmes valeurs que Dot Page.
+   Six zones dans l'ordre: Top, Hero, Showcase, About, List, Footer. Un seul thème sombre. */
 :root {
   --bg: #080808;
   --panel: #0e0e0e;
@@ -208,7 +207,10 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     <p class="note">One command, about 4 minutes. Open source, AGPL-3.0.</p>
   </section>
 
-  <section class="hero">
+  <section class="hero" aria-labelledby="dotTitle">
+    <h2 id="dotTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h2>
+    <canvas id="titleDots" width="1520" height="342" aria-hidden="true"></canvas>
+    <p class="tagline" data-i18n-html="tagline"></p>
     <ul class="stats" id="stats"></ul>
   </section>
 
@@ -630,6 +632,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     });
   });
 
+  drawTitle("DOT BOX");
   paint(document.getElementById("boxPic"), "box", ACC);
   applyLang();
 })();
