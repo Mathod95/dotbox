@@ -29,8 +29,6 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
-# la page d'accueil v3 proposée (Q91, #179): seulement dans le site local, tant qu'elle n'est pas validée
-HOME_PROPOSAL = SITE_SRC / "home-v3.html"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
 RELEASES_DATA = SITE_SRC / "releases.json"
 ROADMAP_TEMPLATE = SITE_SRC / "roadmap.html"
@@ -120,8 +118,8 @@ def links(page, urls, target):
     return page
 
 
-def home(urls, target, title, template=HOME_TEMPLATE):
-    page = template.read_text(encoding="utf-8").replace("__TITLE__", title)
+def home(urls, target, title):
+    page = HOME_TEMPLATE.read_text(encoding="utf-8").replace("__TITLE__", title)
     return links(page, urls, target)
 
 
@@ -243,8 +241,6 @@ def site():
     }
     for d in DOCS:
         pages["getting-started/" + d["slug"] + "/index.html"] = doc(d["slug"], site_urls(2), "", d["name"] + " · Dot Box")
-    if not REMOVED and HOME_PROPOSAL.exists():
-        pages["home-v3/index.html"] = home(site_urls(1), "", "Dot Box · v3 proposed", HOME_PROPOSAL)
     for path, html in pages.items():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)
