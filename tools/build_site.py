@@ -246,7 +246,7 @@ def site():
     for d in DOCS:
         pages["getting-started/" + d["slug"] + "/index.html"] = doc(d["slug"], site_urls(2), "", d["name"] + " · Dot Box")
     if not REMOVED and HOME_PROPOSAL.exists():
-        pages["homev2/index.html"] = home(site_urls(1), "", "Dot Box · homev2", HOME_PROPOSAL)
+        pages["homev2/index.html"] = home(site_urls(1), "", "Dotbox · homev2", HOME_PROPOSAL)
     for path, html in pages.items():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)
