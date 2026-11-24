@@ -122,8 +122,17 @@ def links(page, urls, target):
     return page
 
 
+def spotted_count():
+    """Le nombre d'apps repérées: les lignes du tableau Spotted apps de la page Apps."""
+    text = (DOCS_SRC / "apps.html").read_text(encoding="utf-8")
+    start = text.index('id="spotted"')
+    body = text[text.index("<tbody>", start):text.index("</tbody>", start)]
+    return body.count("<tr>")
+
+
 def home(urls, target, title, template=HOME_TEMPLATE):
-    page = template.read_text(encoding="utf-8").replace("__TITLE__", title)
+    page = (template.read_text(encoding="utf-8").replace("__TITLE__", title)
+            .replace("__SPOTTED__", str(spotted_count())))
     return links(page, urls, target)
 
 
