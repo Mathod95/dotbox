@@ -10,12 +10,7 @@
     <li><b><code>/opt/&lt;app&gt;</code></b>, pour chaque app installée.</li>
     <li><b>Pas <code>/data</code></b>: les médias se re-téléchargent et pèsent trop lourd pour une archive quotidienne. Pour eux, un rsync ou un NAS fait mieux l'affaire.</li>
   </ul>
-  <div class="prop-old" data-prop="137">
-  <p>Les caches et les transcodes de Jellyfin et Plex, ainsi que les logs, sont exclus d'office.</p>
-  </div>
-  <div class="prop-new" data-prop="137">
   <p>Les logs sont laissés de côté d'office: les dossiers <code>logs</code> (vidés, pas retirés) et les fichiers <code>*.log</code>. Chaque app peut en écarter davantage dans son manifest, comme les caches et les transcodes de Jellyfin et de Plex, qui se refont seuls. <code>backup.exclude</code> ajoute tes propres motifs.</p>
-  </div>
 
   <h2 id="fr-how">Comment ça se passe</h2>
   <div class="prop-old" data-prop="113">
@@ -46,7 +41,6 @@
   </ul>
   </div>
 
-  <div class="prop-new" data-prop="138">
   <h2 id="fr-where">Où sont les archives</h2>
   <p>Une archive par dossier et par sauvegarde, rangées à plat dans <code>/backups</code>:</p>
   <pre><span class="p">$</span> sudo ls -l /backups
@@ -60,7 +54,6 @@
     <li><b><code>keep</code></b> compte par app et par destination: avec <code>keep: 7</code>, les 7 dernières archives de chaque app restent dans chaque destination. Une sauvegarde d'une seule app (<code>--app</code>) ne fait pas disparaître les autres.</li>
     <li><b>Une archive en cours</b> s'écrit d'abord sous un nom caché (<code>.radarr-....partial</code>), renommée à la fin: une archive à moitié écrite ne se confond jamais avec une vraie.</li>
   </ul>
-  </div>
 
   <div class="prop-new" data-prop="139">
   <h2 id="fr-sftp">Une destination SFTP</h2>
@@ -150,12 +143,7 @@
     <li><b><code>/opt/&lt;app&gt;</code></b>, for every installed app.</li>
     <li><b>Not <code>/data</code></b>: media can be downloaded again and is too heavy for a daily archive. For media, rsync or a NAS does a better job.</li>
   </ul>
-  <div class="prop-old" data-prop="137">
-  <p>Jellyfin and Plex caches and transcodes, and logs, are always excluded.</p>
-  </div>
-  <div class="prop-new" data-prop="137">
   <p>Logs are always left out: <code>logs</code> folders (emptied, not removed) and <code>*.log</code> files. Each app can leave out more in its manifest, like the caches and transcodes of Jellyfin and Plex, which rebuild themselves. <code>backup.exclude</code> adds your own patterns.</p>
-  </div>
 
   <h2 id="en-how">How it works</h2>
   <div class="prop-old" data-prop="113">
@@ -186,7 +174,6 @@
   </ul>
   </div>
 
-  <div class="prop-new" data-prop="138">
   <h2 id="en-where">Where the archives are</h2>
   <p>One archive per folder and per backup, stored flat in <code>/backups</code>:</p>
   <pre><span class="p">$</span> sudo ls -l /backups
@@ -200,7 +187,6 @@
     <li><b><code>keep</code></b> counts per app and per destination: with <code>keep: 7</code>, the last 7 archives of each app stay in each destination. Backing up a single app (<code>--app</code>) never makes the others disappear.</li>
     <li><b>An archive in progress</b> is first written under a hidden name (<code>.radarr-....partial</code>), renamed at the end: a half-written archive is never mistaken for a real one.</li>
   </ul>
-  </div>
 
   <div class="prop-new" data-prop="139">
   <h2 id="en-sftp">An SFTP destination</h2>
