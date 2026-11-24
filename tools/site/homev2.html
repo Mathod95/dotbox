@@ -140,7 +140,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .frame { width: 100%; padding: clamp(16px, 3vw, 36px); border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); }
 .logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
 .logos a { display: grid; justify-items: center; gap: 10px; padding: 14px 6px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; }
-.logos .pic { --pic: 40px; width: 40px; height: 40px; }
+.logos .pic { --pic: 48px; width: 48px; height: 48px; }
 .logos a:hover { background: #0c1f18; color: var(--lit); }
 
 /* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
@@ -291,9 +291,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
   <div class="sep" aria-hidden="true"></div>
 
   <section class="list" data-i18n-label="apps" id="list">
-    <div class="bar">
-      <h2 data-i18n="apps"></h2>
-    </div>
     <section class="about">
     <div class="about-head">
       <canvas class="pic catPic" width="140" height="140" aria-hidden="true"></canvas>
@@ -469,8 +466,10 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
         var k = ((y * cell + yy) * S + (x * cell + xx)) * 4, a = data[k + 3] / 255;
         R += data[k] * a; G += data[k + 1] * a; B += data[k + 2] * a; A += a;
       }
-      var col = UNLIT;
-      if (A / (cell * cell) > 0.35) {
+      // seulement les points du logo: rien autour, pas de points éteints (D149)
+      if (A / (cell * cell) <= 0.35) continue;
+      var col;
+      {
         var rr = R / A, gg = G / A, bb = B / A;
         // un logo presque noir disparaîtrait sur le fond sombre: il passe en points allumés
         if (rr + gg + bb < 120) { rr = 242; gg = 240; bb = 233; }
