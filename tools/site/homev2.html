@@ -136,23 +136,12 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .inc h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--lit); }
 .inc p { margin: 0; font-size: 14px; color: var(--label); }
 
-/* #182 · les apps, en plus léger: le logo et le nom, toute la tuile mène à sa page */
-.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 10px; }
-.wall a { display: grid; justify-items: center; gap: 10px; padding: 18px 10px 14px; border: 1px solid var(--line2); border-radius: 14px; background: var(--panel); color: var(--lit); text-decoration: none; text-align: center; }
-.wall a:hover { border-color: var(--accent); }
-.wall .pic { --pic: 48px; width: 48px; height: 48px; }
-.wall b { font-size: 15px; font-weight: 600; }
-.wall span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-.wall-more { justify-self: center; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
-.wall-more:hover { color: var(--lit); }
-
-/* #183 · les apps dans un cadre: les logos en gris, en couleur au survol */
+/* les apps dans un cadre: leurs logos, un fond émeraude au survol (D149) */
 .frame { width: 100%; padding: clamp(16px, 3vw, 36px); border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); }
 .logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
 .logos a { display: grid; justify-items: center; gap: 10px; padding: 14px 6px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; }
-.logos .pic { --pic: 40px; width: 40px; height: 40px; filter: grayscale(1); opacity: .55; transition: filter .15s, opacity .15s; }
+.logos .pic { --pic: 40px; width: 40px; height: 40px; }
 .logos a:hover { background: #0c1f18; color: var(--lit); }
-.logos a:hover .pic { filter: none; opacity: 1; }
 
 /* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
 .sep { height: 10px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.6px) center / 22px 10px repeat-x;
@@ -305,21 +294,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     <div class="bar">
       <h2 data-i18n="apps"></h2>
     </div>
-    <div class="prop-old" data-prop="182">
-    <div class="grid" id="appGrid"></div>
-    </div>
-    <div class="prop-new" data-prop="182">
-    <section class="about">
-    <div class="about-head">
-      <canvas class="pic catPic" width="140" height="140" aria-hidden="true"></canvas>
-      <div class="head"><h2>Catalog</h2><span class="status" style="--c: var(--accent)"><span class="catN"></span> apps</span><span class="ver">__SPOTTED__ spotted</span></div>
-    </div>
-    <p class="about-lead">Deploy your apps in one command or one click. From media servers to download clients, monitoring tools and VPN, everything your server needs, with no complex setup.</p>
-    <div class="wall" id="appWall"></div>
-    <a class="wall-more" href="__DOC_APPS__#spotted">__SPOTTED__ more apps spotted, see the list →</a>
-    </section>
-    </div>
-    <div class="prop-new" data-prop="183">
     <section class="about">
     <div class="about-head">
       <canvas class="pic catPic" width="140" height="140" aria-hidden="true"></canvas>
@@ -327,9 +301,8 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     </div>
     <p class="about-lead">Deploy your apps in one command or one click. From media servers to download clients, monitoring tools and VPN, everything your server needs, with no complex setup.</p>
     <div class="frame"><div class="logos" id="appLogos"></div></div>
-    <a class="wall-more" href="__DOC_APPS__">See all the apps →</a>
+    <div class="links"><a class="mock" href="__DOC_APPS__">See all the apps →</a></div>
     </section>
-    </div>
   </section>
 
   <footer class="footer">
@@ -547,17 +520,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     });
   }
 
-  // ---------- #182 · les apps en plus léger: le logo, le nom et le rôle, la tuile mène à sa page
-  function renderWall() {
-    var w = document.getElementById("appWall"); w.innerHTML = "";
-    CATALOG.filter(function (a) { return !a.core; }).forEach(function (a) {
-      var t = el("a"); t.href = a.doc;
-      t.appendChild(appIcon(a.pic)); t.appendChild(el("b", "", a.name)); t.appendChild(el("span", "", tr(a.role)));
-      w.appendChild(t);
-    });
-  }
-
-  // ---------- #183 · les logos en gris dans un cadre, en couleur au survol
+  // ---------- les apps du catalogue dans un cadre, leurs logos (D149)
   function renderLogos() {
     var apps = CATALOG.filter(function (a) { return !a.core; }), w = document.getElementById("appLogos"); w.innerHTML = "";
     apps.forEach(function (a) {
@@ -625,26 +588,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       role: { en: "VPN" },
       text: { en: "A WireGuard VPN to the server, with a web page to add your devices." } }
   ];
-  function renderApps() {
-    var grid = document.getElementById("appGrid"); grid.innerHTML = "";
-    CATALOG.forEach(function (a) {
-      var art = el("article", "card");
-      var row = el("div", "row"); row.appendChild(appIcon(a.pic));
-      var head = el("div", "head"); head.appendChild(el("h3", "", a.name)); head.appendChild(el("span", "tag2", tr(a.role))); row.appendChild(head);
-      art.appendChild(row);
-      var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
-      var foot = el("div", "foot");
-      foot.appendChild(el("span", "go", a.sub ? a.sub + ".example.com" : "*.example.com"));
-      if (a.doc) { var d = el("a", "", "Docs"); d.href = a.doc; foot.appendChild(d); }
-      var link = el("a");
-      if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " · GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
-      else { link.href = a.docs; link.textContent = "Docs ↗"; }
-      link.target = "_blank"; link.rel = "noopener";
-      foot.appendChild(link);
-      art.appendChild(foot);
-      grid.appendChild(art);
-    });
-  }
 
   // ---------- langue
   function applyLang() {
@@ -653,7 +596,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
     document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
-    stats(); renderApps(); renderIncluded(); renderWall(); renderLogos();
+    stats(); renderIncluded(); renderLogos();
     var nApps = CATALOG.filter(function (a) { return !a.core; }).length;
     document.querySelectorAll(".catPic").forEach(function (cv) { paint(cv, "catalog", ACC); });
     document.querySelectorAll(".catN").forEach(function (e) { e.textContent = nApps; });
