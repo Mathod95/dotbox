@@ -24,17 +24,6 @@
 
   <h2 id="fr-images">D'où viennent les images</h2>
   <p>Dot Box prend <b>l'image officielle du projet</b>, quand il en publie une et la maintient. Sinon, celle de <b>linuxserver.io</b>. Toujours à une <b>version précise</b>, jamais <code>latest</code>: une mise à jour est un changement voulu et testé, jamais une surprise au redémarrage.</p>
-  <div class="prop-old" data-prop="54">
-  <div class="table-scroll"><table>
-    <thead><tr><th>Composant</th><th>Image</th><th>Pourquoi</th></tr></thead>
-    <tbody>
-      <tr><td>Traefik, Authelia, qui</td><td>officielles</td><td>Les projets publient leur image.</td></tr>
-      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>Le projet Servarr ne publie pas d'image officielle. Son wiki renvoie vers linuxserver et hotio.</td></tr>
-      <tr><td>Socket proxy de Traefik</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
-    </tbody>
-  </table></div>
-  </div>
-  <div class="prop-new" data-prop="54">
   <div class="table-scroll"><table>
     <thead><tr><th>Composant</th><th>Image</th><th>Pourquoi</th></tr></thead>
     <tbody>
@@ -43,7 +32,6 @@
       <tr><td>Socket proxy de Traefik et de CrowdSec</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
     </tbody>
   </table></div>
-  </div>
   <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
 
   <h2 id="fr-catalog">Les apps du catalogue</h2>
@@ -93,17 +81,6 @@
 
   <h2 id="en-images">Where the images come from</h2>
   <p>Dot Box uses <b>the project's official image</b>, when it publishes and maintains one. Otherwise, the <b>linuxserver.io</b> one. Always at a <b>precise version</b>, never <code>latest</code>: an update is a deliberate, tested change, never a surprise on restart.</p>
-  <div class="prop-old" data-prop="54">
-  <div class="table-scroll"><table>
-    <thead><tr><th>Component</th><th>Image</th><th>Why</th></tr></thead>
-    <tbody>
-      <tr><td>Traefik, Authelia, qui</td><td>official</td><td>The projects publish their image.</td></tr>
-      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>The Servarr project does not publish an official image. Its wiki points to linuxserver and hotio.</td></tr>
-      <tr><td>Traefik's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
-    </tbody>
-  </table></div>
-  </div>
-  <div class="prop-new" data-prop="54">
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Image</th><th>Source</th></tr></thead>
     <tbody>
@@ -131,7 +108,6 @@
     </tbody>
   </table></div>
   <p>Only two cases use linuxserver. Prowlarr, Radarr and Sonarr: the Servarr project does not publish an official image, and its wiki points to linuxserver and hotio. The socket proxy: a small read-only proxy in front of the Docker socket, which Traefik and CrowdSec read instead of the socket itself.</p>
-  </div>
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
