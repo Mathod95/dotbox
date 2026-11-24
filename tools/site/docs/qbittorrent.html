@@ -59,7 +59,7 @@
       <tr><td><code>AuthSubnetWhitelist</code></td><td>le réseau <code>dotbox</code></td><td>Pas de mot de passe pour ce réseau, comme Radarr et Sonarr: Authelia vérifie déjà qui se connecte depuis Internet, et Radarr et Sonarr s'y relient sans mot de passe.</td></tr>
       <tr><td><code>ReverseProxySupportEnabled</code></td><td><code>false</code></td><td>qBittorrent voit l'adresse de Traefik, dans le réseau <code>dotbox</code>, et non celle de ton navigateur, qui ne serait jamais dans la liste.</td></tr>
       <tr><td><code>HostHeaderValidation</code>, <code>ServerDomains</code></td><td><code>true</code>, <code>qbittorrent.example.com;qbittorrent;localhost</code></td><td>qBittorrent refuse les autres noms d'hôte: l'adresse de l'app, le nom du container pour les autres apps, et <code>localhost</code> pour son healthcheck.</td></tr>
-      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Gardée, contrairement à Saltbox: une page d'un autre site ne peut pas piloter qBittorrent à travers ton navigateur.</td></tr>
+      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Gardée: une page d'un autre site ne peut pas piloter qBittorrent à travers ton navigateur.</td></tr>
     </tbody>
   </table></div>
   <p>Dans le compose: le port 56881 publié en TCP et UDP, aucun port web, <code>/data</code> au même chemin que sur le serveur (pour les hardlinks), <code>PUID</code> et <code>PGID</code> de ton utilisateur, <code>no-new-privileges</code>, et un redémarrage automatique. Le bouncer de CrowdSec bloque aussi les IP bannies sur le port 56881.</p>
@@ -125,7 +125,7 @@
       <tr><td><code>AuthSubnetWhitelist</code></td><td>the <code>dotbox</code> network</td><td>No password for this network, like Radarr and Sonarr: Authelia already checks who connects from the Internet, and Radarr and Sonarr connect to it with no password.</td></tr>
       <tr><td><code>ReverseProxySupportEnabled</code></td><td><code>false</code></td><td>qBittorrent sees Traefik's address, in the <code>dotbox</code> network, not your browser's, which would never be in the list.</td></tr>
       <tr><td><code>HostHeaderValidation</code>, <code>ServerDomains</code></td><td><code>true</code>, <code>qbittorrent.example.com;qbittorrent;localhost</code></td><td>qBittorrent refuses other host names: the app's address, the container name for the other apps, and <code>localhost</code> for its healthcheck.</td></tr>
-      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Kept, unlike Saltbox: a page from another site cannot drive qBittorrent through your browser.</td></tr>
+      <tr><td><code>CSRFProtection</code></td><td><code>true</code></td><td>Kept: a page from another site cannot drive qBittorrent through your browser.</td></tr>
     </tbody>
   </table></div>
   <p>In the compose: port 56881 published in TCP and UDP, no web port, <code>/data</code> at the same path as on the server (for hardlinks), your user's <code>PUID</code> and <code>PGID</code>, <code>no-new-privileges</code>, and an automatic restart. The CrowdSec bouncer also blocks banned IPs on port 56881.</p>

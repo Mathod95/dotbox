@@ -32,7 +32,7 @@
       <tr><td>Socket proxy de Traefik et de CrowdSec</td><td>linuxserver</td><td>Un petit proxy en lecture seule devant le socket Docker.</td></tr>
     </tbody>
   </table></div>
-  <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures. Saltbox, lui, prend Radarr chez hotio, sans version fixée.</p>
+  <p>Entre linuxserver et hotio, Dot Box choisit linuxserver par cohérence: une seule famille d'images avec les mêmes conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), des versions précises reconstruites régulièrement avec les correctifs de sécurité (<code>7.0.3.10918-ls328</code>: la version de l'app, puis le numéro de reconstruction), et l'image la plus utilisée. Le revers: il faut attendre que linuxserver reconstruise l'image après une nouvelle version, en général quelques heures.</p>
 
   <h2 id="fr-catalog">Les apps du catalogue</h2>
   <div class="table-scroll"><table>
@@ -113,7 +113,7 @@
       <li>The socket proxy: a small read-only proxy in front of the Docker socket, which Traefik and CrowdSec read instead of the socket itself.</li>
     </ul>
   </div>
-  <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
+  <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
   <div class="table-scroll"><table>

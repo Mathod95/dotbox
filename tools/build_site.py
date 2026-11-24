@@ -4,7 +4,7 @@
 - tools/site/index.html : la homePage (accueil) ;
 - tools/site/releases.html : la releasePage, données dans tools/site/releases.json ;
 - tools/site/roadmap.html : la roadmap (gabarit de la releasePage), données dans tools/site/roadmap.json ;
-- tools/site/docs/ : la documentation (architecture de docs.saltbox.dev) :
+- tools/site/docs/ : la documentation :
   layout.html (en-tête, barre de navigation à gauche, article, pied de page)
   et une page par fichier (basics.html, cli.html), découpée en sections
   <!-- LEDE -->, <!-- CONTENT -->, <!-- CSS --> et <!-- JS -->.

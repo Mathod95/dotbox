@@ -16,7 +16,7 @@ volumes:
   - /data:/data
 data:
   - media/movies
-# Comme Saltbox (Journal, N11): la connexion confiée à Authelia, les noms acceptés (l'adresse
+# Journal, N11: la connexion confiée à Authelia, les noms acceptés (l'adresse
 # de l'app et le nom de son container) et le réseau de Traefik, dont Radarr croit les en-têtes
 # X-Forwarded-*.
 settings:
