@@ -15,6 +15,10 @@
         {
           "fr": "Manifest: des réglages en YAML (`format: yaml`), des clés du premier niveau, posées avant le premier démarrage en gardant les autres",
           "en": "Manifest: YAML settings (`format: yaml`), top-level keys, set before the first start while keeping the others"
+        },
+        {
+          "fr": "CLI: le raccourci `db`, un lien vers `dotbox` posé par `dotbox init` seulement si aucune commande `db` n'existe, et `dotbox completion` déclaré pour les deux noms",
+          "en": "CLI: the `db` shortcut, a link to `dotbox` set up by `dotbox init` only if no `db` command exists, and `dotbox completion` declared for both names"
         }
       ],
       "changed": [

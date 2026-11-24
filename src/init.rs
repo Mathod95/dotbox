@@ -283,7 +283,9 @@ fn steps(args: &Args) -> Result<(), String> {
     let planned = backup::setup_timer(&backup::Settings::of(&cfg)?)?;
     // le message d'accueil SSH et le doctor de nuit (étape 17, D86, D89)
     let welcome = motd::setup(&motd::Settings::of(&cfg)?)?;
-    ui::done(&format!("{service}, {planned}, {welcome}"));
+    // le raccourci db (D143), seulement si aucune commande db n'existe
+    let short = crate::shortcut::setup();
+    ui::done(&format!("{service}, {planned}, {welcome}, {short}"));
 
     // la carte de fin (D26, D32, D37)
     let docker_state =

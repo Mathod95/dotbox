@@ -3452,6 +3452,18 @@ cargo test`,
       does: "Mathod95: « On verra plus tard [l'essai de code-server sur le serveur], mets à jour les docs de code-server, fais qBittorrent et mets à jour sa doc aussi! ». Lu avant d'écrire, dans qbittorrent/docker-qbittorrent-nox (Dockerfile, entrypoint.sh, Readme.md): Alpine, avec curl et tzdata, tini puis entrypoint.sh, qui démarre en root, change l'uid et le gid de qbtUser pour PUID et PGID, donne /config à qbtUser, puis lance qBittorrent avec doas -u qbtUser (root qui descend: no-new-privileges ne le gêne pas, à vérifier sur le serveur). Profil dans /config: les réglages dans qBittorrent/config/qBittorrent.conf, écrits par l'image seulement s'il manque, les torrents (BT_backup) et les logs dans qBittorrent/data. Les tags: 5.3.0-2 (libtorrent 2, comme avant), 5.3.0-lt1-2 (libtorrent 1.2), latest et alpha.",
       effect: "Rien sur le serveur. min_dotbox reste 0.0.4: rien de nouveau dans le moteur. La règle de Renovate: sans elle, Renovate prendrait le « -2 » pour une variante et ne proposerait jamais 5.3.1-1. Les logs restent hors des sauvegardes (le motif */logs/* couvre qBittorrent/data/logs). Le serveur de test (qBittorrent de linuxserver) est à réinstaller: Q85. Reste un exemple de version linuxserver dans la maquette de la page Web UI (5.3.0_v2.1.2-ls487), des données d'exemple.",
       result: "cargo test: 169 tests passent, dont qbittorrent_compose_publishes_its_peer_port (le compose attendu, avec la nouvelle image) et qbittorrent_settings_are_the_expected_ones (le même qBittorrent.conf). renovate.json se lit (JSON valide).",
+      undo: "git revert du commit." },
+    { id: "J303", time: "13:10", status: "fait", where: "PC", kind: "ecriture",
+      title: "D143: le raccourci db, codé sur le PC",
+      cmd: `src/shortcut.rs (nouveau): setup() pose /usr/local/bin/db vers /usr/local/bin/dotbox, completion() déclare db
+src/init.rs: l'étape Service appelle shortcut::setup() ; src/main.rs: dotbox completion passe par shortcut::completion ; src/upgrade.rs: BIN public
+cargo fmt --check ; cargo clippy --all-targets -- -D warnings ; cargo test
+ln -s target/debug/dotbox db ; db --help ; db version ; bash -c 'source <(db completion bash); complete -p db dotbox'`,
+      does: "Mathod95: « Code, et modifie 177 et 178 par la suite, je les validerai à ce moment-là ». Le lien est posé à l'étape Service de init, seulement si /usr/local/bin/db n'existe pas et qu'aucun db n'est dans le PATH de root (/usr/local/sbin, /usr/local/bin, /usr/sbin, /usr/bin, /sbin, /bin). Un lien vers dotbox déjà là: vérifié. Un autre fichier ou un lien vers autre chose: jamais écrasé. Le raccourci ne fait jamais échouer init. La complétion: bash, db ajouté à la ligne complete (la fonction _dotbox reconnaît la commande par son premier mot), zsh, #compdef et compdef, fish, complete -c db --wraps dotbox.",
+      effect: "Rien sur le serveur. Le résumé de l'étape Service de init finit par « db shortcut », ou « db taken, no shortcut ». #177 mise à jour (plus « Coming later », ce que dit init quand db est pris), #178 inchangée. Releases (next) et Roadmap (en cours) à jour. À essayer sur le serveur de test avec le reste.",
+      result: `cargo fmt et clippy: rien à redire. cargo test: 171 tests passent, dont free_ours_or_taken (libre, le nôtre, un lien vers ailleurs, un vrai fichier, un db ailleurs dans le PATH) et completion_for_both_names (bash, zsh, fish)
+db --help: l'aide groupée « Dot Box 0.0.6 », Usage dotbox. Une erreur de clap écrit le nom tapé: « Usage: db list [OPTIONS] [SEARCH] »
+complete -p: « complete -o bashdefault -o default -o nosort -F _dotbox db » et la même pour dotbox`,
       undo: "git revert du commit." }
   ];
 
@@ -5235,7 +5247,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       refs: "Q9, D12, V2, Q89" },
     { t: "Le raccourci db, un lien posé par dotbox init",
       p: "Mathod95, le 24 novembre 2026, sur Q90: « Il n'y a pas moyen de faire autrement, directement dans le binaire? Sinon, faisons ta recommandation! ». Réponse de Claude: non, le shell ne trouve une commande que par un fichier de ce nom dans le PATH, un programme ne peut pas ajouter un nom autrement. Mais c'est le binaire qui pose ce fichier: dotbox init crée le lien, sans étape ni script en plus (install.sh lance init).",
-      reco: "Choix de Mathod95: la première option de Q90, ajustée. dotbox init crée /usr/local/bin/db, un lien vers dotbox, seulement si db est libre (sinon un avertissement, rien d'écrasé), et le recrée s'il manque. Un lien et pas un lien dur: dotbox upgrade remplace le fichier dotbox, un lien dur garderait l'ancien. La complétion pour les deux noms. La doc écrit toujours dotbox. En propositions, pas encore codé: #177 (page CLI, la section The db shortcut) et #178 (Installation, une ligne dans ce que fait init). Une feature dans la Roadmap (à faire).",
+      reco: "Choix de Mathod95: la première option de Q90, ajustée. dotbox init crée /usr/local/bin/db, un lien vers dotbox, seulement si db est libre (sinon un avertissement, rien d'écrasé), et le recrée s'il manque. Un lien et pas un lien dur: dotbox upgrade remplace le fichier dotbox, un lien dur garderait l'ancien. La complétion pour les deux noms. La doc écrit toujours dotbox. Codé le même jour (J303). En propositions: #177 (page CLI, la section The db shortcut) et #178 (Installation, une ligne dans ce que fait init). Une feature dans la Roadmap (à faire).",
       refs: "Q90, D79" },
   ];
 
@@ -5997,7 +6009,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "17": [291, 292, 293, 294, 295, 296, 297],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
-    "14": [213, 214, 215, 216, 217, 218, 298],
+    "14": [213, 214, 215, 216, 217, 218, 298, 303],
     "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],

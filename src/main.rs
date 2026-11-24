@@ -27,6 +27,7 @@ mod restore;
 mod rootcmd;
 mod secrets;
 mod serve;
+mod shortcut;
 mod status;
 mod sync;
 mod system;
@@ -441,8 +442,9 @@ fn main() -> ExitCode {
         Command::Version => client::version(json),
         Command::Upgrade { verbose } => upgrade::run(verbose),
         Command::Completion { shell } => {
-            use clap::CommandFactory;
-            clap_complete::generate(shell, &mut Cli::command(), "dotbox", &mut std::io::stdout());
+            use std::io::Write;
+            let script = shortcut::completion(shell);
+            let _ = std::io::stdout().write_all(script.as_bytes());
             Ok(())
         }
         Command::Authelia { action } => authelia_cmd::run(&action),

@@ -7,7 +7,7 @@ use crate::{apps, catalog, crowdsec, system, ui};
 
 pub const REPO: &str = "Mathod95/dotbox";
 const ASSET: &str = "dotbox-linux-amd64";
-const BIN: &str = "/usr/local/bin/dotbox";
+pub const BIN: &str = "/usr/local/bin/dotbox";
 const PREVIOUS: &str = "/usr/local/bin/dotbox.previous";
 
 /// « v0.0.5 » est-il plus récent que « 0.0.4 »?
