@@ -281,8 +281,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       apps: "Les apps"
     },
     en: {
-      tagline: "Self-hosted app manager<i>●</i>Docker Compose, minimal by design, no subscription, just what you need.",
-      sRust: "Rust binary", sApi: "API", sApps: "apps", sCompose: "compose",
+      tagline: "Self-hosted app manager<i>●</i>Docker Compose, minimal by design, no subscription.",
+      sRust: "Rust binary", sApi: "API", sWeb: "web UI", sCli: "CLI", sApps: "apps", sCompose: "compose",
       showLabel: "Interface preview", onServer: "On your server", showHint: "Pick an app that isn't installed, then install it.",
       mockup: "Mockup · sample data", job: "Install job", reset: "Reset",
       run: "Running", off: "Absent", busy: "Installing", inst: "Install ", already: "Already installed",
@@ -422,7 +422,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   // ---------- 2 · chiffres clés
   function stats() {
     var ul = document.getElementById("stats"); ul.innerHTML = "";
-    [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["100%", t("sCompose")]].forEach(function (s) {
+    [["1", t("sRust")], ["1", t("sApi")], ["1", t("sWeb")], ["1", t("sCli")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")]].forEach(function (s) {
       var li = el("li"); li.appendChild(el("b", "", s[0])); li.appendChild(document.createTextNode(s[1])); ul.appendChild(li);
     });
   }
