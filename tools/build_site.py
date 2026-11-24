@@ -33,6 +33,9 @@ HOME_TEMPLATE = SITE_SRC / "index.html"
 HOME_PROPOSAL = SITE_SRC / "homev2.html"
 # les logos des apps (D145), copiés tels quels dans site/icons/
 ICONS = SITE_SRC / "icons"
+# la démo de l'interface web (D148): les fichiers de web/ tels quels, avec une fausse API d'exemple
+WEB = ROOT / "web"
+UI_DEMO = SITE_SRC / "ui-demo"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
 RELEASES_DATA = SITE_SRC / "releases.json"
 ROADMAP_TEMPLATE = SITE_SRC / "roadmap.html"
@@ -260,6 +263,14 @@ def site():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(document(html), encoding="utf-8")
+    demo = SITE / "ui-demo"
+    demo.mkdir(parents=True, exist_ok=True)
+    page = (WEB / "index.html").read_text(encoding="utf-8").replace("{version}", "0.0.6").replace("{user}", "admin")
+    page = page.replace('<script src="app.js', '<script src="demo-api.js"></script>\n<script src="app.js', 1)
+    (demo / "index.html").write_text(page, encoding="utf-8")
+    for f in ("app.css", "app.js"):
+        shutil.copyfile(WEB / f, demo / f)
+    shutil.copyfile(UI_DEMO / "demo-api.js", demo / "demo-api.js")
     (SITE / "icons").mkdir(parents=True, exist_ok=True)
     for f in sorted(ICONS.glob("*.svg")):
         shutil.copyfile(f, SITE / "icons" / f.name)

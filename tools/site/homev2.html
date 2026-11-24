@@ -80,6 +80,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
 
 /* 3 · Showcase: l'interface de Dot Box, en maquette interactive */
 .showcase { display: grid; gap: 16px; }
+/* la vraie interface web (web/), sur des données d'exemple (D148) */
+.ui { display: block; width: 100%; height: min(78vh, 760px); border: 0; border-radius: clamp(6px, .8vw, 12px); background: #080808; }
 .edge { padding: clamp(8px, 1.2vw, 18px); border-radius: clamp(12px, 1.6vw, 24px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
 .screen { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; padding: clamp(12px, 1.8vw, 22px); border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; }
 .scr-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
@@ -197,21 +199,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       <p class="hint" data-i18n="showHint"></p>
     </div>
     <div class="edge">
-      <div class="screen">
-        <div class="scr-head">
-          <span class="dot">DOT BOX</span>
-          <span class="ex" data-i18n="mockup"></span>
-        </div>
-        <div class="tiles" id="tiles" role="group" aria-label="Apps"></div>
-        <div class="log" aria-live="polite">
-          <div class="log-h"><span data-i18n="job"></span><b id="logApp">sonarr</b></div>
-          <ol id="logList"></ol>
-          <div class="log-f">
-            <button class="btn go" id="btnInstall" type="button"></button>
-            <button class="btn" id="btnReset" type="button" data-i18n="reset"></button>
-          </div>
-        </div>
-      </div>
+      <iframe class="ui" src="__HOME__ui-demo/" title="The Dot Box web interface, on sample data" loading="lazy" sandbox="allow-scripts allow-modals allow-popups allow-popups-to-escape-sandbox"></iframe>
     </div>
   </section>
 
@@ -283,7 +271,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     en: {
       tagline: "Self-hosted app manager<i>●</i>Docker Compose, minimal by design, no subscription.",
       sRust: "Rust binary", sApi: "API", sSpotted: "spotted apps", sApps: "apps", sCompose: "compose",
-      showLabel: "Interface preview", onServer: "On your server", showHint: "Pick an app that isn't installed, then install it.",
+      showLabel: "The web interface", onServer: "On your server", showHint: "The real web interface, on sample data. Install an app, read its logs, change a setting.",
       mockup: "Mockup · sample data", job: "Install job", reset: "Reset",
       run: "Running", off: "Absent", busy: "Installing", inst: "Install ", already: "Already installed",
       boxStatus: "In development",
@@ -506,92 +494,6 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     });
   }
 
-  // ---------- 3 · maquette: apps et installation simulée
-  var APPS = [
-    { slug: "traefik", name: "Traefik", on: true },
-    { slug: "authelia", name: "Authelia", on: true },
-    { slug: "jellyfin", name: "Jellyfin", on: true },
-    { slug: "qbittorrent", name: "qBittorrent", on: true },
-    { slug: "radarr", name: "Radarr", on: true },
-    { slug: "sonarr", name: "Sonarr", on: false },
-    { slug: "prowlarr", name: "Prowlarr", on: false },
-    { slug: "seerr", name: "Seerr", on: false }
-  ];
-  var START = APPS.map(function (a) { return a.on; });
-  var IMG = { sonarr: "lscr.io/linuxserver/sonarr", prowlarr: "lscr.io/linuxserver/prowlarr", seerr: "ghcr.io/seerr-team/seerr" };
-  // relier les apps est une commande à part, pas encore codée (D45): l'installation ne le fait pas
-  var WIRE = {};
-  var selected = "sonarr", busy = null, timers = [];
-  var tilesEl = document.getElementById("tiles"), logEl = document.getElementById("logList"), btn = document.getElementById("btnInstall");
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function app(slug) { for (var i = 0; i < APPS.length; i++) if (APPS[i].slug === slug) return APPS[i]; }
-  function renderTiles() {
-    tilesEl.innerHTML = "";
-    APPS.forEach(function (a) {
-      var b = el("button", "tile" + (a.on ? "": " off")); b.type = "button";
-      b.setAttribute("aria-pressed", a.slug === selected);
-      b.appendChild(appIcon(a.slug));
-      b.appendChild(el("span", "name", a.name));
-      var state = busy === a.slug ? "busy": a.on ? "run": "off";
-      b.appendChild(el("span", "st " + state, t(state)));
-      b.addEventListener("click", function () { if (busy) return; selected = a.slug; renderTiles(); syncButton(); idleLog(); });
-      tilesEl.appendChild(b);
-    });
-  }
-  function syncButton() {
-    var a = app(selected);
-    document.getElementById("logApp").textContent = a.slug;
-    if (busy) { btn.disabled = true; btn.textContent = t("busy") + "…"; return; }
-    btn.disabled = a.on;
-    btn.textContent = a.on ? t("already"): t("inst") + a.name;
-  }
-  function line(kind, k, html) {
-    var li = el("li", kind || ""); li.appendChild(el("span", "k", k));
-    var s = el("span"); s.innerHTML = html; li.appendChild(s); logEl.appendChild(li);
-  }
-  function idleLog() {
-    logEl.innerHTML = "";
-    var a = app(selected);
-    if (a.on) {
-      line("ok", "●", "<em>" + a.slug + ".example.com</em>");
-      line("", "·", "/opt/" + a.slug + "/compose.yml");
-      line("", "·", "/opt/" + a.slug + "/compose.override.yml");
-    } else {
-      line("", "·", "image <em>" + IMG[a.slug] + "</em>");
-      line("", "·", "subdomain <em>" + a.slug + ".example.com</em>");
-      line("", "·", "sso <em>authelia</em>");
-    }
-  }
-  function install() {
-    var a = app(selected); if (a.on || busy) return;
-    busy = a.slug; renderTiles(); syncButton(); logEl.innerHTML = "";
-    var steps = [
-      ["", "›", "pull <em>" + IMG[a.slug] + "</em>"],
-      ["", "›", "mkdir /opt/" + a.slug + " (uid 1000)"],
-      ["", "›", "write /opt/" + a.slug + "/compose.yml"],
-      ["", "›", "label traefik <em>" + a.slug + ".example.com</em>"],
-      ["", "›", "middleware <em>authelia@docker</em>"],
-      ["", "›", "compose up -d"],
-      ["", "›", "wait healthy"]
-    ];
-    (WIRE[a.slug] || []).forEach(function (w) { steps.push(["wire", "⇄", "wire <em>" + w[0] + "</em> " + w[1]]); });
-    steps.push(["ok", "●", "<em>https://" + a.slug + ".example.com</em>"]);
-    var delay = reduce ? 0: 420;
-    steps.forEach(function (st, i) {
-      timers.push(setTimeout(function () {
-        line(st[0], st[1], st[2]);
-        if (i === steps.length - 1) { a.on = true; busy = null; renderTiles(); syncButton(); }
-      }, delay * (i + 1)));
-    });
-  }
-  function reset() {
-    timers.forEach(clearTimeout); timers = []; busy = null;
-    APPS.forEach(function (a, i) { a.on = START[i]; });
-    selected = "sonarr"; renderTiles(); syncButton(); idleLog();
-  }
-  btn.addEventListener("click", install);
-  document.getElementById("btnReset").addEventListener("click", reset);
-
   // ---------- langue
   function applyLang() {
     document.documentElement.lang = lang;
@@ -599,7 +501,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
     document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
-    stats(); renderApps(); renderTiles(); syncButton(); idleLog();
+    stats(); renderApps();
   }
   document.querySelectorAll(".lang .chip").forEach(function (b) {
     b.addEventListener("click", function () {
