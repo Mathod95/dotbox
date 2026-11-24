@@ -146,6 +146,20 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .wall-more { justify-self: center; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
 .wall-more:hover { color: var(--lit); }
 
+/* #183 · les apps dans un cadre: un grand titre, les logos en gris, en couleur au survol */
+.grow { display: grid; gap: 22px; justify-items: center; text-align: center; }
+.grow h3 { margin: 0; font-family: var(--brand); font-weight: 800; font-size: clamp(30px, 4vw, 50px); line-height: 1.1; letter-spacing: -.02em; color: var(--lit); }
+.grow h3 em { font-style: normal; color: var(--accent); }
+.grow .sub { margin: -8px 0 0; max-width: 680px; color: var(--label); font-size: 17px; }
+.frame { width: 100%; padding: clamp(16px, 3vw, 36px); border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); }
+.logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+.logos a { display: grid; justify-items: center; gap: 10px; padding: 14px 6px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; }
+.logos .pic { --pic: 40px; width: 40px; height: 40px; filter: grayscale(1); opacity: .55; transition: filter .15s, opacity .15s; }
+.logos a:hover { background: #0c1f18; color: var(--lit); }
+.logos a:hover .pic { filter: none; opacity: 1; }
+.grow .all { font-family: var(--brand); font-weight: 600; font-size: 16px; color: var(--accent); text-decoration: none; }
+.grow .all:hover { color: var(--lit); }
+
 /* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
 .sep { height: 10px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.6px) center / 22px 10px repeat-x;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
@@ -303,6 +317,14 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     <div class="prop-new" data-prop="182">
     <div class="wall" id="appWall"></div>
     <a class="wall-more" href="__DOC_APPS__#spotted">__SPOTTED__ more apps spotted, see the list →</a>
+    </div>
+    <div class="prop-new" data-prop="183">
+    <div class="grow">
+      <h3><em><span id="growN"></span> apps</em> and growing</h3>
+      <p class="sub">From media servers to downloads, monitoring and VPN, each one is a command or a click away.</p>
+      <div class="frame"><div class="logos" id="appLogos"></div></div>
+      <a class="all" href="__DOC_APPS__">See all the apps →</a>
+    </div>
     </div>
   </section>
 
@@ -530,6 +552,17 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     });
   }
 
+  // ---------- #183 · les logos en gris dans un cadre, en couleur au survol
+  function renderLogos() {
+    var apps = CATALOG.filter(function (a) { return !a.core; }), w = document.getElementById("appLogos"); w.innerHTML = "";
+    document.getElementById("growN").textContent = apps.length;
+    apps.forEach(function (a) {
+      var t = el("a"); t.href = a.doc;
+      t.appendChild(appIcon(a.pic)); t.appendChild(document.createTextNode(a.name));
+      w.appendChild(t);
+    });
+  }
+
   // ---------- 5 · catalogue des apps: une entrée par carte, tout le reste est commun
   var GH_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
   var CATALOG = [
@@ -616,7 +649,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
     document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
-    stats(); renderApps(); renderIncluded(); renderWall();
+    stats(); renderApps(); renderIncluded(); renderWall(); renderLogos();
   }
   document.querySelectorAll(".lang .chip").forEach(function (b) {
     b.addEventListener("click", function () {
