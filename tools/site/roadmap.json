@@ -203,16 +203,6 @@
       ]
     },
     {
-      "stage": "install",
-      "domain": "core",
-      "status": "planned",
-      "fr": "Core: `install.sh`, pouvoir choisir une version précédente au lieu de la dernière (à décider)",
-      "en": "Core: `install.sh`, being able to pick an earlier version instead of the latest (to be decided)",
-      "journal": [
-        "Q49"
-      ]
-    },
-    {
       "stage": "core",
       "domain": "core",
       "status": "progress",

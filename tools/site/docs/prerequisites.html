@@ -57,6 +57,12 @@
       <tr><td>Access</td><td>The root password for the install (<code>su -</code>), or root access over SSH if the hosting provider only gives that. Then your user with <code>sudo</code>.</td><td>An SSH key, no password</td></tr>
     </tbody>
   </table></div>
+  <div class="prop-new" data-prop="174">
+  <p><b>A system up to date.</b> A hosting provider's image is often several months old. Before the install, bring it up to date, then reboot if it asks for it:</p>
+  <pre><span class="p">#</span> apt update &amp;&amp; apt full-upgrade
+<span class="p">#</span> test -f /var/run/reboot-required &amp;&amp; reboot</pre>
+  <p><code>dotbox init</code> never updates the system and never reboots the server. Afterwards, <code>dotbox doctor</code> reports pending updates and when a reboot is needed.</p>
+  </div>
   <h3 id="en-network">Network</h3>
   <ul>
     <li><b>Ports 80 and 443</b> open to the internet and free, for Traefik: 80 is used to get certificates and to redirect to HTTPS, 443 serves the apps. <code>dotbox init</code> stops if another service uses them.</li>
