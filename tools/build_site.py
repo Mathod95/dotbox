@@ -70,6 +70,7 @@ DOCS = [
     {"slug": "cli", "name": "CLI", "dots": "CLI", "section": "References"},
     {"slug": "api", "name": "API", "dots": "API", "section": "References"},
     {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI", "section": "References"},
+    {"slug": "configuration", "name": "Configuration", "dots": "CONFIGURATION", "section": "References"},
     {"slug": "motd", "name": "MOTD", "dots": "MOTD", "section": "References"},
     {"slug": "paths", "name": "Paths", "dots": "PATHS", "section": "References"},
     {"slug": "security", "name": "Security", "dots": "SECURITY", "section": "References"},

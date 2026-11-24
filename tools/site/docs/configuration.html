@@ -1,0 +1,94 @@
+<!-- LEDE -->
+<p class="lede">Configuration<i>●</i>every setting of dotbox.yml, in one place.</p>
+
+<!-- CONTENT -->
+<div class="prop-new" data-prop="168">
+<article class="prose">
+  <p>Dot Box keeps its settings in a single file, <code>/opt/dotbox/dotbox.yml</code>. <code>dotbox init</code> writes it with your answers, <code>dotbox install</code> adds each app to it. A setting that is not in the file uses its default value. The file has no comments, apart from its first line: Dot Box may rewrite it whole.</p>
+
+  <h2 id="file">The whole file</h2>
+  <p>Every possible setting, with an example value:</p>
+  <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
+domain: example.com
+ca: letsencrypt
+user: admin
+apps:
+  radarr:
+    subdomain: radarr
+    access: two_factor
+  jellyfin:
+    subdomain: jellyfin
+    access: app
+    stopped: true
+backup:
+  schedule: daily 04:00
+  keep: 7
+  exclude:
+    - "*/cache/*"
+  destinations:
+    - local: /backups
+    - sftp: dotbox-backup@nas.example.com:/backups
+    - rclone: b2:dotbox-backups
+motd:
+  enabled: true
+  style: compact</pre>
+
+  <h2 id="change">Changing a setting</h2>
+  <pre><span class="p">$</span> dotbox config get
+<span class="p">$</span> dotbox config set backup.schedule "daily 02:30"
+<span class="p">$</span> dotbox diff
+<span class="p">$</span> dotbox sync</pre>
+  <ul>
+    <li><b><code>dotbox config set</code></b> checks the key and the value, then only writes the file. Nothing changes on the server yet.</li>
+    <li><b><code>dotbox diff</code></b> shows what would change, <b><code>dotbox sync</code></b> shows it again, asks for a confirmation, then applies it.</li>
+    <li><b>Lists</b> (<code>backup.exclude</code>, <code>backup.destinations</code>) are written by hand in the file, with <code>sudo</code>, then applied with <code>dotbox sync</code>.</li>
+    <li>The <a href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>web interface</a> does the same in its Settings view. See also <code>config</code>, <code>diff</code> and <code>sync</code> in the <a href="__DOC_CLI__"__DOC_CLI_TARGET__>CLI</a>.</li>
+  </ul>
+
+  <h2 id="server">The server</h2>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>domain</code></td><td>asked by <code>init</code></td><td>The domain of the server. Each app answers on a subdomain of it, <code>dotbox.example.com</code> is the web interface.</td><td><code>config set</code>, then <code>sync</code>. Every certificate is requested again, passkeys must be registered again, and everyone logs in again (see <a href="__DOC_RESTORE__"__DOC_RESTORE_TARGET__>Restore &amp; Migration</a>).</td></tr>
+      <tr><td><code>ca</code></td><td><code>letsencrypt</code></td><td>Where certificates come from: <code>letsencrypt</code>, or <code>letsencrypt-staging</code> for trials (certificates browsers do not trust, without Let's Encrypt's limits).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>user</code></td><td>asked by <code>init</code></td><td>The user that runs the apps and owns their files, with the same name in Authelia.</td><td>Not with <code>config set</code>: the apps' files belong to it.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="apps">The apps</h2>
+  <p>One entry per installed app, under <code>apps</code>. <code>dotbox install</code> adds it, <code>dotbox remove</code> takes it out.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>apps.&lt;app&gt;.subdomain</code></td><td>the app's name</td><td>The address of the app: <code>radarr</code> gives <code>radarr.example.com</code>. Lowercase letters, digits and <code>-</code>, never a name Dot Box keeps for itself (<code>auth</code>, <code>dotbox</code>...).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>apps.&lt;app&gt;.access</code></td><td>set by the app's manifest</td><td>Who gets in: <code>two_factor</code>, <code>app</code> or <code>public</code> (see <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>apps.&lt;app&gt;.stopped</code></td><td>absent</td><td><code>true</code> when you stopped the app with <code>dotbox stop</code>: <code>sync</code> and a reboot leave it stopped.</td><td><code>dotbox stop</code> and <code>dotbox start</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="backup">The backup</h2>
+  <p>Without a <code>backup</code> section, a daily backup at 04:00 into <code>/backups</code>, 7 kept. All the details: <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>backup.schedule</code></td><td><code>daily 04:00</code></td><td>When it runs: <code>off</code>, <code>hourly</code>, <code>daily HH:MM</code>, or a day and a time (<code>sunday 05:00</code>). A backup missed while the server was off runs at boot.</td><td><code>config set</code>, then <code>sync</code>, which rewrites the timer.</td></tr>
+      <tr><td><code>backup.keep</code></td><td><code>7</code></td><td>How many archives are kept, per app and per destination, from 1 to 365.</td><td><code>config set</code>, used from the next backup.</td></tr>
+      <tr><td><code>backup.exclude</code></td><td>none</td><td>Patterns left out of the archives, on top of the logs, relative to <code>/opt</code> (<code>*/cache/*</code>, <code>jellyfin/cache</code>).</td><td>By hand, then <code>sync</code>.</td></tr>
+      <tr><td><code>backup.destinations</code></td><td><code>- local: /backups</code></td><td>Where archives go, one or more: <code>local:</code> a folder of the server (outside <code>/opt</code> and <code>/data</code>), <code>sftp:</code> another machine over SSH, <code>rclone:</code> a remote of <code>/opt/dotbox/secrets/rclone.conf</code>.</td><td>By hand, then <code>sync</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="motd">The welcome message</h2>
+  <p>The message shown at each SSH login. All the details: <a href="__DOC_MOTD__"__DOC_MOTD_TARGET__>MOTD</a>.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>motd.enabled</code></td><td><code>true</code></td><td>Show the message, or not: <code>true</code> or <code>false</code>.</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>motd.style</code></td><td><code>compact</code></td><td>Its look: <code>compact</code>, <code>fastfetch</code>, <code>banner</code> or <code>ascii</code>.</td><td><code>config set</code>, shown from the next login. <code>dotbox motd</code> shows it right away.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="secrets">Secrets</h2>
+  <p>Passwords and keys never go in <code>dotbox.yml</code>. They live in <code>/opt/dotbox/secrets/</code>, readable by root only: the keys of Authelia and CrowdSec, your Authelia password kept for root, the backup key (<code>backup.key</code>), the SSH key of SFTP destinations, and <code>rclone.conf</code>. The whole <code>/opt/dotbox</code> folder is readable by root only: <code>dotbox config get</code> reads the settings without <code>sudo</code>, through the Dot Box service.</p>
+</article>
+</div>
