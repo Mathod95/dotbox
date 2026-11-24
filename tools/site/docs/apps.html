@@ -88,7 +88,7 @@
       <tr><td>Authelia</td><td><code>authelia/authelia</code></td><td>official</td></tr>
       <tr><td>CrowdSec</td><td><code>crowdsecurity/crowdsec</code></td><td>official</td></tr>
       <tr><td>rclone</td><td><code>rclone/rclone</code></td><td>official</td></tr>
-      <tr><td>Socket proxy of Traefik and CrowdSec</td><td><code>lscr.io/linuxserver/socket-proxy</code></td><td>linuxserver</td></tr>
+      <tr><td>Socket proxy</td><td><code>lscr.io/linuxserver/socket-proxy</code></td><td>linuxserver</td></tr>
       <tr><td>autobrr</td><td><code>ghcr.io/autobrr/autobrr</code></td><td>official</td></tr>
       <tr><td>code-server</td><td><code>codercom/code-server</code></td><td>official</td></tr>
       <tr><td>Jellyfin</td><td><code>jellyfin/jellyfin</code></td><td>official</td></tr>
@@ -107,7 +107,12 @@
       <tr><td>Wizarr</td><td><code>ghcr.io/wizarrrr/wizarr</code></td><td>official</td></tr>
     </tbody>
   </table></div>
+  <div class="prop-old" data-prop="167">
   <p>Only two cases use linuxserver. Prowlarr, Radarr and Sonarr: the Servarr project does not publish an official image, and its wiki points to linuxserver and hotio. The socket proxy: a small read-only proxy in front of the Docker socket, which Traefik and CrowdSec read instead of the socket itself.</p>
+  </div>
+  <div class="prop-new" data-prop="167">
+  <p class="note"><b>Only two cases use linuxserver.</b> Prowlarr, Radarr and Sonarr: the Servarr project does not publish an official image, and its wiki points to linuxserver and hotio. The socket proxy: a small read-only proxy in front of the Docker socket, which Traefik and CrowdSec read instead of the socket itself.</p>
+  </div>
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
   <h2 id="en-catalog">Apps in the catalog</h2>
