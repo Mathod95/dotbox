@@ -1364,6 +1364,16 @@
       "status": "progress",
       "fr": "Getting Started: raccourcis clavier, `n` page suivante, `p` précédente, `m` masque le menu de gauche, `?` la liste, désactivables",
       "en": "Getting Started: keyboard shortcuts, `n` next page, `p` previous, `m` hides the left menu, `?` the list, can be turned off"
+    },
+    {
+      "stage": "site",
+      "domain": "site",
+      "status": "progress",
+      "fr": "Site: la page d'accueil v3, centrée sur les fonctionnalités (la promesse, à la main contre Dot Box, douze fonctionnalités, les vraies apps du catalogue, une FAQ)",
+      "en": "Website: homepage v3, focused on features (the promise, by hand versus Dot Box, twelve features, the real catalog apps, a FAQ)",
+      "journal": [
+        "Q91"
+      ]
     }
   ]
 }

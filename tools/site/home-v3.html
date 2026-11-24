@@ -1,0 +1,737 @@
+<title>__TITLE__</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%276%27 fill=%27%2310b981%27/%3E%3C/svg%3E">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap">
+<style>
+/* homePage de Dot Box, v3 proposée (Q91, #179): gabarit docs/design/homePage.html (repris de xeneon),
+   mêmes valeurs que Dot Page. Zones dans l'ordre: Top, Hero, Showcase, Compare, Features, About, List,
+   FAQ, Footer. Un seul thème sombre. Montrée en local seulement (/home-v3/) tant qu'elle n'est pas validée. */
+:root {
+  --bg: #080808;
+  --panel: #0e0e0e;
+  --line: #1f1f1f;
+  --line2: #262626;
+  --lit: #f2f0e9;
+  --label: #b8b6b0;
+  --muted: #7d7b76;
+  --unlit: #1c1c1c;
+  --accent: #10b981;
+  --wip: #f5b942;
+  --spec: #a78bfa;
+  --design: #5aa9e6;
+  --idea: #6b6b6b;
+  --pic: 70px; /* taille de tous les pictogrammes 7 × 7 */
+  --mono: "Fira Code", "Cascadia Mono", Consolas, monospace;
+  --brand: "Segoe UI", Selawik, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); scrollbar-gutter: stable; }
+/* la barre de défilement de la page, dans l'accent du site (D96) */
+html { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg); }
+html::-webkit-scrollbar { width: 10px; }
+html::-webkit-scrollbar-track { background: var(--bg); }
+html::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; border: 3px solid var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--lit);
+  font-family: var(--brand); font-size: 16px; line-height: 1.55;
+  background-image: radial-gradient(circle, #161616 1.2px, transparent 1.6px);
+  background-size: 22px 22px;
+  padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1440px; margin: 0 auto; display: grid; gap: 48px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; color: var(--lit); }
+.pic { display: block; flex: none; width: var(--pic); height: var(--pic); }
+
+/* 1 · Top */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; height: 42px; font-weight: 700; letter-spacing: .22em; font-size: 15px; color: var(--lit); }
+.brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.topr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.ext:hover { color: var(--lit); border-color: #333; }
+.lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.lang .chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--bg); color: var(--label); cursor: pointer; }
+.lang .chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
+
+/* 2 · Hero */
+.hero { display: grid; gap: 22px; }
+.hero canvas { display: block; max-width: min(100%, 760px); height: auto; justify-self: center; }
+.tagline { font-family: var(--mono); font-size: clamp(17px, 2.2vw, 24px); margin: 0; color: var(--lit); text-wrap: pretty; }
+.tagline i { font-style: normal; color: var(--accent); padding: 0 .5em; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.stats b { color: var(--accent); font-weight: 500; font-size: 18px; margin-right: .5em; font-variant-numeric: tabular-nums; }
+
+/* bandeaux de section, boutons */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.bar h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.hint { margin: 0; color: var(--label); font-size: 14px; }
+
+/* 3 · Showcase: l'interface de Dot Box, en maquette interactive */
+.showcase { display: grid; gap: 16px; }
+.edge { padding: clamp(8px, 1.2vw, 18px); border-radius: clamp(12px, 1.6vw, 24px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
+.screen { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; padding: clamp(12px, 1.8vw, 22px); border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; }
+.scr-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.scr-head .dot { display: inline-flex; align-items: center; gap: 8px; }
+.scr-head .dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.scr-head .ex { color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-content: start; }
+.tile { position: relative; display: grid; gap: 10px; justify-items: start; padding: 14px; min-width: 0; border: 1.5px solid #1d1d1d; border-radius: 14px; background: transparent; color: var(--lit); text-align: left; font: inherit; cursor: pointer; }
+.tile:hover, .tile:focus-visible { border-color: var(--accent); background: #0d0d0d; outline: none; }
+.tile .name { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
+.st::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--idea)); }
+.st.run { --c: var(--accent); }
+.st.busy { --c: var(--wip); }
+.st.off { --c: var(--idea); color: var(--muted); }
+.tile.off .pic { opacity: .55; }
+.tile[aria-pressed="true"] { border-color: var(--accent); }
+.log { display: grid; grid-template-rows: auto 1fr auto; gap: 10px; min-width: 0; padding: 14px; border: 1.5px solid #1d1d1d; border-radius: 14px; }
+.log-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--label); }
+.log-h b { color: var(--lit); font-weight: 500; }
+.log ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; align-content: start; font-size: 12px; line-height: 1.5; min-height: 230px; color: var(--label); overflow-wrap: anywhere; }
+.log li { display: grid; grid-template-columns: 1.4em minmax(0, 1fr); }
+.log li .k { color: var(--muted); }
+.log li.ok .k, .log li.ok { color: var(--accent); }
+.log li.wire .k { color: var(--spec); }
+.log li em { font-style: normal; color: var(--lit); }
+.log-f { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line2); background: var(--bg); color: var(--label); cursor: pointer; }
+.btn:hover { color: var(--lit); border-color: #3a3a3a; }
+.btn.go { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.btn.go:hover { color: var(--bg); filter: brightness(1.08); }
+.btn:disabled { opacity: .4; cursor: default; filter: none; }
+
+/* 4 · About */
+.about { display: grid; gap: 22px; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line2); border-radius: 20px; background: var(--panel); }
+.about-head { display: flex; align-items: stretch; gap: 16px; }
+.about-head .head { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; flex: 1; height: var(--pic); }
+.about-head h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 28px; line-height: 1.15; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
+.status::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--idea)); }
+.ver { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.about-lead { margin: 0; font-size: clamp(16px, 1.6vw, 19px); color: var(--lit); text-wrap: pretty; }
+.about-k { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 12px; }
+.part { display: grid; gap: 10px; align-content: start; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+.part .ph2 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.part h3 { margin: 0; font-size: 18px; font-weight: 700; }
+.tag2 { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.part p { margin: 0; color: var(--label); font-size: 15px; }
+.part .more { justify-self: start; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
+.part .more:hover { color: var(--lit); }
+.daily { margin: 0; color: var(--label); font-size: 15px; }
+.daily b, .steps b { color: var(--lit); font-weight: 600; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; counter-reset: st; }
+.steps li { counter-increment: st; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; color: var(--label); font-size: 15px; }
+.steps li::before { content: counter(st); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--bg); font-family: var(--mono); font-weight: 500; font-size: 14px; }
+.links { display: flex; flex-wrap: wrap; gap: 16px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.links a { text-decoration: none; color: var(--label); }
+.links a:hover { color: var(--lit); }
+.links a.mock { color: var(--accent); }
+
+/* 5 · List: une carte par app */
+.list { display: grid; gap: 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+.card { display: grid; grid-template-rows: auto 1fr auto; gap: 14px; padding: 22px; min-width: 0; border: 1px solid var(--line2); border-radius: 18px; background: var(--panel); }
+.card:hover { border-color: var(--accent); }
+.card .row { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.card .head { display: grid; gap: 2px; min-width: 0; }
+.card h3 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: .02em; line-height: 1.3; color: var(--lit); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card p { margin: 0; color: var(--label); font-size: 15px; min-width: 0; }
+.foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; padding-top: 14px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.foot > * { line-height: 28px; }
+.foot a { color: var(--label); text-decoration: none; }
+.foot a:hover { color: var(--lit); }
+.foot .go { color: var(--accent); margin-right: auto; }
+.foot a.gh { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; }
+.foot a.gh svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* 6 · Footer */
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-family: var(--mono); font-size: 13px; letter-spacing: .24em; text-transform: uppercase; }
+.footer .red { color: var(--accent); }
+.footer a { color: var(--label); text-decoration: none; }
+.footer a:hover { color: var(--lit); }
+
+/* la proposition: un bandeau en haut de la page */
+.propbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 12px 18px; border: 1px solid var(--accent); border-radius: 14px; background: #07130e; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.propbar span { color: var(--label); letter-spacing: .06em; text-transform: none; font-size: 13px; }
+
+/* 2 · Hero: la promesse, deux boutons */
+.hero-lead { margin: 0; max-width: 900px; font-size: clamp(17px, 1.8vw, 21px); color: var(--label); text-wrap: pretty; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.cta a { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; padding: 14px 22px; border-radius: 999px; border: 1px solid var(--line2); background: var(--bg); color: var(--label); text-decoration: none; }
+.cta a:hover { color: var(--lit); border-color: #3a3a3a; }
+.cta a.go { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.cta a.go:hover { color: var(--bg); filter: brightness(1.08); }
+
+/* 4 · Compare: à la main, ou avec Dot Box */
+.compare { display: grid; gap: 18px; }
+.compare-lead { margin: 0; max-width: 900px; color: var(--label); font-size: 17px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+.col { display: grid; gap: 16px; align-content: start; padding: 24px; border: 1px solid var(--line2); border-radius: 18px; background: var(--panel); }
+.col.ours { border-color: var(--accent); }
+.col h3 { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
+.col h3 b { font-size: 22px; font-weight: 500; color: var(--muted); letter-spacing: .06em; }
+.col.ours h3 b { color: var(--accent); }
+.jobs { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; color: var(--label); font-size: 15px; }
+.jobs li { display: grid; grid-template-columns: 1.4em minmax(0, 1fr); }
+.jobs li::before { content: "·"; color: var(--muted); }
+.col .steps { grid-template-columns: minmax(0, 1fr); }
+.cmd { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #050505; font-family: var(--mono); font-variant-ligatures: none; font-size: 13px; color: var(--lit); overflow-x: auto; white-space: pre; }
+.cmd .p { color: var(--accent); }
+
+/* 5 · Features: une carte par fonctionnalité */
+.features { display: grid; gap: 18px; }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.feat { display: grid; grid-template-rows: auto auto 1fr auto; gap: 12px; padding: 22px; min-width: 0; border: 1px solid var(--line2); border-radius: 18px; background: var(--panel); }
+.feat:hover { border-color: var(--accent); }
+.feat h3 { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.3; color: var(--lit); }
+.feat p { margin: 0; color: var(--label); font-size: 15px; }
+.feat .more { justify-self: start; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
+.feat .more:hover { color: var(--lit); }
+
+/* 8 · FAQ */
+.faq { display: grid; gap: 12px; }
+.faq details { padding: 18px 22px; border: 1px solid var(--line2); border-radius: 14px; background: var(--panel); }
+.faq details[open] { border-color: #333; }
+.faq summary { display: flex; justify-content: space-between; gap: 16px; cursor: pointer; list-style: none; font-size: 17px; font-weight: 700; color: var(--lit); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; font-family: var(--mono); color: var(--accent); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { margin: 12px 0 0; color: var(--label); font-size: 15px; max-width: 1000px; }
+
+@media (max-width: 1080px) {
+  .screen { grid-template-columns: minmax(0, 1fr); }
+  .log ol { min-height: 0; }
+}
+@media (max-width: 560px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <span class="brand">DOT BOX</span>
+    <div class="topr">
+      <a class="ext" href="__GS__"__GS_TARGET__>Docs</a>
+      <a class="ext" href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap</a>
+      <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
+      <a class="ext" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+
+  <div class="propbar">#179 · Proposed homepage <span>Shown on this computer only. The current homepage stays until this one is validated.</span></div>
+
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h1>
+    <canvas id="titleDots" width="1520" height="342" aria-hidden="true"></canvas>
+    <p class="tagline" data-i18n-html="tagline"></p>
+    <p class="hero-lead">Dot Box installs your media server, the apps around it and everything that keeps them safe: HTTPS on every subdomain, one login with two factors, attacks blocked, encrypted backups. All of it on your own server, from one command.</p>
+    <div class="cta">
+      <a class="go" href="__DOC_INSTALLATION__"__DOC_INSTALLATION_TARGET__>Get started</a>
+      <a href="#features">See the features</a>
+      <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+    <ul class="stats" id="stats"></ul>
+  </section>
+
+  <section class="showcase" data-i18n-label="showLabel">
+    <div class="bar">
+      <h2 data-i18n="onServer"></h2>
+      <p class="hint" data-i18n="showHint"></p>
+    </div>
+    <div class="edge">
+      <div class="screen">
+        <div class="scr-head">
+          <span class="dot">DOT BOX</span>
+          <span class="ex" data-i18n="mockup"></span>
+        </div>
+        <div class="tiles" id="tiles" role="group" aria-label="Apps"></div>
+        <div class="log" aria-live="polite">
+          <div class="log-h"><span data-i18n="job"></span><b id="logApp">sonarr</b></div>
+          <ol id="logList"></ol>
+          <div class="log-f">
+            <button class="btn go" id="btnInstall" type="button"></button>
+            <button class="btn" id="btnReset" type="button" data-i18n="reset"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="compare" aria-labelledby="cmpTitle">
+    <div class="bar">
+      <h2 id="cmpTitle">A server is more than one app</h2>
+    </div>
+    <p class="compare-lead">Plex or Jellyfin is the easy part. The hours go into everything around it: proxy, certificates, logins, security, backups and updates.</p>
+    <div class="cols">
+      <div class="col">
+        <h3>By hand <b>9 jobs</b></h3>
+        <ul class="jobs">
+          <li>Install Docker, and keep its logs from filling the disk.</li>
+          <li>Set up a reverse proxy, and a route for every app.</li>
+          <li>Get TLS certificates, and keep them renewed.</li>
+          <li>Put a login with two factors in front of every app.</li>
+          <li>Watch SSH and the web for attacks, and ban them.</li>
+          <li>Write a compose file per app, with the right user and folders.</li>
+          <li>Keep downloads and media on one disk, so hardlinks work.</li>
+          <li>Back up every app's settings, encrypted, off the server.</li>
+          <li>Update each app, one at a time, and go back when one breaks.</li>
+        </ul>
+      </div>
+      <div class="col ours">
+        <h3>With Dot Box <b>3 steps</b></h3>
+        <ol class="steps">
+          <li><span><b>Point <code>*.example.com</code></b> to a Debian server.</span></li>
+          <li><span><b>Run the install script</b>, as root. About 4 minutes.</span></li>
+          <li><span><b>Install your apps</b>, from the web interface or the terminal.</span></li>
+        </ol>
+        <pre class="cmd"><span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash
+<span class="p">$</span> dotbox install jellyfin radarr sonarr qbittorrent</pre>
+        <a class="more" style="font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);text-decoration:none" href="__DOC_INSTALLATION__"__DOC_INSTALLATION_TARGET__>Read the install guide →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features" aria-labelledby="featTitle">
+    <div class="bar">
+      <h2 id="featTitle">What you get</h2>
+      <p class="hint">Everything Dot Box sets up and runs for you.</p>
+    </div>
+    <div class="fgrid" id="featGrid"></div>
+  </section>
+
+  <section class="about" aria-labelledby="boxTitle">
+    <div class="about-head">
+      <canvas class="pic" id="boxPic" width="140" height="140" aria-hidden="true"></canvas>
+      <div class="head"><h2 id="boxTitle">Dot Box</h2><span class="status" style="--c: var(--wip)" data-i18n="boxStatus"></span><span class="ver">v0.0.6</span></div>
+    </div>
+    <p class="about-lead" data-i18n="boxLead"></p>
+    <p class="about-k" data-i18n="howK"></p>
+    <div class="parts">
+      <div class="part"><div class="ph2"><h3 data-i18n="p1t"></h3><span class="tag2" data-i18n="p1k"></span></div><p data-i18n-html="p1"></p></div>
+      <div class="part"><div class="ph2"><h3 data-i18n="p2t"></h3><span class="tag2" data-i18n="p2k"></span></div><p data-i18n-html="p2"></p><a class="more" href="__DOC_CLI__"__DOC_CLI_TARGET__ data-i18n="more"></a></div>
+    </div>
+    <p class="daily" data-i18n-html="daily"></p>
+    <p class="about-k" data-i18n="installK"></p>
+    <ol class="steps">
+      <li><span data-i18n-html="step1"></span></li>
+      <li><span data-i18n-html="step2"></span></li>
+      <li><span data-i18n-html="step3"></span></li>
+    </ol>
+    <div class="links">
+      <a class="mock" href="__RELEASES__"__RELEASES_TARGET__ data-i18n="relLink"></a>
+      <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </section>
+
+  <section class="list" data-i18n-label="apps" id="list">
+    <div class="bar">
+      <h2 data-i18n="apps"></h2>
+      <p class="hint">The core, then the apps of the catalog. More are coming.</p>
+    </div>
+    <div class="grid" id="appGrid"></div>
+  </section>
+
+  <section class="faq" aria-labelledby="faqTitle">
+    <div class="bar">
+      <h2 id="faqTitle">Questions</h2>
+    </div>
+    <details><summary>What is Dot Box?</summary><p>A tool that installs and runs self-hosted apps on your own server: a media server, the apps that fetch movies and shows, a password manager... Each one runs in Docker, on its own subdomain, behind one login.</p></details>
+    <details><summary>Is it free?</summary><p>Yes. It is open source, under the AGPL-3.0 license: you can use it, change it and share it. A modified copy offered to others has to stay open source too.</p></details>
+    <details><summary>Where does it run?</summary><p>On a dedicated server at a hosting provider, with Debian 12 or 13 on amd64, and a domain name of your own. Your media and your data stay on that server's disks.</p></details>
+    <details><summary>Do I need the terminal?</summary><p>Once, to run the install script over SSH. Then the web interface does the daily work, and the <code>dotbox</code> command is there whenever you prefer it.</p></details>
+    <details><summary>Can I install an app that is not in the catalog?</summary><p>Yes. <code>dotbox add</code> turns its compose file into a Dot Box app, with the same subdomain, login and backups as the others (see <a href="__DOC_YOUR_OWN_APPS__"__DOC_YOUR_OWN_APPS_TARGET__>Your own apps</a>).</p></details>
+    <details><summary>What if the web interface stops responding?</summary><p>Over SSH, the <code>dotbox</code> command keeps working, and <code>dotbox --local</code> talks to the engine directly.</p></details>
+  </section>
+
+  <footer class="footer">
+    <span class="red">Self-hosted · Rust · Docker Compose</span>
+    <span><a href="https://github.com/Mathod95/dotbox/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a> · <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">Mathod95/dotbox</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var LIT = "#f2f0e9", ACC = "#10b981", UNLIT = "#1c1c1c", DIM = "#5f5d58";
+
+  // ---------- français / anglais (français pour un navigateur en français, anglais sinon, comme Dot Page)
+  var STR = {
+    fr: {
+      tagline: "Gestionnaire d'apps auto-hébergées<i>●</i>Rust, Docker Compose, ton propre catalogue.",
+      sRust: "binaire Rust", sApi: "API", sApps: "apps", sCompose: "compose",
+      showLabel: "Aperçu de l'interface", onServer: "Sur ton serveur", showHint: "Choisis une app non installée, puis installe-la.",
+      mockup: "Maquette · données d'exemple", job: "Job d'installation", reset: "Réinitialiser",
+      run: "Running", off: "Absent", busy: "Installation", inst: "Installer ", already: "Déjà installé",
+      boxStatus: "En conception",
+      boxLead: "Dot Box installe et câble des apps auto-hébergées sur un serveur Debian. Chaque app est un petit manifest YAML que Dot Box transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.",
+      howK: "Comment ça marche",
+      p1t: "Le serveur Dot Box", p1k: "Binaire Rust",
+      p1: "Le moteur, l'API et l'interface web, dans un seul programme. Il génère un <code>compose.yml</code> par app dans <code>/opt/&lt;app&gt;</code>, ajoute les labels Traefik et Authelia, écrit les configs avant le premier démarrage puis branche les apps entre elles par leurs API. Il compare en continu ce que tu veux à ce qui tourne et corrige l'écart.",
+      p2t: "La CLI dotbox", p2k: "Terminal",
+      p2: "La même chose depuis le terminal, sur la même API: installer, mettre à jour, voir les logs, sauvegarder et restaurer. Elle marche aussi en SSH, sans passer par Authelia, pour reprendre la main si l'interface ne répond plus.",
+      daily: "<b>Au quotidien</b>: tu installes une app depuis l'interface ou avec <code>dotbox install radarr</code>. Elle arrive sur son sous-domaine, derrière Authelia, déjà branchée aux autres, et reste un fichier compose que tu peux lire et modifier.",
+      installK: "Installer",
+      step1: "<b>Prends un serveur</b> Debian, avec un nom de domaine.",
+      step2: "<b>Lance <code>dotbox init</code></b>: Docker, Traefik et Authelia.",
+      step3: "<b>Installe tes apps</b> depuis l'interface web ou la CLI.",
+      relLink: "Releases →", more: "Tout sur la CLI →",
+      apps: "Les apps"
+    },
+    en: {
+      tagline: "Your media server, set up and kept safe<i>●</i>on your own server, from one command.",
+      sApps: "apps in the catalog", sMin: "minutes to install", sRust: "Rust binary", sCompose: "Docker Compose",
+      showLabel: "Interface preview", onServer: "On your server", showHint: "Pick an app that isn't installed, then install it.",
+      mockup: "Mockup · sample data", job: "Install job", reset: "Reset",
+      run: "Running", off: "Absent", busy: "Installing", inst: "Install ", already: "Already installed",
+      boxStatus: "In development",
+      boxLead: "Dot Box installs and runs self-hosted apps on a Debian server. Each app is a small YAML manifest that Dot Box turns into a readable Docker Compose file, with the same paths, network, certificates and login every time. An app that is not in the catalog? If its project ships a compose file, it can become one.",
+      howK: "How it works",
+      p1t: "The Dot Box service", p1k: "Rust binary",
+      p1: "The engine, the API and the web interface, in a single program. It writes one <code>compose.yml</code> per app in <code>/opt/&lt;app&gt;</code>, adds the Traefik and Authelia labels and writes each app's settings before its first start. <code>dotbox diff</code> compares what you want with what is running, <code>dotbox sync</code> fixes the difference.",
+      p2t: "The dotbox CLI", p2k: "Terminal",
+      p2: "The same from the terminal, on the same API: install, update, read logs, back up and restore. It also works over SSH without going through Authelia, to take back control if the interface stops responding.",
+      daily: "<b>Day to day</b>: you install an app from the interface or with <code>dotbox install radarr</code>. It lands on its own subdomain, behind Authelia, and stays a compose file you can read and edit.",
+      installK: "Install",
+      step1: "<b>Get a server</b> running Debian, with a domain name.",
+      step2: "<b>Run the install script</b>: Docker, Traefik, Authelia and CrowdSec, in about 4 minutes.",
+      step3: "<b>Install your apps</b> from the web interface or the CLI.",
+      relLink: "Releases →", more: "All about the CLI →",
+      apps: "The apps"
+    }
+  };
+  var lang = "en";
+  // le site en anglais seulement, sans choix de langue (D103, D123)
+  if (!STR[lang]) lang = "en";
+  function t(k) { return STR[lang][k]; }
+  function tr(o) { return o[lang] || o.fr; }
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function inline(s) { return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>"); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+  // ---------- titre en points (police 5 × 7), points tous les 19 px, dernier mot en points éteints sur fond d'accent
+  var F = {
+    D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
+    O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
+    B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+    X: ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
+    " ": ["..", "..", "..", "..", "..", "..", ".."]
+  };
+  function drawTitle(text) {
+    var cv = document.getElementById("titleDots"), ctx = cv.getContext("2d");
+    var cols = [], lastWordCol = 0;
+    text.split("").forEach(function (ch, i) {
+      if (ch === " ") lastWordCol = cols.length + F[" "][0].length;
+      var g = F[ch];
+      for (var c = 0; c < g[0].length; c++) cols.push(g.map(function (r) { return r[c] === "#"; }));
+      if (i < text.length - 1) cols.push([false, false, false, false, false, false, false]);
+    });
+    var pad = 1, total = cols.length + pad * 2, rows = 7 + pad * 2, accentFrom = lastWordCol + pad;
+    cv.width = total * 19 * 2; cv.style.width = total * 19 + "px";
+    var pitch = cv.width / total, r = pitch * 0.36;
+    cv.height = Math.round(rows * pitch);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var x = 0; x < total; x++) for (var y = 0; y < rows; y++) {
+      var col = cols[x - pad], on = col && y >= pad && y < 7 + pad && col[y - pad];
+      var inWord = x >= accentFrom, accent = inWord && !on, lit = on && !inWord;
+      ctx.beginPath();
+      ctx.fillStyle = lit ? LIT: accent ? ACC: "#171717";
+      ctx.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, lit || accent ? r: r * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // ---------- pictogrammes 7 × 7, tous dessinés par paint() et dimensionnés par --pic
+  var PICS = {
+    traefik: ["#.....#", "##...##", ".##.##.", "..###..", "...#...", "...#...", "..###.."],
+    authelia: ["..###..", ".#...#.", ".#...#.", "#######", "###.###", "###.###", "#######"],
+    jellyfin: ["...#...", "..###..", "..#.#..", ".##.##.", ".#...#.", "##...##", "#######"],
+    radarr: [".#####.", "##.#.##", "#.....#", "###.###", "#.....#", "##.#.##", ".#####."],
+    sonarr: [".#...#.", "..#.#..", "#######", "#.....#", "#.....#", "#######", ".#...#."],
+    qbittorrent: ["...#...", "...#...", "...#...", "#..#..#", ".#.#.#.", "..###..", "#######"],
+    prowlarr: [".###...", "#...#..", "#...#..", "#...#..", ".###...", "....##.", ".....##"],
+    seerr: ["#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######", "#.#.#.#"],
+    plex: [".##....", "..##...", "...##..", "....##.", "...##..", "..##...", ".##...."],
+    tautulli: ["......#", "......#", "....#.#", "....#.#", "..#.#.#", "..#.#.#", "#######"],
+    qui: ["..###..", ".#...#.", ".#...#.", ".#...#.", "..####.", ".....#.", ".....##"],
+    portainer: ["#######", "#.#.#.#", "#.#.#.#", "#.#.#.#", "#.#.#.#", "#######", "......."],
+    codeserver: ["#......", ".#.....", "..#....", ".#.....", "#......", ".......", "..#####"],
+    jellystat: [".......", "......#", ".....#.", "#...#..", ".#.#...", "..#....", "#######"],
+    wizarr: ["...#...", "...#...", "#######", ".#####.", "..###..", ".##.##.", "##...##"],
+    tracearr: ["..###..", ".#...#.", ".#.#.#.", ".#...#.", "..#.#..", "..#.#..", "...#..."],
+    uptimekuma: [".##.##.", "#######", "#######", ".#####.", "..###..", "...#...", "......."],
+    vaultwarden: ["..###..", ".#...#.", "..###..", "...#...", "...##..", "...#...", "...###."],
+    wireguard: ["#######", "#.....#", "#.....#", "#.....#", ".#...#.", "..#.#..", "...#..."],
+    box: ["#######", "#.....#", "#.###.#", "#.#.#.#", "#.###.#", "#.....#", "#######"],
+    plus: ["...#...", "...#...", "...#...", "#######", "...#...", "...#...", "...#..."],
+    folders: ["###....", "#######", "#.....#", "#######", "#.....#", "#.....#", "#######"],
+    wire: ["##.....", "##.....", "..#....", "...###.", "....#..", ".....##", ".....##"],
+    compose: ["#######", ".......", "#####..", ".......", "######.", ".......", "####..."],
+    sync: [".####..", "#....#.", "#...###", "#....#.", ".#....#", "###...#", ".#....#"],
+    backup: ["..###..", ".#...#.", "#.....#", "...#...", "...#...", ".#####.", "#######"],
+    autobrr: ["....##.", "...##..", "..##...", ".#####.", "...##..", "..##...", ".##...."],
+    maintainerr: [".#####.", "#######", ".#.#.#.", ".#.#.#.", ".#.#.#.", ".#.#.#.", "..###.."],
+    terminal: ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.###", "#.....#", "#######"],
+    globe: ["..###..", ".#.#.#.", "#..#..#", "#######", "#..#..#", ".#.#.#.", "..###.."],
+    lock: ["..###..", ".#...#.", ".#...#.", "#######", "#.....#", "#..#..#", "#######"],
+    shield: ["#######", "#.....#", "#....##", "##..#.#", ".#.#.#.", "..#.#..", "...#..."],
+    update: ["...#...", "..###..", ".#.#.#.", "#..#..#", "...#...", "...#...", "#######"],
+    web: ["#######", "#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######"],
+    pulse: [".......", "...#...", "..#.#..", "#.#.#.#", "...#.#.", ".......", "......."]
+  };
+  function paint(cv, slug, color) {
+    var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
+    ctx.clearRect(0, 0, px, px);
+    for (var y = 0; y < 7; y++) for (var x = 0; x < 7; x++) {
+      ctx.beginPath(); ctx.fillStyle = g[y][x] === "#" ? color: UNLIT;
+      ctx.arc(x * p + p / 2, y * p + p / 2, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  function picCanvas(slug, color) {
+    var cv = document.createElement("canvas"); cv.className = "pic"; cv.width = 140; cv.height = 140; cv.setAttribute("aria-hidden", "true");
+    paint(cv, slug, color); return cv;
+  }
+
+  // ---------- 2 · chiffres clés
+  function stats() {
+    var ul = document.getElementById("stats"); ul.innerHTML = "";
+    [[String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["4", t("sMin")], ["1", t("sRust")], ["100%", t("sCompose")]].forEach(function (s) {
+      var li = el("li"); li.appendChild(el("b", "", s[0])); li.appendChild(document.createTextNode(s[1])); ul.appendChild(li);
+    });
+  }
+
+  // ---------- 5 · catalogue des apps: une entrée par carte, tout le reste est commun
+  var GH_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  var CATALOG = [
+    { pic: "traefik", name: "Traefik", sub: "", core: true, gh: "traefik/traefik",
+      role: { en: "Core · reverse proxy" },
+      text: { en: "Sends every request to the right app, with a Let's Encrypt certificate for each subdomain, obtained on its own." } },
+    { pic: "authelia", name: "Authelia", sub: "auth", core: true, gh: "authelia/authelia",
+      role: { en: "Core · single login" },
+      text: { en: "One login for every app, with a 6-digit code or a passkey as second factor." } },
+    { pic: "jellyfin", name: "Jellyfin", sub: "jellyfin", doc: "__DOC_JELLYFIN__", gh: "jellyfin/jellyfin",
+      role: { en: "Media server" },
+      text: { en: "Free media server with no outside account. Libraries point at `/data/media`." } },
+    { pic: "plex", name: "Plex", sub: "plex", doc: "__DOC_PLEX__",
+      role: { en: "Media server" },
+      text: { en: "Streams your movies and shows to TV, phone and browser. Libraries point at `/data/media`." } },
+    { pic: "radarr", name: "Radarr", sub: "radarr", doc: "__DOC_RADARR__", gh: "Radarr/Radarr",
+      role: { en: "Movies" },
+      text: { en: "Watches your movies, sends downloads to qBittorrent, then files them in `/data/media/movies`." } },
+    { pic: "sonarr", name: "Sonarr", sub: "sonarr", doc: "__DOC_SONARR__", gh: "Sonarr/Sonarr",
+      role: { en: "TV shows" },
+      text: { en: "Watches your shows, sends episodes to qBittorrent, then files them in `/data/media/tv`." } },
+    { pic: "prowlarr", name: "Prowlarr", sub: "prowlarr", doc: "__DOC_PROWLARR__", gh: "Prowlarr/Prowlarr",
+      role: { en: "Indexers" },
+      text: { en: "Manages every indexer in one place, for Radarr and Sonarr." } },
+    { pic: "qbittorrent", name: "qBittorrent", sub: "qbittorrent", doc: "__DOC_QBITTORRENT__", gh: "qbittorrent/qBittorrent",
+      role: { en: "Torrent client" },
+      text: { en: "Downloads into `/data/torrents`. Radarr and Sonarr then import as hardlinks, with no copy." } },
+    { pic: "qui", name: "qui", sub: "qui", doc: "__DOC_QUI__", gh: "autobrr/qui",
+      role: { en: "qBittorrent web UI" },
+      text: { en: "A fast, modern web interface for qBittorrent." } },
+    { pic: "autobrr", name: "autobrr", sub: "autobrr", doc: "__DOC_AUTOBRR__", gh: "autobrr/autobrr",
+      role: { en: "New releases" },
+      text: { en: "Grabs new releases as soon as they are announced, and sends them to your download client." } },
+    { pic: "seerr", name: "Seerr", sub: "seerr", doc: "__DOC_SEERR__", gh: "seerr-team/seerr",
+      role: { en: "Requests" },
+      text: { en: "Friends and family request a movie or show; once approved, it goes to Radarr or Sonarr." } },
+    { pic: "wizarr", name: "Wizarr", sub: "wizarr", doc: "__DOC_WIZARR__", gh: "wizarrrr/wizarr",
+      role: { en: "Invitations" },
+      text: { en: "Invite links that give access to Plex or Jellyfin, with an onboarding guide for new users." } },
+    { pic: "tautulli", name: "Tautulli", sub: "tautulli", doc: "__DOC_TAUTULLI__", gh: "Tautulli/Tautulli",
+      role: { en: "Plex statistics" },
+      text: { en: "Tracks Plex activity: who watches what, history, graphs and notifications." } },
+    { pic: "maintainerr", name: "Maintainerr", sub: "maintainerr", doc: "__DOC_MAINTAINERR__", gh: "Maintainerr/Maintainerr",
+      role: { en: "Library cleanup" },
+      text: { en: "Removes what nobody watches, by rules you set, to keep the disk from filling up." } },
+    { pic: "uptimekuma", name: "Uptime Kuma", sub: "uptime-kuma", doc: "__DOC_UPTIME_KUMA__", gh: "louislam/uptime-kuma",
+      role: { en: "Uptime monitoring" },
+      text: { en: "Checks that every app responds, and alerts you as soon as one goes down." } },
+    { pic: "vaultwarden", name: "Vaultwarden", sub: "vaultwarden", doc: "__DOC_VAULTWARDEN__", gh: "dani-garcia/vaultwarden",
+      role: { en: "Passwords" },
+      text: { en: "A light Bitwarden-compatible server, working with the official Bitwarden apps and extensions." } },
+    { pic: "codeserver", name: "code-server", sub: "code-server", doc: "__DOC_CODE_SERVER__", gh: "coder/code-server",
+      role: { en: "Code editor" },
+      text: { en: "VS Code in the browser, to read and edit the apps' files right on the server." } },
+    { pic: "wireguard", name: "wg-easy", sub: "wg-easy", doc: "__DOC_WG_EASY__", gh: "wg-easy/wg-easy",
+      role: { en: "VPN" },
+      text: { en: "A WireGuard VPN to the server, with a web page to add your devices." } }
+  ];
+  function renderApps() {
+    var grid = document.getElementById("appGrid"); grid.innerHTML = "";
+    CATALOG.forEach(function (a) {
+      var art = el("article", "card");
+      var row = el("div", "row"); row.appendChild(picCanvas(a.pic, LIT));
+      var head = el("div", "head"); head.appendChild(el("h3", "", a.name)); head.appendChild(el("span", "tag2", tr(a.role))); row.appendChild(head);
+      art.appendChild(row);
+      var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
+      var foot = el("div", "foot");
+      foot.appendChild(el("span", "go", a.sub ? a.sub + ".example.com" : "*.example.com"));
+      if (a.doc) { var d = el("a", "", "Docs"); d.href = a.doc; foot.appendChild(d); }
+      var link = el("a");
+      if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " · GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
+      else { link.href = a.docs; link.textContent = "Docs ↗"; }
+      link.target = "_blank"; link.rel = "noopener";
+      foot.appendChild(link);
+      art.appendChild(foot);
+      grid.appendChild(art);
+    });
+  }
+
+  // ---------- 5 · les fonctionnalités: une carte par fonctionnalité, avec sa page
+  var FEATURES = [
+    { pic: "terminal", t: "One command to install", d: "__DOC_INSTALLATION__",
+      p: "One script installs the binary, checks its checksum and sets up the whole server in about 4 minutes, on Debian 12 or 13." },
+    { pic: "globe", t: "HTTPS everywhere", d: "__DOC_ACCESSING_APPS__",
+      p: "Every app on its own subdomain, with a Let's Encrypt certificate obtained and renewed on its own. No DNS token to hand over." },
+    { pic: "lock", t: "One login, two factors", d: "__DOC_SECURITY__",
+      p: "Authelia stands in front of your apps: a password, then a 6-digit code or a passkey. Media servers keep their own login, for TV apps." },
+    { pic: "shield", t: "Attacks blocked", d: "__DOC_SECURITY__",
+      p: "CrowdSec reads the SSH and web logs, bans attackers at the firewall, and stops web attacks before they reach an app." },
+    { pic: "compose", t: "Plain Docker Compose", d: "__DOC_APPS__",
+      p: "Each app is a readable compose.yml in /opt, on its project's official image at a pinned version. Your own changes go in an override file." },
+    { pic: "update", t: "Updates without surprises", d: "__DOC_UPDATE__",
+      p: "Versions are pinned and followed by Renovate. dotbox update moves one app at a time, waits for it to run, and --rollback goes back." },
+    { pic: "backup", t: "Encrypted backups", d: "__DOC_BACKUP__",
+      p: "Every night, app by app: compressed, encrypted, kept on the server and sent to another machine over SFTP, or to any rclone remote." },
+    { pic: "sync", t: "Restore, or move", d: "__DOC_RESTORE__",
+      p: "Bring back one app or the whole server, on the same machine or a new one, from the archives." },
+    { pic: "web", t: "Web, CLI and API", d: "__DOC_WEB_UI__",
+      p: "The web interface on dotbox.example.com and the dotbox command (or db) both talk to the same service on the server." },
+    { pic: "folders", t: "One file, one plan", d: "__DOC_DOTBOX_YML__",
+      p: "Every setting lives in dotbox.yml. dotbox diff shows what would change, dotbox sync applies it." },
+    { pic: "pulse", t: "Know how your server is", d: "__DOC_MOTD__",
+      p: "dotbox doctor checks the whole server every night, and the SSH welcome message shows what needs your attention." },
+    { pic: "plus", t: "Your own apps", d: "__DOC_YOUR_OWN_APPS__",
+      p: "Turn any compose file into a Dot Box app with dotbox add: the same subdomain, login and backups as the catalog." }
+  ];
+  function renderFeatures() {
+    var grid = document.getElementById("featGrid"); grid.innerHTML = "";
+    FEATURES.forEach(function (f) {
+      var art = el("article", "feat");
+      art.appendChild(picCanvas(f.pic, ACC));
+      art.appendChild(el("h3", "", f.t));
+      art.appendChild(el("p", "", f.p));
+      var a = el("a", "more", "Docs →"); a.href = f.d; art.appendChild(a);
+      grid.appendChild(art);
+    });
+  }
+
+  // ---------- 3 · maquette: apps et installation simulée
+  var APPS = [
+    { slug: "traefik", name: "Traefik", on: true },
+    { slug: "authelia", name: "Authelia", on: true },
+    { slug: "jellyfin", name: "Jellyfin", on: true },
+    { slug: "qbittorrent", name: "qBittorrent", on: true },
+    { slug: "radarr", name: "Radarr", on: true },
+    { slug: "sonarr", name: "Sonarr", on: false },
+    { slug: "prowlarr", name: "Prowlarr", on: false },
+    { slug: "seerr", name: "Seerr", on: false }
+  ];
+  var START = APPS.map(function (a) { return a.on; });
+  var IMG = { sonarr: "lscr.io/linuxserver/sonarr", prowlarr: "lscr.io/linuxserver/prowlarr", seerr: "ghcr.io/seerr-team/seerr" };
+  // le câblage entre les apps est une commande à part, pas encore codée (D45): l'installation n'en fait pas
+  var WIRE = {};
+  var selected = "sonarr", busy = null, timers = [];
+  var tilesEl = document.getElementById("tiles"), logEl = document.getElementById("logList"), btn = document.getElementById("btnInstall");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function app(slug) { for (var i = 0; i < APPS.length; i++) if (APPS[i].slug === slug) return APPS[i]; }
+  function renderTiles() {
+    tilesEl.innerHTML = "";
+    APPS.forEach(function (a) {
+      var b = el("button", "tile" + (a.on ? "": " off")); b.type = "button";
+      b.setAttribute("aria-pressed", a.slug === selected);
+      b.appendChild(picCanvas(a.slug, a.on ? LIT: DIM));
+      b.appendChild(el("span", "name", a.name));
+      var state = busy === a.slug ? "busy": a.on ? "run": "off";
+      b.appendChild(el("span", "st " + state, t(state)));
+      b.addEventListener("click", function () { if (busy) return; selected = a.slug; renderTiles(); syncButton(); idleLog(); });
+      tilesEl.appendChild(b);
+    });
+  }
+  function syncButton() {
+    var a = app(selected);
+    document.getElementById("logApp").textContent = a.slug;
+    if (busy) { btn.disabled = true; btn.textContent = t("busy") + "…"; return; }
+    btn.disabled = a.on;
+    btn.textContent = a.on ? t("already"): t("inst") + a.name;
+  }
+  function line(kind, k, html) {
+    var li = el("li", kind || ""); li.appendChild(el("span", "k", k));
+    var s = el("span"); s.innerHTML = html; li.appendChild(s); logEl.appendChild(li);
+  }
+  function idleLog() {
+    logEl.innerHTML = "";
+    var a = app(selected);
+    if (a.on) {
+      line("ok", "●", "<em>" + a.slug + ".example.com</em>");
+      line("", "·", "/opt/" + a.slug + "/compose.yml");
+      line("", "·", "/opt/" + a.slug + "/compose.override.yml");
+    } else {
+      line("", "·", "image <em>" + IMG[a.slug] + "</em>");
+      line("", "·", "subdomain <em>" + a.slug + ".example.com</em>");
+      line("", "·", "sso <em>authelia</em>");
+    }
+  }
+  function install() {
+    var a = app(selected); if (a.on || busy) return;
+    busy = a.slug; renderTiles(); syncButton(); logEl.innerHTML = "";
+    var steps = [
+      ["", "›", "pull <em>" + IMG[a.slug] + "</em>"],
+      ["", "›", "mkdir /opt/" + a.slug + " (uid 1000)"],
+      ["", "›", "write /opt/" + a.slug + "/compose.yml"],
+      ["", "›", "label traefik <em>" + a.slug + ".example.com</em>"],
+      ["", "›", "middleware <em>authelia@docker</em>"],
+      ["", "›", "compose up -d"],
+      ["", "›", "wait healthy"]
+    ];
+    (WIRE[a.slug] || []).forEach(function (w) { steps.push(["wire", "⇄", "wire <em>" + w[0] + "</em> " + w[1]]); });
+    steps.push(["ok", "●", "<em>https://" + a.slug + ".example.com</em>"]);
+    var delay = reduce ? 0: 420;
+    steps.forEach(function (st, i) {
+      timers.push(setTimeout(function () {
+        line(st[0], st[1], st[2]);
+        if (i === steps.length - 1) { a.on = true; busy = null; renderTiles(); syncButton(); }
+      }, delay * (i + 1)));
+    });
+  }
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; busy = null;
+    APPS.forEach(function (a, i) { a.on = START[i]; });
+    selected = "sonarr"; renderTiles(); syncButton(); idleLog();
+  }
+  btn.addEventListener("click", install);
+  document.getElementById("btnReset").addEventListener("click", reset);
+
+  // ---------- langue
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function (e) { e.textContent = t(e.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
+    document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
+    document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
+    stats(); renderFeatures(); renderApps(); renderTiles(); syncButton(); idleLog();
+  }
+  document.querySelectorAll(".lang .chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      lang = b.getAttribute("data-lang");
+      try { localStorage.setItem("dotbox-lang", lang); } catch (e) {}
+      applyLang();
+    });
+  });
+
+  drawTitle("DOT BOX");
+  paint(document.getElementById("boxPic"), "box", ACC);
+  applyLang();
+})();
+</script>
