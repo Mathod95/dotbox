@@ -29,8 +29,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
-# la page d'accueil v3 proposée (#180): seulement dans le site local, tant qu'elle n'est pas validée
-HOME_PROPOSAL = SITE_SRC / "home-v3.html"
+# la page d'accueil proposée (#180): la page en production avec une bannière et GitHub en logo,
+# seulement dans le site local, tant qu'elle n'est pas validée
+HOME_PROPOSAL = SITE_SRC / "home-v2.html"
 # les logos des apps (D145), copiés tels quels dans site/icons/
 ICONS = SITE_SRC / "icons"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
@@ -246,7 +247,7 @@ def site():
     for d in DOCS:
         pages["getting-started/" + d["slug"] + "/index.html"] = doc(d["slug"], site_urls(2), "", d["name"] + " · Dot Box")
     if not REMOVED and HOME_PROPOSAL.exists():
-        pages["home-v3/index.html"] = home(site_urls(1), "", "Dot Box · v3 proposed", HOME_PROPOSAL)
+        pages["home-v2/index.html"] = home(site_urls(1), "", "Dot Box · proposed", HOME_PROPOSAL)
     for path, html in pages.items():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)

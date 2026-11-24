@@ -189,7 +189,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   <div class="top">
     <span class="brand">DOT BOX</span>
     <div class="topr">
-      <a class="ext" href="__GS__"__GS_TARGET__>Docs</a>
+      <a class="ext" href="__GS__"__GS_TARGET__>Getting Started</a>
       <a class="ext" href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap</a>
       <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
       <a class="ext gh" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener" aria-label="GitHub" title="github.com/Mathod95/dotbox"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
@@ -241,9 +241,9 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   <section class="about" aria-labelledby="boxTitle">
     <div class="about-head">
       <canvas class="pic" id="boxPic" width="140" height="140" aria-hidden="true"></canvas>
-      <div class="head"><h2 id="boxTitle">Dot Box</h2><span class="status" style="--c: var(--wip)" data-i18n="boxStatus"></span><span class="ver">v0.0.6</span></div>
+      <div class="head"><h2 id="boxTitle">Dot Box</h2><span class="status" style="--c: var(--design)" data-i18n="boxStatus"></span><span class="ver">v0.0.1</span></div>
     </div>
-    <p class="about-lead" data-i18n-html="boxLead"></p>
+    <p class="about-lead" data-i18n="boxLead"></p>
     <p class="about-k" data-i18n="howK"></p>
     <div class="parts">
       <div class="part"><div class="ph2"><h3 data-i18n="p1t"></h3><span class="tag2" data-i18n="p1k"></span></div><p data-i18n-html="p1"></p></div>
@@ -289,7 +289,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       mockup: "Maquette · données d'exemple", job: "Job d'installation", reset: "Réinitialiser",
       run: "Running", off: "Absent", busy: "Installation", inst: "Installer ", already: "Déjà installé",
       boxStatus: "En conception",
-      boxLead: "Dot Box installe et câble des apps auto-hébergées sur un serveur Debian. Chaque app est un petit manifest YAML que Dot Box transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.",
+      boxLead: "Dot Box installe et câble des apps auto-hébergées sur un serveur Debian ou Ubuntu. Chaque app est un petit manifest YAML que Dot Box transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.",
       howK: "Comment ça marche",
       p1t: "Le serveur Dot Box", p1k: "Binaire Rust",
       p1: "Le moteur, l'API et l'interface web, dans un seul programme. Il génère un <code>compose.yml</code> par app dans <code>/opt/&lt;app&gt;</code>, ajoute les labels Traefik et Authelia, écrit les configs avant le premier démarrage puis branche les apps entre elles par leurs API. Il compare en continu ce que tu veux à ce qui tourne et corrige l'écart.",
@@ -297,7 +297,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       p2: "La même chose depuis le terminal, sur la même API: installer, mettre à jour, voir les logs, sauvegarder et restaurer. Elle marche aussi en SSH, sans passer par Authelia, pour reprendre la main si l'interface ne répond plus.",
       daily: "<b>Au quotidien</b>: tu installes une app depuis l'interface ou avec <code>dotbox install radarr</code>. Elle arrive sur son sous-domaine, derrière Authelia, déjà branchée aux autres, et reste un fichier compose que tu peux lire et modifier.",
       installK: "Installer",
-      step1: "<b>Prends un serveur</b> Debian, avec un nom de domaine.",
+      step1: "<b>Prends un serveur</b> Debian ou Ubuntu, avec un nom de domaine.",
       step2: "<b>Lance <code>dotbox init</code></b>: Docker, Traefik et Authelia.",
       step3: "<b>Installe tes apps</b> depuis l'interface web ou la CLI.",
       relLink: "Releases →", more: "Tout sur la CLI →",
@@ -309,17 +309,17 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       showLabel: "Interface preview", onServer: "On your server", showHint: "Pick an app that isn't installed, then install it.",
       mockup: "Mockup · sample data", job: "Install job", reset: "Reset",
       run: "Running", off: "Absent", busy: "Installing", inst: "Install ", already: "Already installed",
-      boxStatus: "In development",
-      boxLead: "Dot Box installs and runs self-hosted apps on a Debian server. Each app is a small YAML manifest that Dot Box turns into a readable Docker Compose file, with the same paths, network, certificates and login every time. An app that is not in the catalog? If its project ships a compose file, <code>dotbox add</code> turns it into one.",
+      boxStatus: "In design",
+      boxLead: "Dot Box installs and wires self-hosted apps on a Debian or Ubuntu server. Each app is a small YAML manifest that Dot Box turns into a readable Docker Compose file, with the same paths, network, certificates and SSO every time. No catalog to wait for: if a project ships a compose file, it can become an app.",
       howK: "How it works",
-      p1t: "The Dot Box service", p1k: "Rust binary",
-      p1: "The engine, the API and the web interface, in a single program. It writes one <code>compose.yml</code> per app in <code>/opt/&lt;app&gt;</code>, adds the Traefik and Authelia labels and writes each app's settings before its first start. <code>dotbox diff</code> compares what you want with what is running, <code>dotbox sync</code> fixes the difference.",
+      p1t: "The Dot Box server", p1k: "Rust binary",
+      p1: "The engine, the API and the web interface, in a single program. It writes one <code>compose.yml</code> per app in <code>/opt/&lt;app&gt;</code>, adds the Traefik and Authelia labels, writes configs before the first start, then connects apps to each other through their APIs. It keeps comparing what you want with what is running and fixes the drift.",
       p2t: "The dotbox CLI", p2k: "Terminal",
       p2: "The same from the terminal, on the same API: install, update, read logs, back up and restore. It also works over SSH without going through Authelia, to take back control if the interface stops responding.",
-      daily: "<b>Day to day</b>: you install an app from the interface or with <code>dotbox install radarr</code>. It lands on its own subdomain, behind Authelia, and stays a compose file you can read and edit.",
+      daily: "<b>Day to day</b>: you install an app from the interface or with <code>dotbox install radarr</code>. It lands on its own subdomain, behind Authelia, already connected to the others, and stays a compose file you can read and edit.",
       installK: "Install",
-      step1: "<b>Get a server</b> running Debian, with a domain name.",
-      step2: "<b>Run the install script</b>: Docker, Traefik, Authelia and CrowdSec, in about 4 minutes.",
+      step1: "<b>Get a server</b> running Debian or Ubuntu, with a domain name.",
+      step2: "<b>Run <code>dotbox init</code></b>: Docker, Traefik and Authelia.",
       step3: "<b>Install your apps</b> from the web interface or the CLI.",
       relLink: "Releases →", more: "All about the CLI →",
       apps: "The apps"
@@ -409,43 +409,10 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     paint(cv, slug, color); return cv;
   }
 
-  // ---------- les logos des apps (D145): copiés de homarr-labs/dashboard-icons dans icons/, montrés en
-  // couleur ou en points 21 × 21, tiré au sort une fois par visite pour toute la page
-  var ICON = { codeserver: "vscode", uptimekuma: "uptime-kuma", wgeasy: "wireguard" };
-  var DOTTED = Math.random() < 0.5;
-  function logoDots(cv, src) {
-    var n = 21, cell = 8, S = n * cell, off = document.createElement("canvas"); off.width = S; off.height = S;
-    var o = off.getContext("2d"); o.drawImage(src, 0, 0, S, S);
-    var data = o.getImageData(0, 0, S, S).data, ctx = cv.getContext("2d"), p = cv.width / n, r = p * 0.38;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
-      var R = 0, G = 0, B = 0, A = 0;
-      for (var yy = 0; yy < cell; yy++) for (var xx = 0; xx < cell; xx++) {
-        var k = ((y * cell + yy) * S + (x * cell + xx)) * 4, a = data[k + 3] / 255;
-        R += data[k] * a; G += data[k + 1] * a; B += data[k + 2] * a; A += a;
-      }
-      var col = UNLIT;
-      if (A / (cell * cell) > 0.35) {
-        var rr = R / A, gg = G / A, bb = B / A;
-        // un logo presque noir disparaîtrait sur le fond sombre: il passe en points allumés
-        if (rr + gg + bb < 120) { rr = 242; gg = 240; bb = 233; }
-        col = "rgb(" + Math.round(rr) + "," + Math.round(gg) + "," + Math.round(bb) + ")";
-      }
-      ctx.beginPath(); ctx.fillStyle = col; ctx.arc(x * p + p / 2, y * p + p / 2, r, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-  function appIcon(slug) {
-    var src = new Image(); src.src = "__HOME__icons/" + (ICON[slug] || slug) + ".svg"; src.alt = "";
-    if (!DOTTED) { src.className = "pic"; src.setAttribute("aria-hidden", "true"); return src; }
-    var cv = document.createElement("canvas"); cv.className = "pic"; cv.width = 140; cv.height = 140; cv.setAttribute("aria-hidden", "true");
-    src.onload = function () { logoDots(cv, src); };
-    return cv;
-  }
-
   // ---------- 2 · chiffres clés
   function stats() {
     var ul = document.getElementById("stats"); ul.innerHTML = "";
-    [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["100%", t("sCompose")]].forEach(function (s) {
+    [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.length), t("sApps")], ["100%", t("sCompose")]].forEach(function (s) {
       var li = el("li"); li.appendChild(el("b", "", s[0])); li.appendChild(document.createTextNode(s[1])); ul.appendChild(li);
     });
   }
@@ -453,72 +420,93 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   // ---------- 5 · catalogue des apps: une entrée par carte, tout le reste est commun
   var GH_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
   var CATALOG = [
-    { pic: "traefik", name: "Traefik", sub: "", core: true, gh: "traefik/traefik",
-      role: { en: "Core · reverse proxy" },
-      text: { en: "Sends every request to the right app, with a Let's Encrypt certificate for each subdomain, obtained on its own." } },
-    { pic: "authelia", name: "Authelia", sub: "auth", core: true, gh: "authelia/authelia",
-      role: { en: "Core · single login" },
-      text: { en: "One login for every app, with a 6-digit code or a passkey as second factor." } },
-    { pic: "jellyfin", name: "Jellyfin", sub: "jellyfin", doc: "__DOC_JELLYFIN__", gh: "jellyfin/jellyfin",
-      role: { en: "Media server" },
-      text: { en: "Free media server with no outside account. Libraries point at `/data/media`." } },
-    { pic: "plex", name: "Plex", sub: "plex", doc: "__DOC_PLEX__",
-      role: { en: "Media server" },
-      text: { en: "Streams your movies and shows to TV, phone and browser. Libraries point at `/data/media`." } },
-    { pic: "radarr", name: "Radarr", sub: "radarr", doc: "__DOC_RADARR__", gh: "Radarr/Radarr",
-      role: { en: "Movies" },
-      text: { en: "Watches your movies, sends downloads to qBittorrent, then files them in `/data/media/movies`." } },
-    { pic: "sonarr", name: "Sonarr", sub: "sonarr", doc: "__DOC_SONARR__", gh: "Sonarr/Sonarr",
-      role: { en: "TV shows" },
-      text: { en: "Watches your shows, sends episodes to qBittorrent, then files them in `/data/media/tv`." } },
-    { pic: "prowlarr", name: "Prowlarr", sub: "prowlarr", doc: "__DOC_PROWLARR__", gh: "Prowlarr/Prowlarr",
-      role: { en: "Indexers" },
-      text: { en: "Manages every indexer in one place, for Radarr and Sonarr." } },
-    { pic: "qbittorrent", name: "qBittorrent", sub: "qbittorrent", doc: "__DOC_QBITTORRENT__", gh: "qbittorrent/qBittorrent",
-      role: { en: "Torrent client" },
-      text: { en: "Downloads into `/data/torrents`. Radarr and Sonarr then import as hardlinks, with no copy." } },
-    { pic: "qui", name: "qui", sub: "qui", doc: "__DOC_QUI__", gh: "autobrr/qui",
-      role: { en: "qBittorrent web UI" },
-      text: { en: "A fast, modern web interface for qBittorrent." } },
-    { pic: "autobrr", name: "autobrr", sub: "autobrr", doc: "__DOC_AUTOBRR__", gh: "autobrr/autobrr",
-      role: { en: "New releases" },
-      text: { en: "Grabs new releases as soon as they are announced, and sends them to your download client." } },
-    { pic: "seerr", name: "Seerr", sub: "seerr", doc: "__DOC_SEERR__", gh: "seerr-team/seerr",
-      role: { en: "Requests" },
-      text: { en: "Friends and family request a movie or show; once approved, it goes to Radarr or Sonarr." } },
-    { pic: "wizarr", name: "Wizarr", sub: "wizarr", doc: "__DOC_WIZARR__", gh: "wizarrrr/wizarr",
-      role: { en: "Invitations" },
-      text: { en: "Invite links that give access to Plex or Jellyfin, with an onboarding guide for new users." } },
-    { pic: "tautulli", name: "Tautulli", sub: "tautulli", doc: "__DOC_TAUTULLI__", gh: "Tautulli/Tautulli",
-      role: { en: "Plex statistics" },
-      text: { en: "Tracks Plex activity: who watches what, history, graphs and notifications." } },
-    { pic: "maintainerr", name: "Maintainerr", sub: "maintainerr", doc: "__DOC_MAINTAINERR__", gh: "Maintainerr/Maintainerr",
-      role: { en: "Library cleanup" },
-      text: { en: "Removes what nobody watches, by rules you set, before the disk fills up." } },
-    { pic: "uptimekuma", name: "Uptime Kuma", sub: "uptime-kuma", doc: "__DOC_UPTIME_KUMA__", gh: "louislam/uptime-kuma",
-      role: { en: "Uptime monitoring" },
-      text: { en: "Checks that every app responds, and alerts you as soon as one goes down." } },
-    { pic: "vaultwarden", name: "Vaultwarden", sub: "vaultwarden", doc: "__DOC_VAULTWARDEN__", gh: "dani-garcia/vaultwarden",
-      role: { en: "Passwords" },
-      text: { en: "A light Bitwarden-compatible server, working with the official Bitwarden apps and extensions." } },
-    { pic: "codeserver", name: "code-server", sub: "code-server", doc: "__DOC_CODE_SERVER__", gh: "coder/code-server",
-      role: { en: "Code editor" },
-      text: { en: "VS Code in the browser, to read and edit the apps' files right on the server." } },
-    { pic: "wgeasy", name: "wg-easy", sub: "wg-easy", doc: "__DOC_WG_EASY__", gh: "wg-easy/wg-easy",
-      role: { en: "VPN" },
-      text: { en: "A WireGuard VPN to the server, with a web page to add your devices." } }
+    { pic: "traefik", name: "Traefik", sub: "traefik", gh: "traefik/traefik",
+      role: { fr: "Reverse proxy", en: "Reverse proxy" },
+      text: { fr: "Envoie chaque requête vers la bonne app, avec un certificat Let's Encrypt pour chaque sous-domaine, obtenu tout seul.",
+              en: "Sends every request to the right app, with a Let's Encrypt certificate for each subdomain, obtained on its own." } },
+    { pic: "authelia", name: "Authelia", sub: "auth", gh: "authelia/authelia",
+      role: { fr: "Authentification (SSO)", en: "Authentication (SSO)" },
+      text: { fr: "Une seule connexion pour toutes les apps, avec double authentification et passkeys.",
+              en: "One login for every app, with two-factor authentication and passkeys." } },
+    { pic: "plex", name: "Plex", sub: "plex", docs: "https://support.plex.tv/",
+      role: { fr: "Serveur multimédia", en: "Media server" },
+      text: { fr: "Diffuse tes films et séries sur TV, mobile et navigateur. Bibliothèques pointées sur `/data/media`, alimentées par Radarr et Sonarr.",
+              en: "Streams your movies and shows to TV, phone and browser. Libraries point at `/data/media`, filled by Radarr and Sonarr." } },
+    { pic: "tautulli", name: "Tautulli", sub: "tautulli", gh: "Tautulli/Tautulli",
+      role: { fr: "Statistiques Plex", en: "Plex statistics" },
+      text: { fr: "Suit l'activité de Plex: qui regarde quoi, historique, graphiques et notifications.",
+              en: "Tracks Plex activity: who watches what, history, graphs and notifications." } },
+    { pic: "qbittorrent", name: "qBittorrent", sub: "qbittorrent", gh: "qbittorrent/qBittorrent",
+      role: { fr: "Client torrent", en: "Torrent client" },
+      text: { fr: "Télécharge dans `/data/torrents`, une catégorie par app. Radarr et Sonarr importent ensuite en hardlink, sans copie.",
+              en: "Downloads into `/data/torrents`, one category per app. Radarr and Sonarr then import as hardlinks, with no copy." } },
+    { pic: "qui", name: "qui", sub: "qui", gh: "autobrr/qui",
+      role: { fr: "Interface qBittorrent", en: "qBittorrent web UI" },
+      text: { fr: "Interface web moderne pour qBittorrent, qui gère plusieurs instances depuis un seul écran.",
+              en: "Modern web interface for qBittorrent, managing several instances from one screen." } },
+    { pic: "sonarr", name: "Sonarr", sub: "sonarr", gh: "Sonarr/Sonarr",
+      role: { fr: "Séries", en: "TV shows" },
+      text: { fr: "Surveille tes séries, envoie les épisodes à qBittorrent puis les range dans `/data/media/tv`.",
+              en: "Watches your shows, sends episodes to qBittorrent, then files them in `/data/media/tv`." } },
+    { pic: "radarr", name: "Radarr", sub: "radarr", gh: "Radarr/Radarr",
+      role: { fr: "Films", en: "Movies" },
+      text: { fr: "Surveille tes films, envoie les téléchargements à qBittorrent puis les range dans `/data/media/movies`.",
+              en: "Watches your movies, sends downloads to qBittorrent, then files them in `/data/media/movies`." } },
+    { pic: "prowlarr", name: "Prowlarr", sub: "prowlarr", gh: "Prowlarr/Prowlarr",
+      role: { fr: "Indexeurs", en: "Indexers" },
+      text: { fr: "Gère tous les indexeurs au même endroit et les pousse automatiquement vers Radarr et Sonarr.",
+              en: "Manages every indexer in one place and pushes them to Radarr and Sonarr automatically." } },
+    { pic: "seerr", name: "Seerr", sub: "seerr", gh: "seerr-team/seerr",
+      role: { fr: "Demandes", en: "Requests" },
+      text: { fr: "Tes proches demandent un film ou une série, la demande validée part dans Radarr ou Sonarr. Successeur d'Overseerr et de Jellyseerr.",
+              en: "Friends and family request a movie or show; once approved it goes to Radarr or Sonarr. Successor to Overseerr and Jellyseerr." } },
+    { pic: "jellyfin", name: "Jellyfin", sub: "jellyfin", gh: "jellyfin/jellyfin",
+      role: { fr: "Serveur multimédia", en: "Media server" },
+      text: { fr: "Serveur multimédia libre, sans compte externe. Bibliothèques pointées sur `/data/media`, transcodage matériel via `/dev/dri`.",
+              en: "Free media server with no outside account. Libraries point at `/data/media`, hardware transcoding through `/dev/dri`." } },
+    { pic: "portainer", name: "Portainer", sub: "portainer", gh: "portainer/portainer",
+      role: { fr: "Gestion Docker", en: "Docker management" },
+      text: { fr: "Interface web pour voir et gérer containers, images, volumes et réseaux du serveur.",
+              en: "Web interface to see and manage the server's containers, images, volumes and networks." } },
+    { pic: "codeserver", name: "code-server", sub: "code", gh: "coder/code-server",
+      role: { fr: "Éditeur de code", en: "Code editor" },
+      text: { fr: "VS Code dans le navigateur, pour éditer configs et fichiers compose directement sur le serveur.",
+              en: "VS Code in the browser, to edit configs and compose files right on the server." } },
+    { pic: "jellystat", name: "Jellystat", sub: "jellystat", gh: "CyferShepard/Jellystat",
+      role: { fr: "Statistiques Jellyfin", en: "Jellyfin statistics" },
+      text: { fr: "L'équivalent de Tautulli pour Jellyfin: historique de lecture, utilisateurs et statistiques par bibliothèque.",
+              en: "Tautulli's counterpart for Jellyfin: playback history, users and per-library statistics." } },
+    { pic: "wizarr", name: "Wizarr", sub: "wizarr", gh: "wizarrrr/wizarr",
+      role: { fr: "Invitations", en: "Invitations" },
+      text: { fr: "Liens d'invitation pour donner accès à Plex ou Jellyfin, avec un guide d'accueil pour les nouveaux utilisateurs.",
+              en: "Invite links that give access to Plex or Jellyfin, with an onboarding guide for new users." } },
+    { pic: "tracearr", name: "Tracearr", sub: "tracearr", gh: "connorgallopo/Tracearr",
+      role: { fr: "Suivi des lectures", en: "Stream monitoring" },
+      text: { fr: "Suit en temps réel les lectures sur Plex, Jellyfin et Emby, avec détection du partage de compte et alertes.",
+              en: "Follows streams on Plex, Jellyfin and Emby in real time, with account-sharing detection and alerts." } },
+    { pic: "uptimekuma", name: "Uptime Kuma", sub: "status", gh: "louislam/uptime-kuma",
+      role: { fr: "Supervision", en: "Uptime monitoring" },
+      text: { fr: "Vérifie que chaque app répond et prévient (Discord, e-mail...) dès qu'une tombe.",
+              en: "Checks that every app responds and alerts you (Discord, email...) as soon as one goes down." } },
+    { pic: "vaultwarden", name: "Vaultwarden", sub: "vault", gh: "dani-garcia/vaultwarden",
+      role: { fr: "Mots de passe", en: "Passwords" },
+      text: { fr: "Serveur compatible Bitwarden, léger et écrit en Rust. Fonctionne avec les apps et extensions Bitwarden officielles.",
+              en: "Lightweight Bitwarden-compatible server written in Rust. Works with the official Bitwarden apps and extensions." } },
+    { pic: "wireguard", name: "WireGuard", sub: "vpn", docs: "https://www.wireguard.com/",
+      role: { fr: "VPN", en: "VPN" },
+      text: { fr: "Accès privé au serveur depuis l'extérieur, pour les apps que tu ne veux pas exposer publiquement.",
+              en: "Private access to the server from outside, for apps you don't want to expose publicly." } }
   ];
   function renderApps() {
     var grid = document.getElementById("appGrid"); grid.innerHTML = "";
     CATALOG.forEach(function (a) {
       var art = el("article", "card");
-      var row = el("div", "row"); row.appendChild(appIcon(a.pic));
+      var row = el("div", "row"); row.appendChild(picCanvas(a.pic, LIT));
       var head = el("div", "head"); head.appendChild(el("h3", "", a.name)); head.appendChild(el("span", "tag2", tr(a.role))); row.appendChild(head);
       art.appendChild(row);
       var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
       var foot = el("div", "foot");
-      foot.appendChild(el("span", "go", a.sub ? a.sub + ".example.com" : "*.example.com"));
-      if (a.doc) { var d = el("a", "", "Docs"); d.href = a.doc; foot.appendChild(d); }
+      foot.appendChild(el("span", "go", a.sub + ".example.com"));
       var link = el("a");
       if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " · GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
       else { link.href = a.docs; link.textContent = "Docs ↗"; }
@@ -542,8 +530,11 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
   ];
   var START = APPS.map(function (a) { return a.on; });
   var IMG = { sonarr: "lscr.io/linuxserver/sonarr", prowlarr: "lscr.io/linuxserver/prowlarr", seerr: "ghcr.io/seerr-team/seerr" };
-  // relier les apps est une commande à part, pas encore codée (D45): l'installation ne le fait pas
-  var WIRE = {};
+  var WIRE = {
+    sonarr: [["qbittorrent", "category sonarr"], ["root folder", "/data/media/tv"], ["jellyfin", "library /data/media/tv"]],
+    prowlarr: [["radarr", "push indexers"], ["sonarr", "push indexers"]],
+    seerr: [["jellyfin", "sign-in"], ["radarr", "4K off, quality HD-1080p"]]
+  };
   var selected = "sonarr", busy = null, timers = [];
   var tilesEl = document.getElementById("tiles"), logEl = document.getElementById("logList"), btn = document.getElementById("btnInstall");
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -553,7 +544,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     APPS.forEach(function (a) {
       var b = el("button", "tile" + (a.on ? "": " off")); b.type = "button";
       b.setAttribute("aria-pressed", a.slug === selected);
-      b.appendChild(appIcon(a.slug));
+      b.appendChild(picCanvas(a.slug, a.on ? LIT: DIM));
       b.appendChild(el("span", "name", a.name));
       var state = busy === a.slug ? "busy": a.on ? "run": "off";
       b.appendChild(el("span", "st " + state, t(state)));
