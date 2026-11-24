@@ -38,41 +38,42 @@ DOCS_LAYOUT = DOCS_SRC / "layout.html"
 
 # la documentation (D127, 23 novembre 2026): des sections, comme Getting Started, chacune titrée
 # dans la barre de gauche, ses pages dans l'ordre. « Travail »: les pages de travail en français,
-# seulement dans le site local (D125).
+# seulement dans le site local (D125). « group »: un groupe repliable dans sa section, ouvert
+# seulement sur une de ses pages (D128: « Dot Box apps »).
 DOCS = [
     {"slug": "basics", "name": "Basics", "dots": "BASICS", "section": "Getting Started"},
     {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES", "section": "Getting Started"},
     {"slug": "installation", "name": "Installation", "dots": "INSTALL", "section": "Getting Started"},
     {"slug": "post-installation", "name": "Post-installation", "dots": "POST-INSTALL", "section": "Getting Started"},
-    {"slug": "update", "name": "Update", "dots": "UPDATE", "section": "Getting Started"},
-    {"slug": "renovate", "name": "Renovate", "dots": "RENOVATE", "section": "Getting Started"},
     {"slug": "accessing-apps", "name": "Accessing Apps", "dots": "ACCESS", "section": "Getting Started"},
-    {"slug": "security", "name": "Security", "dots": "SECURITY", "section": "Getting Started"},
-    {"slug": "paths", "name": "Paths", "dots": "PATHS", "section": "Getting Started"},
+    {"slug": "update", "name": "Update", "dots": "UPDATE", "section": "Getting Started"},
     {"slug": "backup", "name": "Backup", "dots": "BACKUP", "section": "Backup / Restore"},
     {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "section": "Backup / Restore"},
     {"slug": "apps", "name": "Overview", "dots": "APPS", "section": "Apps"},
     {"slug": "your-own-apps", "name": "Your own apps", "dots": "YOUR-APPS", "section": "Apps"},
-    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "section": "Apps"},
-    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "section": "Apps"},
-    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "section": "Apps"},
-    {"slug": "qui", "name": "qui", "dots": "QUI", "section": "Apps"},
-    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "section": "Apps"},
-    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "section": "Apps"},
-    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "section": "Apps"},
-    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "section": "Apps"},
-    {"slug": "plex", "name": "Plex", "dots": "PLEX", "section": "Apps"},
-    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "section": "Apps"},
-    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "section": "Apps"},
-    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "section": "Apps"},
-    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "section": "Apps"},
-    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Apps"},
-    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Apps"},
-    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Apps"},
+    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "qui", "name": "qui", "dots": "QUI", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "plex", "name": "Plex", "dots": "PLEX", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Apps", "group": "Dot Box apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI", "section": "References"},
     {"slug": "api", "name": "API", "dots": "API", "section": "References"},
     {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI", "section": "References"},
     {"slug": "motd", "name": "MOTD", "dots": "MOTD", "section": "References"},
+    {"slug": "paths", "name": "Paths", "dots": "PATHS", "section": "References"},
+    {"slug": "security", "name": "Security", "dots": "SECURITY", "section": "References"},
+    {"slug": "renovate", "name": "Renovate", "dots": "RENOVATE", "section": "References"},
     {"slug": "sandbox", "name": "Sandbox", "dots": "SANDBOX", "section": "References"},
     {"slug": "journal", "name": "Journal", "dots": "JOURNAL", "section": "Travail"},
     {"slug": "cli-output", "name": "CLI Output", "dots": "CLI-OUTPUT", "section": "Travail"},
@@ -153,19 +154,33 @@ def doc(slug, urls, target, title):
     part = sections((DOCS_SRC / (slug + ".html")).read_text(encoding="utf-8"))
     nav = []
     section = None
+    group = None
     for d in DOCS:
         key = "__DOC_" + ukey(d["slug"]) + "__"
+        if d.get("group") != group or d["section"] != section:
+            if group:
+                nav.append("        </ul></details></li>")
+            group = None
         if d["section"] != section:
             if section is not None:
                 nav.append("      </ul>")
             section = d["section"]
             nav.append('      <h2>' + section.replace("&", "&amp;") + '</h2>')
             nav.append('      <ul class="nav">')
+        if d.get("group") and d.get("group") != group:
+            # un groupe repliable: ouvert seulement quand la page en cours en fait partie
+            group = d["group"]
+            is_open = " open" if page_def.get("group") == group else ""
+            nav.append('        <li class="fold"><details' + is_open + '><summary class="grp">' + group.replace("&", "&amp;")
+                       + '</summary><ul class="nav-sub">')
+        li = '<li class="sub">' if group else "<li>"
         name = d["name"].replace("&", "&amp;")
         if d["slug"] == slug:
-            nav.append('        <li><a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
+            nav.append("        " + li + '<a href="' + key + '" aria-current="page">' + name + '</a><ul class="toc" id="pageToc"></ul></li>')
         else:
-            nav.append('        <li><a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
+            nav.append("        " + li + '<a href="' + key + '"__DOC_' + ukey(d["slug"]) + "_TARGET__>" + name + "</a></li>")
+    if group:
+        nav.append("        </ul></details></li>")
     nav.append("      </ul>")
     pn = []
     if i > 0:

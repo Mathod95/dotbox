@@ -5135,6 +5135,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 23 novembre 2026: « Le bouton dans le top menu, on va le renommer en Docs! On garde la catégorie GETTING STARTED! APPS devient comme GETTING STARTED. Pareil pour BACKUP / RESTORE, je pense. Sandbox irait dans REFERENCES (Références pareille que les autres?) ».",
       reco: "Choix de Mathod95, appliqué par Claude le 23 novembre 2026 (modification dictée): le bouton « Getting Started » de l'en-tête devient « Docs » sur toutes les pages. La barre de gauche passe en sections titrées comme Getting Started: Getting Started (Basics à Paths), Backup / Restore, Apps (Overview, Your own apps, puis les apps, plus repliable: D96 remplacée), References (CLI, API, Web UI, MOTD, Sandbox). Choix de Claude, à corriger si besoin: CLI, API et Web UI rangées dans References (elles étaient entre Apps et References, une section les aurait mises dans Apps), et une section « Travail » pour le Journal, CLI Output et En vrac (seulement en local, D125). Le fil d'Ariane au-dessus du titre donne la section de la page. Les adresses ne changent pas (/getting-started/<page>/).",
       refs: "D96, D88, D125" },
+    { t: "Getting Started, le chemin de l'installation, et le groupe « Dot Box apps »",
+      p: "Mathod95, le 24 novembre 2026, sur Q83: « Oui go! Dans Apps aussi, tu crées une sous-catégorie Dot Box apps et tu y ajoutes toutes les apps dedans, dans un menu qui se replie ».",
+      reco: "Choix de Mathod95, appliqué par Claude le 24 novembre 2026: (1) la première option de Q83. Getting Started: Basics, Prerequisites, Installation, Post-installation, Accessing Apps, Update. References: CLI, API, Web UI, MOTD, Paths, Security, Renovate, Sandbox. L'ordre de DOCS suit, donc aussi les liens Précédent et Suivant. (2) Dans Apps, après Overview et Your own apps, un groupe repliable « Dot Box apps » avec une page par app du catalogue, ouvert seulement quand la page en cours en fait partie (champ group de DOCS, comme le groupe de D96). Les adresses ne changent pas.",
+      refs: "Q83, D127, D96" },
   ];
 
   var QUESTIONS = [
@@ -5647,11 +5651,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Un repo privé à côté (Mathod95/dotbox-notes, créé par Mathod95 sur GitHub, avec sa propre clé de déploiement pour Claude), cloné dans tools/site/private/, ignoré par le repo public. build_site.py prend les pages de ce dossier s'il existe: en local, le site complet. Sur GitHub Pages, seulement la doc, et les liens vers le Journal (Roadmap, doc) n'apparaissent qu'en local. Versionné et sauvegardé sur GitHub, invisible du public. CLAUDE.md pourrait y aller aussi (Claude Code lit CLAUDE.local.md, ignoré par Git).", "Garder les fichiers dans le repo public, mais ne plus les publier sur le site (build_site.py --private en local). Simple, mais toujours lisibles sur GitHub.", "Un dossier local ignoré par Git, sans repo: rien de public, mais aucune sauvegarde ni historique (le PC qui lâche, et tout est perdu).", "Laisser comme c'est."],
       reco: "Proposé par Claude: la première. Le dépôt privé et sa clé sont à créer par Mathod95 sur GitHub (Claude n'a pas d'accès connecté). Pas encore tranchée.",
       refs: "D53, D85, D103, D123" },
-    { n: 83,
+    { n: 83, done: "D128",
       t: "Getting Started, vraiment le chemin de l'installation: ce qui part dans References",
       p: "Mathod95, le 24 novembre 2026, après D127: « Renovate irait dans References? Le Getting Started devrait être vraiment lié à l'installation, l'update, etc. ». Ce que Claude a vu: Getting Started a neuf pages (Basics, Prerequisites, Installation, Post-installation, Update, Renovate, Accessing Apps, Security, Paths). Certaines suivent le chemin d'un nouvel utilisateur, de zéro à un serveur qui tourne puis tenu à jour: Basics, Prerequisites, Installation, Post-installation, Accessing Apps (atteindre ses apps, changer un sous-domaine ou un accès), Update. Les autres se consultent au besoin, sans être une étape: Renovate (comment le catalogue suit les nouvelles versions, côté projet, rien à faire pour l'utilisateur), Security (les protections en place et prévues), Paths (où sont les fichiers).",
       l: ["Getting Started: Basics, Prerequisites, Installation, Post-installation, Accessing Apps, Update. References: CLI, API, Web UI, MOTD, Paths, Security, Renovate, Sandbox. Seul le champ section de DOCS change, les adresses restent les mêmes.", "Seulement Renovate dans References, le reste comme aujourd'hui.", "Laisser comme D127."],
-      reco: "Proposé par Claude: la première. Accessing Apps reste dans Getting Started, c'est la première chose qu'on fait après l'installation. Pas encore tranchée.",
+      reco: "Proposé par Claude: la première. Accessing Apps reste dans Getting Started, c'est la première chose qu'on fait après l'installation.",
       refs: "D127, D88" },
   ];
 
@@ -5869,7 +5873,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
