@@ -3,23 +3,23 @@
 name: code-server
 services:
   code-server:
-    image: lscr.io/linuxserver/code-server:<version>
+    image: codercom/code-server:<version>
     container_name: code-server
     restart: unless-stopped
     networks:
       - dotbox
+    user: "1000:1000"
+    command: ['/opt']
     environment:
-      PUID: '1000'
-      PGID: '1000'
+      HOME: '/home/coder'
       TZ: 'Europe/Paris'
-      DEFAULT_WORKSPACE: '/opt'
     volumes:
-      - /opt/code-server/config:/config
+      - /opt/code-server/config:/home/coder
       - /opt:/opt
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8443/healthz"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -28,7 +28,7 @@ services:
       traefik.enable: "true"
       traefik.http.routers.code-server.rule: Host(`code-server.example.com`)
       traefik.http.routers.code-server.entrypoints: websecure
-      traefik.http.services.code-server.loadbalancer.server.port: "8443"
+      traefik.http.services.code-server.loadbalancer.server.port: "8080"
       # two_factor: Authelia demande qui se connecte avant de laisser passer
       traefik.http.routers.code-server.middlewares: authelia@docker
 

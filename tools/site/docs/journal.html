@@ -3430,7 +3430,19 @@ Dans le container: uid=1000 (l'utilisateur a l'uid 1000) ; sudo refusé (« The 
 B, config.yaml avec auth: none: « Authentication is disabled », / répond 302 (vers le dossier ouvert)
 C, uid 1234: le container s'arrête, « EACCES: permission denied, mkdir '/.config' » (sans entrée dans passwd, HOME devient /)
 D, uid 1234 avec HOME=/home/coder: démarre, « Authentication is disabled », / répond 302`,
-      undo: "Rien à annuler." }
+      undo: "Rien à annuler." },
+    { id: "J301", time: "03:30", status: "fait", where: "PC", kind: "ecriture",
+      title: "D131: code-server sur son image officielle, codé sur le PC",
+      cmd: `src/catalog.rs: command: (les arguments de l'image) et settings format: yaml
+src/engine.rs: merge_yaml, command: dans le compose ; src/apps.rs: le format yaml
+catalog/code-server.yml: codercom/code-server:4.146.0, user, HOME, config:/home/coder, command [/opt], config.yaml (bind-addr, auth none, cert false)
+tests/expected/code-server/compose.yml et config.yaml
+cargo fmt --check ; cargo clippy --all-targets -- -D warnings ; cargo test`,
+      does: "Mathod95: « Apprends au moteur! GO code ». Le plan de D131, points 1 à 3 et 5 (la doc en propositions #159 à #162 sur la page code-server).",
+      effect: "Rien sur le serveur. Commité en local, pas poussé. À ne pas pousser avant la v0.0.7: les serveurs en v0.0.6 lisent le catalogue sur main, et leur binaire refuse un manifest avec command: (champ inconnu). min_dotbox reste 0.0.6 dans le manifest, comme pour la v0.0.6: il passe à 0.0.7 dans le commit de la release, avec la version de Cargo.toml (la vérification du catalogue refuse un min_dotbox plus récent que le binaire).",
+      result: `cargo fmt et clippy: rien à redire
+cargo test: 169 tests passent, dont code_server_sees_opt (le compose attendu), code_server_settings_are_the_expected_ones (le config.yaml attendu, relancé sans changement), yaml_settings_keep_the_rest (le mot de passe écrit par code-server gardé, un fichier vide, une liste refusée) et les règles de command: et du format yaml`,
+      undo: "git revert du commit." }
   ];
 
   var PLAN = [
@@ -5900,7 +5912,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 300],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 300, 301],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.

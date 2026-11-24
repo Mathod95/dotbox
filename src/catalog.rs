@@ -98,6 +98,10 @@ struct Raw {
     /// l'utilisateur du container, pour les images sans PUID ni PGID (7.11): « {{uid}}:{{gid}} »
     #[serde(default)]
     user: Option<String>,
+    /// les arguments donnés à l'image au démarrage, après son entrypoint (le dossier qu'ouvre
+    /// code-server, D131): « command: [/opt] »
+    #[serde(default)]
+    command: Vec<String>,
     /// l'assistant de premier démarrage: derrière Authelia tant qu'il n'est pas fini (D71)
     #[serde(default)]
     setup: Option<RawSetup>,
@@ -197,6 +201,8 @@ pub struct Settings {
     /// [Section] en « Clé\Sous-clé ».
     /// « json »: « a/b/c » est la clé c de l'objet b de l'objet a. true et false sont des
     /// booléens, le reste du texte.
+    /// « yaml »: des clés du premier niveau (« bind-addr », le config.yaml de code-server).
+    /// true et false sont des booléens, le reste du texte.
     pub format: String,
     /// format xml: l'élément racine (« Config », « NetworkConfiguration »)
     pub root: String,
@@ -243,6 +249,8 @@ pub struct Manifest {
     pub ports: Vec<Port>,
     /// le container tourne avec l'utilisateur de dotbox.yml (user: dans le compose)
     pub run_as_user: bool,
+    /// les arguments donnés à l'image au démarrage (command: dans le compose)
+    pub command: Vec<String>,
     pub setup: Option<Setup>,
     pub crowdsec: Option<Watch>,
     /// des chemins derrière Authelia, en plus du niveau de l'app (/admin de Vaultwarden)
@@ -426,6 +434,14 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         Some("{{uid}}:{{gid}}") => true,
         Some(u) => return Err(format!("user {u:?}: only \"{{{{uid}}}}:{{{{gid}}}}\"")),
     };
+    for arg in &raw.command {
+        if arg.is_empty() || arg.chars().any(char::is_control) {
+            return Err(format!(
+                "command {arg:?}: one argument per line, not empty, on a single line"
+            ));
+        }
+        check_placeholders(&format!("command {arg}"), arg)?;
+    }
     let mut ports: Vec<Port> = Vec::new();
     for spec in &raw.ports {
         let p = port(spec)?;
@@ -448,17 +464,22 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                     st.file
                 ));
             }
-            let (ini, json) = match st.format.as_str() {
-                "xml" => (false, false),
-                "ini" => (true, false),
-                "json" => (false, true),
-                other => return Err(format!("settings: format {other:?}, xml, ini or json")),
+            let (ini, json, yaml) = match st.format.as_str() {
+                "xml" => (false, false, false),
+                "ini" => (true, false, false),
+                "json" => (false, true, false),
+                "yaml" => (false, false, true),
+                other => {
+                    return Err(format!(
+                        "settings: format {other:?}, xml, ini, json or yaml"
+                    ));
+                }
             };
             let word = |w: &str| {
                 w.starts_with(|c: char| c.is_ascii_alphabetic())
                     && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
             };
-            let root = match (&st.root, ini || json) {
+            let root = match (&st.root, ini || json || yaml) {
                 (None, _) => "Config".to_string(),
                 (Some(r), false) if word(r) => r.clone(),
                 (Some(r), false) => {
@@ -474,13 +495,24 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
                         "settings {key:?}: Section/Key, letters, digits and _ (format ini)"
                     ));
                 }
+                // une clé du premier niveau, avec des tirets (« bind-addr »)
+                if yaml
+                    && !(key.starts_with(|c: char| c.is_ascii_alphabetic())
+                        && key
+                            .chars()
+                            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'))
+                {
+                    return Err(format!(
+                        "settings {key:?}: a top-level key, letters, digits, _ and - (format yaml)"
+                    ));
+                }
                 let parts: Vec<&str> = key.split('/').collect();
                 if json && !parts.iter().all(|w| word(w)) {
                     return Err(format!(
                         "settings {key:?}: a/b/c, letters, digits and _ (format json)"
                     ));
                 }
-                if !ini && !json && !(parts.len() <= 2 && parts.iter().all(|w| word(w))) {
+                if !ini && !json && !yaml && !(parts.len() <= 2 && parts.iter().all(|w| word(w))) {
                     return Err(format!(
                         "settings {key:?}: Key or Key/Child, letters, digits and _ (format xml)"
                     ));
@@ -630,6 +662,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         settings,
         ports,
         run_as_user,
+        command: raw.command,
         setup,
         crowdsec,
         authelia_paths: raw.authelia_paths,
@@ -1137,6 +1170,24 @@ mod tests {
         assert!(with(&format!("{st}    <A>: x\n")).is_err());
         assert!(with("settings:\n  file: ../x.xml\n  format: xml\n  values: {}\n").is_err());
         assert!(with("settings:\n  file: config/x.ini\n  format: toml\n  values: {}\n").is_err());
+        // yaml: des clés du premier niveau, avec des tirets (code-server, D131), sans root
+        let yaml = "settings:\n  file: config/.config/code-server/config.yaml\n  format: yaml\n  values:\n";
+        assert!(with(&format!("{yaml}    bind-addr: \"0.0.0.0:8080\"\n")).is_ok());
+        assert!(with(&format!("{yaml}    a/b: x\n")).is_err());
+        assert!(with(&format!("{yaml}    -a: x\n")).is_err());
+        assert!(with(&format!("{yaml}    a b: x\n")).is_err());
+        assert!(
+            with(
+                "settings:\n  file: config/c.yaml\n  format: yaml\n  root: X\n  values:\n    a: x\n"
+            )
+            .is_err()
+        );
+        // command: les arguments de l'image, un par ligne, les {{...}} connus seulement
+        assert_eq!(with("command:\n  - /opt\n").unwrap().command, ["/opt"]);
+        assert!(with("command:\n  - \"--app={{app}}\"\n").is_ok());
+        assert!(with("command:\n  - \"{{home}}\"\n").is_err());
+        assert!(with("command:\n  - \"\"\n").is_err());
+        assert!(with("command:\n  - \"a\\nb\"\n").is_err());
         // ini: Section/Clé, le fichier peut avoir des majuscules (c'est l'app qui le nomme)
         let ini =
             "settings:\n  file: config/qBittorrent/qBittorrent.conf\n  format: ini\n  values:\n";

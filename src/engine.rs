@@ -82,6 +82,33 @@ pub fn merge_json(existing: Option<&str>, values: &[(String, String)]) -> Result
         .map_err(|e| e.to_string())
 }
 
+/// Pose des réglages dans un fichier YAML (config.yaml de code-server), des clés du premier
+/// niveau, en gardant les autres. « true » et « false » deviennent des booléens. Rien ne change
+/// si les valeurs y sont déjà: le texte de l'app est rendu tel quel.
+pub fn merge_yaml(existing: Option<&str>, values: &[(String, String)]) -> Result<String, String> {
+    use serde_yaml_ng::{Mapping, Value};
+    let text = existing.unwrap_or("");
+    let mut doc: Mapping = match serde_yaml_ng::from_str::<Value>(text) {
+        Ok(Value::Mapping(m)) => m,
+        Ok(Value::Null) => Mapping::new(),
+        Ok(_) => return Err("not a YAML mapping".into()),
+        Err(e) => return Err(format!("not valid YAML: {e}")),
+    };
+    let before = doc.clone();
+    for (key, value) in values {
+        let v = match value.as_str() {
+            "true" => Value::Bool(true),
+            "false" => Value::Bool(false),
+            s => Value::String(s.to_string()),
+        };
+        doc.insert(Value::String(key.clone()), v);
+    }
+    if doc == before && existing.is_some() {
+        return Ok(text.to_string());
+    }
+    serde_yaml_ng::to_string(&doc).map_err(|e| e.to_string())
+}
+
 /// Ce que XML ne laisse pas écrire tel quel dans un texte (comme Radarr l'écrit lui-même).
 fn xml_escape(v: &str) -> String {
     v.replace('&', "&amp;")
@@ -251,6 +278,10 @@ services:
     if m.run_as_user {
         // l'image ne connaît pas PUID et PGID: le container tourne avec l'utilisateur (7.11)
         out.push_str(&format!("    user: \"{}:{}\"\n", c.uid, c.gid));
+    }
+    if !m.command.is_empty() {
+        let args: Vec<String> = m.command.iter().map(|a| quote(&fill(a, app, c))).collect();
+        out.push_str(&format!("    command: [{}]\n", args.join(", ")));
     }
     if !m.ports.is_empty() {
         out.push_str(
@@ -663,6 +694,54 @@ mod tests {
         assert_eq!(out, "{\n  \"a\": {\n    \"b\": \"x\"\n  }\n}\n");
         assert!(merge_json(Some("{\"a\": 1}"), &[v("a/b", "x")]).is_err());
         assert!(merge_json(Some("pas du json"), &[v("a", "x")]).is_err());
+    }
+
+    /// Le config.yaml de code-server écrit avant le premier démarrage (D131).
+    #[test]
+    fn code_server_settings_are_the_expected_ones() {
+        let m = load("code-server");
+        let c = ctx(Access::TwoFactor);
+        let st = m.settings.unwrap();
+        assert_eq!(st.format, "yaml");
+        let values: Vec<(String, String)> = st
+            .values
+            .iter()
+            .map(|(k, v)| (k.clone(), fill(v, &m.name, &c)))
+            .collect();
+        let out = merge_yaml(None, &values).unwrap();
+        assert_eq!(
+            out,
+            include_str!("../tests/expected/code-server/config.yaml")
+        );
+        // relancé: rien ne change
+        assert_eq!(merge_yaml(Some(&out), &values).unwrap(), out);
+    }
+
+    #[test]
+    fn yaml_settings_keep_the_rest() {
+        let v = |k: &str, x: &str| (k.to_string(), x.to_string());
+        // le config.yaml que code-server écrit à son premier démarrage: le mot de passe gardé,
+        // auth changé, cert reste un booléen
+        let cs = "bind-addr: 127.0.0.1:8080\nauth: password\npassword: abc123\ncert: false\n";
+        let out = merge_yaml(
+            Some(cs),
+            &[v("bind-addr", "0.0.0.0:8080"), v("auth", "none")],
+        )
+        .unwrap();
+        assert_eq!(
+            out,
+            "bind-addr: 0.0.0.0:8080\nauth: none\npassword: abc123\ncert: false\n"
+        );
+        // déjà réglé: le texte de l'app, tel quel
+        let set = "# écrit par l'app\nauth: none\n";
+        assert_eq!(merge_yaml(Some(set), &[v("auth", "none")]).unwrap(), set);
+        // un fichier vide, ou une liste au lieu de clés
+        assert_eq!(
+            merge_yaml(Some(""), &[v("auth", "none")]).unwrap(),
+            "auth: none\n"
+        );
+        assert!(merge_yaml(Some("- a\n"), &[v("auth", "none")]).is_err());
+        assert!(merge_yaml(Some("a: [\n"), &[v("auth", "none")]).is_err());
     }
 
     #[test]

@@ -870,13 +870,15 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "progress",
       "fr": "Catalogue: qBittorrent et code-server sur l'image officielle de leur projet, comme Traefik et Authelia",
       "en": "Catalog: qBittorrent and code-server on their project's official image, like Traefik and Authelia",
       "doc": "apps",
       "journal": [
         "D130",
+        "D131",
         "Q84",
+        "J300",
         "8.4",
         "8.9"
       ]

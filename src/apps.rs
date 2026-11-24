@@ -639,6 +639,7 @@ fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Resul
             "xml" => engine::merge_xml(old, &st.root, &values),
             "ini" => engine::merge_ini(old, &values),
             "json" => engine::merge_json(old, &values),
+            "yaml" => engine::merge_yaml(old, &values),
             other => Err(format!("format {other} not supported")),
         }
         .map_err(|e| format!("{path}: {e}"))

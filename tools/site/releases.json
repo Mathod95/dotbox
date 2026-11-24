@@ -7,7 +7,16 @@
         "fr": "Tes propres apps",
         "en": "Your own apps"
       },
-      "new": [],
+      "new": [
+        {
+          "fr": "Manifest: `command:`, les arguments donnés à l'image au démarrage (le dossier qu'ouvre code-server)",
+          "en": "Manifest: `command:`, the arguments given to the image at start (the folder code-server opens)"
+        },
+        {
+          "fr": "Manifest: des réglages en YAML (`format: yaml`), des clés du premier niveau, posées avant le premier démarrage en gardant les autres",
+          "en": "Manifest: YAML settings (`format: yaml`), top-level keys, set before the first start while keeping the others"
+        }
+      ],
       "changed": [
         {
           "fr": "CLI: `dotbox list` montre aussi les apps ajoutées avec `dotbox add`, marquées yours",
@@ -16,6 +25,10 @@
         {
           "fr": "CLI: le manifest écrit par `dotbox add` commence par des commentaires en anglais",
           "en": "CLI: the manifest written by `dotbox add` starts with comments in English"
+        },
+        {
+          "fr": "code-server: l'image officielle `codercom/code-server`, au lieu de celle de linuxserver, sans mot de passe ni sudo",
+          "en": "code-server: the official `codercom/code-server` image instead of linuxserver's, without password or sudo"
         }
       ],
       "fixed": [
