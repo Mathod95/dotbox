@@ -29,6 +29,10 @@
         {
           "fr": "code-server: l'image officielle `codercom/code-server`, au lieu de celle de linuxserver, sans mot de passe ni sudo",
           "en": "code-server: the official `codercom/code-server` image instead of linuxserver's, without password or sudo"
+        },
+        {
+          "fr": "qBittorrent: l'image officielle `qbittorrentofficial/qbittorrent-nox`, au lieu de celle de linuxserver. Ses réglages dans `config/qBittorrent/config/qBittorrent.conf`",
+          "en": "qBittorrent: the official `qbittorrentofficial/qbittorrent-nox` image instead of linuxserver's. Its settings in `config/qBittorrent/config/qBittorrent.conf`"
         }
       ],
       "fixed": [

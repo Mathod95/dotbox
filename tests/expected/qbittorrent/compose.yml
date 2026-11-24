@@ -3,7 +3,7 @@
 name: qbittorrent
 services:
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:<version>
+    image: qbittorrentofficial/qbittorrent-nox:<version>
     container_name: qbittorrent
     restart: unless-stopped
     networks:

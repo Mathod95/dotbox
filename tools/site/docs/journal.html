@@ -3442,6 +3442,16 @@ cargo fmt --check ; cargo clippy --all-targets -- -D warnings ; cargo test`,
       effect: "Rien sur le serveur. Commité en local, pas poussé. À ne pas pousser avant la v0.0.7: les serveurs en v0.0.6 lisent le catalogue sur main, et leur binaire refuse un manifest avec command: (champ inconnu). min_dotbox reste 0.0.6 dans le manifest, comme pour la v0.0.6: il passe à 0.0.7 dans le commit de la release, avec la version de Cargo.toml (la vérification du catalogue refuse un min_dotbox plus récent que le binaire).",
       result: `cargo fmt et clippy: rien à redire
 cargo test: 169 tests passent, dont code_server_sees_opt (le compose attendu), code_server_settings_are_the_expected_ones (le config.yaml attendu, relancé sans changement), yaml_settings_keep_the_rest (le mot de passe écrit par code-server gardé, un fichier vide, une liste refusée) et les règles de command: et du format yaml`,
+      undo: "git revert du commit." },
+    { id: "J302", time: "03:50", status: "fait", where: "PC", kind: "ecriture",
+      title: "D130: qBittorrent sur son image officielle, codé sur le PC",
+      cmd: `catalog/qbittorrent.yml: qbittorrentofficial/qbittorrent-nox:5.3.0-2, settings dans config/qBittorrent/config/qBittorrent.conf
+tests/expected/qbittorrent/compose.yml ; renovate.json: une règle pour ses tags (5.3.0-2)
+tools/site/docs/qbittorrent.html: propositions #163 à #166
+cargo test`,
+      does: "Mathod95: « On verra plus tard [l'essai de code-server sur le serveur], mets à jour les docs de code-server, fais qBittorrent et mets à jour sa doc aussi! ». Lu avant d'écrire, dans qbittorrent/docker-qbittorrent-nox (Dockerfile, entrypoint.sh, Readme.md): Alpine, avec curl et tzdata, tini puis entrypoint.sh, qui démarre en root, change l'uid et le gid de qbtUser pour PUID et PGID, donne /config à qbtUser, puis lance qBittorrent avec doas -u qbtUser (root qui descend: no-new-privileges ne le gêne pas, à vérifier sur le serveur). Profil dans /config: les réglages dans qBittorrent/config/qBittorrent.conf, écrits par l'image seulement s'il manque, les torrents (BT_backup) et les logs dans qBittorrent/data. Les tags: 5.3.0-2 (libtorrent 2, comme avant), 5.3.0-lt1-2 (libtorrent 1.2), latest et alpha.",
+      effect: "Rien sur le serveur. min_dotbox reste 0.0.4: rien de nouveau dans le moteur. La règle de Renovate: sans elle, Renovate prendrait le « -2 » pour une variante et ne proposerait jamais 5.3.1-1. Les logs restent hors des sauvegardes (le motif */logs/* couvre qBittorrent/data/logs). Le serveur de test (qBittorrent de linuxserver) est à réinstaller: Q85. Reste un exemple de version linuxserver dans la maquette de la page Web UI (5.3.0_v2.1.2-ls487), des données d'exemple.",
+      result: "cargo test: 169 tests passent, dont qbittorrent_compose_publishes_its_peer_port (le compose attendu, avec la nouvelle image) et qbittorrent_settings_are_the_expected_ones (le même qBittorrent.conf). renovate.json se lit (JSON valide).",
       undo: "git revert du commit." }
   ];
 
@@ -5703,6 +5713,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Garder linuxserver pour code-server, avec la raison dans #54 (sans sudo et sans mot de passe par défaut, ce que demande D67), et passer qBittorrent seul à son image officielle.", "Passer code-server à l'image officielle quand même: ajouter au moteur les réglages en YAML (ou command:), garder no-new-privileges, et essayer sur le serveur de test que le container démarre, avec l'uid de l'utilisateur, sans sudo.", "Passer à l'image officielle et retirer /opt/dotbox de ce que voit code-server (seulement les dossiers des apps), pour que le sudo de l'image ne donne pas les secrets."],
       reco: "Proposé par Claude: la deuxième, si l'essai montre que le container démarre avec no-new-privileges. Sinon la première. Essayé (J300): il démarre.",
       refs: "D130, D67, 8.9, J300" },
+    { n: 85,
+      t: "qBittorrent qui tourne déjà sur l'image de linuxserver: que fait dotbox update?",
+      p: "Vu par Claude le 24 novembre 2026 en codant D130 (J302). L'image officielle range les fichiers autrement: le réglage dans config/qBittorrent/config/qBittorrent.conf (chez linuxserver: config/qBittorrent/qBittorrent.conf), les torrents et les logs dans config/qBittorrent/data (chez linuxserver: config/qBittorrent/BT_backup et logs). Un serveur où qBittorrent tourne déjà, après dotbox update ou install, démarrerait l'image officielle avec un nouveau fichier de réglages (ceux de Dot Box), sans la liste des torrents ni les réglages faits dans l'interface. Les fichiers téléchargés restent dans /data/torrents. Aujourd'hui, seul le serveur de test est concerné (Dot Box n'a pas encore d'autres utilisateurs).",
+      l: ["Rien dans le code: réinstaller qBittorrent sur le serveur de test (remove --purge puis install), une ligne dans Releases qui le dit.", "dotbox déplace les fichiers une fois, à l'install ou l'update, quand il trouve l'ancienne forme (config/qBittorrent/qBittorrent.conf sans config/qBittorrent/config/), puis démarre l'image officielle.", "Un mécanisme général de migration dans les manifests, pour les prochains changements de ce genre."],
+      reco: "Proposé par Claude: la première, Dot Box est encore en 0.0.x et sans autres utilisateurs. La troisième le jour où il y en aura. Pas encore tranchée.",
+      refs: "D130, J302, 8.4" },
   ];
 
 
@@ -5912,7 +5928,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "5": [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 74],
     "6": [71, 73, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98],
     "7": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155],
-    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 300, 301],
+    "8": [109, 110, 111, 112, 113, 115, 116, 117, 118, 119, 120, 121, 122, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 170, 171, 172, 173, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 300, 301, 302],
     "10": [42, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 166, 167, 168, 169, 174, 175, 176, 177, 178]
   };
   // Où ranger chaque décision, question et note (D51). « sans » : pas encore d'étape.
@@ -5923,7 +5939,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
-    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83]
+    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83]
   };
   var NHOME = { "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18], "17": [20] };
   var placed = {};

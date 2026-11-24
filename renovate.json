@@ -47,6 +47,12 @@
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?(?:_v\\d+\\.\\d+\\.\\d+)?(?:-r\\d+)?-ls(?<revision>\\d+)$"
     },
     {
+      "description": "qBittorrent, l'image officielle: la version de qBittorrent, puis le build de l'image (5.3.0-2). Sans les variantes lt1 (libtorrent 1.2) ni alpha et latest. Un nouveau build compte comme un correctif.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["qbittorrentofficial/qbittorrent-nox"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<revision>\\d+)$"
+    },
+    {
       "description": "Jellyfin: seulement ses versions (12.4, 12.4.1). Il publie aussi unstable, des builds datés (2026111613) et la même image datée (12.4.20261026-211555), que Renovate prendrait pour des versions.",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["jellyfin/jellyfin"],

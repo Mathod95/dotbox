@@ -1,9 +1,13 @@
 # qBittorrent: le client BitTorrent, qui télécharge dans /data/torrents.
 # Format: Journal, étape 7 (7.1, 7.8) et 8.4. Les {{...}} sont remplis par dotbox à l'installation.
+# L'image officielle du projet (D130): sur Alpine, avec curl. Elle démarre en root, donne
+# /config à PUID et PGID, puis lance qBittorrent avec eux (doas, que no-new-privileges laisse
+# faire: root qui descend). Le tag: la version de qBittorrent, puis le build de l'image. Sans
+# « lt1 »: libtorrent 2, comme avant.
 name: qbittorrent
 description: BitTorrent client
 min_dotbox: 0.0.4
-image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487
+image: qbittorrentofficial/qbittorrent-nox:5.3.0-2
 port: 8080
 access: two_factor
 # sans session, / rend la page de connexion (200): localhost est dans ServerDomains, plus bas
@@ -21,10 +25,11 @@ data:
 ports:
   - 56881/tcp
   - 56881/udp
-# Écrits avant le premier démarrage, l'image de linuxserver ne copie alors pas sa config par
-# défaut. Chaque clé vérifiée dans le code de qBittorrent 5.3.0 (Journal, 8.4).
+# Écrits avant le premier démarrage, l'image n'écrit alors pas sa config par défaut
+# (entrypoint.sh). Le profil est /config: le fichier dans qBittorrent/config, les torrents et les
+# logs dans qBittorrent/data. Chaque clé vérifiée dans le code de qBittorrent 5.3.0 (Journal, 8.4).
 settings:
-  file: config/qBittorrent/qBittorrent.conf
+  file: config/qBittorrent/config/qBittorrent.conf
   format: ini
   values:
     LegalNotice/Accepted: "true"
