@@ -219,7 +219,8 @@
   <ul>
     <li><b>The locking folder</b>, and each of its parents, must be owned by root and writable only by it, or SSH refuses the connection. On some machines, <code>/srv</code> belongs to a user: hence <code>/var/lib</code>.</li>
     <li><b>In <code>dotbox.yml</code></b>, the path is the one the locked account sees: <code>- sftp: dotbox-backup@nas.example.com:/backups</code>.</li>
-    <li><b>The first backup</b> creates Dot Box's SSH key (<code>/opt/dotbox/secrets/backup_ssh</code>) and shows the line to put in <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>, preceded by <code>restrict</code>. It also records the other machine's fingerprint and shows it: compare it with <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> over there. From then on, a machine that no longer has that fingerprint is refused, and nothing is sent.</li>
+    <li><b>The first backup</b> creates Dot Box's SSH key (<code>/opt/dotbox/secrets/backup_ssh</code>), records the other machine's fingerprint and shows it: compare it with <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> over there. From then on, a machine that no longer has that fingerprint is refused, and nothing is sent.</li>
+    <li><b>The key</b>: as long as the other machine refuses it, the backup stops and shows the line to add to <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>. Put <code>restrict</code> in front of it, so the key can do nothing but SFTP.</li>
   </ul>
   </div>
 
@@ -241,14 +242,14 @@
   keep: 7                          <span class="c"># archives kept, per app and per destination</span>
   exclude: ["*/cache/*"]           <span class="c"># on top of the logs</span>
   destinations:
-    - local: /backups              <span class="c"># on the server, always the first one</span>
+    - local: /backups              <span class="c"># on the server</span>
     - sftp: dotbox-backup@nas.example.com:/backups
     - rclone: b2:dotbox-backups    <span class="c"># a remote from rclone.conf</span></pre>
   <p>Without a <code>backup</code> section, the defaults: <code>daily 04:00</code>, <code>keep: 7</code>, to <code>/backups</code>. They are not written in the file, <code>dotbox config get</code> shows them.</p>
   <ul>
     <li><b>The time</b>: <code>dotbox config set backup.schedule "daily 02:30"</code>, then <code>dotbox sync</code>, which rewrites the systemd timer (<code>dotbox-backup.timer</code>). A backup missed while the server was off runs at boot.</li>
     <li><b><code>keep</code></b>: <code>dotbox config set backup.keep 14</code>, used from the next backup.</li>
-    <li><b>Destinations and exclusions</b>, lists, are written by hand in <code>dotbox.yml</code> (<code>sudo nano</code>). Archives are always made in a local folder first, then sent to the remote destinations.</li>
+    <li><b>Destinations and exclusions</b>, lists, are written by hand in <code>dotbox.yml</code> (<code>sudo nano</code>). Archives are always made in a local folder first (<code>/backups</code> when the list has none), then sent to the remote destinations.</li>
     <li><b><code>rclone:</code></b> reads its remotes (your B2, S3... account) from <code>/opt/dotbox/secrets/rclone.conf</code>, readable by root only. <code>sftp:</code> does not need it: Dot Box handles its key and the other machine's fingerprint.</li>
   </ul>
   </div>
