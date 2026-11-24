@@ -62,21 +62,6 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
 .lang .chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--bg); color: var(--label); cursor: pointer; }
 .lang .chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
 
-/* 2 · Bannière: pastille, grand titre, phrase, boutons, note */
-.banner { display: grid; justify-items: center; gap: 26px; padding: clamp(32px, 6vw, 88px) 0 clamp(16px, 3vw, 40px); text-align: center; }
-.pill { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 12px; padding: 8px 18px; border: 1px solid #1d3a2f; border-radius: 999px; background: #07130e; font-family: var(--mono); font-size: 13px; letter-spacing: .06em; color: var(--label); }
-.pill b { color: var(--accent); font-weight: 500; }
-.pill i { font-style: normal; color: #2c4a3e; }
-.banner h1 { margin: 0; font-family: var(--brand); font-weight: 800; font-size: clamp(40px, 6.4vw, 92px); line-height: 1.04; letter-spacing: -.025em; color: var(--lit); text-wrap: balance; }
-.banner h1 span { display: block; color: var(--accent); }
-.banner .lead { margin: 0; max-width: 780px; font-size: clamp(17px, 1.7vw, 21px); line-height: 1.55; color: var(--label); text-wrap: pretty; }
-.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
-.cta a { font-family: var(--brand); font-weight: 600; font-size: 17px; padding: 14px 28px; border-radius: 12px; border: 1px solid var(--line2); background: var(--bg); color: var(--lit); text-decoration: none; }
-.cta a:hover { border-color: #3a3a3a; }
-.cta a.go { background: var(--accent); border-color: var(--accent); color: #04130c; }
-.cta a.go:hover { filter: brightness(1.08); }
-.banner .note { margin: -8px 0 0; font-size: 15px; color: var(--muted); }
-
 /* 2 · Hero */
 .hero { display: grid; gap: 22px; }
 .hero canvas { display: block; max-width: min(100%, 760px); height: auto; justify-self: center; }
@@ -196,19 +181,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     </div>
   </div>
 
-  <section class="banner" aria-labelledby="title">
-    <p class="pill"><b>v0.0.6</b><i>/</i>CLI + Web UI<i>/</i><b>Self-hosted</b></p>
-    <h1 id="title">Your media server,<span>set up and kept safe.</span></h1>
-    <p class="lead">Dot Box installs your media server and the apps around it on your own server: each one on its own subdomain in HTTPS, behind one login with two factors, with attacks blocked and encrypted backups.</p>
-    <div class="cta">
-      <a class="go" href="__DOC_INSTALLATION__"__DOC_INSTALLATION_TARGET__>Get started</a>
-      <a href="__GS__"__GS_TARGET__>Read the docs</a>
-    </div>
-    <p class="note">One command, about 4 minutes. Open source, AGPL-3.0.</p>
-  </section>
-
-  <section class="hero" aria-labelledby="dotTitle">
-    <h2 id="dotTitle" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h2>
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h1>
     <canvas id="titleDots" width="1520" height="342" aria-hidden="true"></canvas>
     <p class="tagline" data-i18n-html="tagline"></p>
     <ul class="stats" id="stats"></ul>
