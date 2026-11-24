@@ -27,6 +27,11 @@ pub fn compose_path(app: &str) -> String {
     format!("/opt/{app}/compose.yml")
 }
 
+/// Le nom du fichier d'un secret de l'app dans /opt/dotbox/secrets (D151).
+pub fn secret_name(app: &str, name: &str) -> String {
+    format!("{app}_{name}")
+}
+
 /// Une valeur YAML entre apostrophes.
 fn quote(v: &str) -> String {
     format!("'{}'", v.replace('\'', "''"))
@@ -313,11 +318,18 @@ services:
             out.push_str(&format!("      {k}: {}\n", quote(&fill(v, app, c))));
         }
     }
-    if !m.volumes.is_empty() {
+    if !m.volumes.is_empty() || !m.secrets.is_empty() {
         out.push_str("    volumes:\n");
         for v in &m.volumes {
             let ro = if v.read_only { ":ro" } else { "" };
             out.push_str(&format!("      - {}:{}{ro}\n", v.host, v.container));
+        }
+        // les secrets: tirés par dotbox, lus par l'app dans /run/secrets (D151)
+        for s in &m.secrets {
+            out.push_str(&format!(
+                "      - {}:/run/secrets/{s}:ro\n",
+                crate::secrets::path(&secret_name(app, s))
+            ));
         }
     }
     out.push_str("    security_opt:\n      - no-new-privileges:true\n");
@@ -533,6 +545,23 @@ mod tests {
         let expected = include_str!("../tests/expected/uptime-kuma/compose.yml")
             .replace("<version>", m.version());
         assert_eq!(compose(&m, &c), expected);
+    }
+
+    /// Homarr: sa clé de chiffrement montée depuis /opt/dotbox/secrets, jamais dans le compose (D151).
+    #[test]
+    fn homarr_reads_its_key_from_a_file() {
+        let m = load("homarr");
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "homarr".into();
+        let out = compose(&m, &c);
+        let expected =
+            include_str!("../tests/expected/homarr/compose.yml").replace("<version>", m.version());
+        assert_eq!(out, expected);
+        assert!(
+            out.contains(
+                "/opt/dotbox/secrets/homarr_encryption_key:/run/secrets/encryption_key:ro"
+            )
+        );
     }
 
     #[test]

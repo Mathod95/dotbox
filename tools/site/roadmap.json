@@ -937,6 +937,30 @@
       ]
     },
     {
+      "stage": "apps",
+      "domain": "engine",
+      "status": "progress",
+      "fr": "Moteur: les secrets d'une app (`secrets:`), tirés une seule fois et montés en lecture seule, jamais dans `compose.yml`",
+      "en": "Engine: an app's secrets (`secrets:`), drawn once and mounted read-only, never in `compose.yml`",
+      "journal": [
+        "D151",
+        "J304"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "progress",
+      "fr": "Homarr: un tableau de bord pour tes apps, en `two_factor`, sa clé de chiffrement tirée par Dotbox",
+      "en": "Homarr: a dashboard for your apps, `two_factor`, its encryption key drawn by Dotbox",
+      "doc": "homarr",
+      "journal": [
+        "D150",
+        "D151",
+        "J304"
+      ]
+    },
+    {
       "stage": "web",
       "domain": "web",
       "status": "progress",

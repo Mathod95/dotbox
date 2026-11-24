@@ -61,6 +61,25 @@ pub fn ensure(name: &str) -> Result<bool, String> {
     Ok(true)
 }
 
+/// Comme ensure, mais en hexadécimal: `len` caractères 0-9 et a-f, ce que demandent certaines
+/// apps pour une clé de chiffrement (Homarr: 64 caractères, 32 octets). Rend true s'il vient
+/// d'être créé.
+pub fn ensure_hex(name: &str, len: usize) -> Result<bool, String> {
+    let p = path(name);
+    if fs::metadata(&p).is_ok_and(|m| m.len() > 0) {
+        return Ok(false);
+    }
+    let mut urandom =
+        fs::File::open("/dev/urandom").map_err(|e| format!("cannot open /dev/urandom: {e}"))?;
+    let mut bytes = vec![0u8; len.div_ceil(2)];
+    urandom
+        .read_exact(&mut bytes)
+        .map_err(|e| format!("cannot read /dev/urandom: {e}"))?;
+    let hex: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+    store(name, &hex[..len])?;
+    Ok(true)
+}
+
 /// Garde une valeur donnée (par exemple un mot de passe au moment où il est créé), fichier 0600.
 pub fn store(name: &str, value: &str) -> Result<(), String> {
     fs::DirBuilder::new()

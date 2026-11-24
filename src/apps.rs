@@ -384,6 +384,15 @@ pub fn install_one(
         prepare_data(&m, uid, gid, user)?;
     }
     load_modules(&m)?;
+    // les secrets de l'app: tirés une seule fois, jamais réécrits (D151)
+    for s in &m.secrets {
+        let name = engine::secret_name(app, s);
+        if crate::secrets::ensure_hex(&name, 64)? {
+            say("create", &crate::secrets::path(&name));
+        } else {
+            say("check", &crate::secrets::path(&name));
+        }
+    }
     let settings_changed = write_settings(&m, &ctx, uid, gid)?;
     if !m.ports.is_empty() && !running(&traefik::container_state(app)) {
         check_ports(&m)?;

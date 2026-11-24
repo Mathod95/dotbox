@@ -1,0 +1,27 @@
+# Homarr: un tableau de bord pour tes apps, avec des widgets (les flux de Jellyfin ou Plex, les
+# demandes de Seerr, les téléchargements...). Dotbox gère le serveur, Homarr montre les apps (D150).
+# Format: Journal, étape 7 (7.1) et D151. Les {{...}} sont remplis par dotbox à l'installation.
+# L'image officielle du projet, sur Debian (lu dans son Dockerfile et son entrypoint.sh, v2.14.0).
+name: homarr
+description: Dashboard for your apps
+min_dotbox: 0.0.6
+image: ghcr.io/homarr-labs/homarr:v2.14.0
+port: 7575
+access: two_factor
+# l'image a son propre healthcheck (/api/health/live)
+health: image
+# L'image démarre en root, donne /appdata à PUID et PGID, puis lance Homarr avec eux (setpriv:
+# root qui descend, que no-new-privileges laisse faire). Elle lit ses variables *_FILE avant.
+env:
+  PUID: "{{uid}}"
+  PGID: "{{gid}}"
+  TZ: "{{tz}}"
+  # la clé qui chiffre les identifiants des intégrations: 64 caractères hexadécimaux, tirée une
+  # seule fois par dotbox, lue dans un fichier et jamais écrite dans compose.yml (D151)
+  SECRET_ENCRYPTION_KEY_FILE: /run/secrets/encryption_key
+secrets:
+  - encryption_key
+# la base SQLite, Redis et les certificats de confiance. Pas de socket Docker: Homarr ne gère
+# pas les containers, Dotbox s'en charge.
+volumes:
+  - config:/appdata

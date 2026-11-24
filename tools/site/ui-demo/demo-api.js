@@ -8,6 +8,7 @@
   var CATALOG = [
     ["autobrr", "Release grabber for trackers' announce channels", "v1.91.1", "two_factor"],
     ["code-server", "VS Code in the browser", "4.146.0", "two_factor"],
+    ["homarr", "Dashboard for your apps", "v2.14.0", "two_factor"],
     ["jellyfin", "Media server", "12.4", "app"],
     ["maintainerr", "Rule-based library cleanup", "3.33.0", "two_factor"],
     ["plex", "Media server", "1.43.5.11079-b3b13e506", "app"],

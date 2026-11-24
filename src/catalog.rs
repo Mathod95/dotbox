@@ -102,6 +102,10 @@ struct Raw {
     /// code-server, D131): « command: [/opt] »
     #[serde(default)]
     command: Vec<String>,
+    /// des clés que dotbox tire au hasard une seule fois et monte en lecture seule dans
+    /// /run/secrets/<nom> (la clé de chiffrement de Homarr, D151): jamais dans compose.yml
+    #[serde(default)]
+    secrets: Vec<String>,
     /// l'assistant de premier démarrage: derrière Authelia tant qu'il n'est pas fini (D71)
     #[serde(default)]
     setup: Option<RawSetup>,
@@ -251,6 +255,8 @@ pub struct Manifest {
     pub run_as_user: bool,
     /// les arguments donnés à l'image au démarrage (command: dans le compose)
     pub command: Vec<String>,
+    /// les secrets de l'app, montés dans /run/secrets/<nom> (D151)
+    pub secrets: Vec<String>,
     pub setup: Option<Setup>,
     pub crowdsec: Option<Watch>,
     /// des chemins derrière Authelia, en plus du niveau de l'app (/admin de Vaultwarden)
@@ -441,6 +447,24 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
             ));
         }
         check_placeholders(&format!("command {arg}"), arg)?;
+    }
+    let mut seen = Vec::new();
+    for s in &raw.secrets {
+        if s.is_empty()
+            || s.len() > 30
+            || !s.starts_with(|c: char| c.is_ascii_lowercase())
+            || !s
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+        {
+            return Err(format!(
+                "secrets {s:?}: lowercase letters, digits and _, 30 characters at most"
+            ));
+        }
+        if seen.contains(&s) {
+            return Err(format!("secrets {s:?}: listed twice"));
+        }
+        seen.push(s);
     }
     let mut ports: Vec<Port> = Vec::new();
     for spec in &raw.ports {
@@ -663,6 +687,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         ports,
         run_as_user,
         command: raw.command,
+        secrets: raw.secrets,
         setup,
         crowdsec,
         authelia_paths: raw.authelia_paths,
@@ -1182,6 +1207,14 @@ mod tests {
             )
             .is_err()
         );
+        // secrets: des noms simples, chacun une seule fois (D151)
+        assert_eq!(
+            with("secrets:\n  - encryption_key\n").unwrap().secrets,
+            ["encryption_key"]
+        );
+        assert!(with("secrets:\n  - Key\n").is_err());
+        assert!(with("secrets:\n  - a/b\n").is_err());
+        assert!(with("secrets:\n  - k\n  - k\n").is_err());
         // command: les arguments de l'image, un par ligne, les {{...}} connus seulement
         assert_eq!(with("command:\n  - /opt\n").unwrap().command, ["/opt"]);
         assert!(with("command:\n  - \"--app={{app}}\"\n").is_ok());

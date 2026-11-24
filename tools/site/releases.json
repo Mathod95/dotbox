@@ -19,6 +19,14 @@
         {
           "fr": "CLI: le raccourci `db`, un lien vers `dotbox` posé par `dotbox init` seulement si aucune commande `db` n'existe, et `dotbox completion` déclaré pour les deux noms",
           "en": "CLI: the `db` shortcut, a link to `dotbox` set up by `dotbox init` only if no `db` command exists, and `dotbox completion` declared for both names"
+        },
+        {
+          "fr": "Manifest: `secrets:`, des clés que Dotbox tire au hasard une seule fois dans `/opt/dotbox/secrets/` et monte en lecture seule dans `/run/secrets/`, jamais écrites dans `compose.yml`",
+          "en": "Manifest: `secrets:`, keys that Dotbox draws once into `/opt/dotbox/secrets/` and mounts read-only in `/run/secrets/`, never written in `compose.yml`"
+        },
+        {
+          "fr": "Homarr: un tableau de bord pour tes apps, sur son image officielle, sa clé de chiffrement tirée par Dotbox",
+          "en": "Homarr: a dashboard for your apps, on its official image, its encryption key drawn by Dotbox"
         }
       ],
       "changed": [

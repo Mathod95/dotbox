@@ -74,6 +74,7 @@ DOCS = [
     {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Apps", "group": "Dot Box apps"},
     {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Apps", "group": "Dot Box apps"},
     {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Apps", "group": "Dot Box apps"},
+    {"slug": "homarr", "name": "Homarr", "dots": "HOMARR", "section": "Apps", "group": "Dot Box apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI", "section": "References"},
     {"slug": "api", "name": "API", "dots": "API", "section": "References"},
     {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI", "section": "References"},
