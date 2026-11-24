@@ -105,13 +105,32 @@
   </div>
   <div class="prop-new" data-prop="54">
   <div class="table-scroll"><table>
-    <thead><tr><th>Component</th><th>Image</th><th>Why</th></tr></thead>
+    <thead><tr><th>Component</th><th>Image</th><th>Source</th></tr></thead>
     <tbody>
-      <tr><td>Traefik, Authelia, CrowdSec, qui, qBittorrent, code-server, Uptime Kuma, Jellyfin, Plex, Seerr, Wizarr, Vaultwarden, Tautulli, autobrr, Maintainerr, wg-easy</td><td>official</td><td>The projects publish their image.</td></tr>
-      <tr><td>Prowlarr, Radarr, Sonarr</td><td>linuxserver</td><td>The Servarr project does not publish an official image. Its wiki points to linuxserver and hotio.</td></tr>
-      <tr><td>Traefik's and CrowdSec's socket proxy</td><td>linuxserver</td><td>A small read-only proxy in front of the Docker socket.</td></tr>
+      <tr><td>Traefik</td><td><code>traefik</code></td><td>official</td></tr>
+      <tr><td>Authelia</td><td><code>authelia/authelia</code></td><td>official</td></tr>
+      <tr><td>CrowdSec</td><td><code>crowdsecurity/crowdsec</code></td><td>official</td></tr>
+      <tr><td>rclone, for backups</td><td><code>rclone/rclone</code></td><td>official</td></tr>
+      <tr><td>Socket proxy of Traefik and CrowdSec</td><td><code>lscr.io/linuxserver/socket-proxy</code></td><td>linuxserver</td></tr>
+      <tr><td>autobrr</td><td><code>ghcr.io/autobrr/autobrr</code></td><td>official</td></tr>
+      <tr><td>code-server</td><td><code>codercom/code-server</code></td><td>official</td></tr>
+      <tr><td>Jellyfin</td><td><code>jellyfin/jellyfin</code></td><td>official</td></tr>
+      <tr><td>Maintainerr</td><td><code>ghcr.io/maintainerr/maintainerr</code></td><td>official</td></tr>
+      <tr><td>Plex</td><td><code>plexinc/pms-docker</code></td><td>official</td></tr>
+      <tr><td>Prowlarr</td><td><code>lscr.io/linuxserver/prowlarr</code></td><td>linuxserver</td></tr>
+      <tr><td>qBittorrent</td><td><code>qbittorrentofficial/qbittorrent-nox</code></td><td>official</td></tr>
+      <tr><td>qui</td><td><code>ghcr.io/autobrr/qui</code></td><td>official</td></tr>
+      <tr><td>Radarr</td><td><code>lscr.io/linuxserver/radarr</code></td><td>linuxserver</td></tr>
+      <tr><td>Seerr</td><td><code>ghcr.io/seerr-team/seerr</code></td><td>official</td></tr>
+      <tr><td>Sonarr</td><td><code>lscr.io/linuxserver/sonarr</code></td><td>linuxserver</td></tr>
+      <tr><td>Tautulli</td><td><code>ghcr.io/tautulli/tautulli</code></td><td>official</td></tr>
+      <tr><td>Uptime Kuma</td><td><code>louislam/uptime-kuma</code></td><td>official</td></tr>
+      <tr><td>Vaultwarden</td><td><code>vaultwarden/server</code></td><td>official</td></tr>
+      <tr><td>wg-easy</td><td><code>ghcr.io/wg-easy/wg-easy</code></td><td>official</td></tr>
+      <tr><td>Wizarr</td><td><code>ghcr.io/wizarrrr/wizarr</code></td><td>official</td></tr>
     </tbody>
   </table></div>
+  <p>Only two cases use linuxserver. Prowlarr, Radarr and Sonarr: the Servarr project does not publish an official image, and its wiki points to linuxserver and hotio. The socket proxy: a small read-only proxy in front of the Docker socket, which Traefik and CrowdSec read instead of the socket itself.</p>
   </div>
   <p>Between linuxserver and hotio, Dot Box picks linuxserver for consistency: a single family of images with the same conventions (<code>PUID</code>, <code>PGID</code>, <code>TZ</code>, <code>/config</code>), precise versions rebuilt regularly with security fixes (<code>7.0.3.10918-ls328</code>: the app's version, then the rebuild number), and the most used image. The downside: after a new release, you wait for linuxserver to rebuild the image, usually a few hours. Saltbox takes Radarr from hotio, without a fixed version.</p>
 
