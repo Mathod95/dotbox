@@ -229,8 +229,8 @@
       "stage": "core",
       "domain": "core",
       "status": "done",
-      "fr": "CLI: `dotbox init` installe Docker depuis le dépôt officiel (Debian ou Ubuntu), retire les paquets en conflit avec accord, logs `local`, `live-restore`, réseau `dotbox`, utilisateur dans le groupe `docker`",
-      "en": "CLI: `dotbox init` installs Docker from the official repository (Debian or Ubuntu), removes conflicting packages with consent, `local` logs, `live-restore`, `dotbox` network, user in the `docker` group",
+      "fr": "CLI: `dotbox init` installe Docker depuis le dépôt officiel de Debian, retire les paquets en conflit avec accord, logs `local`, `live-restore`, réseau `dotbox`, utilisateur dans le groupe `docker`",
+      "en": "CLI: `dotbox init` installs Docker from the official Debian repository, removes conflicting packages with consent, `local` logs, `live-restore`, `dotbox` network, user in the `docker` group",
       "doc": "installation",
       "journal": [
         "3.1-3.11",
@@ -243,8 +243,8 @@
       "stage": "core",
       "domain": "core",
       "status": "progress",
-      "fr": "CLI: `dotbox init` sur une Debian ou une Ubuntu LTS vierge (Docker, réseau commun, Traefik, Authelia, CrowdSec), sans mise à jour du système ni redémarrage",
-      "en": "CLI: `dotbox init` on a blank Debian or Ubuntu LTS (Docker, shared network, Traefik, Authelia, CrowdSec), with no system update or reboot",
+      "fr": "CLI: `dotbox init` sur une Debian vierge (Docker, réseau commun, Traefik, Authelia, CrowdSec), sans mise à jour du système ni redémarrage",
+      "en": "CLI: `dotbox init` on a blank Debian (Docker, shared network, Traefik, Authelia, CrowdSec), with no system update or reboot",
       "doc": "installation",
       "journal": [
         "D3",

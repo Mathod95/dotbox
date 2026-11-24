@@ -60,7 +60,7 @@
   <h2 id="fr-crowdsec">CrowdSec</h2>
   <ul>
     <li>Il lit les connexions SSH (dans le journal du système) et le log d'accès de Traefik, et y repère les attaques: essais de mots de passe, scans de pages, failles connues.</li>
-    <li>Une IP qui attaque est bannie pour tout le serveur: elle n'atteint plus ni SSH, ni Traefik, ni aucune app. Le blocage se fait dans le noyau, par une liste d'IP bannies, avec iptables-nft: la commande <code>iptables</code> de Debian et d'Ubuntu, qui écrit ses règles dans nftables. Docker s'en sert déjà pour ses propres règles. Le bouncer ajoute ses règles dans deux chaînes: <code>INPUT</code> (SSH) et <code>DOCKER-USER</code> (Traefik et les ports des apps). Rien d'autre n'est bloqué.</li>
+    <li>Une IP qui attaque est bannie pour tout le serveur: elle n'atteint plus ni SSH, ni Traefik, ni aucune app. Le blocage se fait dans le noyau, par une liste d'IP bannies, avec iptables-nft: la commande <code>iptables</code> de Debian, qui écrit ses règles dans nftables. Docker s'en sert déjà pour ses propres règles. Le bouncer ajoute ses règles dans deux chaînes: <code>INPUT</code> (SSH) et <code>DOCKER-USER</code> (Traefik et les ports des apps). Rien d'autre n'est bloqué.</li>
     <li>Il partage les attaques qu'il voit avec la communauté CrowdSec, et reçoit en échange une liste d'IP déjà repérées ailleurs, bloquées d'avance. Ce qui part: le type d'attaque, l'heure et l'IP de l'attaquant.</li>
     <li>Dot Box installe l'image officielle de CrowdSec, et le binaire officiel du bouncer, son empreinte vérifiée.</li>
   </ul>
@@ -148,7 +148,7 @@
   <h2 id="en-crowdsec">CrowdSec</h2>
   <ul>
     <li>It reads SSH connections (in the system journal) and Traefik's access log, and spots attacks there: password attempts, page scans, known vulnerabilities.</li>
-    <li>An attacking IP is banned for the whole server: it no longer reaches SSH, Traefik or any app. Blocking happens in the kernel, through a list of banned IPs, with iptables-nft: the <code>iptables</code> command of Debian and Ubuntu, which writes its rules into nftables. Docker already uses it for its own rules. The bouncer adds its rules to two chains: <code>INPUT</code> (SSH) and <code>DOCKER-USER</code> (Traefik and the apps' ports). Nothing else is blocked.</li>
+    <li>An attacking IP is banned for the whole server: it no longer reaches SSH, Traefik or any app. Blocking happens in the kernel, through a list of banned IPs, with iptables-nft: the <code>iptables</code> command of Debian, which writes its rules into nftables. Docker already uses it for its own rules. The bouncer adds its rules to two chains: <code>INPUT</code> (SSH) and <code>DOCKER-USER</code> (Traefik and the apps' ports). Nothing else is blocked.</li>
     <li>It shares the attacks it sees with the CrowdSec community, and receives in return a list of IPs already spotted elsewhere, blocked in advance. What is sent: the type of attack, the time and the attacker's IP.</li>
     <li>Dot Box installs CrowdSec's official image, and the bouncer's official binary, its checksum verified.</li>
   </ul>
