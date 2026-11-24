@@ -121,7 +121,9 @@ apps:
   <p>First, <code>*.example.com</code> must point to the server (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
   <p>Run it as root (<code>su -</code>).</p>
   <div class="prop-old" data-prop="133"><p>It is the only time you need root: afterwards, you work with your user and <code>sudo</code>.</p></div>
-  <div class="prop-new" data-prop="133"><p>It is the only time you log in as root. Afterwards, you work with your user, and the <code>dotbox</code> commands go through its service, without <code>sudo</code>: <code>init</code> puts your user in the <code>dotbox</code> group, which counts from your next login. Only the commands that would give root to whoever runs them need <code>sudo</code>: <code>init</code>, <code>upgrade</code>, <code>restore</code>, <code>authelia</code>, <code>exec</code>, <code>edit</code> and <code>add</code> (see CLI).</p></div>
+  <div class="prop-new" data-prop="133">
+  <p>It is the only time you log in as root. Afterwards, you work with your user, and the <code>dotbox</code> commands go through its service, without <code>sudo</code>: <code>init</code> puts your user in the <code>dotbox</code> group, which counts from your next login. Only the commands that would give root to whoever runs them need <code>sudo</code>: <code>init</code>, <code>upgrade</code>, <code>restore</code>, <code>authelia</code>, <code>exec</code>, <code>edit</code> and <code>add</code> (see <a href="__DOC_CLI__"__DOC_CLI_TARGET__>CLI</a>).</p>
+  </div>
   <pre><span class="p">$</span> su -
 <span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
   <h3 id="en-installsh">What install.sh does</h3>
@@ -150,8 +152,9 @@ apps:
     <li><b>Installs <code>sudo</code></b> if it is missing <b>and prepares your user</b>: creates it if it does not exist, asking for its password, and adds it to the <code>sudo</code> and <code>dotbox</code> groups (the latter for <code>dotbox</code> commands without <code>sudo</code>). Not to the <code>docker</code> group, which amounts to root: <code>sudo docker</code> is enough. An existing user keeps its password, shell and SSH keys.</li>
     <li><b>Installs Docker</b> if it is missing, from Docker's official repository. If conflicting packages are present (<code>docker.io</code>, <code>podman-docker</code>...), it lists them and asks before removing them. Container logs are rotated over a few files, and containers keep running while Docker restarts (<code>live-restore</code>). Creates the <code>dotbox</code> network.</li>
     <li><b>Starts Traefik, Authelia and CrowdSec</b>. Traefik gets a certificate for each subdomain. Authelia gets your account, with the same name as your user and the password you choose (12 characters or more), or a random one if you press Enter. CrowdSec watches SSH and Traefik, and blocks banned IPs at the firewall, with its bouncer, and in Traefik.</li>
-    <li><b>Starts the Dot Box service</b> (<code>dotbox.service</code>), which the <code>dotbox</code> command calls, <b>and schedules the backup</b>, daily (04:00, into <code>/backups</code>, see Backup), with the key that encrypts its archives.</li>
-    <li><b>Coming later</b>: Dot Box's web interface on <code>dotbox.example.com</code>.</li>
+    <li><b>Starts the Dot Box service</b> (<code>dotbox.service</code>). The <code>dotbox</code> command and the <a href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>web interface</a>, on <code>dotbox.example.com</code> behind Authelia, both go through it.</li>
+    <li><b>Schedules the backup</b>, daily at 04:00 into <code>/backups</code>, with the key that encrypts its archives (see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>).</li>
+    <li><b>Sets up the welcome message</b> shown at each SSH login, and the nightly <code>dotbox doctor</code> it reads, at 05:00 (see <a href="__DOC_MOTD__"__DOC_MOTD_TARGET__>MOTD</a>).</li>
   </ol>
   </div>
   <p class="note"><b>Traefik does not hold the keys to Docker.</b> It is the only container exposed to the internet: it reads Docker through a socket proxy that only lets the list of containers through. If it were compromised, it could neither start nor stop a container.</p>
@@ -174,7 +177,7 @@ update:
 schedule: off</pre>
   </div>
   <div class="prop-new" data-prop="70">
-  <p>Your answers are kept in <code>/opt/dotbox/dotbox.yml</code>, and each installed app adds its subdomain and access level to it (and <code>stopped: true</code> when you stop it with <code>dotbox stop</code>). The file has no comments, apart from its first line: Dot Box may rewrite it whole. <code>ca</code> is <code>letsencrypt</code>, or <code>letsencrypt-staging</code> for trials. The <code>/opt/dotbox</code> folder is readable by root only: <code>dotbox config get</code> reads the file without <code>sudo</code>, <code>dotbox config set</code> changes it (see CLI). Secrets (Authelia keys, CrowdSec keys, your Authelia password kept for root) go to <code>/opt/dotbox/secrets/</code>.</p>
+  <p>Your answers are kept in <code>/opt/dotbox/dotbox.yml</code>, and each installed app adds its subdomain and access level to it (and <code>stopped: true</code> when you stop it with <code>dotbox stop</code>). The file has no comments, apart from its first line: Dot Box may rewrite it whole. <code>ca</code> is <code>letsencrypt</code>, or <code>letsencrypt-staging</code> for trials.</p>
   <pre># Dot Box: configuration du serveur (spec: Getting Started).
 domain: example.com
 ca: letsencrypt
@@ -186,7 +189,7 @@ apps:
   jellyfin:
     subdomain: jellyfin
     access: app</pre>
-  <p>Coming later in this file: paths (<code>paths</code>), backup (<code>backup</code>) and updates (<code>update</code>).</p>
+  <p>Other settings only appear once you change them: the backup (<code>backup</code>, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>) and the welcome message (<code>motd</code>, see <a href="__DOC_MOTD__"__DOC_MOTD_TARGET__>MOTD</a>). Until then, their defaults apply. The <code>/opt/dotbox</code> folder is readable by root only: <code>dotbox config get</code> reads the file without <code>sudo</code>, and <code>dotbox config set</code> changes it (see <a href="__DOC_CLI__"__DOC_CLI_TARGET__>CLI</a>). Secrets (Authelia keys, CrowdSec keys, the backup key, your Authelia password kept for root) go to <code>/opt/dotbox/secrets/</code>.</p>
   </div>
   <p><code>sudo dotbox init</code> can be run again safely: it checks, fills in what is missing and recreates nothing that already exists.</p>
 
