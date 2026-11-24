@@ -119,6 +119,10 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
 .btn.go:hover { color: var(--bg); filter: brightness(1.08); }
 .btn:disabled { opacity: .4; cursor: default; filter: none; }
 
+/* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
+.sep { height: 10px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.6px) center / 22px 10px repeat-x;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+
 /* 4 · About */
 .about { display: grid; gap: 22px; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line2); border-radius: 20px; background: var(--panel); }
 .about-head { display: flex; align-items: stretch; gap: 16px; }
@@ -138,6 +142,15 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
 .part .more { justify-self: start; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
 .part .more:hover { color: var(--lit); }
 .daily { margin: 0; color: var(--label); font-size: 15px; }
+/* le core, en pastilles */
+.core { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.core li { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 14px; color: var(--label); }
+.core li b { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--lit); }
+/* la commande d'installation, et ce qu'il faut avant */
+.cmd { margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #050505; font-family: var(--mono); font-variant-ligatures: none; font-size: 13px; color: var(--lit); overflow-x: auto; white-space: pre; }
+.cmd .p { color: var(--accent); }
+.needs { margin: 0; color: var(--label); font-size: 15px; }
+.needs a { color: var(--lit); text-decoration-color: var(--accent); text-underline-offset: 3px; }
 .daily b, .steps b { color: var(--lit); font-weight: 600; }
 .steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; counter-reset: st; }
 .steps li { counter-increment: st; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; color: var(--label); font-size: 15px; }
@@ -207,6 +220,8 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     </div>
   </section>
 
+  <div class="sep" aria-hidden="true"></div>
+
   <section class="about" aria-labelledby="boxTitle">
     <div class="about-head">
       <canvas class="pic" id="boxPic" width="140" height="140" aria-hidden="true"></canvas>
@@ -217,7 +232,17 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     <div class="parts">
       <div class="part"><div class="ph2"><h3 data-i18n="p1t"></h3><span class="tag2" data-i18n="p1k"></span></div><p data-i18n-html="p1"></p></div>
       <div class="part"><div class="ph2"><h3 data-i18n="p2t"></h3><span class="tag2" data-i18n="p2k"></span></div><p data-i18n-html="p2"></p><a class="more" href="__DOC_CLI__"__DOC_CLI_TARGET__ data-i18n="more"></a></div>
+      <div class="part"><div class="ph2"><h3>The web interface</h3><span class="tag2">Browser</span></div><p>On <code>dotbox.example.com</code>, behind Authelia: the state of the core and your apps, the catalog, updates, backups and settings, with every job followed live. It calls the same API as the CLI.</p><a class="more" href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>All about the web UI →</a></div>
     </div>
+    <p class="about-k">The core, set up by the install</p>
+    <ul class="core">
+      <li><b>Docker</b>the apps' containers</li>
+      <li><b>Traefik</b>HTTPS on every subdomain</li>
+      <li><b>Authelia</b>one login, two factors</li>
+      <li><b>CrowdSec</b>attacks blocked</li>
+      <li><b>Backup</b>every night, encrypted</li>
+      <li><b>Doctor</b>the server checked every night</li>
+    </ul>
     <p class="daily" data-i18n-html="daily"></p>
     <p class="about-k" data-i18n="installK"></p>
     <ol class="steps">
@@ -225,8 +250,13 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
       <li><span data-i18n-html="step2"></span></li>
       <li><span data-i18n-html="step3"></span></li>
     </ol>
+    <pre class="cmd"><span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
+    <p class="needs">You need a server with Debian 12 or 13 on amd64, a domain whose <code>*.example.com</code> points to it, and ports 80 and 443 open (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
     <div class="links">
+      <a class="mock" href="__DOC_INSTALLATION__"__DOC_INSTALLATION_TARGET__>Install guide →</a>
       <a class="mock" href="__RELEASES__"__RELEASES_TARGET__ data-i18n="relLink"></a>
+      <a href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap →</a>
+      <a href="https://github.com/Mathod95/dotbox/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0 ↗</a>
       <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
   </section>
