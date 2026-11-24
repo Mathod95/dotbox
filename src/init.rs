@@ -190,9 +190,7 @@ fn steps(args: &Args) -> Result<(), String> {
         return Err("the apps do not run as root: choose another user".into());
     }
     if !system::valid_username(&name) {
-        return Err(format!(
-            "invalid user name {name:?}: lowercase letters, digits, _ and - only"
-        ));
+        return Err(format!("invalid user name {name:?}: {USER_RULE}"));
     }
     if system::user_exists(&name) {
         say("check", &format!("user {name}"));
@@ -374,20 +372,24 @@ fn ask_domain() -> Result<String, String> {
 }
 
 /// Demande l'utilisateur. Le compte connecté avant su est proposé, Entrée le garde.
+/// Ce que system::valid_username accepte, dit à l'utilisateur.
+const USER_RULE: &str =
+    "lowercase letters, digits, _ and -, starting with a letter or _, 32 characters at most";
+
 fn ask_user() -> Result<String, String> {
     if !prompt::is_terminal() {
         return Err("no terminal to ask for the user: pass --user <name>".into());
     }
     let default = system::login_user();
     prompt::input(
-        "User that runs the apps",
+        "User that runs the apps, lowercase letters, digits, _ and -",
         "created if it does not exist",
         default.as_deref(),
         |answer| {
             if answer == "root" {
                 Err("the apps do not run as root: choose another user".into())
             } else if !system::valid_username(answer) {
-                Err("lowercase letters, digits, _ and - only".into())
+                Err(USER_RULE.into())
             } else {
                 Ok(())
             }

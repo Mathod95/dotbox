@@ -33,6 +33,10 @@
         {
           "fr": "qBittorrent: l'image officielle `qbittorrentofficial/qbittorrent-nox`, au lieu de celle de linuxserver. Ses réglages dans `config/qBittorrent/config/qBittorrent.conf`",
           "en": "qBittorrent: the official `qbittorrentofficial/qbittorrent-nox` image instead of linuxserver's. Its settings in `config/qBittorrent/config/qBittorrent.conf`"
+        },
+        {
+          "fr": "CLI: la question de `dotbox init` sur l'utilisateur dit les caractères permis (minuscules, chiffres, `_` et `-`)",
+          "en": "CLI: `dotbox init`'s question about the user says which characters are allowed (lowercase letters, digits, `_` and `-`)"
         }
       ],
       "fixed": [
