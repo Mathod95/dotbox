@@ -29,6 +29,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
+# les logos des apps (D145), copiés tels quels dans site/icons/
+ICONS = SITE_SRC / "icons"
 RELEASES_TEMPLATE = SITE_SRC / "releases.html"
 RELEASES_DATA = SITE_SRC / "releases.json"
 ROADMAP_TEMPLATE = SITE_SRC / "roadmap.html"
@@ -245,6 +247,9 @@ def site():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(document(html), encoding="utf-8")
+    (SITE / "icons").mkdir(parents=True, exist_ok=True)
+    for f in sorted(ICONS.glob("*.svg")):
+        shutil.copyfile(f, SITE / "icons" / f.name)
     print(f"{len(pages)} pages -> {SITE}")
 
 

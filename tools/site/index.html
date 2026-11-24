@@ -380,6 +380,39 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     paint(cv, slug, color); return cv;
   }
 
+  // ---------- les logos des apps (D145): copiés de homarr-labs/dashboard-icons dans icons/, montrés en
+  // couleur ou en points 21 × 21, tiré au sort une fois par visite pour toute la page
+  var ICON = { codeserver: "vscode", uptimekuma: "uptime-kuma" };
+  var DOTTED = Math.random() < 0.5;
+  function logoDots(cv, src) {
+    var n = 21, cell = 8, S = n * cell, off = document.createElement("canvas"); off.width = S; off.height = S;
+    var o = off.getContext("2d"); o.drawImage(src, 0, 0, S, S);
+    var data = o.getImageData(0, 0, S, S).data, ctx = cv.getContext("2d"), p = cv.width / n, r = p * 0.38;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+      var R = 0, G = 0, B = 0, A = 0;
+      for (var yy = 0; yy < cell; yy++) for (var xx = 0; xx < cell; xx++) {
+        var k = ((y * cell + yy) * S + (x * cell + xx)) * 4, a = data[k + 3] / 255;
+        R += data[k] * a; G += data[k + 1] * a; B += data[k + 2] * a; A += a;
+      }
+      var col = UNLIT;
+      if (A / (cell * cell) > 0.35) {
+        var rr = R / A, gg = G / A, bb = B / A;
+        // un logo presque noir disparaîtrait sur le fond sombre: il passe en points allumés
+        if (rr + gg + bb < 120) { rr = 242; gg = 240; bb = 233; }
+        col = "rgb(" + Math.round(rr) + "," + Math.round(gg) + "," + Math.round(bb) + ")";
+      }
+      ctx.beginPath(); ctx.fillStyle = col; ctx.arc(x * p + p / 2, y * p + p / 2, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  function appIcon(slug) {
+    var src = new Image(); src.src = "__HOME__icons/" + (ICON[slug] || slug) + ".svg"; src.alt = "";
+    if (!DOTTED) { src.className = "pic"; src.setAttribute("aria-hidden", "true"); return src; }
+    var cv = document.createElement("canvas"); cv.className = "pic"; cv.width = 140; cv.height = 140; cv.setAttribute("aria-hidden", "true");
+    src.onload = function () { logoDots(cv, src); };
+    return cv;
+  }
+
   // ---------- 2 · chiffres clés
   function stats() {
     var ul = document.getElementById("stats"); ul.innerHTML = "";
@@ -472,7 +505,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     var grid = document.getElementById("appGrid"); grid.innerHTML = "";
     CATALOG.forEach(function (a) {
       var art = el("article", "card");
-      var row = el("div", "row"); row.appendChild(picCanvas(a.pic, LIT));
+      var row = el("div", "row"); row.appendChild(appIcon(a.pic));
       var head = el("div", "head"); head.appendChild(el("h3", "", a.name)); head.appendChild(el("span", "tag2", tr(a.role))); row.appendChild(head);
       art.appendChild(row);
       var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
@@ -515,7 +548,7 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; 
     APPS.forEach(function (a) {
       var b = el("button", "tile" + (a.on ? "": " off")); b.type = "button";
       b.setAttribute("aria-pressed", a.slug === selected);
-      b.appendChild(picCanvas(a.slug, a.on ? LIT: DIM));
+      b.appendChild(appIcon(a.slug));
       b.appendChild(el("span", "name", a.name));
       var state = busy === a.slug ? "busy": a.on ? "run": "off";
       b.appendChild(el("span", "st " + state, t(state)));
