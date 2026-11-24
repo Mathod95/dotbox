@@ -222,12 +222,31 @@
   <p>After a reboot, Docker starts every app again.</p>
 
   <h2 id="en-ssh">Secure SSH</h2>
+  <div class="prop-old" data-prop="175">
   <p>Dot Box never changes the SSH configuration on its own: a mistake could lock you out of the server. <code>doctor</code> reports what is missing. A Dot Box option will be able to apply it for you, only when you run it (coming later). Until then, it goes in <code>/etc/ssh/sshd_config</code>:</p>
   <ul>
     <li><b>Keys only</b>: <code>PasswordAuthentication no</code>.</li>
     <li><b>No root</b>: <code>PermitRootLogin no</code>.</li>
     <li><b>Keep a session open</b> while you test the new configuration in a second one.</li>
   </ul>
+  </div>
+  <div class="prop-new" data-prop="175">
+  <p>Coming later. Dot Box never changes the SSH configuration on its own: a mistake could lock you out of the server. Once your SSH key works for your user, turn on the hardening Dot Box brings. Until then, the card at the end of <code>init</code> and <code>dotbox doctor</code> remind you that SSH still accepts passwords.</p>
+  <pre><span class="c"># from your computer, if your key is not on the server yet</span>
+<span class="p">$</span> ssh-copy-id admin@203.0.113.10
+<span class="c"># on the server</span>
+<span class="p">$</span> sudo dotbox config set ssh.hardened true
+<span class="p">$</span> dotbox sync</pre>
+  <ul>
+    <li><b>Checked first</b>: a key in your user's <code>~/.ssh/authorized_keys</code>, and your user in the <code>sudo</code> group, to still become root without root login. Otherwise <code>sync</code> refuses and says how to fix it.</li>
+    <li><b>One file</b>: <code>/etc/ssh/sshd_config.d/00-dotbox.conf</code>, checked with <code>sshd -t</code>, then SSH reloads. Your open session stays open.</li>
+    <li><b>The safety net</b>: open a new SSH connection and type <code>sudo dotbox ssh confirm</code> in it, within 5 minutes. Without it, Dot Box removes the file and SSH goes back to how it was, so nobody stays locked out.</li>
+    <li><b>What changes</b>: keys only, no root login, 3 attempts per connection, 30 seconds to log in, a forgotten session closed after 10 minutes, no graphical display or agent forwarding, and the key used written in the logs. The SSH port does not change.</li>
+    <li><b>Tunnels</b>: <code>ssh.forwarding: false</code> also closes the tunnels (<code>ssh -L</code>), which some use to reach an app.</li>
+    <li><b>Going back</b>: <code>sudo dotbox config set ssh.hardened false</code>, then <code>dotbox sync</code>.</li>
+  </ul>
+  <p>The setting lives in <code>dotbox.yml</code> (see <a href="__DOC_DOTBOX_YML__"__DOC_DOTBOX_YML_TARGET__>dotbox.yml</a>): a restore on a new server puts it back, and <code>dotbox diff</code> shows when the file was removed or undone.</p>
+  </div>
   <p>CrowdSec, installed with the core, already blocks addresses that keep trying to log in over SSH, without touching this configuration.</p>
 
   <h2 id="en-backup">Move backups off the server</h2>

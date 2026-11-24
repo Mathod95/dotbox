@@ -106,3 +106,15 @@ motd:
   </table></div>
 </article>
 </div>
+<div class="prop-new" data-prop="176">
+<article class="prose">
+  <h3 id="later-ssh">SSH, coming later</h3>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
+    <tbody>
+      <tr><td><code>ssh.hardened</code></td><td><code>false</code></td><td>The SSH hardening Dot Box brings: keys only, no root login, and the rest (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>). Refused while your user has no SSH key.</td><td><code>sudo dotbox config set</code>, then <code>sync</code>, confirmed from a new SSH connection within 5 minutes.</td></tr>
+      <tr><td><code>ssh.forwarding</code></td><td><code>true</code></td><td>With <code>ssh.hardened</code>, <code>false</code> also closes the tunnels (<code>ssh -L</code>).</td><td><code>sudo dotbox config set</code>, then <code>sync</code>.</td></tr>
+    </tbody>
+  </table></div>
+</article>
+</div>

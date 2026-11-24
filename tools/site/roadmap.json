@@ -387,12 +387,14 @@
       "stage": "core",
       "domain": "core",
       "status": "planned",
-      "fr": "CLI: option pour durcir SSH, que l'utilisateur choisit d'appliquer (contenu à définir)",
-      "en": "CLI: option to harden SSH, applied only if the user chooses to (contents to be defined)",
+      "fr": "Core: durcissement SSH au choix, `ssh.hardened` dans `dotbox.yml`, appliqué par `dotbox sync` après avoir vérifié la clé de l'utilisateur, avec un retour en arrière seul sans `dotbox ssh confirm` depuis une nouvelle connexion",
+      "en": "Core: optional SSH hardening, `ssh.hardened` in `dotbox.yml`, applied by `dotbox sync` after checking the user's key, rolled back on its own without `dotbox ssh confirm` from a new connection",
       "doc": "post-installation",
       "journal": [
         "D12",
-        "Q9"
+        "Q9",
+        "D142",
+        "V2"
       ]
     },
     {

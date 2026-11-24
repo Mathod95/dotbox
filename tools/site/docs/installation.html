@@ -72,7 +72,7 @@ apps:
   <div class="table-scroll"><table>
     <thead><tr><th>Component</th><th>Role</th><th>Installed by</th></tr></thead>
     <tbody>
-      <tr><td>Dot Box</td><td><span class="prop-old" data-prop="170">The binary that installs and manages everything else, and its service, which the <code>dotbox</code> command calls on the server (see API). The web interface on <code>dotbox.example.com</code> is coming later.</span><span class="prop-new" data-prop="170">The binary that installs and manages everything else, and its service, which the <code>dotbox</code> command and the <a href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>web interface</a> on <code>dotbox.example.com</code> both call (see <a href="__DOC_API__"__DOC_API_TARGET__>API</a>).</span></td><td><code>install.sh</code></td></tr>
+      <tr><td>Dot Box</td><td>The binary that installs and manages everything else, and its service, which the <code>dotbox</code> command and the <a href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>web interface</a> on <code>dotbox.example.com</code> both call (see <a href="__DOC_API__"__DOC_API_TARGET__>API</a>).</td><td><code>install.sh</code></td></tr>
       <tr><td>Docker</td><td>Containers and the <code>dotbox</code> network</td><td><code>dotbox init</code></td></tr>
       <tr><td>Traefik</td><td>Subdomains and certificates</td><td><code>dotbox init</code></td></tr>
       <tr><td>Authelia</td><td>Single login</td><td><code>dotbox init</code></td></tr>
@@ -95,9 +95,7 @@ apps:
   </ol>
   <p>The rest is the job of <code>init</code>, in step 2. The script can be run again safely: it puts back the latest <code>dotbox</code> and runs <code>init</code> again, which only does what is missing.</p>
 
-  <div class="prop-new" data-prop="173">
   <p>On a fresh server, the whole install takes about 4 minutes, most of it downloading Docker and the images of the core.</p>
-  </div>
 
   <h2 id="en-step2">Step 2: answer dotbox init</h2>
   <p><code>init</code> asks for the domain and your user, the one that runs the apps (by default, the account you logged in with before <code>su -</code>), in the terminal or as flags: <code>dotbox init --domain example.com --user admin</code>. Then it:</p>
@@ -133,7 +131,6 @@ apps:
   <pre><span class="p">$</span> dotbox install qbittorrent prowlarr radarr sonarr</pre>
   <p>No <code>sudo</code>: the command goes through the Dot Box service. Each app lands on its own subdomain, with its certificate. <code>install</code> creates <code>/data/torrents</code> and <code>/data/media</code> for your user if they are missing, and checks that they are on the same filesystem, without which hardlinks would be impossible. Connecting the apps together will be a separate command, coming later.</p>
 
-  <div class="prop-new" data-prop="171">
   <h2 id="en-trouble">If something goes wrong</h2>
   <ul>
     <li><b>The error</b> is shown under the step that failed, with the last lines of the log. The steps after it did not run.</li>
@@ -141,9 +138,7 @@ apps:
     <li><b>Run it again</b> once the cause is fixed: <code>sudo dotbox init</code> only does what is missing.</li>
     <li><b><code>dotbox doctor</code></b> checks the whole server and says what to fix.</li>
   </ul>
-  </div>
 
-  <div class="prop-new" data-prop="172">
   <h2 id="en-next">Next steps</h2>
   <ul>
     <li><b>Register your two-factor method</b> in Authelia, before anything else (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>).</li>
@@ -151,5 +146,4 @@ apps:
     <li><b>Reach your apps</b> on their subdomains, and change who gets in (see <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</li>
     <li><b>From the terminal</b>: <code>dotbox status</code>, <code>dotbox list</code>, <code>dotbox install &lt;app&gt;</code>, <code>dotbox doctor</code>, and <code>dotbox --help</code> for the rest (see <a href="__DOC_CLI__"__DOC_CLI_TARGET__>CLI</a>).</li>
   </ul>
-  </div>
 </article>
