@@ -121,6 +121,31 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .btn.go:hover { color: var(--bg); filter: brightness(1.08); }
 .btn:disabled { opacity: .4; cursor: default; filter: none; }
 
+/* les propositions de Claude (bleu: retiré, vert: ajouté à la validation), comme dans la doc */
+.prop-old, .prop-new { display: grid; gap: 14px; position: relative; padding: 36px 18px 16px; border: 1px solid var(--design); border-radius: 12px; background: #0a1219; min-width: 0; }
+.prop-new { border-color: var(--accent); background: #07130e; }
+.prop-old::before, .prop-new::before { position: absolute; top: 12px; left: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.prop-old::before { content: "#" attr(data-prop) " · Removed once approved"; color: var(--design); }
+.prop-new::before { content: "#" attr(data-prop) " · Added once approved"; color: var(--accent); }
+
+/* #181 · ce qui est inclus: une tuile par fonctionnalité, avec son pictogramme en points */
+.incl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.inc { display: grid; gap: 10px; align-content: start; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+.inc .badge { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: #0c1f18; }
+.inc .badge canvas { width: 28px; height: 28px; }
+.inc h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--lit); }
+.inc p { margin: 0; font-size: 14px; color: var(--label); }
+
+/* #182 · les apps, en plus léger: le logo et le nom, toute la tuile mène à sa page */
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+.wall a { display: grid; justify-items: center; gap: 10px; padding: 18px 10px 14px; border: 1px solid var(--line2); border-radius: 14px; background: var(--panel); color: var(--lit); text-decoration: none; text-align: center; }
+.wall a:hover { border-color: var(--accent); }
+.wall .pic { --pic: 48px; width: 48px; height: 48px; }
+.wall b { font-size: 15px; font-weight: 600; }
+.wall span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.wall-more { justify-self: center; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
+.wall-more:hover { color: var(--lit); }
+
 /* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
 .sep { height: 10px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.6px) center / 22px 10px repeat-x;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
@@ -236,6 +261,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       <div class="part"><div class="ph2"><h3 data-i18n="p2t"></h3><span class="tag2" data-i18n="p2k"></span></div><p data-i18n-html="p2"></p><a class="more" href="__DOC_CLI__"__DOC_CLI_TARGET__ data-i18n="more"></a></div>
       <div class="part"><div class="ph2"><h3>The web interface</h3><span class="tag2">Browser</span></div><p>On <code>dotbox.example.com</code>, behind Authelia: the state of the core and your apps, the catalog, updates, backups and settings, with every job followed live. It calls the same API as the CLI.</p><a class="more" href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>All about the web UI →</a></div>
     </div>
+    <div class="prop-old" data-prop="181">
     <p class="about-k">The core, set up by the install</p>
     <ul class="core">
       <li><b>Docker</b>the apps' containers</li>
@@ -245,6 +271,11 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       <li><b>Backup</b>every night, encrypted</li>
       <li><b>Doctor</b>the server checked every night</li>
     </ul>
+    </div>
+    <div class="prop-new" data-prop="181">
+    <p class="about-k">What's included</p>
+    <div class="incl" id="inclGrid"></div>
+    </div>
     <p class="daily" data-i18n-html="daily"></p>
     <p class="about-k" data-i18n="installK"></p>
     <ol class="steps">
@@ -266,7 +297,13 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     <div class="bar">
       <h2 data-i18n="apps"></h2>
     </div>
+    <div class="prop-old" data-prop="182">
     <div class="grid" id="appGrid"></div>
+    </div>
+    <div class="prop-new" data-prop="182">
+    <div class="wall" id="appWall"></div>
+    <a class="wall-more" href="__DOC_APPS__#spotted">__SPOTTED__ more apps spotted, see the list →</a>
+    </div>
   </section>
 
   <footer class="footer">
@@ -396,6 +433,14 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     sync: [".####..", "#....#.", "#...###", "#....#.", ".#....#", "###...#", ".#....#"],
     backup: ["..###..", ".#...#.", "#.....#", "...#...", "...#...", ".#####.", "#######"]
   };
+  // pictogrammes de #181
+  PICS.terminal = ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.###", "#.....#", "#######"];
+  PICS.globe = ["..###..", ".#.#.#.", "#..#..#", "#######", "#..#..#", ".#.#.#.", "..###.."];
+  PICS.lock = ["..###..", ".#...#.", ".#...#.", "#######", "#.....#", "#..#..#", "#######"];
+  PICS.shield = ["#######", "#.....#", "#....##", "##..#.#", ".#.#.#.", "..#.#..", "...#..."];
+  PICS.update = ["...#...", "..###..", ".#.#.#.", "#..#..#", "...#...", "...#...", "#######"];
+  PICS.web = ["#######", "#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######"];
+  PICS.pulse = [".......", "...#...", "..#.#..", "#.#.#.#", "...#.#.", ".......", "......."];
   function paint(cv, slug, color) {
     var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
     ctx.clearRect(0, 0, px, px);
@@ -447,6 +492,41 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     var ul = document.getElementById("stats"); ul.innerHTML = "";
     [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["__SPOTTED__", t("sSpotted")]].forEach(function (s) {
       var li = el("li"); li.appendChild(el("b", "", s[0])); li.appendChild(document.createTextNode(s[1])); ul.appendChild(li);
+    });
+  }
+
+  // ---------- #181 · ce qui est inclus
+  var INCLUDED = [
+    ["terminal", "One-command install", "One script sets up the whole server in about 4 minutes: Docker, Traefik, Authelia, CrowdSec and Dotbox."],
+    ["globe", "HTTPS everywhere", "Each app on its own subdomain, with a Let's Encrypt certificate obtained and renewed on its own."],
+    ["lock", "One login, two factors", "Authelia in front of your apps: a password, then a 6-digit code or a passkey. Media servers keep their own login for TV apps."],
+    ["shield", "Attacks blocked", "CrowdSec reads the SSH and web logs, bans attackers at the firewall and stops web attacks before they reach an app."],
+    ["compose", "Plain Docker Compose", "One readable compose.yml per app, on its official image at a pinned version. Your changes go in an override file."],
+    ["update", "Updates you control", "Versions followed by Renovate. One app at a time, it waits for each to run, and a rollback goes back."],
+    ["backup", "Encrypted backups", "Every night, app by app, compressed and encrypted, kept on the server and sent over SFTP or to any rclone remote."],
+    ["sync", "Restore or move", "Bring back one app or the whole server, on the same machine or a new one."],
+    ["web", "Web UI + CLI", "Manage everything from the browser or the terminal: both call the same API."],
+    ["folders", "One file, one plan", "Every setting in dotbox.yml. dotbox diff shows what would change, dotbox sync applies it."],
+    ["pulse", "Your server talks to you", "dotbox doctor checks the whole server every night, and the SSH welcome message shows what needs you."],
+    ["plus", "Your own apps", "Turn any compose file into a Dotbox app, with the same subdomain, login and backups."]
+  ];
+  function renderIncluded() {
+    var g = document.getElementById("inclGrid"); g.innerHTML = "";
+    INCLUDED.forEach(function (f) {
+      var c = el("div", "inc"), b = el("span", "badge");
+      b.appendChild(picCanvas(f[0], ACC)); c.appendChild(b);
+      c.appendChild(el("h3", "", f[1])); c.appendChild(el("p", "", f[2]));
+      g.appendChild(c);
+    });
+  }
+
+  // ---------- #182 · les apps en plus léger: le logo, le nom et le rôle, la tuile mène à sa page
+  function renderWall() {
+    var w = document.getElementById("appWall"); w.innerHTML = "";
+    CATALOG.filter(function (a) { return !a.core; }).forEach(function (a) {
+      var t = el("a"); t.href = a.doc;
+      t.appendChild(appIcon(a.pic)); t.appendChild(el("b", "", a.name)); t.appendChild(el("span", "", tr(a.role)));
+      w.appendChild(t);
     });
   }
 
@@ -536,7 +616,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
     document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
-    stats(); renderApps();
+    stats(); renderApps(); renderIncluded(); renderWall();
   }
   document.querySelectorAll(".lang .chip").forEach(function (b) {
     b.addEventListener("click", function () {
