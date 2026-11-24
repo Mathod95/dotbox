@@ -5273,6 +5273,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 24 novembre 2026, sur homev2: « On garde 183. On laisse la couleur des icônes. Le See all the apps, tu le mets comme pour Prerequisites et Install guide ».",
       reco: "Choix de Mathod95, appliqué par Claude le même jour. #183 appliquée: la section The apps de homev2 est une carte Catalog (le pictogramme, 16 apps, 302 spotted, la phrase), avec un cadre où les logos des apps du catalogue gardent leurs couleurs (plus de gris), un fond émeraude au survol, chaque tuile vers la page de l'app, et See all the apps → dans le style des liens de la carte Dotbox (Prerequisites, Install guide). #182 écartée (les tuiles logo, nom et rôle) et les anciennes grandes cartes retirées, avec leur code et leur style. Reste #181 (What's included) à trancher. Puis, dicté: le titre The apps au-dessus de la carte retiré, les logos en points dessinés sans les points éteints autour (seuls les points du logo), et les logos du cadre en 48 px au lieu de 40 (la taille de #182).",
       refs: "D148, D145, D146" },
+    { t: "L'interface web de Dotbox reste minimaliste: un tableau de bord, c'est une app",
+      p: "Mathod95, le 24 novembre 2026, après N23: « Oui, c'est plus pour cette partie-là. La web UI de Dotbox, c'est vraiment pour Dotbox. Encore une fois, on fournit un service simpliste et minimaliste. Si des gens veulent un tableau de bord, il y a Homarr, Homepage, Heimdall, etc. ».",
+      reco: "Choix de Mathod95: l'interface web de Dotbox ne sert qu'à gérer Dotbox (le core, les apps, le catalogue, les mises à jour, la sauvegarde, les réglages), comme la CLI. Pas de statistiques de visionnage, de portail média, de sessions en direct, de demandes de films, de guide TV ni de tableau de bord personnalisable. Qui veut un tableau de bord installe une app faite pour ça (Homarr, Homepage, Heimdall...), candidates pour le catalogue.",
+      refs: "N23, D100, D148" },
   ];
 
   var QUESTIONS = [
@@ -6077,7 +6081,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
