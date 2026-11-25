@@ -245,7 +245,7 @@
     <li><b>Tunnels</b>: <code>ssh.forwarding: false</code> also closes the tunnels (<code>ssh -L</code>), which some use to reach an app.</li>
     <li><b>Going back</b>: <code>sudo dotbox config set ssh.hardened false</code>, then <code>dotbox sync</code>.</li>
   </ul>
-  <p>The setting lives in <code>dotbox.yml</code> (see <a href="__DOC_DOTBOX_YML__"__DOC_DOTBOX_YML_TARGET__>dotbox.yml</a>): a restore on a new server puts it back, and <code>dotbox diff</code> shows when the file was removed or undone.</p>
+  <p>The setting lives in <code>dotbox.yml</code> (see <a href="__DOC_DOTBOX_YML__"__DOC_DOTBOX_YML_TARGET__>dotbox.yml</a>): a restore on a new server puts it back. <code>dotbox diff</code> and <code>dotbox doctor</code> show when the file was removed or undone, and <code>dotbox sync</code> puts it back. It changes with <code>sudo</code> only, never from the <a href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>web interface</a>: it is the door of the server.</p>
   </div>
   <p>CrowdSec, installed with the core, already blocks addresses that keep trying to log in over SSH, without touching this configuration.</p>
 
