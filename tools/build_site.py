@@ -268,10 +268,12 @@ def site():
     demo.mkdir(parents=True, exist_ok=True)
     page = (WEB / "index.html").read_text(encoding="utf-8").replace("{version}", "0.0.6").replace("{user}", "admin")
     page = page.replace('<script src="app.js', '<script src="demo-api.js"></script>\n<script src="app.js', 1)
+    page = page.replace("</head>", '<link rel="stylesheet" href="demo.css">\n</head>', 1)
     (demo / "index.html").write_text(page, encoding="utf-8")
     for f in ("app.css", "app.js"):
         shutil.copyfile(WEB / f, demo / f)
     shutil.copyfile(UI_DEMO / "demo-api.js", demo / "demo-api.js")
+    shutil.copyfile(UI_DEMO / "demo.css", demo / "demo.css")
     (SITE / "icons").mkdir(parents=True, exist_ok=True)
     for f in sorted(ICONS.glob("*.svg")):
         shutil.copyfile(f, SITE / "icons" / f.name)

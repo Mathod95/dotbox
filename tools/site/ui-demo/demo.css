@@ -1,0 +1,4 @@
+/* La démo de la page d'accueil (D148): la marge de 120 px sous le contenu, gardée par la vraie
+   interface pour le panneau des tâches, ferait défiler la vue Overview dans le cadre. Le pied de
+   page remonte, sans toucher à web/app.css. */
+.main { padding-bottom: 22px; }
