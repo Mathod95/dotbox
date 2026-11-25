@@ -135,6 +135,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .inc .badge canvas { width: 28px; height: 28px; }
 .inc h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--lit); }
 .inc p { margin: 0; font-size: 14px; color: var(--label); }
+.inc .soon { margin-left: 10px; padding: 2px 8px; border: 1px solid #4a3a14; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--wip); vertical-align: middle; }
 
 /* les apps dans un cadre: leurs logos, un fond émeraude au survol (D149) */
 .frame { width: 100%; padding: clamp(16px, 3vw, 36px); border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); }
@@ -437,6 +438,13 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
   PICS.update = ["...#...", "..###..", ".#.#.#.", "#..#..#", "...#...", "...#...", "#######"];
   PICS.web = ["#######", "#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######"];
   PICS.catalog = ["###.###", "###.###", "###.###", ".......", "###.###", "###.###", "###.###"];
+  PICS.key = [".###...", "#...#..", "#...#..", ".###...", "..#....", "..###..", "..#.##."];
+  PICS.link = ["##.....", "#.#....", "##.#...", "...#...", "...#.##", "....#.#", ".....##"];
+  PICS.refresh = ["..####.", ".#...##", "#...###", "#......", "#.....#", ".#...#.", "..###.."];
+  PICS.plan = ["#######", "#.....#", "#.###.#", "#.....#", "#.##..#", "#.....#", "#######"];
+  PICS.motd = ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.#.#", "#.....#", "#######"];
+  PICS.sshkey = ["..###..", ".#...#.", ".#...#.", "#######", "##.#.##", "###.###", "#######"];
+  PICS.cmd = [".......", "#......", ".#.....", "..#....", ".#.....", "#..###.", "......."];
   PICS.pulse = [".......", "...#...", "..#.#..", "#.#.#.#", "...#.#.", ".......", "......."];
   function paint(cv, slug, color) {
     var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
@@ -498,23 +506,33 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
   var INCLUDED = [
     ["terminal", "One-command install", "One script sets up the whole server in about 4 minutes: Docker, Traefik, Authelia, CrowdSec and Dotbox."],
     ["globe", "HTTPS everywhere", "Each app on its own subdomain, with a Let's Encrypt certificate obtained and renewed on its own."],
-    ["lock", "One login, two factors", "Authelia in front of your apps: a password, then a 6-digit code or a passkey. Media servers keep their own login for TV apps."],
+    ["lock", "One login, two factors", "Authelia in front of your apps: a password, then a 6-digit code or a passkey."],
+    ["key", "Access per app", "`two_factor` for the apps that run your server, `app` for media servers and their TV apps, `public` for an invite page."],
     ["shield", "Attacks blocked", "CrowdSec reads the SSH and web logs, bans attackers at the firewall and stops web attacks before they reach an app."],
-    ["compose", "Plain Docker Compose", "One readable compose.yml per app, on its official image at a pinned version. Your changes go in an override file."],
-    ["update", "Updates you control", "Versions followed by Renovate. One app at a time, it waits for each to run, and a rollback goes back."],
+    ["compose", "Plain Docker Compose", "One readable `compose.yml` per app, on its official image at a pinned version. Your changes go in `compose.override.yml`."],
+    ["link", "Auto-connect", "Your apps wired together in one command: qBittorrent in Radarr and Sonarr, the indexers of Prowlarr, the root folders.", true],
+    ["folders", "Hardlinks, no copies", "Downloads and media on the same disk, under `/data`: a finished download is filed into your library without a second copy."],
+    ["update", "Updates you control", "`dotbox update` moves one app at a time, waits for it to run, and `--rollback` goes back."],
+    ["refresh", "A catalog that keeps up", "Renovate follows every new version of the apps and the core. A new version reaches your server with `dotbox update`, no new Dotbox needed."],
     ["backup", "Encrypted backups", "Every night, app by app, compressed and encrypted, kept on the server and sent over SFTP or to any rclone remote."],
-    ["sync", "Restore or move", "Bring back one app or the whole server, on the same machine or a new one."],
+    ["sync", "Restore or move", "`sudo dotbox restore` brings back one app or the whole server, on the same machine or a new one."],
     ["web", "Web UI + CLI", "Manage everything from the browser or the terminal: both call the same API."],
-    ["folders", "One file, one plan", "Every setting in dotbox.yml. dotbox diff shows what would change, dotbox sync applies it."],
-    ["pulse", "Your server talks to you", "dotbox doctor checks the whole server every night, and the SSH welcome message shows what needs you."],
-    ["plus", "Your own apps", "Turn any compose file into a Dotbox app, with the same subdomain, login and backups."]
+    ["plan", "One file, one plan", "Every setting in `dotbox.yml`. `dotbox diff` shows what would change, `dotbox sync` applies it."],
+    ["pulse", "A doctor every night", "`dotbox doctor` checks the whole server: the core, the apps, the disks, the backups, SSH and the system updates."],
+    ["motd", "SSH welcome message", "At each SSH login, the state of your server in a few lines: what runs, what is behind, what needs you."],
+    ["sshkey", "SSH hardening", "Keys only, no root login, with a safety net: confirmed from a new connection, or rolled back on its own.", true],
+    ["plus", "Your own apps", "`dotbox add` turns any compose file into a Dotbox app, with the same subdomain, login and backups."],
+    ["cmd", "Shortcuts", "`db` for `dotbox`, shell completion, and `--json` for your scripts."]
   ];
   function renderIncluded() {
     var g = document.getElementById("inclGrid"); g.innerHTML = "";
     INCLUDED.forEach(function (f) {
       var c = el("div", "inc"), b = el("span", "badge");
       b.appendChild(picCanvas(f[0], ACC)); c.appendChild(b);
-      c.appendChild(el("h3", "", f[1])); c.appendChild(el("p", "", f[2]));
+      var h = el("h3", "", f[1]);
+      if (f[3]) h.appendChild(el("span", "soon", "Coming soon"));
+      c.appendChild(h);
+      var p = el("p"); p.innerHTML = inline(f[2]); c.appendChild(p);
       g.appendChild(c);
     });
   }
