@@ -1399,6 +1399,19 @@
         "Q92",
         "D145"
       ]
+    },
+    {
+      "stage": "site",
+      "domain": "site",
+      "status": "done",
+      "fr": "Site: la page d'accueil v3, une top banner, la vraie interface web en démo, ce que fait Dotbox en 18 fonctionnalités, le catalogue en logos",
+      "en": "Website: homepage v3, a top banner, the real web interface as a demo, what Dotbox does in 18 features, the catalog as logos",
+      "journal": [
+        "D147",
+        "D148",
+        "D149",
+        "D152"
+      ]
     }
   ]
 }

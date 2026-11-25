@@ -29,8 +29,6 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 SITE_SRC = ROOT / "tools" / "site"
 HOME_TEMPLATE = SITE_SRC / "index.html"
-# homev2: une copie de la page d'accueil, pour y travailler (D147), seulement dans le site local
-HOME_PROPOSAL = SITE_SRC / "homev2.html"
 # les logos des apps (D145), copiés tels quels dans site/icons/
 ICONS = SITE_SRC / "icons"
 # la démo de l'interface web (D148): les fichiers de web/ tels quels, avec une fausse API d'exemple
@@ -258,8 +256,6 @@ def site():
     }
     for d in DOCS:
         pages["getting-started/" + d["slug"] + "/index.html"] = doc(d["slug"], site_urls(2), "", d["name"] + " · Dot Box")
-    if not REMOVED and HOME_PROPOSAL.exists():
-        pages["homev2/index.html"] = home(site_urls(1), "", "Dotbox · homev2", HOME_PROPOSAL)
     for path, html in pages.items():
         out = SITE / path
         out.parent.mkdir(parents=True, exist_ok=True)

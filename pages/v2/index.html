@@ -46,23 +46,15 @@ body {
 a { color: inherit; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 code { font-family: var(--mono); font-variant-ligatures: none; font-size: .9em; color: var(--lit); }
-/* une commande dans le texte: une petite pastille, pour qu'on la voie comme du code */
-p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-radius: 6px; background: #141414; font-size: .85em; white-space: nowrap; }
 .pic { display: block; flex: none; width: var(--pic); height: var(--pic); }
 
 /* 1 · Top */
 .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
-/* la top banner: une barre qui regroupe la marque, Docs, Roadmap, Releases et GitHub */
-.top { padding: 10px 12px 10px 22px; border: 1px solid rgba(255, 255, 255, .08); border-radius: 18px; background: rgba(20, 20, 20, .2); -webkit-backdrop-filter: blur(2px) saturate(140%); backdrop-filter: blur(2px) saturate(140%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
-.top .ext { border-color: transparent; background: transparent; }
-.top .ext:hover { border-color: transparent; background: #161616; }
 .brand { display: flex; align-items: center; gap: 10px; height: 42px; font-weight: 700; letter-spacing: .22em; font-size: 15px; color: var(--lit); }
 .brand::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
 .topr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .ext { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--label); text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
 .ext:hover { color: var(--lit); border-color: #333; }
-.ext.gh { display: inline-grid; place-items: center; width: 42px; height: 42px; padding: 0; }
-.ext.gh svg { width: 20px; height: 20px; fill: currentColor; }
 .lang { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
 .lang .chip { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 0; background: var(--bg); color: var(--label); cursor: pointer; }
 .lang .chip[aria-pressed="true"] { background: var(--lit); color: var(--bg); }
@@ -72,10 +64,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .hero canvas { display: block; max-width: min(100%, 760px); height: auto; justify-self: center; }
 .tagline { font-family: var(--mono); font-size: clamp(17px, 2.2vw, 24px); margin: 0; color: var(--lit); text-wrap: pretty; }
 .tagline i { font-style: normal; color: var(--accent); padding: 0 .5em; }
-/* les chiffres, plus près du slogan */
-.hero .stats { margin-top: -12px; }
-/* la maquette plus près des chiffres, un peu plus loin que les chiffres du slogan */
-.hero + .showcase { margin-top: -26px; }
 .stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
 .stats b { color: var(--accent); font-weight: 500; font-size: 18px; margin-right: .5em; font-variant-numeric: tabular-nums; }
 
@@ -86,8 +74,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 
 /* 3 · Showcase: l'interface de Dot Box, en maquette interactive */
 .showcase { display: grid; gap: 16px; }
-/* la vraie interface web (web/), sur des données d'exemple (D148) */
-.ui { display: block; width: 100%; height: min(78vh, 760px); border: 0; border-radius: clamp(6px, .8vw, 12px); background: #080808; }
 .edge { padding: clamp(8px, 1.2vw, 18px); border-radius: clamp(12px, 1.6vw, 24px); background: linear-gradient(180deg, #161616, #0b0b0b); border: 1px solid #2a2a2a; box-shadow: 0 40px 80px -40px #000, inset 0 1px 0 #262626; }
 .screen { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; padding: clamp(12px, 1.8vw, 22px); border-radius: clamp(6px, .8vw, 12px); background: #050505; font-family: var(--mono); font-variant-ligatures: none; }
 .scr-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
@@ -121,33 +107,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .btn.go:hover { color: var(--bg); filter: brightness(1.08); }
 .btn:disabled { opacity: .4; cursor: default; filter: none; }
 
-/* les propositions de Claude (bleu: retiré, vert: ajouté à la validation), comme dans la doc */
-.prop-old, .prop-new { display: grid; gap: 14px; position: relative; padding: 36px 18px 16px; border: 1px solid var(--design); border-radius: 12px; background: #0a1219; min-width: 0; }
-.prop-new { border-color: var(--accent); background: #07130e; }
-.prop-old::before, .prop-new::before { position: absolute; top: 12px; left: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
-.prop-old::before { content: "#" attr(data-prop) " · Removed once approved"; color: var(--design); }
-.prop-new::before { content: "#" attr(data-prop) " · Added once approved"; color: var(--accent); }
-
-/* #181 · ce qui est inclus: une tuile par fonctionnalité, avec son pictogramme en points */
-.incl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
-.inc { display: grid; gap: 10px; align-content: start; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
-.inc .badge { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: #0c1f18; }
-.inc .badge canvas { width: 28px; height: 28px; }
-.inc h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--lit); }
-.inc p { margin: 0; font-size: 14px; color: var(--label); }
-.inc .soon { margin-left: 10px; padding: 2px 8px; border: 1px solid #4a3a14; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--wip); vertical-align: middle; }
-
-/* les apps dans un cadre: leurs logos, un fond émeraude au survol (D149) */
-.frame { width: 100%; padding: clamp(16px, 3vw, 36px); border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); }
-.logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
-.logos a { display: grid; justify-items: center; gap: 10px; padding: 14px 6px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; }
-.logos .pic { --pic: 48px; width: 48px; height: 48px; }
-.logos a:hover { background: #0c1f18; color: var(--lit); }
-
-/* séparateur entre la maquette et la carte: une ligne de points émeraude, qui s'efface aux bouts */
-.sep { height: 10px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.6px) center / 22px 10px repeat-x;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
-
 /* 4 · About */
 .about { display: grid; gap: 22px; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line2); border-radius: 20px; background: var(--panel); }
 .about-head { display: flex; align-items: stretch; gap: 16px; }
@@ -167,15 +126,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .part .more { justify-self: start; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); text-decoration: none; }
 .part .more:hover { color: var(--lit); }
 .daily { margin: 0; color: var(--label); font-size: 15px; }
-/* le core, en pastilles */
-.core { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.core li { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 14px; color: var(--label); }
-.core li b { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--lit); }
-/* la commande d'installation, et ce qu'il faut avant */
-.cmd { margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #050505; font-family: var(--mono); font-variant-ligatures: none; font-size: 13px; color: var(--lit); overflow-x: auto; white-space: pre; }
-.cmd .p { color: var(--accent); }
-.needs { margin: 0; color: var(--label); font-size: 15px; }
-.needs a { color: var(--lit); text-decoration-color: var(--accent); text-underline-offset: 3px; }
 .daily b, .steps b { color: var(--lit); font-weight: 600; }
 .steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; counter-reset: st; }
 .steps li { counter-increment: st; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; color: var(--label); font-size: 15px; }
@@ -224,12 +174,12 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       <a class="ext" href="__GS__"__GS_TARGET__>Docs</a>
       <a class="ext" href="__ROADMAP__"__ROADMAP_TARGET__>Roadmap</a>
       <a class="ext" href="__RELEASES__"__RELEASES_TARGET__>Releases</a>
-      <a class="ext gh" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener" aria-label="GitHub" title="github.com/Mathod95/dotbox"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+      <a class="ext" href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
   </div>
 
   <section class="hero" aria-labelledby="title">
-    <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dotbox</h1>
+    <h1 id="title" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dot Box</h1>
     <canvas id="titleDots" width="1520" height="342" aria-hidden="true"></canvas>
     <p class="tagline" data-i18n-html="tagline"></p>
     <ul class="stats" id="stats"></ul>
@@ -241,38 +191,34 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       <p class="hint" data-i18n="showHint"></p>
     </div>
     <div class="edge">
-      <iframe class="ui" src="__HOME__ui-demo/" title="The Dot Box web interface, on sample data" loading="lazy" sandbox="allow-scripts allow-modals allow-popups allow-popups-to-escape-sandbox"></iframe>
+      <div class="screen">
+        <div class="scr-head">
+          <span class="dot">DOT BOX</span>
+          <span class="ex" data-i18n="mockup"></span>
+        </div>
+        <div class="tiles" id="tiles" role="group" aria-label="Apps"></div>
+        <div class="log" aria-live="polite">
+          <div class="log-h"><span data-i18n="job"></span><b id="logApp">sonarr</b></div>
+          <ol id="logList"></ol>
+          <div class="log-f">
+            <button class="btn go" id="btnInstall" type="button"></button>
+            <button class="btn" id="btnReset" type="button" data-i18n="reset"></button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
-
-  <div class="sep" aria-hidden="true"></div>
 
   <section class="about" aria-labelledby="boxTitle">
     <div class="about-head">
       <canvas class="pic" id="boxPic" width="140" height="140" aria-hidden="true"></canvas>
-      <div class="head"><h2 id="boxTitle">Dotbox</h2><span class="status" style="--c: var(--wip)" data-i18n="boxStatus"></span><span class="ver">v0.0.6</span></div>
+      <div class="head"><h2 id="boxTitle">Dot Box</h2><span class="status" style="--c: var(--wip)" data-i18n="boxStatus"></span><span class="ver">v0.0.6</span></div>
     </div>
     <p class="about-lead" data-i18n-html="boxLead"></p>
     <p class="about-k" data-i18n="howK"></p>
     <div class="parts">
       <div class="part"><div class="ph2"><h3 data-i18n="p1t"></h3><span class="tag2" data-i18n="p1k"></span></div><p data-i18n-html="p1"></p></div>
       <div class="part"><div class="ph2"><h3 data-i18n="p2t"></h3><span class="tag2" data-i18n="p2k"></span></div><p data-i18n-html="p2"></p><a class="more" href="__DOC_CLI__"__DOC_CLI_TARGET__ data-i18n="more"></a></div>
-      <div class="part"><div class="ph2"><h3>The web interface</h3><span class="tag2">Browser</span></div><p>On <code>dotbox.example.com</code>, behind Authelia: the state of the core and your apps, the catalog, updates, backups and settings, with every job followed live. It calls the same API as the CLI.</p><a class="more" href="__DOC_WEB_UI__"__DOC_WEB_UI_TARGET__>All about the web UI →</a></div>
-    </div>
-    <div class="prop-old" data-prop="181">
-    <p class="about-k">The core, set up by the install</p>
-    <ul class="core">
-      <li><b>Docker</b>the apps' containers</li>
-      <li><b>Traefik</b>HTTPS on every subdomain</li>
-      <li><b>Authelia</b>one login, two factors</li>
-      <li><b>CrowdSec</b>attacks blocked</li>
-      <li><b>Backup</b>every night, encrypted</li>
-      <li><b>Doctor</b>the server checked every night</li>
-    </ul>
-    </div>
-    <div class="prop-new" data-prop="181">
-    <p class="about-k">What's included</p>
-    <div class="incl" id="inclGrid"></div>
     </div>
     <p class="daily" data-i18n-html="daily"></p>
     <p class="about-k" data-i18n="installK"></p>
@@ -281,26 +227,17 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       <li><span data-i18n-html="step2"></span></li>
       <li><span data-i18n-html="step3"></span></li>
     </ol>
-    <pre class="cmd"><span class="p">#</span> wget -qO- https://github.com/Mathod95/dotbox/releases/latest/download/install.sh | bash</pre>
-    <p class="needs">You need a server with Debian 13 on amd64, a domain whose <code>*.example.com</code> points to it, and ports 80 and 443 open (see <a href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites</a>).</p>
     <div class="links">
-      <a class="mock" href="__DOC_PREREQUISITES__"__DOC_PREREQUISITES_TARGET__>Prerequisites →</a>
-      <a class="mock" href="__DOC_INSTALLATION__"__DOC_INSTALLATION_TARGET__>Install guide →</a>
+      <a class="mock" href="__RELEASES__"__RELEASES_TARGET__ data-i18n="relLink"></a>
+      <a href="https://github.com/Mathod95/dotbox" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
   </section>
 
-  <div class="sep" aria-hidden="true"></div>
-
   <section class="list" data-i18n-label="apps" id="list">
-    <section class="about">
-    <div class="about-head">
-      <canvas class="pic catPic" width="140" height="140" aria-hidden="true"></canvas>
-      <div class="head"><h2>Catalog</h2><span class="status" style="--c: var(--accent)"><span class="catN"></span> apps</span><span class="ver">__SPOTTED__ spotted</span></div>
+    <div class="bar">
+      <h2 data-i18n="apps"></h2>
     </div>
-    <p class="about-lead">Deploy your apps in one command or one click. From media servers to download clients, monitoring tools and VPN, everything your server needs, with no complex setup.</p>
-    <div class="frame"><div class="logos" id="appLogos"></div></div>
-    <div class="links"><a class="mock" href="__DOC_APPS__">See all the apps →</a></div>
-    </section>
+    <div class="grid" id="appGrid"></div>
   </section>
 
   <footer class="footer">
@@ -323,9 +260,9 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       mockup: "Maquette · données d'exemple", job: "Job d'installation", reset: "Réinitialiser",
       run: "Running", off: "Absent", busy: "Installation", inst: "Installer ", already: "Déjà installé",
       boxStatus: "En conception",
-      boxLead: "Dotbox installe et câble des apps auto-hébergées sur un serveur Debian. Chaque app est un petit manifest YAML que Dotbox transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.",
+      boxLead: "Dot Box installe et câble des apps auto-hébergées sur un serveur Debian. Chaque app est un petit manifest YAML que Dot Box transforme en fichier Docker Compose lisible, avec à chaque fois les mêmes chemins, le même réseau, les certificats et le SSO. Pas de catalogue à attendre: si un projet fournit un compose, il peut devenir une app.",
       howK: "Comment ça marche",
-      p1t: "Le serveur Dotbox", p1k: "Binaire Rust",
+      p1t: "Le serveur Dot Box", p1k: "Binaire Rust",
       p1: "Le moteur, l'API et l'interface web, dans un seul programme. Il génère un <code>compose.yml</code> par app dans <code>/opt/&lt;app&gt;</code>, ajoute les labels Traefik et Authelia, écrit les configs avant le premier démarrage puis branche les apps entre elles par leurs API. Il compare en continu ce que tu veux à ce qui tourne et corrige l'écart.",
       p2t: "La CLI dotbox", p2k: "Terminal",
       p2: "La même chose depuis le terminal, sur la même API: installer, mettre à jour, voir les logs, sauvegarder et restaurer. Elle marche aussi en SSH, sans passer par Authelia, pour reprendre la main si l'interface ne répond plus.",
@@ -338,15 +275,15 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       apps: "Les apps"
     },
     en: {
-      tagline: "Self-hosted app manager<i>●</i>Docker Compose, minimal by design, no subscription.",
-      sRust: "Rust binary", sApi: "API", sSpotted: "spotted apps", sApps: "apps", sCompose: "compose",
-      showLabel: "The web interface", onServer: "On your server", showHint: "The real web interface, on sample data. Install an app, read its logs, change a setting.",
+      tagline: "Self-hosted app manager<i>●</i>Rust, Docker Compose, your own catalog.",
+      sRust: "Rust binary", sApi: "API", sApps: "apps", sCompose: "compose",
+      showLabel: "Interface preview", onServer: "On your server", showHint: "Pick an app that isn't installed, then install it.",
       mockup: "Mockup · sample data", job: "Install job", reset: "Reset",
       run: "Running", off: "Absent", busy: "Installing", inst: "Install ", already: "Already installed",
       boxStatus: "In development",
-      boxLead: "Dotbox installs and runs self-hosted apps on a Debian server. Each app is a small YAML manifest that Dotbox turns into a readable Docker Compose file, with the same paths, network, certificates and login every time. An app that is not in the catalog? If its project ships a compose file, <code>dotbox add</code> turns it into one.",
+      boxLead: "Dot Box installs and runs self-hosted apps on a Debian server. Each app is a small YAML manifest that Dot Box turns into a readable Docker Compose file, with the same paths, network, certificates and login every time. An app that is not in the catalog? If its project ships a compose file, <code>dotbox add</code> turns it into one.",
       howK: "How it works",
-      p1t: "The Dotbox service", p1k: "Rust binary",
+      p1t: "The Dot Box service", p1k: "Rust binary",
       p1: "The engine, the API and the web interface, in a single program. It writes one <code>compose.yml</code> per app in <code>/opt/&lt;app&gt;</code>, adds the Traefik and Authelia labels and writes each app's settings before its first start. <code>dotbox diff</code> compares what you want with what is running, <code>dotbox sync</code> fixes the difference.",
       p2t: "The dotbox CLI", p2k: "Terminal",
       p2: "The same from the terminal, on the same API: install, update, read logs, back up and restore. It also works over SSH without going through Authelia, to take back control if the interface stops responding.",
@@ -430,21 +367,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     sync: [".####..", "#....#.", "#...###", "#....#.", ".#....#", "###...#", ".#....#"],
     backup: ["..###..", ".#...#.", "#.....#", "...#...", "...#...", ".#####.", "#######"]
   };
-  // pictogrammes de #181
-  PICS.terminal = ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.###", "#.....#", "#######"];
-  PICS.globe = ["..###..", ".#.#.#.", "#..#..#", "#######", "#..#..#", ".#.#.#.", "..###.."];
-  PICS.lock = ["..###..", ".#...#.", ".#...#.", "#######", "#.....#", "#..#..#", "#######"];
-  PICS.shield = ["#######", "#.....#", "#....##", "##..#.#", ".#.#.#.", "..#.#..", "...#..."];
-  PICS.update = ["...#...", "..###..", ".#.#.#.", "#..#..#", "...#...", "...#...", "#######"];
-  PICS.web = ["#######", "#.#.#.#", "#######", "#.....#", "#.....#", "#.....#", "#######"];
-  PICS.catalog = ["###.###", "###.###", "###.###", ".......", "###.###", "###.###", "###.###"];
-  PICS.key = [".###...", "#...#..", "#...#..", ".###...", "..#....", "..###..", "..#.##."];
-  PICS.link = ["##.....", "#.#....", "##.#...", "...#...", "...#.##", "....#.#", ".....##"];
-  PICS.refresh = ["..####.", ".#...##", "#...###", "#......", "#.....#", ".#...#.", "..###.."];
-  PICS.plan = ["#######", "#.....#", "#.###.#", "#.....#", "#.##..#", "#.....#", "#######"];
-  PICS.motd = ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.#.#", "#.....#", "#######"];
-  PICS.sshkey = ["..###..", ".#...#.", ".#...#.", "#######", "##.#.##", "###.###", "#######"];
-  PICS.pulse = [".......", "...#...", "..#.#..", "#.#.#.#", "...#.#.", ".......", "......."];
   function paint(cv, slug, color) {
     var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
     ctx.clearRect(0, 0, px, px);
@@ -473,10 +395,8 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
         var k = ((y * cell + yy) * S + (x * cell + xx)) * 4, a = data[k + 3] / 255;
         R += data[k] * a; G += data[k + 1] * a; B += data[k + 2] * a; A += a;
       }
-      // seulement les points du logo: rien autour, pas de points éteints (D149)
-      if (A / (cell * cell) <= 0.35) continue;
-      var col;
-      {
+      var col = UNLIT;
+      if (A / (cell * cell) > 0.35) {
         var rr = R / A, gg = G / A, bb = B / A;
         // un logo presque noir disparaîtrait sur le fond sombre: il passe en points allumés
         if (rr + gg + bb < 120) { rr = 242; gg = 240; bb = 233; }
@@ -496,52 +416,8 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
   // ---------- 2 · chiffres clés
   function stats() {
     var ul = document.getElementById("stats"); ul.innerHTML = "";
-    [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["__SPOTTED__", t("sSpotted")]].forEach(function (s) {
+    [["1", t("sRust")], ["1", t("sApi")], [String(CATALOG.filter(function (a) { return !a.core; }).length), t("sApps")], ["100%", t("sCompose")]].forEach(function (s) {
       var li = el("li"); li.appendChild(el("b", "", s[0])); li.appendChild(document.createTextNode(s[1])); ul.appendChild(li);
-    });
-  }
-
-  // ---------- #181 · ce qui est inclus
-  var INCLUDED = [
-    ["terminal", "One-command install", "One script sets up the whole server in about 4 minutes: Docker, Traefik, Authelia, CrowdSec and Dotbox."],
-    ["globe", "HTTPS everywhere", "Each app on its own subdomain, with a Let's Encrypt certificate obtained and renewed on its own."],
-    ["lock", "One login, two factors", "Authelia in front of your apps: a password, then a 6-digit code or a passkey."],
-    ["key", "Access per app", "`two_factor` for the apps that run your server, `app` for media servers and their TV apps, `public` for an invite page."],
-    ["shield", "Attacks blocked", "CrowdSec reads the SSH and web logs, bans attackers at the firewall and stops web attacks before they reach an app."],
-    ["compose", "Plain Docker Compose", "One readable `compose.yml` per app, on its official image at a pinned version. Your changes go in `compose.override.yml`."],
-    ["link", "Auto-connect", "Your apps wired together in one command: qBittorrent in Radarr and Sonarr, the indexers of Prowlarr, the root folders.", true],
-    ["folders", "Hardlinks, no copies", "Downloads and media on the same disk, under `/data`: a finished download is filed into your library without a second copy."],
-    ["update", "Updates you control", "`dotbox update` moves one app at a time, waits for it to run, and `--rollback` goes back."],
-    ["refresh", "A catalog that keeps up", "Renovate follows every new version of the apps and the core. A new version reaches your server with `dotbox update`, no new Dotbox needed."],
-    ["backup", "Encrypted backups", "Every night, app by app, compressed and encrypted, kept on the server and sent over SFTP or to any rclone remote."],
-    ["sync", "Restore or move", "`sudo dotbox restore` brings back one app or the whole server, on the same machine or a new one."],
-    ["web", "Web UI + CLI", "Manage everything from the browser or the terminal: both call the same API."],
-    ["plan", "One file, one plan", "Every setting in `dotbox.yml`. `dotbox diff` shows what would change, `dotbox sync` applies it."],
-    ["pulse", "A doctor every night", "`dotbox doctor` checks the whole server: the core, the apps, the disks, the backups, SSH and the system updates."],
-    ["motd", "SSH welcome message", "At each SSH login, the state of your server in a few lines: what runs, what is behind, what needs you."],
-    ["sshkey", "SSH hardening", "Keys only, no root login, with a safety net: confirmed from a new connection, or rolled back on its own.", true],
-    ["plus", "Your own apps", "`dotbox add` turns any compose file into a Dotbox app, with the same subdomain, login and backups."]
-  ];
-  function renderIncluded() {
-    var g = document.getElementById("inclGrid"); g.innerHTML = "";
-    INCLUDED.forEach(function (f) {
-      var c = el("div", "inc"), b = el("span", "badge");
-      b.appendChild(picCanvas(f[0], ACC)); c.appendChild(b);
-      var h = el("h3", "", f[1]);
-      if (f[3]) h.appendChild(el("span", "soon", "Coming soon"));
-      c.appendChild(h);
-      var p = el("p"); p.innerHTML = inline(f[2]); c.appendChild(p);
-      g.appendChild(c);
-    });
-  }
-
-  // ---------- les apps du catalogue dans un cadre, leurs logos (D149)
-  function renderLogos() {
-    var apps = CATALOG.filter(function (a) { return !a.core; }), w = document.getElementById("appLogos"); w.innerHTML = "";
-    apps.forEach(function (a) {
-      var t = el("a"); t.href = a.doc;
-      t.appendChild(appIcon(a.pic)); t.appendChild(document.createTextNode(a.name));
-      w.appendChild(t);
     });
   }
 
@@ -606,6 +482,112 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       role: { en: "Dashboard" },
       text: { en: "A dashboard for your apps, with widgets: streams, requests, downloads, arranged by drag and drop." } }
   ];
+  function renderApps() {
+    var grid = document.getElementById("appGrid"); grid.innerHTML = "";
+    CATALOG.forEach(function (a) {
+      var art = el("article", "card");
+      var row = el("div", "row"); row.appendChild(appIcon(a.pic));
+      var head = el("div", "head"); head.appendChild(el("h3", "", a.name)); head.appendChild(el("span", "tag2", tr(a.role))); row.appendChild(head);
+      art.appendChild(row);
+      var p = el("p"); p.innerHTML = inline(tr(a.text)); art.appendChild(p);
+      var foot = el("div", "foot");
+      foot.appendChild(el("span", "go", a.sub ? a.sub + ".example.com" : "*.example.com"));
+      if (a.doc) { var d = el("a", "", "Docs"); d.href = a.doc; foot.appendChild(d); }
+      var link = el("a");
+      if (a.gh) { link.className = "gh"; link.href = "https://github.com/" + a.gh; link.setAttribute("aria-label", a.name + " · GitHub"); link.title = "github.com/" + a.gh; link.innerHTML = GH_ICON; }
+      else { link.href = a.docs; link.textContent = "Docs ↗"; }
+      link.target = "_blank"; link.rel = "noopener";
+      foot.appendChild(link);
+      art.appendChild(foot);
+      grid.appendChild(art);
+    });
+  }
+
+  // ---------- 3 · maquette: apps et installation simulée
+  var APPS = [
+    { slug: "traefik", name: "Traefik", on: true },
+    { slug: "authelia", name: "Authelia", on: true },
+    { slug: "jellyfin", name: "Jellyfin", on: true },
+    { slug: "qbittorrent", name: "qBittorrent", on: true },
+    { slug: "radarr", name: "Radarr", on: true },
+    { slug: "sonarr", name: "Sonarr", on: false },
+    { slug: "prowlarr", name: "Prowlarr", on: false },
+    { slug: "seerr", name: "Seerr", on: false }
+  ];
+  var START = APPS.map(function (a) { return a.on; });
+  var IMG = { sonarr: "lscr.io/linuxserver/sonarr", prowlarr: "lscr.io/linuxserver/prowlarr", seerr: "ghcr.io/seerr-team/seerr" };
+  // relier les apps est une commande à part, pas encore codée (D45): l'installation ne le fait pas
+  var WIRE = {};
+  var selected = "sonarr", busy = null, timers = [];
+  var tilesEl = document.getElementById("tiles"), logEl = document.getElementById("logList"), btn = document.getElementById("btnInstall");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function app(slug) { for (var i = 0; i < APPS.length; i++) if (APPS[i].slug === slug) return APPS[i]; }
+  function renderTiles() {
+    tilesEl.innerHTML = "";
+    APPS.forEach(function (a) {
+      var b = el("button", "tile" + (a.on ? "": " off")); b.type = "button";
+      b.setAttribute("aria-pressed", a.slug === selected);
+      b.appendChild(appIcon(a.slug));
+      b.appendChild(el("span", "name", a.name));
+      var state = busy === a.slug ? "busy": a.on ? "run": "off";
+      b.appendChild(el("span", "st " + state, t(state)));
+      b.addEventListener("click", function () { if (busy) return; selected = a.slug; renderTiles(); syncButton(); idleLog(); });
+      tilesEl.appendChild(b);
+    });
+  }
+  function syncButton() {
+    var a = app(selected);
+    document.getElementById("logApp").textContent = a.slug;
+    if (busy) { btn.disabled = true; btn.textContent = t("busy") + "…"; return; }
+    btn.disabled = a.on;
+    btn.textContent = a.on ? t("already"): t("inst") + a.name;
+  }
+  function line(kind, k, html) {
+    var li = el("li", kind || ""); li.appendChild(el("span", "k", k));
+    var s = el("span"); s.innerHTML = html; li.appendChild(s); logEl.appendChild(li);
+  }
+  function idleLog() {
+    logEl.innerHTML = "";
+    var a = app(selected);
+    if (a.on) {
+      line("ok", "●", "<em>" + a.slug + ".example.com</em>");
+      line("", "·", "/opt/" + a.slug + "/compose.yml");
+      line("", "·", "/opt/" + a.slug + "/compose.override.yml");
+    } else {
+      line("", "·", "image <em>" + IMG[a.slug] + "</em>");
+      line("", "·", "subdomain <em>" + a.slug + ".example.com</em>");
+      line("", "·", "sso <em>authelia</em>");
+    }
+  }
+  function install() {
+    var a = app(selected); if (a.on || busy) return;
+    busy = a.slug; renderTiles(); syncButton(); logEl.innerHTML = "";
+    var steps = [
+      ["", "›", "pull <em>" + IMG[a.slug] + "</em>"],
+      ["", "›", "mkdir /opt/" + a.slug + " (uid 1000)"],
+      ["", "›", "write /opt/" + a.slug + "/compose.yml"],
+      ["", "›", "label traefik <em>" + a.slug + ".example.com</em>"],
+      ["", "›", "middleware <em>authelia@docker</em>"],
+      ["", "›", "compose up -d"],
+      ["", "›", "wait healthy"]
+    ];
+    (WIRE[a.slug] || []).forEach(function (w) { steps.push(["wire", "⇄", "wire <em>" + w[0] + "</em> " + w[1]]); });
+    steps.push(["ok", "●", "<em>https://" + a.slug + ".example.com</em>"]);
+    var delay = reduce ? 0: 420;
+    steps.forEach(function (st, i) {
+      timers.push(setTimeout(function () {
+        line(st[0], st[1], st[2]);
+        if (i === steps.length - 1) { a.on = true; busy = null; renderTiles(); syncButton(); }
+      }, delay * (i + 1)));
+    });
+  }
+  function reset() {
+    timers.forEach(clearTimeout); timers = []; busy = null;
+    APPS.forEach(function (a, i) { a.on = START[i]; });
+    selected = "sonarr"; renderTiles(); syncButton(); idleLog();
+  }
+  btn.addEventListener("click", install);
+  document.getElementById("btnReset").addEventListener("click", reset);
 
   // ---------- langue
   function applyLang() {
@@ -614,10 +596,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     document.querySelectorAll("[data-i18n-html]").forEach(function (e) { e.innerHTML = t(e.getAttribute("data-i18n-html")); });
     document.querySelectorAll("[data-i18n-label]").forEach(function (e) { e.setAttribute("aria-label", t(e.getAttribute("data-i18n-label"))); });
     document.querySelectorAll(".lang .chip").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true": "false"); });
-    stats(); renderIncluded(); renderLogos();
-    var nApps = CATALOG.filter(function (a) { return !a.core; }).length;
-    document.querySelectorAll(".catPic").forEach(function (cv) { paint(cv, "catalog", ACC); });
-    document.querySelectorAll(".catN").forEach(function (e) { e.textContent = nApps; });
+    stats(); renderApps(); renderTiles(); syncButton(); idleLog();
   }
   document.querySelectorAll(".lang .chip").forEach(function (b) {
     b.addEventListener("click", function () {
