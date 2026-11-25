@@ -444,7 +444,6 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
   PICS.plan = ["#######", "#.....#", "#.###.#", "#.....#", "#.##..#", "#.....#", "#######"];
   PICS.motd = ["#######", "#.....#", "#.#...#", "#..#..#", "#.#.#.#", "#.....#", "#######"];
   PICS.sshkey = ["..###..", ".#...#.", ".#...#.", "#######", "##.#.##", "###.###", "#######"];
-  PICS.cmd = [".......", "#......", ".#.....", "..#....", ".#.....", "#..###.", "......."];
   PICS.pulse = [".......", "...#...", "..#.#..", "#.#.#.#", "...#.#.", ".......", "......."];
   function paint(cv, slug, color) {
     var g = PICS[slug], ctx = cv.getContext("2d"), px = cv.width, p = px / 7, r = p * 0.36;
@@ -521,8 +520,7 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     ["pulse", "A doctor every night", "`dotbox doctor` checks the whole server: the core, the apps, the disks, the backups, SSH and the system updates."],
     ["motd", "SSH welcome message", "At each SSH login, the state of your server in a few lines: what runs, what is behind, what needs you."],
     ["sshkey", "SSH hardening", "Keys only, no root login, with a safety net: confirmed from a new connection, or rolled back on its own.", true],
-    ["plus", "Your own apps", "`dotbox add` turns any compose file into a Dotbox app, with the same subdomain, login and backups."],
-    ["cmd", "Shortcuts", "`db` for `dotbox`, shell completion, and `--json` for your scripts."]
+    ["plus", "Your own apps", "`dotbox add` turns any compose file into a Dotbox app, with the same subdomain, login and backups."]
   ];
   function renderIncluded() {
     var g = document.getElementById("inclGrid"); g.innerHTML = "";
