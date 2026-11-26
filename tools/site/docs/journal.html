@@ -3474,6 +3474,48 @@ cargo fmt --check ; cargo clippy --all-targets -- -D warnings ; cargo test`,
       does: "Mathod95: « Ajoute-les dans Spotted apps, oui! Et ajoute Homarr dans les apps, crée l'app ». Lu avant d'écrire: l'image officielle ghcr.io/homarr-labs/homarr:v2.14.0 (Debian, Node, nginx et Redis dedans, port 7575, son propre HEALTHCHECK sur /api/health/live), son entrypoint démarre en root, donne /appdata à PUID et PGID puis descend avec setpriv, et lit les variables *_FILE avant. Sa doc demande SECRET_ENCRYPTION_KEY, 64 caractères hexadécimaux (openssl rand -hex 32), qui chiffre les identifiants des intégrations.",
       effect: "Rien sur le serveur. Le moteur sait donner un secret à une app: secrets: dans le manifest, dotbox install le tire une seule fois (64 caractères hexadécimaux) dans /opt/dotbox/secrets/<app>_<nom> (0600, root) et le monte en lecture seule dans /run/secrets/<nom>, jamais dans compose.yml (lisible par tous). Homarr: two_factor, PUID, PGID, TZ, SECRET_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key, config:/appdata, pas de socket Docker. min_dotbox reste 0.0.6, il passe à 0.0.7 dans le commit de la release (secrets: est nouveau). Doc: la page Homarr (groupe Dot Box apps), les tableaux du catalogue et des images de Apps Overview, Homarr retiré de Spotted apps (il est au catalogue), Homepage et Heimdall ajoutés, Homarr dans les listes de la page d'accueil, de homev2 et de la démo de l'interface web, son logo. Releases (next) et Roadmap à jour. À essayer sur le serveur de test, avec accord: l'installation, la clé lue, Homarr derrière Traefik et Authelia (son premier lancement, ses intégrations par nom de container).",
       result: "cargo fmt et clippy: rien à redire. cargo test: 172 tests passent, dont homarr_reads_its_key_from_a_file (le compose attendu, le secret monté en lecture seule) et les règles de secrets: (un nom simple, une seule fois).",
+      undo: "git revert du commit." },
+    { id: "J305", time: "07:02", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "17.6: l'état du serveur et le message à la connexion",
+      cmd: `dotbox --version ; ls -l /usr/local/bin/dotbox* ; ls /etc/update-motd.d/ ; systemctl list-timers --all | grep dotbox
+cat /etc/update-motd.d/60-dotbox ; ls -l /etc/update-motd.d/ /etc/motd
+echo exit | ssh -tt dotbox-test   (une vraie connexion, pour voir le message)`,
+      does: "Mathod95: « Fais le test sur le serveur! Je ne comprends pas pourquoi tu ne l'as pas déjà fait! ». 17.6 prévoyait un serveur réinstallé: le serveur de test a déjà la v0.0.6, avec le MOTD posé par init (D114), l'essai se fait donc sur lui.",
+      effect: "Rien de changé.",
+      result: `dotbox 0.0.6 ; 60-dotbox exécutable (timeout 5, dotbox motd --login) ; 10-uname non exécutable ; /etc/motd vide
+dotbox-backup.timer (04:00) et dotbox-doctor.timer (05:05, passé à 05:14 ce matin, le délai au hasard de 15 min) actifs
+À la connexion: le cadre compact, « Dot Box 0.0.6 · <domaine> », System, Memory 2.4 / 3.8 GiB, Disks / 11 %, Apps 13 running, Doctor 4 sections to look at (1 h ago), Backup 3 h ago · 14 archives · 14 MB, CrowdSec 52 IPs banned in 24 h, 3 apps behind, 1 Debian update, le pied de page avec l'adresse de l'interface web. Ni la ligne du noyau, ni la licence de Debian.`,
+      undo: "Rien à annuler." },
+    { id: "J306", time: "07:03", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "17.6: le binaire du PC sur le serveur (le style ascii de D156)",
+      cmd: `cargo build --release --target x86_64-unknown-linux-musl ; scp dotbox dotbox-test:/tmp/dotbox.new
+sudo: cp -p /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.6.bak && install -m 755 /tmp/dotbox.new /usr/local/bin/dotbox && rm /tmp/dotbox.new && systemctl restart dotbox`,
+      does: "Avec l'accord de Mathod95 (« Fais le test sur le serveur »): le binaire de main en local (commit b0d5f28), pour essayer le style ascii tel que Mathod95 l'a voulu.",
+      effect: "Le binaire du PC dans /usr/local/bin/dotbox, la v0.0.6 gardée dans dotbox-0.0.6.bak, le service relancé.",
+      result: "dotbox.service active ; dotbox 0.0.6 ; empreinte 5e7497743cff3974, celle du binaire du PC.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.6.bak /usr/local/bin/dotbox && sudo systemctl restart dotbox" },
+    { id: "J307", time: "07:04", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "17.6: les quatre styles, --refresh, le style choisi, le message coupé puis remis",
+      cmd: `dotbox motd --style compact|fastfetch|banner|ascii   (sans sudo)
+time dotbox motd --refresh ; systemctl list-timers dotbox-doctor.timer
+dotbox config set motd.style ascii ; dotbox diff ; dotbox sync -y ; puis une connexion
+dotbox config set motd.enabled false ; dotbox diff ; dotbox sync -y ; ls -l /etc/update-motd.d/ /etc/motd ; puis une connexion
+dotbox config set motd.enabled true ; dotbox config set motd.style compact ; dotbox sync -y ; puis une connexion`,
+      does: "Ce que 17.6 demandait de voir, sans sudo, par le service.",
+      effect: "Le message coupé puis remis: le serveur finit comme avant, en compact.",
+      result: `Les quatre styles: les mêmes lignes. ascii: « dotbox » en figlet, puis les lignes de banner avec les symboles de cliclack (◇ ▲), comme voulu (D156)
+--refresh: 18 s, puis Doctor, CrowdSec et Debian update « just now » ; le timer du doctor reste programmé
+motd.style ascii: « it shows from the next login », rien à faire pour sync ; à la connexion, le logo ascii
+motd.enabled false: diff montre 3 écarts du MOTD (60-dotbox là, 10-uname rendu non exécutable, /etc/motd vidé) ; sync: 60-dotbox retiré, 10-uname exécutable de nouveau, /etc/motd remis (286 octets) ; à la connexion, le message de Debian (la ligne du noyau, la licence)
+motd.enabled true et compact: sync réécrit 60-dotbox, rend 10-uname non exécutable, vide /etc/motd (une copie gardée) ; à la connexion, le cadre compact
+Vu en chemin: 60-dotbox commence par un commentaire en français (« Écrit par dotbox (init, sync): le message d'accueil de Dot Box... »), comme l'ancienne première ligne de dotbox.yml (D155)`,
+      undo: "Rien à annuler: le serveur est revenu à motd.enabled true, compact." },
+    { id: "J308", time: "07:10", status: "fait", where: "PC", kind: "ecriture",
+      title: "17.6: la doc après l'essai, #150 refaite",
+      cmd: `tools/site/docs/motd.html ; tools/site/roadmap.json`,
+      does: "Mathod95 avait relevé « Coded, not yet tried on a server. This page is the specification of dotbox motd. Debian only for now. ». Après J307, la note n'a plus lieu d'être: le MOTD est essayé, et Debian seulement est déjà dit dans Prerequisites.",
+      effect: "#150 refaite sous son numéro: l'encadré bleu seul, la note retirée sans rien à la place. La feature MOTD de la Roadmap passe à fait.",
+      result: "Montré en local.",
       undo: "git revert du commit." }
   ];
 
@@ -4778,7 +4820,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "17.5", status: "valide", kind: "ecriture", where: "PC", title: "La doc",
           does: "Page CLI #149 (dotbox motd, une commande ajoutée, demandée par le test qui compare l'aide à la page). Page MOTD #150 (codé, pas encore essayé sur un serveur), #151 (d'où vient chaque ligne, qui écrit le cache, le timer de nuit, les 5 secondes, sans le service en root), #152 (le pied avec l'adresse de l'interface web), #153 (la maquette compact refaite avec les vraies lignes). #148 (le style ascii) toujours à valider. À valider par Mathod95.",
           effect: "PC: cli.html, motd.html." },
-        { id: "17.6", kind: "ecriture", where: "Serveur", title: "L'essai sur un serveur neuf",
+        { id: "17.6", status: "fait", ref: "J305-J307", kind: "ecriture", where: "Serveur", title: "L'essai sur un serveur neuf",
           does: "Avec l'interface web (11.27), sur un serveur réinstallé (D114). Ce qu'il faudra voir: le message à la connexion SSH, sans la ligne du noyau ni la licence, dans chacun des quatre styles (dotbox config set motd.style), dotbox motd sans sudo, --refresh, le timer (systemctl list-timers), puis motd.enabled false et sync: le message de Debian revient. Pour un serveur neuf par install.sh, il faut une release (D114).",
           effect: "Plus tard." }
       ] }
@@ -6102,7 +6144,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var HOME = {
     "0": [1, 2, 3, 4, 5, 13, 28, 29, 44, 72, 114, 194, 195, 254, 299],
     "11": [197, 198, 201, 202, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290],
-    "17": [291, 292, 293, 294, 295, 296, 297],
+    "17": [291, 292, 293, 294, 295, 296, 297, 305, 306, 307, 308],
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
