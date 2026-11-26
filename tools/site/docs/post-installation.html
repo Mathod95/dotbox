@@ -72,7 +72,7 @@
 <span class="ok">◇</span>  Disk           / 11% used
 <span class="w">▲</span>  Backup         only on this server: a dead disk takes the backups with it
 <span class="c">│    → add a remote destination, see https://mathod95.github.io/dotbox/getting-started/backup/</span>
-<span class="ok">◇</span>  Service        dotbox running
+<span class="ok">◇</span>  Service        dotbox running, web gate: refuses without Traefik's secret, answers with it
 <span class="c">│</span>
 <span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
   </div>
@@ -108,7 +108,7 @@
 
   <h2 id="fr-backup">Sortir les sauvegardes du serveur</h2>
   <div class="prop-old" data-prop="134"><p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
-  <div class="prop-new" data-prop="134"><p>À venir. La sauvegarde quotidienne sera active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
+  <div class="prop-new" data-prop="134"><p><code>init</code> programme une sauvegarde chaque jour à 04:00, dans <code>/backups</code>, sur le serveur: un disque qui lâche l'emporte avec lui. Ajoute une destination distante (<code>sftp</code> ou <code>rclone</code>), voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. D'ici là, <code>dotbox doctor</code> te le rappelle.</p></div>
 
   <h2 id="fr-users">Créer les comptes</h2>
   <div class="prop-old" data-prop="57">
@@ -196,7 +196,7 @@
 <span class="ok">◇</span>  Disk           / 11% used
 <span class="w">▲</span>  Backup         only on this server: a dead disk takes the backups with it
 <span class="c">│    → add a remote destination, see https://mathod95.github.io/dotbox/getting-started/backup/</span>
-<span class="ok">◇</span>  Service        dotbox running
+<span class="ok">◇</span>  Service        dotbox running, web gate: refuses without Traefik's secret, answers with it
 <span class="c">│</span>
 <span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
   </div>
@@ -251,7 +251,7 @@
 
   <h2 id="en-backup">Move backups off the server</h2>
   <div class="prop-old" data-prop="134"><p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
-  <div class="prop-new" data-prop="134"><p>Coming later. The daily backup will be on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
+  <div class="prop-new" data-prop="134"><p><code>init</code> schedules a backup every day at 04:00, into <code>/backups</code>, on the server: a failing disk takes it with it. Add a remote destination (<code>sftp</code> or <code>rclone</code>), see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. Until then, <code>dotbox doctor</code> reminds you.</p></div>
 
   <h2 id="en-users">Create accounts</h2>
   <div class="prop-old" data-prop="57">

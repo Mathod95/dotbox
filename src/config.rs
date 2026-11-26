@@ -154,7 +154,8 @@ impl Config {
     pub fn render(&self) -> Result<String, String> {
         let body = serde_yaml_ng::to_string(&self.map).map_err(|e| e.to_string())?;
         Ok(format!(
-            "# Dot Box: configuration du serveur (spec: Getting Started).\n{body}"
+            "# Dot Box settings, explained at {}dotbox-yml/\n{body}",
+            crate::card::DOCS
         ))
     }
 }

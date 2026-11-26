@@ -35,6 +35,10 @@
           "en": "CLI: `dotbox list` also shows the apps added with `dotbox add`, marked yours"
         },
         {
+          "fr": "CLI: la première ligne de `dotbox.yml` est en anglais et donne l'adresse de sa page dans la doc",
+          "en": "CLI: the first line of `dotbox.yml` is in English and gives the address of its page in the docs"
+        },
+        {
           "fr": "CLI: le manifest écrit par `dotbox add` commence par des commentaires en anglais",
           "en": "CLI: the manifest written by `dotbox add` starts with comments in English"
         },

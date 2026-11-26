@@ -42,7 +42,7 @@
   </div>
   <div class="prop-new" data-prop="116">
   <ol start="4">
-    <li>À venir (Journal, 16.7). <b>Restaure</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box installe d'abord Docker, dont rclone a besoin pour aller chercher l'archive, puis relit la config de la sauvegarde, refait l'installation du core avec elle (Traefik, Authelia, CrowdSec, certificats) et restaure toutes les apps. Une archive copiée à la main sur le serveur (<code>scp</code>) s'ouvre aussi, sans passer par rclone.</li>
+    <li>À venir. <b>Restaure</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box installe d'abord Docker, dont rclone a besoin pour aller chercher l'archive, puis relit la config de la sauvegarde, refait l'installation du core avec elle (Traefik, Authelia, CrowdSec, certificats) et restaure toutes les apps. Une archive copiée à la main sur le serveur (<code>scp</code>) s'ouvre aussi, sans passer par rclone.</li>
   </ol>
   </div>
   <ol start="5">
@@ -96,8 +96,13 @@
   </div>
   <div class="prop-new" data-prop="116">
   <ol start="4">
-    <li>Coming later (Journal, 16.7). <b>Restore</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box first installs Docker, which rclone needs to fetch the archive, then reads the config from the backup, reinstalls the core with it (Traefik, Authelia, CrowdSec, certificates) and restores every app. An archive copied to the server by hand (<code>scp</code>) opens too, without going through rclone.</li>
+    <li>Coming later. <b>Restore</b>: <code>sudo dotbox restore rclone:b2:dotbox-backups --key backup.key</code>. Dot Box first installs Docker, which rclone needs to fetch the archive, then reads the config from the backup, reinstalls the core with it (Traefik, Authelia, CrowdSec, certificates) and restores every app. An archive copied to the server by hand (<code>scp</code>) opens too, without going through rclone.</li>
   </ol>
+  </div>
+  <div class="prop-new" data-prop="187">
+  <p>Until then, on a server where <code>dotbox init</code> has not run, <code>restore</code> stops right away and says what to do:</p>
+  <pre><span class="p">$</span> sudo dotbox restore latest
+  error    no /opt/dotbox/dotbox.yml: restoring a new server is coming later. For now: sudo dotbox init, then sudo dotbox restore again</pre>
   </div>
   <ol start="5">
     <li><b>Media</b>: copy <code>/data</code> with rsync if it should come along.</li>
