@@ -777,24 +777,41 @@
     },
     {
       "stage": "apps",
-      "domain": "catalog",
+      "domain": "engine",
       "status": "planned",
-      "fr": "Jellystat: les statistiques et l'historique de Jellyfin",
-      "en": "Jellystat: Jellyfin statistics and history",
+      "fr": "Moteur: les apps à plusieurs services (une base de données ou un cache à côté, sur un réseau à eux)",
+      "en": "Engine: apps with several services (a database or a cache next to the app, on their own network)",
+      "doc": "your-own-apps",
       "journal": [
-        "8.15",
-        "D74"
+        "18.1-18.5",
+        "D159",
+        "Q96"
       ]
     },
     {
       "stage": "apps",
       "domain": "catalog",
       "status": "planned",
-      "fr": "Tracearr: le suivi des lectures du serveur média (base de données à côté, à vérifier)",
-      "en": "Tracearr: media server playback tracking (database alongside, to check)",
+      "fr": "Jellystat: les statistiques et l'historique de Jellyfin",
+      "en": "Jellystat: Jellyfin statistics and history",
+      "journal": [
+        "8.15",
+        "D74",
+        "18.6",
+        "D159"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "catalog",
+      "status": "planned",
+      "fr": "Tracearr: le suivi des lectures du serveur média (TimescaleDB et Redis à côté)",
+      "en": "Tracearr: media server playback tracking (TimescaleDB and Redis alongside)",
       "journal": [
         "8.16",
-        "D74"
+        "D74",
+        "18.7",
+        "D159"
       ]
     },
     {
@@ -1007,6 +1024,19 @@
       "journal": [
         "16.3",
         "J238-J253"
+      ]
+    },
+    {
+      "stage": "backup",
+      "domain": "backup",
+      "status": "planned",
+      "fr": "Moteur: sauvegarde sans arrêter les apps chaque nuit",
+      "en": "Engine: backup without stopping the apps every night",
+      "doc": "backup",
+      "journal": [
+        "Q97",
+        "D160",
+        "N25"
       ]
     },
     {
