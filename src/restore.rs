@@ -106,7 +106,7 @@ fn from_remote(what: &str, app: Option<&str>, dirs: &[String]) -> Result<Vec<Arc
         .first()
         .cloned()
         .unwrap_or_else(|| backup::DEFAULT_LOCAL.to_string());
-    let found: Vec<Archive> = backup::remote_list(what, &local)?
+    let found: Vec<Archive> = backup::remote_list(what, Some(&local))?
         .into_iter()
         .map(|(file, app, stamp)| Archive {
             app,

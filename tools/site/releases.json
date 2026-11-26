@@ -27,6 +27,10 @@
         {
           "fr": "Homarr: un tableau de bord pour tes apps, sur son image officielle, sa clé de chiffrement tirée par Dotbox",
           "en": "Homarr: a dashboard for your apps, on its official image, its encryption key drawn by Dotbox"
+        },
+        {
+          "fr": "CLI: `dotbox backup --stream` envoie chaque archive tout droit aux destinations distantes, sans rien écrire sur le disque du serveur. Chaque destination est vérifiée avant d'arrêter une app, une archive coupée ne laisse rien",
+          "en": "CLI: `dotbox backup --stream` sends each archive straight to the remote destinations, without writing anything on the server's disk. Each destination is checked before any app stops, a cut archive leaves nothing behind"
         }
       ],
       "changed": [

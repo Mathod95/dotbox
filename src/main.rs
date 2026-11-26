@@ -192,6 +192,9 @@ enum Command {
         /// A folder of the server instead of backup.destinations
         #[arg(long, value_name = "DEST")]
         to: Option<String>,
+        /// Send each archive straight to the remote destinations, nothing on the server's disk
+        #[arg(long)]
+        stream: bool,
         /// Show every sub-step as it happens (they are always in the log)
         #[arg(long)]
         verbose: bool,
@@ -427,12 +430,18 @@ fn main() -> ExitCode {
         Command::Config {
             action: ConfigAction::Set { key, value },
         } => client::config_set(&key, &value, json),
-        Command::Backup { app, to, verbose } if local => {
-            backup::run(app.as_deref(), to.as_deref(), verbose)
-        }
-        Command::Backup { app, to, verbose } => {
-            client::backup(app.as_deref(), to.as_deref(), verbose, json)
-        }
+        Command::Backup {
+            app,
+            to,
+            stream,
+            verbose,
+        } if local => backup::run(app.as_deref(), to.as_deref(), stream, verbose),
+        Command::Backup {
+            app,
+            to,
+            stream,
+            verbose,
+        } => client::backup(app.as_deref(), to.as_deref(), stream, verbose, json),
         Command::Restore {
             what,
             app,

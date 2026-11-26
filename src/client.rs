@@ -369,10 +369,11 @@ pub fn update(
 pub fn backup(
     app: Option<&str>,
     to: Option<&str>,
+    stream: bool,
     verbose: bool,
     json_out: bool,
 ) -> Result<(), String> {
-    let body = json!({ "app": app, "to": to });
+    let body = json!({ "app": app, "to": to, "stream": stream });
     let result = runtime()?.block_on(job(Method::POST, "/api/v1/backup", Some(body), verbose))?;
     if let Some(v) = result {
         if json_out {

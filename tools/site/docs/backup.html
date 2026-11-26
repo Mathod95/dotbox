@@ -32,14 +32,12 @@
   </div>
   <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>, lisible par root seulement. <code>dotbox init</code> la crée, ou la première sauvegarde sur un serveur déjà installé. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles. La carte de fin de <code>init</code> et la première sauvegarde te le rappellent.</p>
 
-  <div class="prop-new" data-prop="110">
   <h2 id="fr-nothing">Rien à installer</h2>
   <ul>
     <li><b>Sur le serveur</b>: la compression (zstd) et le chiffrement (age) sont dans le binaire <code>dotbox</code>. rclone, pour les destinations distantes, tourne depuis son image Docker officielle, à une version fixée dans le catalogue, le temps de l'envoi. Il ne voit que <code>/backups</code>, en lecture seule, et les quelques fichiers dont il a besoin.</li>
     <li><b>En face</b>: la destination ne fait que stocker des fichiers chiffrés, qu'elle ne sait pas lire. Pour B2, S3 ou Google Drive, un compte suffit. Pour <code>sftp</code>, une machine avec un serveur SSH, ce qu'ont tout Linux et la plupart des NAS (Synology, TrueNAS...). Elle n'a jamais besoin de rclone, de zstd ni d'age.</li>
     <li><b>Relire une archive ailleurs</b>, sur ton PC par exemple: <code>dotbox</code> sait le faire, et les formats sont standards. Avec la clé, <code>age -d -i backup.key radarr-2026-11-22-0400.tar.zst.age | zstd -d | tar -x</code>.</li>
   </ul>
-  </div>
 
   <h2 id="fr-where">Où sont les archives</h2>
   <p>Une archive par dossier et par sauvegarde, rangées à plat dans <code>/backups</code>:</p>
@@ -77,18 +75,6 @@
   </div>
 
   <h2 id="fr-settings">Réglages</h2>
-  <div class="prop-old" data-prop="111">
-  <pre>backup:
-  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
-  keep: 7                          <span class="c"># archives gardées par destination</span>
-  exclude: ["*/logs/*"]
-  destinations:
-    - local: /backups
-    - rclone: b2:dotbox-backups
-    - sftp: backup@nas.local:/volume1/dotbox</pre>
-  <p>La planification est un timer systemd créé par <code>init</code>. <code>dotbox status</code> montre la dernière sauvegarde, son résultat et la prochaine.</p>
-  </div>
-  <div class="prop-new" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
   keep: 7                          <span class="c"># archives gardées, par app et par destination</span>
@@ -104,16 +90,11 @@
     <li><b>Les destinations et les exclusions</b>, des listes, s'écrivent à la main dans <code>dotbox.yml</code> (<code>sudo nano</code>). Les archives se font toujours d'abord dans un dossier local, puis partent aux destinations distantes.</li>
     <li><b><code>rclone:</code></b> lit ses remotes (ton compte B2, S3...) dans <code>/opt/dotbox/secrets/rclone.conf</code>, lisible par root seulement. <code>sftp:</code> n'en a pas besoin: Dot Box gère sa clé et l'empreinte de l'autre machine.</li>
   </ul>
-  </div>
 
   <h2 id="fr-manual">Lancer une sauvegarde</h2>
   <pre><span class="p">$</span> dotbox backup
 <span class="p">$</span> dotbox backup --app radarr
 <span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
-  <div class="prop-old" data-prop="140">
-  <p>La sauvegarde tourne sur le serveur, pas dans ton terminal: tu peux fermer la session SSH, <code>dotbox status</code> suit l'avancement.</p>
-  </div>
-  <div class="prop-new" data-prop="140">
   <p>Sans <code>sudo</code>: la sauvegarde tourne dans le service de Dot Box, une tâche à la fois comme une installation, et ton terminal la suit étape par étape. Fermer le terminal ne l'arrête pas.</p>
   <pre><span class="p">$</span> dotbox backup
 <span class="ok">  ✓ [1/5] Key           backup.key                                  0.0 s
@@ -124,7 +105,6 @@
 
   3 archives, 7 MB, in /backups and sftp:dotbox-backup@nas.example.com:/backups, keep 7</pre>
   <p><code>dotbox status</code> montre la dernière sauvegarde complète et la prochaine. <code>dotbox doctor</code> signale une sauvegarde ratée, une sauvegarde de plus de deux jours, un timer arrêté, et des sauvegardes qui ne quittent pas le serveur.</p>
-  </div>
 
   <h2 id="fr-stream">Sauvegarde en flux</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
@@ -132,7 +112,12 @@
   <p>Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
   </div>
   <div class="prop-new" data-prop="141">
-  <p>À venir. Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
+  <p>Pour un disque qui n'a pas la place des archives: <code>--stream</code> envoie chaque archive tout droit aux destinations distantes, sans rien écrire sur le disque du serveur. Seulement vers <code>sftp</code> ou <code>rclone</code>: celles de <code>backup.destinations</code>, ou celle de <code>--to</code>.</p>
+  <ul>
+    <li><b>Plus lent pour les apps</b>: chacune reste arrêtée le temps de l'envoi de son archive, pas seulement de son écriture.</li>
+    <li><b>Vérifié d'abord</b>: avant d'arrêter une app, Dot Box s'assure que chaque destination l'accepte.</li>
+    <li><b>Jamais à moitié</b>: une archive arrive sous un nom provisoire, puis prend son vrai nom une fois complète. Un envoi coupé ne laisse rien, et l'app repart quand même.</li>
+  </ul>
   </div>
 </article>
 
@@ -165,14 +150,12 @@
   </div>
   <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>, readable by root only. <code>dotbox init</code> creates it, or the first backup on a server already installed. Keep a copy off the server, in a password manager: without it, archives cannot be read. The card at the end of <code>init</code> and the first backup remind you.</p>
 
-  <div class="prop-new" data-prop="110">
   <h2 id="en-nothing">Nothing to install</h2>
   <ul>
     <li><b>On the server</b>: compression (zstd) and encryption (age) are in the <code>dotbox</code> binary. rclone, for remote destinations, runs from its official Docker image, at a version pinned in the catalog, for the time of the upload. It only sees <code>/backups</code>, read-only, and the few files it needs.</li>
     <li><b>On the other side</b>: the destination only stores encrypted files, which it cannot read. For B2, S3 or Google Drive, an account is enough. For <code>sftp</code>, a machine with an SSH server, which every Linux and most NAS have (Synology, TrueNAS...). It never needs rclone, zstd or age.</li>
     <li><b>Reading an archive elsewhere</b>, on your PC for example: <code>dotbox</code> can do it, and the formats are standard. With the key, <code>age -d -i backup.key radarr-2026-11-22-0400.tar.zst.age | zstd -d | tar -x</code>.</li>
   </ul>
-  </div>
 
   <h2 id="en-where">Where the archives are</h2>
   <p>One archive per folder and per backup, stored flat in <code>/backups</code>:</p>
@@ -211,18 +194,6 @@
   </div>
 
   <h2 id="en-settings">Settings</h2>
-  <div class="prop-old" data-prop="111">
-  <pre>backup:
-  schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
-  keep: 7                          <span class="c"># archives kept per destination</span>
-  exclude: ["*/logs/*"]
-  destinations:
-    - local: /backups
-    - rclone: b2:dotbox-backups
-    - sftp: backup@nas.local:/volume1/dotbox</pre>
-  <p>Scheduling is a systemd timer created by <code>init</code>. <code>dotbox status</code> shows the last backup, its result and the next one.</p>
-  </div>
-  <div class="prop-new" data-prop="111">
   <pre>backup:
   schedule: daily 04:00            <span class="c"># off, hourly, daily HH:MM, sunday HH:MM...</span>
   keep: 7                          <span class="c"># archives kept, per app and per destination</span>
@@ -238,16 +209,11 @@
     <li><b>Destinations and exclusions</b>, lists, are written by hand in <code>dotbox.yml</code> (<code>sudo nano</code>). Archives are always made in a local folder first (<code>/backups</code> when the list has none), then sent to the remote destinations.</li>
     <li><b><code>rclone:</code></b> reads its remotes (your B2, S3... account) from <code>/opt/dotbox/secrets/rclone.conf</code>, readable by root only. <code>sftp:</code> does not need it: Dot Box handles its key and the other machine's fingerprint.</li>
   </ul>
-  </div>
 
   <h2 id="en-manual">Run a backup</h2>
   <pre><span class="p">$</span> dotbox backup
 <span class="p">$</span> dotbox backup --app radarr
 <span class="p">$</span> dotbox backup --to rclone:b2:dotbox-backups</pre>
-  <div class="prop-old" data-prop="140">
-  <p>The backup runs on the server, not in your terminal: you can close the SSH session, <code>dotbox status</code> follows its progress.</p>
-  </div>
-  <div class="prop-new" data-prop="140">
   <p>No <code>sudo</code>: the backup runs in the Dot Box service, one job at a time like an install, and your terminal follows it step by step. Closing the terminal does not stop it.</p>
   <pre><span class="p">$</span> dotbox backup
 <span class="ok">  ✓ [1/5] Key           backup.key                                  0.0 s
@@ -258,7 +224,6 @@
 
   3 archives, 7 MB, in /backups and sftp:dotbox-backup@nas.example.com:/backups, keep 7</pre>
   <p><code>dotbox status</code> shows the last full backup and the next one. <code>dotbox doctor</code> reports a failed backup, a backup older than two days, a stopped timer, and backups that never leave the server.</p>
-  </div>
 
   <h2 id="en-stream">Streamed backup</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
@@ -266,6 +231,11 @@
   <p>If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
   </div>
   <div class="prop-new" data-prop="141">
-  <p>Coming later. If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
+  <p>For a disk with no room for the archives: <code>--stream</code> sends each archive straight to the remote destinations, without writing anything on the server's disk. Only to <code>sftp</code> or <code>rclone</code>: those of <code>backup.destinations</code>, or the one given by <code>--to</code>.</p>
+  <ul>
+    <li><b>Slower for the apps</b>: each one stays stopped while its archive is sent, not only while it is written.</li>
+    <li><b>Checked first</b>: before stopping any app, Dot Box makes sure each destination accepts it.</li>
+    <li><b>Never half done</b>: an archive arrives under a temporary name, then takes its real name once complete. A cut transfer leaves nothing behind, and the app starts again anyway.</li>
+  </ul>
   </div>
 </article>

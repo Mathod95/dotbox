@@ -3516,7 +3516,38 @@ Vu en chemin: 60-dotbox commence par un commentaire en français (« Écrit par 
       does: "Mathod95 avait relevé « Coded, not yet tried on a server. This page is the specification of dotbox motd. Debian only for now. ». Après J307, la note n'a plus lieu d'être: le MOTD est essayé, et Debian seulement est déjà dit dans Prerequisites.",
       effect: "#150 refaite sous son numéro: l'encadré bleu seul, la note retirée sans rien à la place. La feature MOTD de la Roadmap passe à fait.",
       result: "Montré en local.",
-      undo: "git revert du commit." }
+      undo: "git revert du commit." },
+    { id: "J309", time: "08:10", status: "fait", where: "PC", kind: "ecriture",
+      title: "16.11: dotbox backup --stream, codé et testé sur le PC (D157)",
+      cmd: `src/backup.rs: seal coupé en seal et seal_to (n'importe quel écrivain), Tee (chaque octet vers chaque rclone, et leur compte), one_stream, rclone_args (-i pour rclone rcat), rclone_in (sans dossier local), prune_remote sorti de send, remote_list(r, Option)
+src/main.rs, src/client.rs, src/serve.rs: --stream, et stream dans POST /api/v1/backup ; src/restore.rs: remote_list
+cargo fmt --check ; cargo clippy --all-targets -- -D warnings ; cargo test ; cargo build --release --target x86_64-unknown-linux-musl`,
+      does: "Mathod95: « Il faut coder 141 avant de le valider ». Ce que fait --stream: voir 16.11 (a).",
+      effect: "Rien sur le serveur.",
+      result: "174 tests passent, dont streamed_to_two_commands (2 Mo qui ne se compressent pas, envoyés à deux commandes à la fois: les deux fichiers identiques, l'archive relue entière; une commande qui ferme son entrée donne une erreur, pas un blocage) et remote_paths.",
+      undo: "git revert du commit." },
+    { id: "J310", time: "08:17", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "16.11: --stream sur le serveur de test, vers le Saltbox: refusé",
+      cmd: `scp dotbox dotbox-test:/tmp/dotbox.new ; sudo: install -m 755 /tmp/dotbox.new /usr/local/bin/dotbox && systemctl restart dotbox
+sudo dotbox backup --stream --app prowlarr
+sudo dotbox backup --stream --app prowlarr --verbose --to sftp:dotbox-backup@<saltbox>:/backups   (l'hôte lu dans backup_known_hosts, masqué)
+ls /backups | wc -l ; docker ps --filter name=prowlarr`,
+      does: "L'accord de Mathod95 (« tu peux utiliser mon serveur Saltbox pour tester »). Rien n'est fait sur le Saltbox lui-même: Dot Box s'y connecte avec le compte d'avant.",
+      effect: "Le binaire de J309 sur le serveur de test (la v0.0.6 reste dans dotbox-0.0.6.bak). Prowlarr arrêté puis relancé (22 s).",
+      result: `Sans destination distante: « --stream sends to a remote destination: --to sftp:... or rclone:..., or one in backup.destinations », exit 1
+Vers le Saltbox: Prowlarr arrêté, puis « refuses the key of Dot Box » (le compte dotbox-backup a été retiré du Saltbox en J276), précédé de « age: failed to write header: Broken pipe ». Prowlarr relancé, healthy. /backups: 94 fichiers avant et après, aucun .partial, aucun container rclone resté
+Deux défauts: l'app arrêtée avant de savoir que la destination refuse, et l'erreur du tuyau cassé affichée en plus de celle de rclone`,
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.6.bak /usr/local/bin/dotbox && sudo systemctl restart dotbox" },
+    { id: "J311", time: "08:19", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "16.11: les deux défauts corrigés, la destination vérifiée avant tout arrêt",
+      cmd: `src/backup.rs: avec --stream, remote_list de chaque destination à l'étape Key ; l'erreur du tuyau cassé tue quand rclone a échoué
+cargo test ; le binaire sur le serveur de test, le service relancé
+sudo dotbox backup --stream --app prowlarr --to sftp:dotbox-backup@<saltbox>:/backups ; docker ps --filter name=prowlarr`,
+      does: "Après J310.",
+      effect: "Le nouveau binaire sur le serveur de test. Aucune app arrêtée.",
+      result: `174 tests passent
+✗ [1/2] Key, 1.6 s: « sftp:dotbox-backup@<saltbox>:/backups refuses the key of Dot Box: add this line to the account's authorized_keys there », suivie de la clé publique de Dot Box. Prowlarr pas arrêté (Up About a minute, healthy)`,
+      undo: "Comme J310." }
   ];
 
   var PLAN = [
@@ -4800,7 +4831,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           effect: "PC: backup.html, restore.html, cli.html, api.html, releases.json, roadmap.json." },
         { id: "16.10", status: "fait", ref: "J240-J253", kind: "ecriture", where: "PC → Serveur", title: "Les tests de 16.1 à 16.4 et 16.6 sur le serveur",
           does: "Proposés par Claude le 22 novembre 2026, après J238 et J239, à lancer avec l'accord de Mathod95. dotbox.yml copié de côté avant (dotbox.yml.before-16), son empreinte notée. (a) Le binaire de J238 dans /usr/local/bin/dotbox (dotbox.previous garde la v0.0.5, pas touché), le service redémarré, dotbox --help, dotbox diff: le timer et son service manquent (deux lignes dotbox). (b) dotbox sync -y: les deux unités écrites, systemctl list-timers montre la prochaine à 04:00, diff ne dit plus rien. (c) dotbox backup --app prowlarr: la clé créée (la première fois), /backups en 700, l'archive en 600, prowlarr arrêté, relancé, healthy. (d) dotbox backup: /opt/dotbox et les 16 apps, une à la fois, chacune relancée, la durée de chacune. dotbox status (la ligne Backup) et dotbox doctor (la section Backup: seulement sur ce serveur, en jaune). (e) Une restauration: un fichier témoin posé dans /opt/prowlarr/config, puis sudo dotbox restore latest --app prowlarr -y: le témoin a disparu, l'ancien dossier est dans /opt/prowlarr.before-restore-<date>, prowlarr healthy. (f) L'heure: dotbox config set backup.schedule « daily HH:MM » trois minutes plus tard, diff, sync -y, puis attendre: le timer lance la sauvegarde tout seul (backup.json et le journal de dotbox-backup.service). (g) keep: dotbox config set backup.keep 2, puis deux dotbox backup --app prowlarr: il en reste deux. Puis dotbox.yml remis tel qu'avant (son empreinte), sync -y: le timer revient à 04:00. Reste sur le serveur: le timer à 04:00, la clé, /backups et ses archives (moins de 100 Mo par sauvegarde). À effacer avec accord (rm -rf, D: demander avant): /opt/prowlarr.before-restore-<date>.",
-          effect: "Serveur: /usr/local/bin/dotbox, le service redémarré, /opt/dotbox/secrets/backup.key, /backups, dotbox-backup.timer et .service, chaque app arrêtée quelques secondes, prowlarr restauré." }
+          effect: "Serveur: /usr/local/bin/dotbox, le service redémarré, /opt/dotbox/secrets/backup.key, /backups, dotbox-backup.timer et .service, chaque app arrêtée quelques secondes, prowlarr restauré." },
+        { id: "16.11", status: "en cours", ref: "J309-J311", kind: "ecriture", where: "PC → Serveur → Saltbox", title: "--stream, sorti de 16.8 (D157)",
+          does: "Mathod95: « Il faut coder 141 avant de le valider, et tu peux utiliser mon serveur Saltbox pour tester ». (a) Le code (J309): dotbox backup --stream, sans dossier local; chaque destination distante vérifiée avant d'arrêter une app; l'app arrêtée, son archive (tar, zstd, age) écrite dans l'entrée de rclone rcat (docker run -i), une par destination, sous .<archive>.partial; l'app relancée et attendue; l'archive renommée (rclone moveto), puis keep de l'autre côté. Un envoi raté: le .partial effacé, l'app relancée quand même. (b) Sur le serveur de test (J310, J311): sans destination distante, refusé; vers le Saltbox, refusé (le compte retiré en J276). (c) À faire avec l'accord de Mathod95, commande par commande, par sa clé dans le ssh-agent: recréer le compte dotbox-backup sur le Saltbox (J257, J258, J262, J264, J266: le compte, sa règle SSH vérifiée par sshd -t, SSH rechargé, la clé de Dot Box avec restrict), puis dotbox backup --stream --app prowlarr, une sauvegarde complète en flux, un restore depuis le Saltbox, rien de nouveau dans /backups, puis le compte retiré comme en J276.",
+          effect: "Serveur de test: le binaire du PC. Saltbox: le compte recréé le temps des essais, puis retiré." },
       ] },
     { phase: "17", group: "avenir", title: "Le MOTD",
       intro: "Ajoutée le 21 novembre 2026. Spécification: page MOTD (groupe References, D88). Décidé en D86 (notre commande, compact par défaut, trois formes, en anglais, seulement notre message, installé par défaut et désactivable). Debian seulement (D87). Rien n'est codé avant que Q53 à Q55 soient tranchées et que le plan soit accordé. Le MOTD attend l'étape 16 (backup), et la CLI passe d'abord (D91, 21 novembre 2026). Q53 tranchée en D89, Q54 en D90. Le 22 novembre 2026, Mathod95 demande de le coder tout de suite, pour l'essayer avec l'interface web sur un serveur neuf (D114): codé et essayé sur le PC (J291, J292), Q55 encore ouverte.",
@@ -5353,6 +5387,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 26 novembre 2026: « 168 169 176 146 142 114 147 153 151 94 135 ». Puis: « Sur la page dotbox.yml, le titre affiche dotbox-yml! Je veux un point ». Puis, sur la page MOTD: « C'est pas 4 styles? Aussi, le style ascii: seulement le logo doit être affiché en style ascii! Ce que je veux dire, c'est qu'on reste sur du Rust avec cliclack! ». Puis « GO » pour les exemples fastfetch et banner restés en 0.0.5.",
       reco: "Fait par Claude le même jour. Les 11 propositions appliquées (encadrés bleus retirés, verts déballés): dotbox.yml (#168, #169, #176), API (#146), Restore (#142, #114), Web UI (#147), MOTD (#153, #151), Post-installation (#94, #135). Le titre en points de la page dotbox.yml: la police des titres (layout.html) gagne le point, le titre devient DOTBOX.YML (dicté, appliqué directement). Le style ascii: dans le code (src/motd.rs), ascii rend les mêmes lignes que banner, avec les symboles de cliclack (◇ ▲ ■), seul le logo est en ASCII (figlet Standard); ascii_only et les symboles + et ! retirés, le test le vérifie. La doc en proposition #148, refaite sous son numéro: quatre styles, seul le logo d'ascii en ASCII, l'exemple ascii avec les lignes de banner, « all four styles » dans What it shows. #188: les exemples fastfetch et banner tels que le code les affiche (0.0.6, Memory et Disks séparés, Doctor, Backup, CrowdSec, le pied de page). Q95 ouverte (télécharger les sauvegardes depuis l'interface web).",
       refs: "D86, D155, Q95" },
+    { t: "dotbox backup --stream",
+      p: "Mathod95, le 26 novembre 2026, sur la proposition #141 (--stream, « à venir »): « Il faut coder 141 avant de le valider, et tu peux utiliser mon serveur Saltbox pour tester! ».",
+      reco: "Choix de Mathod95, codé par Claude (16.11, J309 à J311). Ce que fait --stream: rien sur le disque du serveur, chaque archive envoyée tout droit aux destinations distantes (sftp, rclone: celles de backup.destinations ou celle de --to), par rclone rcat, une par destination, à partir du même flux. L'app reste arrêtée le temps de l'envoi (le prix de --stream). Chaque destination vérifiée avant d'arrêter une app. Une archive arrive sous .<archive>.partial et ne prend son nom qu'une fois complète: un envoi coupé ne laisse rien. keep fait le ménage de l'autre côté, comme sans --stream. Les essais sur le Saltbox attendent le compte dotbox-backup, retiré en J276, à recréer avec l'accord de Mathod95, commande par commande. #141 refaite sous son numéro, --stream remis dans #143.",
+      refs: "D97, D98, D99, J276" },
+    { t: "14 propositions validées, #161 réparée, la phrase de #148 retirée",
+      p: "Mathod95, le 26 novembre 2026: « 174 110 111 140 188 152 186 185 159 160 162 149 184 145 ». Sur #148: « Only the logo of ascii is drawn in ASCII. Pas besoin de le préciser! C'est dans la commande Rust ou c'est à part? ». Sur #161: « 161 wtf? ».",
+      reco: "Fait par Claude le même jour. Les 14 appliquées: Prerequisites (#174), Backup (#110, #111, #140), MOTD (#188, #152), API (#186), Security (#185), code-server (#159, #160, #162), CLI (#149: motd n'est plus « ajoutée » et entre dans le terminal de la page, #184: ssh confirm aussi, #145: les options globales, FLAGS_PROP à 0). #161: ses encadrés étaient posés entre les lignes d'un tableau, ce que le navigateur ne sait pas afficher (les lignes sortaient des encadrés); refaite avec un tableau entier dans chaque encadré, et aucune autre proposition dans ce cas. #148: la phrase retirée (dicté). La réponse: le logo ascii est dans le binaire, une constante de src/motd.rs (FIGLET, « dotbox » dans la police Standard de figlet, recopiée une fois): rien à installer, figlet n'est jamais lancé.",
+      refs: "D156" },
   ];
 
   var QUESTIONS = [
@@ -6148,7 +6190,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
-    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276],
+    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -6163,7 +6205,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],

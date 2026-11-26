@@ -1060,12 +1060,14 @@
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "planned",
+      "status": "progress",
       "fr": "CLI: `dotbox backup --stream`, envoyer l'archive sans l'écrire sur le disque",
       "en": "CLI: `dotbox backup --stream`, send the archive without writing it to disk",
       "doc": "backup",
       "journal": [
-        "16.8"
+        "16.11",
+        "J309-J311",
+        "D157"
       ]
     },
     {

@@ -552,6 +552,8 @@ struct BackupBody {
     app: Option<String>,
     #[serde(default)]
     to: Option<String>,
+    #[serde(default)]
+    stream: bool,
 }
 
 /// dotbox backup, en tâche (D97): une à la fois, comme le reste.
@@ -571,6 +573,9 @@ async fn post_backup(State(jobs): State<Shared>, body: Option<Json<BackupBody>>)
         }
         args.push("--to".into());
         args.push(to);
+    }
+    if body.stream {
+        args.push("--stream".into());
     }
     let what = format!("dotbox {}", args.join(" "));
     start_job(&jobs, what, args)

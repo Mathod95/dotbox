@@ -169,12 +169,7 @@
   </ul>
 
   <h2 id="en-ssh">SSH <small>(planned)</small></h2>
-  <div class="prop-old" data-prop="185">
-  <p>Dot Box never changes the SSH configuration on its own: it is your access to the server. An option, which you will choose to apply, will harden it (its content is still to be defined). Meanwhile, CrowdSec will ban the IPs that try passwords.</p>
-  </div>
-  <div class="prop-new" data-prop="185">
   <p>Dotbox never changes the SSH configuration on its own: it is your access to the server. You turn the hardening on yourself, once your SSH key works: keys only, no root login, 3 attempts per connection, a forgotten session closed after 10 minutes, no agent forwarding. A safety net puts SSH back as it was if you do not confirm from a new connection within 5 minutes (see <a href="__DOC_POST_INSTALLATION__"__DOC_POST_INSTALLATION_TARGET__>Post-installation</a>). Meanwhile, CrowdSec bans the IPs that try passwords.</p>
-  </div>
 
   <h2 id="en-not">What Dot Box does not do</h2>
   <ul>

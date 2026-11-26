@@ -39,7 +39,7 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 
   <h2 id="styles">Styles</h2>
   <div class="prop-old" data-prop="148"><p>Three styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
-  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>. Only the logo of <b>ascii</b> is drawn in ASCII.</p></div>
+  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
 
   <h3 id="compact">compact (default)</h3>
   <p>What <code>dotbox motd</code> prints, line by line as coded: a line per state, then the yellow lines with their command.</p>
@@ -58,16 +58,6 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 
   <h3 id="fastfetch">fastfetch</h3>
   <p>The 7 × 7 dot pictogram on the left, the lines on the right.</p>
-  <div class="prop-old" data-prop="188">
-  <pre><span class="ok">● ● ● ● ● ● ●</span>   Dot Box 0.0.5 · example.com
-<span class="ok">●           ●</span>   System    Debian 13 · up 3 days · load 0.42
-<span class="ok">●   ● ● ●   ●</span>   Memory    2.1 / 8 GB · /opt 12 % · /data 61 %
-<span class="ok">●   ●   ●   ●</span>   Apps      14 running · 1 stopped (sonarr)
-<span class="ok">●   ● ● ●   ●</span>   CrowdSec  37 IPs banned in 24 h
-<span class="ok">●           ●</span>   Doctor    ✓ nothing to report, 2 h ago
-<span class="ok">● ● ● ● ● ● ●</span>   <span class="w">▲ 2 apps behind: dotbox update --all</span></pre>
-  </div>
-  <div class="prop-new" data-prop="188">
   <pre><span class="ok">● ● ● ● ● ● ●</span>   Dot Box 0.0.6 · example.com
 <span class="ok">●           ●</span>   System    Debian 13 · up 3 days · load 0.42
 <span class="ok">●   ● ● ●   ●</span>   Memory    2.1 / 7.8 GiB
@@ -78,25 +68,9 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
                 CrowdSec  37 IPs banned in 24 h, 4 min ago
                 <span class="w">▲ 2 apps behind: dotbox update --all</span>
                 <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
-  </div>
 
   <h3 id="banner">banner</h3>
   <p>« DOT BOX » in dot letters, the 5 × 7 font of the site's page titles, above the lines.</p>
-  <div class="prop-old" data-prop="188">
-  <pre><span class="ok">●●●●   ●●●  ●●●●●   ●●●●   ●●●  ●   ●
-●   ● ●   ●   ●     ●   ● ●   ● ●   ●
-●   ● ●   ●   ●     ●   ● ●   ●  ● ●
-●   ● ●   ●   ●     ●●●●  ●   ●   ●
-●   ● ●   ●   ●     ●   ● ●   ●  ● ●
-●   ● ●   ●   ●     ●   ● ●   ● ●   ●
-●●●●   ●●●    ●     ●●●●   ●●●  ●   ●</span>
-0.0.5 · example.com
-
-<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
-<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
-<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span></pre>
-  </div>
-  <div class="prop-new" data-prop="188">
   <pre><span class="ok">●●●●   ●●●  ●●●●●   ●●●●   ●●●  ●   ●
 ●   ● ●   ●   ●     ●   ● ●   ● ●   ●
 ●   ● ●   ●   ●     ●   ● ●   ●  ● ●
@@ -116,7 +90,6 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
 
 <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
-  </div>
 
   <div class="prop-new" data-prop="148">
   <h3 id="ascii">ascii</h3>
@@ -195,7 +168,7 @@ motd:
       <tr><td>Certificates</td><td>The closest expiry</td><td>When under 14 days</td><td>Always, with the subdomain</td></tr>
       <tr><td>Backup</td><td>The last backup</td><td>Once backups exist</td><td>Failed, or older than 2 days</td></tr>
       <tr><td>CrowdSec</td><td>IPs banned in the last 24 h</td><td>Always</td><td>Never (its state is in Core)</td></tr>
-      <tr><td>Footer</td><td><span class="prop-old" data-prop="152"><code>dotbox status · dotbox --help</code>, later the web interface's address</span><span class="prop-new" data-prop="152"><code>dotbox status · dotbox --help</code> and the web interface's address, <code>https://dotbox.example.com</code></span></td><td>Always</td><td>Never</td></tr>
+      <tr><td>Footer</td><td><code>dotbox status · dotbox --help</code> and the web interface's address, <code>https://dotbox.example.com</code></td><td>Always</td><td>Never</td></tr>
     </tbody>
   </table></div>
   <p>The <code>Last login</code> line printed by sshd stays as it is, under the message: Dot Box does not touch the SSH configuration on its own. The SSH hardening option may bring it into the message later.</p>

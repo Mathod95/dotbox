@@ -351,8 +351,7 @@ pub fn write_tar<W: std::io::Write>(
 }
 
 /// tar, puis zstd (ruzstd, niveau Fastest, N14), puis age, dans `target`. Le tar se fait dans un
-/// fil à part et passe par un tuyau: aucune copie en clair sur le disque. ruzstd ne rend pas
-/// d'erreur: une écriture ratée (disque plein) finit en panique, rattrapée ici.
+/// fil à part et passe par un tuyau: aucune copie en clair sur le disque.
 pub fn seal(
     root: &Path,
     name: &str,
@@ -367,11 +366,46 @@ pub fn seal(
         .mode(0o600)
         .open(target)
         .map_err(|e| format!("cannot create {}: {e}", target.display()))?;
+    let (entries, w) = seal_to(
+        root,
+        name,
+        patterns,
+        recipient,
+        BufWriter::new(file),
+        &target.display().to_string(),
+    )
+    .map_err(|e| {
+        if e.ends_with("was cut") {
+            format!(
+                "cannot write {}: is the disk full? (df -h {})",
+                target.display(),
+                target.parent().unwrap_or(Path::new("/")).display()
+            )
+        } else {
+            e
+        }
+    })?;
+    w.into_inner()
+        .map_err(|e| format!("cannot write {}: {e}", target.display()))?
+        .sync_all()
+        .map_err(|e| format!("cannot write {}: {e}", target.display()))?;
+    Ok(entries)
+}
+
+/// Le cœur de seal: l'archive chiffrée écrite dans `w`, un fichier ou le tuyau vers rclone
+/// (--stream). ruzstd ne rend pas d'erreur: une écriture ratée (disque plein, envoi coupé) finit
+/// en panique, rattrapée ici. Rend le nombre d'entrées et `w`, vidé.
+pub fn seal_to<W: Write>(
+    root: &Path,
+    name: &str,
+    patterns: &[String],
+    recipient: &age::x25519::Recipient,
+    w: W,
+    what: &str,
+) -> Result<(u64, W), String> {
     let enc = age::Encryptor::with_recipients(std::iter::once(recipient as &dyn age::Recipient))
         .map_err(|e| format!("age: {e}"))?;
-    let mut out = enc
-        .wrap_output(BufWriter::new(file))
-        .map_err(|e| format!("age: {e}"))?;
+    let mut out = enc.wrap_output(w).map_err(|e| format!("age: {e}"))?;
     let (reader, writer) = std::io::pipe().map_err(|e| format!("cannot open a pipe: {e}"))?;
     let (root, name, patterns) = (root.to_path_buf(), name.to_string(), patterns.to_vec());
     let tarring = std::thread::spawn(move || write_tar(writer, &root, &name, &patterns));
@@ -385,24 +419,13 @@ pub fn seal(
     let entries = tarring
         .join()
         .map_err(|_| "the archive stopped halfway".to_string())?;
-    compressed.map_err(|_| {
-        format!(
-            "cannot write {}: is the disk full? (df -h {})",
-            target.display(),
-            target.parent().unwrap_or(Path::new("/")).display()
-        )
-    })?;
+    compressed.map_err(|_| format!("{what}: the writing was cut"))?;
     let entries = entries?;
     let mut w = out
         .finish()
-        .map_err(|e| format!("cannot write {}: {e}", target.display()))?;
-    w.flush()
-        .map_err(|e| format!("cannot write {}: {e}", target.display()))?;
-    w.into_inner()
-        .map_err(|e| format!("cannot write {}: {e}", target.display()))?
-        .sync_all()
-        .map_err(|e| format!("cannot write {}: {e}", target.display()))?;
-    Ok(entries)
+        .map_err(|e| format!("cannot write {what}: {e}"))?;
+    w.flush().map_err(|e| format!("cannot write {what}: {e}"))?;
+    Ok((entries, w))
 }
 
 /// Le chemin inverse: age, zstd, tar. Rend un lecteur du tar.
@@ -650,8 +673,176 @@ fn one(
     })
 }
 
+/// Ce qui part vers rclone (--stream): chaque octet écrit dans chaque envoi, et leur compte.
+struct Tee {
+    outs: Vec<std::process::ChildStdin>,
+    bytes: u64,
+}
+
+impl Write for Tee {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        for o in &mut self.outs {
+            o.write_all(buf)?;
+        }
+        self.bytes += buf.len() as u64;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        for o in &mut self.outs {
+            o.flush()?;
+        }
+        Ok(())
+    }
+}
+
+/// « :sftp,...:/backups » et « .radarr-....partial » donnent « :sftp,...:/backups/.radarr-... ».
+fn remote_file(target: &str, file: &str) -> String {
+    if target.ends_with('/') || target.ends_with(':') {
+        format!("{target}{file}")
+    } else {
+        format!("{target}/{file}")
+    }
+}
+
+/// --stream (D157): l'app arrêtée, son archive envoyée tout droit à chaque destination distante
+/// (rclone rcat, sous un nom provisoire, renommée une fois arrivée), puis relancée. Rien n'est
+/// écrit sur le disque du serveur. L'app reste arrêtée le temps de l'envoi.
+fn one_stream(
+    settings: &Settings,
+    name: &str,
+    remotes: &[String],
+    stamp: &str,
+    recipient: &age::x25519::Recipient,
+) -> Result<Done, String> {
+    use std::process::Stdio;
+    let folder = format!("{OPT}/{name}");
+    if !Path::new(&folder).is_dir() {
+        return Err(format!("{folder} does not exist"));
+    }
+    let pats = patterns(settings, name);
+    let file = format!("{name}-{stamp}{SUFFIX}");
+    let partial = format!(".{file}.partial");
+    let mut sends = Vec::new();
+    let mut outs = Vec::new();
+    for (i, r) in remotes.iter().enumerate() {
+        prepare_sftp(r)?;
+        let (target, files) = rclone_target(r)?;
+        let args = rclone_args(
+            &format!("dotbox-rclone-{i}"),
+            None,
+            &files,
+            &["rcat".into(), remote_file(&target, &partial)],
+            true,
+        )?;
+        crate::log::write(&format!("$ docker {}", args.join(" ")));
+        let mut child = system::command("docker")
+            .args(&args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("cannot run docker: {e}"))?;
+        outs.extend(child.stdin.take());
+        sends.push((r, target, files, child));
+    }
+    let was_running = name != "dotbox" && apps::running(&traefik::container_state(name));
+    if was_running {
+        say("stop", name);
+        apps::compose(name, &["stop"])?;
+    }
+    // l'entrée de rclone se ferme avec le Tee, à la fin de seal_to: rclone finit son envoi
+    let sealed = seal_to(
+        Path::new(OPT),
+        name,
+        &pats,
+        recipient,
+        Tee { outs, bytes: 0 },
+        &partial,
+    )
+    .map(|(n, tee)| (n, tee.bytes));
+    let mut failed: Vec<String> = Vec::new();
+    for (r, _, _, child) in sends.iter_mut() {
+        let out = child.wait().map_err(|e| format!("rclone for {r}: {e}"));
+        let mut err = String::new();
+        if let Some(mut e) = child.stderr.take() {
+            let _ = std::io::Read::read_to_string(&mut e, &mut err);
+        }
+        crate::log::write(&err);
+        match out {
+            Ok(st) if st.success() => {}
+            Ok(st) => failed.push(explain(
+                r,
+                format!(
+                    "rclone rcat to {r} failed (exit {}): {}",
+                    st.code().unwrap_or(-1),
+                    err.lines()
+                        .rev()
+                        .find(|l| !l.trim().is_empty())
+                        .unwrap_or("")
+                ),
+            )),
+            Err(e) => failed.push(e),
+        }
+    }
+    // relancée même si l'envoi a échoué: l'app ne doit pas rester arrêtée
+    let state = if was_running {
+        say("start", name);
+        apps::compose(name, &["start"])?;
+        apps::wait_ready(name, manage::has_health(name), Duration::from_secs(180))?
+    } else if name == "dotbox" {
+        String::new()
+    } else {
+        "stopped".to_string()
+    };
+    // une archive coupée parce que rclone s'est arrêté: l'erreur de rclone suffit
+    if let (Err(e), true) = (&sealed, failed.is_empty()) {
+        failed.push(e.clone());
+    }
+    if !failed.is_empty() {
+        for (_, target, files, _) in &sends {
+            let _ = rclone_in(
+                None,
+                files,
+                &["deletefile".into(), remote_file(target, &partial)],
+            );
+        }
+        return Err(failed.join("\n"));
+    }
+    let (entries, bytes) = sealed?;
+    for (r, target, files, _) in &sends {
+        rclone_in(
+            None,
+            files,
+            &[
+                "moveto".into(),
+                remote_file(target, &partial),
+                remote_file(target, &file),
+            ],
+        )
+        .map_err(|e| explain(r, e))?;
+        say(
+            "send",
+            &format!("{r}/{file} ({entries} entries, {})", human(bytes)),
+        );
+        prune_remote(r, None, &[name.to_string()], settings.keep)?;
+    }
+    let shown = if state.is_empty() {
+        human(bytes)
+    } else {
+        format!("{}, {state}", human(bytes))
+    };
+    ui::done(&shown);
+    Ok(Done {
+        name: name.to_string(),
+        file: format!("{}/{file}", remotes[0]),
+        bytes,
+        state,
+    })
+}
+
 /// dotbox backup --local, ou la tâche du service (D97: une tâche à la fois).
-pub fn run(app: Option<&str>, to: Option<&str>, verbose: bool) -> Result<(), String> {
+pub fn run(app: Option<&str>, to: Option<&str>, stream: bool, verbose: bool) -> Result<(), String> {
     let cfg = Config::load()?;
     let settings = Settings::of(&cfg)?;
     let installed = cfg.app_names();
@@ -676,13 +867,6 @@ pub fn run(app: Option<&str>, to: Option<&str>, verbose: bool) -> Result<(), Str
             })
             .collect()
     };
-    let mut dirs = local(&wanted);
-    if dirs.is_empty() {
-        dirs = local(&settings.destinations);
-    }
-    if dirs.is_empty() {
-        dirs.push(DEFAULT_LOCAL.to_string());
-    }
     let remotes: Vec<String> = wanted
         .iter()
         .filter_map(|d| match d {
@@ -690,15 +874,32 @@ pub fn run(app: Option<&str>, to: Option<&str>, verbose: bool) -> Result<(), Str
             Dest::Local(_) => None,
         })
         .collect();
+    // --stream (D157): rien sur le disque du serveur, chaque archive part tout droit vers les
+    // destinations distantes
+    let mut dirs = if stream { Vec::new() } else { local(&wanted) };
+    if stream && remotes.is_empty() {
+        return Err(
+            "--stream sends to a remote destination: --to sftp:<user>@<host>:<path> or rclone:<remote>:<path>, or one in backup.destinations"
+                .into(),
+        );
+    }
+    if !stream && dirs.is_empty() {
+        dirs = local(&settings.destinations);
+    }
+    if !stream && dirs.is_empty() {
+        dirs.push(DEFAULT_LOCAL.to_string());
+    }
     let what = [
         app.map(|a| format!("--app {a}")),
         to.map(|t| format!("--to {t}")),
     ]
     .into_iter()
     .flatten()
+    .chain(stream.then(|| "--stream".to_string()))
     .collect::<Vec<_>>()
     .join(" ");
-    apps::begin("backup", &what, 1 + names.len() + remotes.len(), verbose)?;
+    let sends = if stream { 0 } else { remotes.len() };
+    apps::begin("backup", &what, 1 + names.len() + sends, verbose)?;
     let mut report = Report {
         started: now(),
         destinations: dirs.iter().chain(remotes.iter()).cloned().collect(),
@@ -713,6 +914,13 @@ pub fn run(app: Option<&str>, to: Option<&str>, verbose: bool) -> Result<(), Str
         for d in &dirs {
             prepare_dir(d)?;
             say("check", &format!("{d} (700, root)"));
+        }
+        // --stream: chaque destination doit accepter Dot Box avant qu'une app soit arrêtée
+        if stream {
+            for r in &remotes {
+                remote_list(r, None)?;
+                say("check", r);
+            }
         }
         report.key_created = created;
         ui::done(if created {
@@ -730,9 +938,15 @@ pub fn run(app: Option<&str>, to: Option<&str>, verbose: bool) -> Result<(), Str
                     "stop, archive, start"
                 },
             );
-            report
-                .archives
-                .push(one(&settings, name, &dirs, &stamp, &recipient)?);
+            let done = if stream {
+                one_stream(&settings, name, &remotes, &stamp, &recipient)?
+            } else {
+                one(&settings, name, &dirs, &stamp, &recipient)?
+            };
+            report.archives.push(done);
+        }
+        if stream {
+            return Ok(());
         }
         // puis en une fois vers chaque destination distante, keep y fait aussi le ménage
         for r in &remotes {
@@ -878,28 +1092,60 @@ fn rclone(
     files: &[(&str, &str)],
     args: &[String],
 ) -> Result<String, String> {
+    let all = rclone_args("dotbox-rclone", Some((local, writable)), files, args, false)?;
+    let refs: Vec<&str> = all.iter().map(String::as_str).collect();
+    system::run("docker", &refs)
+}
+
+/// rclone, avec ou sans dossier local (--stream n'en a pas), en lecture seule.
+fn rclone_in(
+    local: Option<&str>,
+    files: &[(&str, &str)],
+    args: &[String],
+) -> Result<String, String> {
+    let all = rclone_args(
+        "dotbox-rclone",
+        local.map(|l| (l, false)),
+        files,
+        args,
+        false,
+    )?;
+    let refs: Vec<&str> = all.iter().map(String::as_str).collect();
+    system::run("docker", &refs)
+}
+
+/// La ligne de docker run pour rclone. `input`: l'entrée de la commande reste ouverte (-i), pour
+/// rclone rcat, qui envoie ce qu'il lit.
+fn rclone_args(
+    name: &str,
+    local: Option<(&str, bool)>,
+    files: &[(&str, &str)],
+    args: &[String],
+    input: bool,
+) -> Result<Vec<String>, String> {
     let image = catalog::load_core(Path::new(github::DIR), "rclone")?
         .image("rclone")?
         .to_string();
-    let mut all: Vec<String> = vec![
-        "run".into(),
-        "--rm".into(),
-        "--name".into(),
-        "dotbox-rclone".into(),
-    ];
-    all.push("-v".into());
-    all.push(format!(
-        "{local}:{local}{}",
-        if writable { "" } else { ":ro" }
-    ));
+    let mut all: Vec<String> = vec!["run".into(), "--rm".into()];
+    if input {
+        all.push("-i".into());
+    }
+    all.push("--name".into());
+    all.push(name.into());
+    if let Some((local, writable)) = local {
+        all.push("-v".into());
+        all.push(format!(
+            "{local}:{local}{}",
+            if writable { "" } else { ":ro" }
+        ));
+    }
     for (host, inside) in files {
         all.push("-v".into());
         all.push(format!("{host}:{inside}:ro"));
     }
     all.push(image);
     all.extend(args.iter().cloned());
-    let refs: Vec<&str> = all.iter().map(String::as_str).collect();
-    system::run("docker", &refs)
+    Ok(all)
 }
 
 /// La clé SSH de Dot Box pour sftp (D99, 3): créée la première fois, root seulement.
@@ -1002,12 +1248,11 @@ fn explain(r: &str, e: String) -> String {
 }
 
 /// Les archives d'une destination distante: (nom du fichier, app, date).
-pub fn remote_list(r: &str, local: &str) -> Result<Vec<(String, String, String)>, String> {
+pub fn remote_list(r: &str, local: Option<&str>) -> Result<Vec<(String, String, String)>, String> {
     prepare_sftp(r)?;
     let (target, files) = rclone_target(r)?;
-    let out = rclone(
+    let out = rclone_in(
         local,
-        false,
         &files,
         &["lsf".into(), "--files-only".into(), target],
     )
@@ -1038,7 +1283,13 @@ fn send(
     }
     rclone(local, false, &files, &args).map_err(|e| explain(r, e))?;
     say("send", &format!("{} to {r}", count(names.len())));
-    // keep, par app, de l'autre côté aussi
+    prune_remote(r, Some(local), names, keep)?;
+    Ok(format!("{} sent, keep {keep}", count(names.len())))
+}
+
+/// keep, par app, de l'autre côté aussi. `local`: le dossier que rclone voit (aucun pour --stream).
+fn prune_remote(r: &str, local: Option<&str>, names: &[String], keep: usize) -> Result<(), String> {
+    let (target, files) = rclone_target(r)?;
     let mut old: Vec<String> = Vec::new();
     let mut all = remote_list(r, local)?;
     all.sort_by(|a, b| b.2.cmp(&a.2));
@@ -1057,9 +1308,9 @@ fn send(
             args.push(f.clone());
             say("delete", &format!("{r}/{f} (keep {keep})"));
         }
-        rclone(local, false, &files, &args).map_err(|e| explain(r, e))?;
+        rclone_in(local, &files, &args).map_err(|e| explain(r, e))?;
     }
-    Ok(format!("{} sent, keep {keep}", count(names.len())))
+    Ok(())
 }
 
 /// Rapporte des archives d'une destination distante dans `local`, pour un restore.
@@ -1391,6 +1642,90 @@ mod tests {
         let other = age::x25519::Identity::generate();
         assert!(open(&target, &other).is_err());
         fs::remove_dir_all(&tmp).unwrap();
+    }
+
+    /// --stream: l'archive écrite dans l'entrée de deux commandes à la fois, comme vers deux
+    /// rclone rcat, arrive entière des deux côtés. Une commande qui ferme son entrée coupe tout.
+    #[test]
+    fn streamed_to_two_commands() {
+        use std::process::{Command, Stdio};
+        let tmp = std::env::temp_dir().join(format!("dotbox-stream-test-{}", std::process::id()));
+        let app = tmp.join("demo");
+        fs::create_dir_all(app.join("config")).unwrap();
+        // 2 Mo qui ne se compressent pas: plus que ce que garde un tuyau
+        let mut x: u32 = 1;
+        let noise: Vec<u8> = (0..2_000_000)
+            .map(|_| {
+                x = x.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+                (x >> 16) as u8
+            })
+            .collect();
+        fs::write(app.join("config/app.db"), &noise).unwrap();
+        let id = age::x25519::Identity::generate();
+        let spawn = |cmd: String| {
+            Command::new("sh")
+                .args(["-c", &cmd])
+                .stdin(Stdio::piped())
+                .spawn()
+                .unwrap()
+        };
+        let (a, b) = (tmp.join("a.age"), tmp.join("b.age"));
+        let mut kids = [
+            spawn(format!("cat > {}", a.display())),
+            spawn(format!("cat > {}", b.display())),
+        ];
+        let outs = kids.iter_mut().filter_map(|k| k.stdin.take()).collect();
+        let (n, tee) = seal_to(
+            &tmp,
+            "demo",
+            &[],
+            &id.to_public(),
+            Tee { outs, bytes: 0 },
+            "test",
+        )
+        .unwrap();
+        let bytes = tee.bytes;
+        drop(tee);
+        for k in kids.iter_mut() {
+            assert!(k.wait().unwrap().success());
+        }
+        assert_eq!(n, 3); // demo, config, config/app.db
+        assert_eq!(fs::metadata(&a).unwrap().len(), bytes);
+        assert_eq!(fs::read(&a).unwrap(), fs::read(&b).unwrap());
+        let mut ar = open(&a, &id).unwrap();
+        let mut db = ar
+            .entries()
+            .unwrap()
+            .map(|e| e.unwrap())
+            .find(|e| e.path().unwrap().ends_with("app.db"))
+            .unwrap();
+        let mut back = Vec::new();
+        std::io::Read::read_to_end(&mut db, &mut back).unwrap();
+        assert_eq!(back, noise);
+        // l'autre côté qui s'arrête (rclone refusé): l'écriture est coupée, une erreur, pas un blocage
+        let mut gone = spawn("exit 0".into());
+        let outs = gone.stdin.take().into_iter().collect();
+        gone.wait().unwrap();
+        let cut = seal_to(
+            &tmp,
+            "demo",
+            &[],
+            &id.to_public(),
+            Tee { outs, bytes: 0 },
+            "x",
+        );
+        assert!(cut.is_err());
+        fs::remove_dir_all(&tmp).unwrap();
+    }
+
+    #[test]
+    fn remote_paths() {
+        assert_eq!(remote_file("b2:dotbox", "f"), "b2:dotbox/f");
+        assert_eq!(remote_file("b2:", "f"), "b2:f");
+        assert_eq!(
+            remote_file(":sftp,host=h:/backups/", "f"),
+            ":sftp,host=h:/backups/f"
+        );
     }
 
     #[test]
