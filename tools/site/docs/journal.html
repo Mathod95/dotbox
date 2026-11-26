@@ -3667,7 +3667,31 @@ ssh saltbox 'echo nouvelle connexion'`,
       does: "Le plan de 16.11 (c), comme J276: le Saltbox ne reste pas une destination du serveur de test.",
       effect: "Saltbox: revenu à son état de J318 (seul 50-cloud-init.conf), les 16 archives de test effacées avec le compte.",
       result: "sshd -t: ok, SSH active ; compte absent, /var/lib/dotbox-backup absent ; nouvelle connexion: ok.",
-      undo: "Refaire J319." }
+      undo: "Refaire J319." },
+    { id: "J324", time: "23:41", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "N25: les disques du serveur de test",
+      cmd: `lsblk -o NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS ; df -hT ; cat /proc/mdstat ; findmnt /opt ; findmnt /data
+sudo vgs ; sudo lvs ; sudo pvs`,
+      does: "Demandé par Mathod95: ce qui serait faisable pour des instantanés (btrfs, ZFS, LVM).",
+      effect: "Rien, lecture seule.",
+      result: `sda 119,2 Go: sda1 ext4 511 Mo /boot, sda2 ext4 118,7 Go / (13 Go utilisés, 98 Go libres). Pas de place hors partition.
+/proc/mdstat vide (pas de RAID logiciel). /opt et /data sur / (sda2). vgs, lvs, pvs: commande introuvable (lvm2 pas installé, donc pas de LVM).`,
+      undo: "Rien à annuler." },
+    { id: "J325", time: "23:41", status: "echec", where: "PC → Saltbox", kind: "lecture",
+      title: "N25: les disques du Saltbox",
+      cmd: `ssh saltbox 'lsblk ; df -hT ; cat /proc/mdstat ; findmnt / /opt /mnt/local ; sudo -n vgs ; sudo -n lvs'`,
+      does: "La même lecture sur le Saltbox, sans root (sudo -n ne demande pas de mot de passe et s'arrête s'il en faut un).",
+      effect: "Rien.",
+      result: "Permission denied (publickey): la clé du Saltbox n'est plus dans l'agent. À refaire quand Mathod95 l'aura rechargée.",
+      undo: "Rien à annuler." },
+    { id: "J326", time: "23:48", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "18.2: le compose.yml d'une app et de ses services, lu par Docker",
+      cmd: `echo <tests/expected/db-app/compose.yml en base64> | base64 -d | docker compose -p stats -f - config -q
+... | docker compose -p stats -f - config --format json (les réseaux de chaque service)`,
+      does: "Docker n'est pas sur le PC: le fichier attendu des tests (une app, sa base PostgreSQL et un cache Redis) vérifié par docker compose, sans rien lancer.",
+      effect: "Rien, lecture seule (aucun container, aucun réseau créé).",
+      result: `config -q: valide. Réseaux: dotbox et private. stats: dotbox et private ; db et cache: private seulement. private: stats_private, internal: true.`,
+      undo: "Rien à annuler." }
   ];
 
   var PLAN = [
@@ -4978,18 +5002,23 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           does: "Avec l'interface web (11.27), sur un serveur réinstallé (D114). Ce qu'il faudra voir: le message à la connexion SSH, sans la ligne du noyau ni la licence, dans chacun des quatre styles (dotbox config set motd.style), dotbox motd sans sudo, --refresh, le timer (systemctl list-timers), puis motd.enabled false et sync: le message de Debian revient. Pour un serveur neuf par install.sh, il faut une release (D114).",
           effect: "Plus tard." }
       ] },
-    { phase: "18", group: "avenir", title: "Les apps à base de données",
+    { phase: "18", group: "encours", title: "Les apps à base de données",
       intro: "Ajoutée le 26 novembre 2026 (D159, Q96 tranchée): les apps qui ont une base de données ou un cache à côté, pour enrichir le catalogue. La base et sa version viennent du compose officiel de chaque app, réécrites dans notre manifest. Plan proposé par Claude, rien n'est codé avant l'accord de Mathod95. Les apps restent aussi dans l'étape 8 (8.15 Jellystat, 8.16 Tracearr), qui renvoient ici. Après: Gitea (D77), Portainer (D68), NetBird (D75), Backstage (D76).",
       steps: [
-        { id: "18.1", kind: "ecriture", where: "PC", title: "Le manifest: services:",
+        { id: "18.1", status: "fait", ref: "J326", kind: "ecriture", where: "PC", title: "Le manifest: services:",
+          lede: "Codé le 26 novembre 2026 (src/catalog.rs), testé sur le PC (services_rules). services: dans l'ordre du fichier, quatre au plus, des noms de 12 caractères au plus. Chaque service: image fixée, user:, env, volumes (seulement des dossiers de l'app, ni /data ni /opt), command, secrets (pris dans ceux de l'app), health (une commande, ou image) obligatoire, shm_size, ulimits (nofile seulement). ports, sous-domaine, accès et le reste refusés (champ inconnu).",
           does: "Les champs d'aujourd'hui restent ceux de l'app, et les manifests du catalogue ne changent pas. Un nouveau champ services: liste ce qui tourne à côté (une base, un cache), chacun avec: son nom (le container s'appelle <app>-<nom>), son image à une version fixée, env, volumes (seulement sous /opt/<app>/<nom>), command, health (la commande de son healthcheck, attendue par l'app), user: (l'utilisateur, comme l'app), shm_size et ulimits (demandés par PostgreSQL et TimescaleDB), secrets:. Refusé dans un service: ports, sous-domaine, accès, setup:, cap_add, sysctls. Le manifest est vérifié comme aujourd'hui (catalog.rs), avec ses tests." },
-        { id: "18.2", kind: "ecriture", where: "PC", title: "Le compose.yml: l'app, ses services et un réseau à eux",
+        { id: "18.2", status: "fait", ref: "J326", kind: "ecriture", where: "PC", title: "Le compose.yml: l'app, ses services et un réseau à eux",
+          lede: "Codé le 26 novembre 2026 (src/engine.rs), testé sur le PC (an_app_and_its_database, tests/expected/db-app/) et lu par Docker (J326). L'app sur dotbox et private, ses services sur private seulement (internal: true), depends_on avec service_healthy, traefik.docker.network: dotbox pour que Traefik choisisse le bon réseau. Une app sans services: son compose.yml ne change pas.",
           does: "Le moteur (engine.rs) écrit tous les services dans le même compose.yml de /opt/<app>. Un réseau <app> en internal (pas d'accès à Internet, que ni Traefik ni les autres apps ne voient), où vont l'app et ses services. L'app garde aussi le réseau dotbox, pour Traefik. depends_on avec condition: service_healthy sur chaque service. Les mêmes protections que l'app (no-new-privileges, logs, restart). Un fichier attendu dans tests/expected pour une app à deux services." },
-        { id: "18.3", kind: "ecriture", where: "PC", title: "Les secrets partagés et composés",
+        { id: "18.3", status: "fait", ref: "J326", kind: "ecriture", where: "PC", title: "Les secrets partagés et composés",
+          lede: "Codé le 26 novembre 2026 (src/catalog.rs, src/apps.rs, src/secrets.rs). Un secret composé s'écrit dans la liste secrets: (« - database_url: postgres://stats:{{secret:db_password}}@{{app}}-db:5432/stats »), seulement à partir des secrets tirés au hasard de la même app, réécrit seulement s'il change. Les secrets d'une app passent en 0444 (N26).",
           does: "Un secret tiré pour l'app (secrets:, D151) peut être monté aussi dans un service: le mot de passe de la base lu par PostgreSQL (POSTGRES_PASSWORD_FILE) et par l'app (FILE__POSTGRES_PASSWORD pour Jellystat). Certaines apps veulent le mot de passe dans une URL (DATABASE_URL_FILE de Tracearr): un secret composé, écrit à partir d'un modèle (postgres://tracearr:{secret}@tracearr-db:5432/tracearr), lui aussi dans /opt/dotbox/secrets, jamais dans compose.yml." },
-        { id: "18.4", kind: "ecriture", where: "PC", title: "install, remove, update, start, stop, logs, status",
+        { id: "18.4", status: "fait", ref: "J326", kind: "ecriture", where: "PC", title: "install, remove, update, start, stop, logs, status",
+          lede: "Codé le 26 novembre 2026. install: chaque image tirée, les dossiers des services créés à l'utilisateur. update: une base en retard compte (« jellystat-db 18.1 → 18.2 »), et .dotbox-previous garde l'image de chaque container pour --rollback. sync et diff: la version de chaque container gardée, une base en retard montrée. logs: dotbox logs jellystat-db. doctor: un service arrêté ou unhealthy d'une app qui tourne. remove: compose down, --purge efface aussi leurs images. Renovate: les lignes image: des services, sans version majeure pour les bases. Écarts au plan dans N26.",
           does: "install tire toutes les images et attend l'app healthy (donc sa base). remove arrête tout, --purge efface aussi les images des services. update compare chaque image du manifest à celle qui tourne, et --rollback les remet toutes. start, stop, restart sur tout le projet. logs montre l'app, et un service avec --service <nom>. status et l'interface web montrent l'app, avec l'état de ses services. dotbox add refuse toujours plusieurs services (D80). Renovate: la règle du catalogue lit aussi les images de services:." },
-        { id: "18.5", kind: "ecriture", where: "PC", title: "Sauvegarde et restauration d'une app à base de données",
+        { id: "18.5", status: "valide", kind: "ecriture", where: "PC", title: "Sauvegarde et restauration d'une app à base de données",
+          lede: "Rien à coder (vérifié dans src/backup.rs et src/restore.rs): compose stop et start agissent sur tout le projet, la base est donc arrêtée avec l'app, ses fichiers archivés avec /opt/<app>, leurs droits gardés à la restauration. À essayer en 18.6 sur le serveur de test: une sauvegarde, puis une restauration qui repart avec ses données.",
           does: "Les données de la base sont dans /opt/<app>/<nom>: archivées avec l'app, tout le projet arrêté ou gelé pendant l'archive (selon Q97, D160). PostgreSQL reprend après une coupure comme SQLite, grâce à son journal (WAL). restore remet le dossier entier puis relance le projet. À essayer: une archive restaurée qui redémarre avec ses données." },
         { id: "18.6", kind: "ecriture", where: "Serveur", title: "Jellystat (8.15)",
           does: "Son compose officiel: postgres 18.1 et cyfershepard/jellystat (à une version fixée, pas latest), JWT_SECRET et le mot de passe de la base lus par FILE__, healthcheck sur /auth/isConfigured, two_factor. Essayé sur le serveur de test: install, l'assistant, une sauvegarde puis une restauration, remove --purge. Sa page dans la doc." },
@@ -5543,6 +5572,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 26 novembre 2026, après la réponse de Claude sur Q97: « Je pense qu'il y a une grosse amélioration à faire côté backup, car tout couper tous les soirs c'est trop! Ça va gêner les futurs utilisateurs je pense ».",
       reco: "Choix de Mathod95: l'arrêt de chaque app à chaque sauvegarde est à changer. La façon reste à trancher dans Q97 (le gel par docker pause proposé par défaut, à essayer d'abord sur le serveur de test), avec la revue complète de la sauvegarde demandée par Mathod95. Les instantanés ne peuvent pas être la solution de tous (N25).",
       refs: "Q97, N25, D97, D157" },
+    { t: "Go pour l'étape 18, de 18.1 à 18.5",
+      p: "Mathod95, le 26 novembre 2026: « Go pour l'étape 18, code les étapes 1 à 5 ».",
+      reco: "Choix de Mathod95, codé par Claude le même jour (18.1 à 18.4 faites, 18.5 sans code), testé sur le PC (178 tests) et le compose lu par Docker sur le serveur de test (J326). Les écarts au plan et les choix du code dans N26. Ensuite: Jellystat (18.6), qui essaie tout sur le serveur.",
+      refs: "D159, N26, J326" },
+    { t: "ZFS oublié",
+      p: "Mathod95, le 26 novembre 2026, après N25: « Ok donc je pense qu'on peut oublier ZFS! La partition est actuellement en ext4 sur un RAID 0 de mémoire! Et je crois qu'il y a bien un LVM! Vérifie mon Saltbox et dotbox pour récupérer ces informations et me faire un bilan de ce qui serait faisable ou non! ».",
+      reco: "Avis de Mathod95: pas de ZFS. Le bilan demandé: le serveur de test lu (J324: un disque, ext4, ni RAID ni LVM), le Saltbox pas encore (J325, la clé absente de l'agent). La feature des instantanés (btrfs ou ZFS) à reprendre après le bilan.",
+      refs: "N25, J324, J325, Q97" },
   ];
 
   var QUESTIONS = [
@@ -6300,7 +6337,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "btrfs, ZFS et LVM: ce qui se change après l'installation de Debian",
       p: "Mathod95, le 26 novembre 2026, sur les instantanés de Q97: « btrfs ou ZFS, ceci peut être changé à chaud sur juste le /data? Ou c'est au moment de l'installation de Debian qu'il faut le choisir? ». Réponse de Claude, à vérifier sur le serveur de test avant d'en faire quoi que ce soit.",
       reco: "(1) Le système de fichiers se choisit par partition ou par disque, pas pour tout le serveur. Un /data à lui (un second disque, ou de la place libre sur le premier) peut être formaté en btrfs ou ZFS après l'installation, sans réinstaller Debian. Une partition ext4 qui a déjà des données: btrfs-convert la convertit sur place, mais démontée (donc pas à chaud), et une sauvegarde avant est indispensable. ZFS n'a pas de conversion: un disque vide, puis tout recopier. (2) Mais la sauvegarde ne lit pas /data: elle archive /opt, où sont les bases SQLite des apps (/opt/<app>/config). Pour des instantanés de sauvegarde, c'est /opt qui doit être en btrfs ou ZFS. /opt est d'habitude sur la partition racine, choisie à l'installation de Debian, le plus souvent par l'installeur de l'hébergeur (ext4 par défaut chez la plupart, btrfs proposé chez certains, ZFS rarement pour la racine de Debian). Sans réinstaller: un volume à part monté sur /opt (un disque ou une partition libre). (3) LVM: si Debian est installé sur LVM, souvent proposé par les installeurs, un instantané LVM marche avec ext4: le même effet, sans changer de système de fichiers, s'il reste de la place libre dans le groupe de volumes. (4) Sur /data, btrfs ou ZFS apporteraient autre chose (les sommes de contrôle contre la corruption silencieuse), pas la sauvegarde. Les hardlinks marchent sur les deux. (5) Conclusion pour Dot Box: les instantanés ne peuvent pas être la solution de tous les utilisateurs, d'où un moyen par défaut qui marche sur ext4 (le gel de Q97), et les instantanés en plus, quand /opt est sur btrfs, ZFS ou LVM (16.8). Le disque du serveur de test (ext4, LVM ou non) à regarder en lecture, journalisé, avant d'écrire 16.8.",
-      refs: "Q97, D160, 16.8" }
+      refs: "Q97, D160, 16.8" },
+    { t: "Les choix du code de 18.1 à 18.5 (les apps à base de données)",
+      p: "Ce que Claude a choisi en codant, le 26 novembre 2026, et les écarts au plan de l'étape 18.",
+      reco: "(1) Les secrets d'une app passent de 0600 à 0444 (secrets::mountable). PostgreSQL lit son mot de passe (POSTGRES_PASSWORD_FILE) sous son propre compte, ou celui de l'utilisateur avec user:, pas en root: un fichier 0600 de root lui serait fermé. Sur le serveur, le dossier /opt/dotbox/secrets reste en 0700: seul root y entre, le fichier n'est lisible que dans les containers qui le montent. Le secret de Homarr passe aussi en 0444 à sa prochaine installation. (2) Un service s'appelle <app>-<nom> (jellystat-db), sa clé dans compose.yml est son nom (db): depends_on et Docker le trouvent par là. L'app le joint par le nom du container ({{app}}-db), que seul le réseau privé connaît. (3) Le réseau privé est internal: la base ne sort pas sur Internet. L'app garde Internet par le réseau dotbox. (4) Écart au plan: pas d'option --service pour dotbox logs, qui aurait changé la CLI et sa page. dotbox logs prend aussi le nom du container d'un service (dotbox logs jellystat-db). (5) Écart au plan: dotbox status et l'interface web montrent l'app seule, comme avant. C'est dotbox doctor qui signale un service arrêté ou unhealthy. À revoir si Mathod95 veut le voir dans status. (6) Les secrets restent après remove --purge, comme avant: une réinstallation retrouve le mot de passe de sa base. (7) Renovate: les images des services lues, jamais de version majeure proposée pour postgres, timescaledb-ha, redis, mariadb et valkey (leurs fichiers ne se relisent pas d'une majeure à l'autre). Le tag de timescaledb-ha (pg18.4-ts2.29.1) demandera sa propre règle de versions, en 18.7. (8) Le fichier .dotbox-previous de --rollback garde une ligne par container (« jellystat-db postgres:18.1 »), et lit encore l'ancien format (une seule image).",
+      refs: "D161, 18.1-18.5" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -6358,7 +6399,8 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
-    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323],
+    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323, 324, 325],
+    "18": [326],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -6373,13 +6415,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160], "18": [159], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95], "18": [96]
   };
-  var NHOME = { "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25], "17": [20] };
+  var NHOME = { "18": [26], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

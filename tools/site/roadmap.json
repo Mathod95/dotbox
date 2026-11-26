@@ -778,14 +778,15 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "planned",
+      "status": "done",
       "fr": "Moteur: les apps à plusieurs services (une base de données ou un cache à côté, sur un réseau à eux)",
       "en": "Engine: apps with several services (a database or a cache next to the app, on their own network)",
       "doc": "your-own-apps",
       "journal": [
         "18.1-18.5",
         "D159",
-        "Q96"
+        "D161",
+        "N26"
       ]
     },
     {

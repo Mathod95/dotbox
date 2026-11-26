@@ -1,0 +1,38 @@
+name: stats
+description: An app and its database, for the tests (D159)
+min_dotbox: 0.0.7
+image: example/stats:1.2.3
+port: 3000
+access: two_factor
+health: /health
+env:
+  POSTGRES_IP: "{{app}}-db"
+  FILE__POSTGRES_PASSWORD: /run/secrets/db_password
+  FILE__DATABASE_URL: /run/secrets/database_url
+secrets:
+  - db_password
+  - jwt_secret
+  - database_url: "postgres://stats:{{secret:db_password}}@{{app}}-db:5432/stats"
+volumes:
+  - backup:/app/backup
+services:
+  db:
+    image: postgres:18.1
+    user: "{{uid}}:{{gid}}"
+    shm_size: 1gb
+    env:
+      POSTGRES_USER: stats
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - db:/var/lib/postgresql
+    secrets:
+      - db_password
+    health: [pg_isready, -U, stats]
+  cache:
+    image: redis:8.2.1-alpine
+    command: [redis-server, --appendonly, "yes"]
+    ulimits:
+      nofile: 65536
+    volumes:
+      - cache:/data
+    health: [redis-cli, ping]

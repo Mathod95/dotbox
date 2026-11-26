@@ -80,14 +80,49 @@ pub fn compose_image(text: &str) -> Option<String> {
         .filter(|i| !i.is_empty())
 }
 
-/// La version gardée par sync pour une app: celle qui tourne, sinon celle de son compose.yml,
-/// sinon (jamais installée) celle du catalogue.
-fn kept_image(list: &[Container], app: &str) -> Option<String> {
-    running_image(list, app).or_else(|| {
-        std::fs::read_to_string(engine::compose_path(app))
+/// Les containers d'un compose.yml écrit par dotbox et leur image: l'app, puis ses services
+/// (D159). image: vient avant container_name: dans chaque service.
+pub fn compose_images(text: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    let mut image = None;
+    for l in text.lines() {
+        let l = l.trim_start();
+        if let Some(i) = l.strip_prefix("image: ") {
+            image = Some(i.trim().to_string());
+        } else if let Some(c) = l.strip_prefix("container_name: ") {
+            if let Some(i) = image.take().filter(|i| !i.is_empty()) {
+                out.push((c.trim().to_string(), i));
+            }
+        }
+    }
+    out
+}
+
+/// Les versions gardées par sync pour une app, container par container: celle qui tourne,
+/// sinon celle de son compose.yml, sinon (jamais installée) celle du catalogue.
+fn kept_image(list: &[Container], app: &str) -> Option<Vec<(String, String)>> {
+    let mut pins = std::fs::read_to_string(engine::compose_path(app))
+        .map(|t| compose_images(&t))
+        .unwrap_or_default();
+    if !pins.iter().any(|(c, _)| c == app) {
+        if let Some(i) = std::fs::read_to_string(engine::compose_path(app))
             .ok()
             .and_then(|t| compose_image(&t))
-    })
+        {
+            pins.insert(0, (app.to_string(), i));
+        }
+    }
+    if !pins.iter().any(|(c, _)| c == app) {
+        if let Some(i) = running_image(list, app) {
+            pins.insert(0, (app.to_string(), i));
+        }
+    }
+    for (c, i) in pins.iter_mut() {
+        if let Some(r) = running_image(list, c) {
+            *i = r;
+        }
+    }
+    (!pins.is_empty()).then_some(pins)
 }
 
 /// Un morceau du core: ses fichiers tels qu'init les écrit depuis dotbox.yml, et ses containers.
@@ -411,17 +446,31 @@ fn app_gaps(
     // la version: sync n'y touche pas
     if let (Some(c), Ok(m)) = (c, crate::add::load(dir, app)) {
         let tag = status::tag(&c.image);
+        let from = if crate::add::is_yours(app) {
+            "its manifest"
+        } else {
+            "the catalog"
+        };
         if tag != m.version() {
-            let from = if crate::add::is_yours(app) {
-                "its manifest"
-            } else {
-                "the catalog"
-            };
             gaps.push(gap(
                 format!("runs {tag}, {from} has {}", m.version()),
                 format!("dotbox update {app}"),
                 "",
             ));
+        }
+        // ses services (D159): leur version change aussi par dotbox update
+        for s in &m.services {
+            let container = s.container(app);
+            if let Some(sc) = list.iter().find(|c| c.name == container) {
+                let tag = status::tag(&sc.image);
+                if tag != s.version() {
+                    gaps.push(gap(
+                        format!("{container} runs {tag}, {from} has {}", s.version()),
+                        format!("dotbox update {app}"),
+                        "",
+                    ));
+                }
+            }
         }
     }
     gaps
@@ -662,6 +711,16 @@ mod tests {
             Some("lscr.io/linuxserver/radarr:7.0.3".into())
         );
         assert_eq!(compose_image("services: {}\n"), None);
+        // une app et sa base (D159)
+        assert_eq!(
+            compose_images(
+                "services:\n  jellystat:\n    image: a/jellystat:1.1\n    container_name: jellystat\n  db:\n    image: postgres:18.1\n    container_name: jellystat-db\n"
+            ),
+            [
+                ("jellystat".to_string(), "a/jellystat:1.1".to_string()),
+                ("jellystat-db".to_string(), "postgres:18.1".to_string())
+            ]
+        );
         assert_eq!(
             image_ref("traefik:v3.7.19").as_deref(),
             Some("traefik:v3.7.19")

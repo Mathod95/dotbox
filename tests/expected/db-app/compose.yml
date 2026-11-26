@@ -1,0 +1,90 @@
+# Généré par dotbox install: ne pas modifier, il est réécrit à chaque install.
+# Vos changements vont dans compose.override.yml, à côté.
+name: stats
+services:
+  stats:
+    image: example/stats:1.2.3
+    container_name: stats
+    restart: unless-stopped
+    networks:
+      - dotbox
+      - private
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    environment:
+      POSTGRES_IP: 'stats-db'
+      FILE__POSTGRES_PASSWORD: '/run/secrets/db_password'
+      FILE__DATABASE_URL: '/run/secrets/database_url'
+    volumes:
+      - /opt/stats/backup:/app/backup
+      - /opt/dotbox/secrets/stats_db_password:/run/secrets/db_password:ro
+      - /opt/dotbox/secrets/stats_jwt_secret:/run/secrets/jwt_secret:ro
+      - /opt/dotbox/secrets/stats_database_url:/run/secrets/database_url:ro
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      traefik.docker.network: dotbox
+      traefik.enable: "true"
+      traefik.http.routers.stats.rule: Host(`stats.example.com`)
+      traefik.http.routers.stats.entrypoints: websecure
+      traefik.http.services.stats.loadbalancer.server.port: "3000"
+      # two_factor: Authelia demande qui se connecte avant de laisser passer
+      traefik.http.routers.stats.middlewares: authelia@docker
+  db:
+    image: postgres:18.1
+    container_name: stats-db
+    restart: unless-stopped
+    networks:
+      - private
+    user: "1000:1000"
+    shm_size: 1gb
+    environment:
+      POSTGRES_USER: 'stats'
+      POSTGRES_PASSWORD_FILE: '/run/secrets/db_password'
+    volumes:
+      - /opt/stats/db:/var/lib/postgresql
+      - /opt/dotbox/secrets/stats_db_password:/run/secrets/db_password:ro
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  cache:
+    image: redis:8.2.1-alpine
+    container_name: stats-cache
+    restart: unless-stopped
+    networks:
+      - private
+    command: ['redis-server', '--appendonly', 'yes']
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - /opt/stats/cache:/data
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  dotbox:
+    external: true
+  private:
+    internal: true

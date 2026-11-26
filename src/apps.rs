@@ -263,19 +263,37 @@ pub struct Wanted {
     pub compose: String,
 }
 
-/// `image`: une autre image que celle du catalogue (dotbox update --rollback, 13.6, ou celle qui
-/// tourne, pour dotbox sync, qui ne change jamais de version).
+/// Des images à la place de celles du catalogue, par container (l'app, puis <app>-<service>):
+/// celles d'avant pour dotbox update --rollback (13.6), celles qui tournent pour dotbox sync, qui
+/// ne change jamais de version. Un container absent de la liste garde l'image du catalogue.
+pub type Pins = [(String, String)];
+
+/// L'image épinglée d'un container, s'il y en a une.
+pub fn pinned<'a>(pins: &'a Pins, container: &str) -> Option<&'a str> {
+    pins.iter()
+        .find(|(c, _)| c == container)
+        .map(|(_, i)| i.as_str())
+}
+
+/// `image`: voir Pins.
 pub fn wanted(
     dir: &Path,
     app: &str,
     domain: &str,
     user: &str,
-    image: Option<&str>,
+    image: Option<&Pins>,
 ) -> Result<Wanted, String> {
     let from = crate::add::manifest_dir(dir, app);
     let mut m = catalog::load(&from, app)?;
-    if let Some(i) = image {
-        m.image = i.to_string();
+    if let Some(p) = image {
+        if let Some(i) = pinned(p, app) {
+            m.image = i.to_string();
+        }
+        for s in &mut m.services {
+            if let Some(i) = pinned(p, &s.container(app)) {
+                s.image = i.to_string();
+            }
+        }
     }
     // le sous-domaine et le niveau: ceux de dotbox.yml s'ils y sont, sinon ceux du manifest
     let cfg = Config::load()?;
@@ -335,11 +353,11 @@ pub fn install_one(
     app: &str,
     domain: &str,
     user: &str,
-    image: Option<&str>,
+    image: Option<&Pins>,
     start: bool,
 ) -> Result<Ready, String> {
     let from = crate::add::manifest_dir(dir, app);
-    let doing = match image {
+    let doing = match image.and_then(|p| pinned(p, app)) {
         Some(i) => format!("image {}", crate::status::tag(i)),
         None if from != dir => "from your apps (dotbox add)".into(),
         None => "from the catalog".into(),
@@ -373,7 +391,8 @@ pub fn install_one(
     }
     let mut cfg = Config::load()?;
     let (uid, gid) = (ctx.uid, ctx.gid);
-    for v in &m.volumes {
+    let service_volumes = m.services.iter().flat_map(|s| s.volumes.iter());
+    for v in m.volumes.iter().chain(service_volumes) {
         // /data: ses dossiers et la vérification des hardlinks, plus bas
         if !catalog::in_data(&v.host) && !Path::new(&v.host).exists() {
             system::owned_dir(&v.host, uid, gid)?;
@@ -384,15 +403,7 @@ pub fn install_one(
         prepare_data(&m, uid, gid, user)?;
     }
     load_modules(&m)?;
-    // les secrets de l'app: tirés une seule fois, jamais réécrits (D151)
-    for s in &m.secrets {
-        let name = engine::secret_name(app, s);
-        if crate::secrets::ensure_hex(&name, 64)? {
-            say("create", &crate::secrets::path(&name));
-        } else {
-            say("check", &crate::secrets::path(&name));
-        }
-    }
+    write_secrets(&m, &ctx)?;
     let settings_changed = write_settings(&m, &ctx, uid, gid)?;
     if !m.ports.is_empty() && !running(&traefik::container_state(app)) {
         check_ports(&m)?;
@@ -408,7 +419,9 @@ pub fn install_one(
         say("write", &format!("{} (apps: {app})", config::PATH));
     }
 
-    docker::pull(&m.image)?;
+    for (_, image) in m.images() {
+        docker::pull(&image)?;
+    }
     if !start {
         // arrêtée exprès (D81): tout est prêt, elle reste arrêtée. Un container qui tourne
         // encore (ses réglages l'ont arrêté, ou il a été lancé à la main) s'arrête.
@@ -484,6 +497,47 @@ pub fn install_one(
         access: access.as_str().to_string(),
         setup_pending,
     })
+}
+
+/// Les secrets de l'app: tirés une seule fois, jamais réécrits (D151). Un secret composé est
+/// écrit à partir des autres, et réécrit seulement s'il change (D159). Tous lisibles dans les
+/// containers qui les montent.
+fn write_secrets(m: &catalog::Manifest, ctx: &Ctx) -> Result<(), String> {
+    let app = &m.name;
+    for s in m
+        .secrets
+        .iter()
+        .filter(|s| !m.composed.iter().any(|(c, _)| c == *s))
+    {
+        let name = engine::secret_name(app, s);
+        if crate::secrets::ensure_hex(&name, 64)? {
+            say("create", &crate::secrets::path(&name));
+        } else {
+            say("check", &crate::secrets::path(&name));
+        }
+        crate::secrets::mountable(&name)?;
+    }
+    for (s, template) in &m.composed {
+        let mut value = template.clone();
+        for p in &m.secrets {
+            let key = format!("{{{{secret:{p}}}}}");
+            if value.contains(&key) {
+                let v = crate::secrets::read(&engine::secret_name(app, p))
+                    .ok_or(format!("the secret {p} of {app} is missing"))?;
+                value = value.replace(&key, &v);
+            }
+        }
+        let value = engine::fill(&value, app, ctx);
+        let name = engine::secret_name(app, s);
+        if crate::secrets::read(&name).as_deref() != Some(value.as_str()) {
+            crate::secrets::store(&name, &value)?;
+            say("write", &crate::secrets::path(&name));
+        } else {
+            say("check", &crate::secrets::path(&name));
+        }
+        crate::secrets::mountable(&name)?;
+    }
+    Ok(())
 }
 
 /// L'empreinte du compose.yml que dotbox vient d'écrire: dotbox diff voit s'il a été changé à la

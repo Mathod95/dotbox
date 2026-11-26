@@ -31,6 +31,18 @@
         {
           "fr": "CLI: `dotbox backup --stream` envoie chaque archive tout droit aux destinations distantes, sans rien écrire sur le disque du serveur. Chaque destination est vérifiée avant d'arrêter une app, une archive coupée ne laisse rien",
           "en": "CLI: `dotbox backup --stream` sends each archive straight to the remote destinations, without writing anything on the server's disk. Each destination is checked before any app stops, a cut archive leaves nothing behind"
+        },
+        {
+          "fr": "Manifest: `services:`, ce qui tourne à côté de l'app (une base de données, un cache), dans le même `compose.yml`, sur un réseau privé à l'app sans accès à Internet, l'app démarrée quand ils sont healthy",
+          "en": "Manifest: `services:`, what runs next to the app (a database, a cache), in the same `compose.yml`, on a network private to the app with no Internet access, the app started once they are healthy"
+        },
+        {
+          "fr": "Manifest: des secrets composés, écrits à partir des autres (`database_url: postgres://...{{secret:db_password}}@...`), pour une app qui veut son mot de passe dans une adresse",
+          "en": "Manifest: composed secrets, written from the others (`database_url: postgres://...{{secret:db_password}}@...`), for an app that wants its password inside an address"
+        },
+        {
+          "fr": "CLI: `dotbox update`, `diff` et `sync` suivent aussi la version des services d'une app, `--rollback` les remet toutes, `dotbox logs <app>-<service>` montre les logs d'un service, et `dotbox doctor` signale un service arrêté",
+          "en": "CLI: `dotbox update`, `diff` and `sync` also follow the version of an app's services, `--rollback` puts them all back, `dotbox logs <app>-<service>` shows a service's logs, and `dotbox doctor` reports a stopped service"
         }
       ],
       "changed": [

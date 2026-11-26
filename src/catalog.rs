@@ -103,9 +103,15 @@ struct Raw {
     #[serde(default)]
     command: Vec<String>,
     /// des clés que dotbox tire au hasard une seule fois et monte en lecture seule dans
-    /// /run/secrets/<nom> (la clé de chiffrement de Homarr, D151): jamais dans compose.yml
+    /// /run/secrets/<nom> (la clé de chiffrement de Homarr, D151): jamais dans compose.yml.
+    /// Un secret composé (« database_url: postgres://...{{secret:db_password}}@... ») est écrit
+    /// par dotbox à partir des autres, pour une app qui veut le mot de passe dans une adresse.
     #[serde(default)]
-    secrets: Vec<String>,
+    secrets: Vec<RawSecret>,
+    /// ce qui tourne à côté de l'app, dans le même compose.yml (une base, un cache, D159): le
+    /// nom du service, puis son image et ses réglages
+    #[serde(default)]
+    services: serde_yaml_ng::Mapping,
     /// l'assistant de premier démarrage: derrière Authelia tant qu'il n'est pas fini (D71)
     #[serde(default)]
     setup: Option<RawSetup>,
@@ -129,6 +135,75 @@ struct Raw {
     /// qui se refont seuls. Chemins relatifs au dossier de l'app, * pour n'importe quoi.
     #[serde(default)]
     backup_exclude: Vec<String>,
+}
+
+/// Un secret: son nom, ou son nom et le modèle d'un secret composé.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RawSecret {
+    Plain(String),
+    Composed(std::collections::BTreeMap<String, String>),
+}
+
+/// Un service à côté de l'app (D159).
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawService {
+    image: String,
+    #[serde(default)]
+    user: Option<String>,
+    #[serde(default)]
+    env: serde_yaml_ng::Mapping,
+    /// seulement des dossiers de l'app (db:/var/lib/postgresql)
+    #[serde(default)]
+    volumes: Vec<String>,
+    #[serde(default)]
+    command: Vec<String>,
+    /// des secrets de l'app (secrets:), montés aussi dans ce service
+    #[serde(default)]
+    secrets: Vec<String>,
+    /// la commande de son healthcheck ([pg_isready, -U, jellystat]), ou image
+    health: serde_yaml_ng::Value,
+    /// la mémoire partagée (/dev/shm) que demande PostgreSQL: « 1gb »
+    #[serde(default)]
+    shm_size: Option<String>,
+    /// les fichiers ouverts à la fois (TimescaleDB): seulement nofile
+    #[serde(default)]
+    ulimits: serde_yaml_ng::Mapping,
+}
+
+/// Le healthcheck d'un service: celui de l'image, ou une commande.
+#[derive(Debug, PartialEq, Eq)]
+pub enum ServiceHealth {
+    Image,
+    Command(Vec<String>),
+}
+
+/// Un service vérifié: le container s'appelle <app>-<nom>, il n'est que sur le réseau privé de
+/// l'app, sans port ni route, et l'app démarre quand il est healthy (D159).
+#[derive(Debug)]
+pub struct Service {
+    pub name: String,
+    pub image: String,
+    pub run_as_user: bool,
+    /// dans l'ordre du fichier
+    pub env: Vec<(String, String)>,
+    pub volumes: Vec<Volume>,
+    pub command: Vec<String>,
+    pub secrets: Vec<String>,
+    pub health: ServiceHealth,
+    pub shm_size: Option<String>,
+    pub nofile: Option<u32>,
+}
+
+impl Service {
+    pub fn container(&self, app: &str) -> String {
+        format!("{app}-{}", self.name)
+    }
+
+    pub fn version(&self) -> &str {
+        self.image.rsplit_once(':').map(|(_, t)| t).unwrap_or("")
+    }
 }
 
 /// Ce qu'un manifest peut demander au noyau: une liste fermée, chaque entrée vérifiée.
@@ -255,8 +330,12 @@ pub struct Manifest {
     pub run_as_user: bool,
     /// les arguments donnés à l'image au démarrage (command: dans le compose)
     pub command: Vec<String>,
-    /// les secrets de l'app, montés dans /run/secrets/<nom> (D151)
+    /// les secrets de l'app, montés dans /run/secrets/<nom> (D151), les composés compris
     pub secrets: Vec<String>,
+    /// les secrets composés: leur nom et leur modèle ({{secret:<nom>}} et les {{...}} connus)
+    pub composed: Vec<(String, String)>,
+    /// ce qui tourne à côté de l'app (D159), dans l'ordre du fichier
+    pub services: Vec<Service>,
     pub setup: Option<Setup>,
     pub crowdsec: Option<Watch>,
     /// des chemins derrière Authelia, en plus du niveau de l'app (/admin de Vaultwarden)
@@ -283,6 +362,17 @@ impl Manifest {
     /// La version de l'image (« 3.0.2.5780-ls169 »).
     pub fn version(&self) -> &str {
         self.image.rsplit_once(':').map(|(_, t)| t).unwrap_or("")
+    }
+
+    /// Les containers de l'app et leur image: l'app d'abord, puis ses services.
+    pub fn images(&self) -> Vec<(String, String)> {
+        std::iter::once((self.name.clone(), self.image.clone()))
+            .chain(
+                self.services
+                    .iter()
+                    .map(|s| (s.container(&self.name), s.image.clone())),
+            )
+            .collect()
     }
 }
 
@@ -399,26 +489,7 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
     if health_wget && !raw.health.as_ref().is_some_and(|h| h.starts_with('/')) {
         return Err("health_tool: only with a health path, like /ping".into());
     }
-    let mut env = Vec::new();
-    for (k, v) in &raw.env {
-        let key = k.as_str().ok_or("env: every name must be text")?;
-        // une majuscule d'abord, puis des lettres, des chiffres et _ (JELLYFIN_PublishedServerUrl)
-        if !key.starts_with(|c: char| c.is_ascii_uppercase())
-            || !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-        {
-            return Err(format!(
-                "env {key:?}: an uppercase letter first, then letters, digits and _"
-            ));
-        }
-        let value = match v {
-            serde_yaml_ng::Value::String(s) => s.clone(),
-            serde_yaml_ng::Value::Number(n) => n.to_string(),
-            serde_yaml_ng::Value::Bool(b) => b.to_string(),
-            _ => return Err(format!("env {key}: the value must be text")),
-        };
-        check_placeholders(&format!("env {key}"), &value)?;
-        env.push((key.to_string(), value));
-    }
+    let env = parse_env(&raw.env)?;
     let volumes = raw
         .volumes
         .iter()
@@ -435,37 +506,10 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         }
     }
     // seulement l'utilisateur de dotbox.yml: jamais root, jamais un autre compte
-    let run_as_user = match raw.user.as_deref() {
-        None => false,
-        Some("{{uid}}:{{gid}}") => true,
-        Some(u) => return Err(format!("user {u:?}: only \"{{{{uid}}}}:{{{{gid}}}}\"")),
-    };
-    for arg in &raw.command {
-        if arg.is_empty() || arg.chars().any(char::is_control) {
-            return Err(format!(
-                "command {arg:?}: one argument per line, not empty, on a single line"
-            ));
-        }
-        check_placeholders(&format!("command {arg}"), arg)?;
-    }
-    let mut seen = Vec::new();
-    for s in &raw.secrets {
-        if s.is_empty()
-            || s.len() > 30
-            || !s.starts_with(|c: char| c.is_ascii_lowercase())
-            || !s
-                .chars()
-                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
-        {
-            return Err(format!(
-                "secrets {s:?}: lowercase letters, digits and _, 30 characters at most"
-            ));
-        }
-        if seen.contains(&s) {
-            return Err(format!("secrets {s:?}: listed twice"));
-        }
-        seen.push(s);
-    }
+    let run_as_user = parse_user(raw.user.as_deref())?;
+    check_command(&raw.command)?;
+    let (secrets, composed) = parse_secrets(raw.secrets)?;
+    let services = parse_services(&name, &raw.services, &secrets)?;
     let mut ports: Vec<Port> = Vec::new();
     for spec in &raw.ports {
         let p = port(spec)?;
@@ -687,7 +731,9 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         ports,
         run_as_user,
         command: raw.command,
-        secrets: raw.secrets,
+        secrets,
+        composed,
+        services,
         setup,
         crowdsec,
         authelia_paths: raw.authelia_paths,
@@ -696,6 +742,241 @@ pub fn parse(text: &str) -> Result<Manifest, String> {
         kernel_modules: raw.kernel_modules,
         backup_exclude: raw.backup_exclude,
     })
+}
+
+/// Les variables d'un container: une majuscule d'abord, puis des lettres, des chiffres et _
+/// (JELLYFIN_PublishedServerUrl), une valeur en texte.
+fn parse_env(map: &serde_yaml_ng::Mapping) -> Result<Vec<(String, String)>, String> {
+    let mut env = Vec::new();
+    for (k, v) in map {
+        let key = k.as_str().ok_or("env: every name must be text")?;
+        if !key.starts_with(|c: char| c.is_ascii_uppercase())
+            || !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        {
+            return Err(format!(
+                "env {key:?}: an uppercase letter first, then letters, digits and _"
+            ));
+        }
+        let value = match v {
+            serde_yaml_ng::Value::String(s) => s.clone(),
+            serde_yaml_ng::Value::Number(n) => n.to_string(),
+            serde_yaml_ng::Value::Bool(b) => b.to_string(),
+            _ => return Err(format!("env {key}: the value must be text")),
+        };
+        check_placeholders(&format!("env {key}"), &value)?;
+        env.push((key.to_string(), value));
+    }
+    Ok(env)
+}
+
+/// Seulement l'utilisateur de dotbox.yml: jamais root, jamais un autre compte.
+fn parse_user(user: Option<&str>) -> Result<bool, String> {
+    match user {
+        None => Ok(false),
+        Some("{{uid}}:{{gid}}") => Ok(true),
+        Some(u) => Err(format!("user {u:?}: only \"{{{{uid}}}}:{{{{gid}}}}\"")),
+    }
+}
+
+fn check_command(args: &[String]) -> Result<(), String> {
+    for arg in args {
+        if arg.is_empty() || arg.chars().any(char::is_control) {
+            return Err(format!(
+                "command {arg:?}: one argument per line, not empty, on a single line"
+            ));
+        }
+        check_placeholders(&format!("command {arg}"), arg)?;
+    }
+    Ok(())
+}
+
+fn secret_word(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 30
+        && s.starts_with(|c: char| c.is_ascii_lowercase())
+        && s.chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+}
+
+/// Les secrets de l'app: tous les noms, et les composés avec leur modèle. Un composé ne lit que
+/// des secrets tirés au hasard, déclarés dans la même liste.
+/// Les noms des secrets, et les composés avec leur modèle.
+type Secrets = (Vec<String>, Vec<(String, String)>);
+
+fn parse_secrets(raw: Vec<RawSecret>) -> Result<Secrets, String> {
+    let mut names: Vec<String> = Vec::new();
+    let mut composed = Vec::new();
+    for r in raw {
+        let (name, template) = match r {
+            RawSecret::Plain(n) => (n, None),
+            RawSecret::Composed(m) => {
+                let mut it = m.into_iter();
+                match (it.next(), it.next()) {
+                    (Some((n, t)), None) => (n, Some(t)),
+                    _ => {
+                        return Err(
+                            "secrets: a composed secret is one name and its template".into()
+                        );
+                    }
+                }
+            }
+        };
+        if !secret_word(&name) {
+            return Err(format!(
+                "secrets {name:?}: lowercase letters, digits and _, 30 characters at most"
+            ));
+        }
+        if names.contains(&name) {
+            return Err(format!("secrets {name:?}: listed twice"));
+        }
+        names.push(name.clone());
+        if let Some(t) = template {
+            composed.push((name, t));
+        }
+    }
+    let plain: Vec<&String> = names
+        .iter()
+        .filter(|n| !composed.iter().any(|(c, _)| c == *n))
+        .collect();
+    for (name, t) in &composed {
+        if t.is_empty() || t.chars().any(char::is_control) {
+            return Err(format!("secrets {name}: the template is one line of text"));
+        }
+        let mut rest = t.as_str();
+        let mut uses = 0;
+        let mut others = String::new();
+        while let Some(start) = rest.find("{{secret:") {
+            let end = rest[start..]
+                .find("}}")
+                .ok_or(format!("secrets {name}: {{{{secret: without }}}}"))?;
+            let used = &rest[start + 9..start + end];
+            if !plain.iter().any(|p| p.as_str() == used) {
+                return Err(format!(
+                    "secrets {name}: {{{{secret:{used}}}}} is not a random secret of this app"
+                ));
+            }
+            uses += 1;
+            others.push_str(&rest[..start]);
+            rest = &rest[start + end + 2..];
+        }
+        others.push_str(rest);
+        if uses == 0 {
+            return Err(format!(
+                "secrets {name}: a composed secret uses at least one {{{{secret:<name>}}}}"
+            ));
+        }
+        check_placeholders(&format!("secrets {name}"), &others)?;
+    }
+    Ok((names, composed))
+}
+
+/// Les services à côté de l'app (D159): quatre au plus, des noms courts, des images à une
+/// version fixe, leurs données dans les dossiers de l'app, un healthcheck.
+fn parse_services(
+    app: &str,
+    map: &serde_yaml_ng::Mapping,
+    secrets: &[String],
+) -> Result<Vec<Service>, String> {
+    if map.len() > 4 {
+        return Err("services: four at most".into());
+    }
+    let mut out = Vec::new();
+    for (k, v) in map {
+        let name = k.as_str().ok_or("services: every name must be text")?;
+        if !valid_name(name) || name.len() > 12 {
+            return Err(format!(
+                "services {name:?}: lowercase letters, digits and -, 12 characters at most"
+            ));
+        }
+        if name == app {
+            return Err(format!("services {name:?}: the app's own name"));
+        }
+        let r: RawService =
+            serde_yaml_ng::from_value(v.clone()).map_err(|e| format!("services {name}: {e}"))?;
+        let what = |e: String| format!("services {name}: {e}");
+        check_image(&r.image).map_err(what)?;
+        let env = parse_env(&r.env).map_err(what)?;
+        let run_as_user = parse_user(r.user.as_deref()).map_err(what)?;
+        check_command(&r.command).map_err(what)?;
+        let mut volumes = Vec::new();
+        for spec in &r.volumes {
+            let vol = volume(app, spec).map_err(what)?;
+            // seulement les dossiers de l'app: une base ne voit ni /data ni /opt
+            if !vol.host.starts_with(&format!("/opt/{app}/")) {
+                return Err(what(format!(
+                    "volume {spec:?}: only a folder of the app, like db:/var/lib/postgresql"
+                )));
+            }
+            volumes.push(vol);
+        }
+        for s in &r.secrets {
+            if !secrets.contains(s) {
+                return Err(what(format!("secrets {s:?}: not in the app's secrets")));
+            }
+        }
+        let health = match &r.health {
+            serde_yaml_ng::Value::String(s) if s == "image" => ServiceHealth::Image,
+            serde_yaml_ng::Value::Sequence(seq) if !seq.is_empty() => {
+                let mut args = Vec::new();
+                for a in seq {
+                    let a = match a {
+                        serde_yaml_ng::Value::String(s) => s.clone(),
+                        serde_yaml_ng::Value::Number(n) => n.to_string(),
+                        _ => return Err(what("health: every argument must be text".into())),
+                    };
+                    if a.is_empty() || a.chars().any(char::is_control) {
+                        return Err(what(format!(
+                            "health {a:?}: one argument, on a single line"
+                        )));
+                    }
+                    check_placeholders(&format!("services {name} health"), &a)?;
+                    args.push(a);
+                }
+                ServiceHealth::Command(args)
+            }
+            _ => {
+                return Err(what(
+                    "health: the command of its healthcheck, like [pg_isready, -U, app], or image (the app waits for it)".into(),
+                ));
+            }
+        };
+        if let Some(sz) = &r.shm_size {
+            let digits = sz.trim_end_matches(|c: char| c.is_ascii_alphabetic());
+            let unit = &sz[digits.len()..];
+            if digits.is_empty()
+                || !digits.chars().all(|c| c.is_ascii_digit())
+                || !["b", "k", "m", "g", "kb", "mb", "gb"].contains(&unit)
+            {
+                return Err(what(format!("shm_size {sz:?}: a size like 512mb or 1gb")));
+            }
+        }
+        let mut nofile = None;
+        for (lk, lv) in &r.ulimits {
+            match (lk.as_str(), lv.as_u64()) {
+                (Some("nofile"), Some(n)) if (1024..=1_048_576).contains(&n) => {
+                    nofile = Some(n as u32);
+                }
+                _ => {
+                    return Err(what(
+                        "ulimits: only nofile, a number from 1024 to 1048576".into(),
+                    ));
+                }
+            }
+        }
+        out.push(Service {
+            name: name.to_string(),
+            image: r.image,
+            run_as_user,
+            env,
+            volumes,
+            command: r.command,
+            secrets: r.secrets,
+            health,
+            shm_size: r.shm_size,
+            nofile,
+        });
+    }
+    Ok(out)
 }
 
 /// « 56881/tcp » ou « 56881/udp ».
@@ -1144,6 +1425,50 @@ mod tests {
     }
 
     const OK: &str = "name: demo\ndescription: d\nmin_dotbox: 0.0.3\nimage: demo/demo:1.2\nport: 80\naccess: public\n";
+
+    /// Les services à côté de l'app (D159) et les secrets composés.
+    #[test]
+    fn services_rules() {
+        let base = include_str!("../tests/expected/db-app/manifest.yml");
+        let m = parse(base).unwrap();
+        assert_eq!(m.secrets, ["db_password", "jwt_secret", "database_url"]);
+        assert_eq!(m.composed.len(), 1);
+        assert_eq!(m.services.len(), 2);
+        assert_eq!(m.services[0].container("stats"), "stats-db");
+        assert!(m.services[0].run_as_user);
+        assert_eq!(m.services[1].nofile, Some(65536));
+        assert_eq!(
+            m.services[1].health,
+            ServiceHealth::Command(vec!["redis-cli".into(), "ping".into()])
+        );
+        let bad = |from: &str, to: &str| {
+            assert!(base.contains(from), "{from}");
+            parse(&base.replace(from, to)).unwrap_err()
+        };
+        assert!(bad("postgres:18.1", "postgres:latest").contains("never latest"));
+        assert!(bad("    health: [redis-cli, ping]\n", "").contains("missing field `health`"));
+        assert!(bad("[redis-cli, ping]", "yes").contains("healthcheck"));
+        assert!(bad("db:/var/lib/postgresql", "/data:/data").contains("only a folder of the app"));
+        assert!(bad("db:/var/lib/postgresql", "/opt:/opt").contains("only a folder of the app"));
+        assert!(bad("    shm_size: 1gb", "    ports: [\"5432/tcp\"]").contains("unknown field"));
+        assert!(bad("    shm_size: 1gb", "    shm_size: lots").contains("shm_size"));
+        assert!(bad("nofile: 65536", "nproc: 10").contains("only nofile"));
+        assert!(
+            bad(
+                "      - db_password\n    health",
+                "      - other\n    health"
+            )
+            .contains("not in the app's secrets")
+        );
+        assert!(bad("  cache:", "  stats:").contains("the app's own name"));
+        assert!(bad("  cache:", "  a-very-long-name:").contains("12 characters"));
+        assert!(bad("user: \"{{uid}}:{{gid}}\"", "user: \"0:0\"").contains("only"));
+        // un composé ne lit que des secrets tirés au hasard de l'app
+        assert!(bad("{{secret:db_password}}", "{{secret:nope}}").contains("not a random secret"));
+        assert!(bad("{{secret:db_password}}", "x").contains("at least one"));
+        assert!(bad("@{{app}}-db", "@{{home}}-db").contains("unknown {{home}}"));
+        assert!(bad("  - jwt_secret\n", "  - db_password\n").contains("listed twice"));
+    }
 
     #[test]
     fn rules() {

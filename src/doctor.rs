@@ -212,7 +212,9 @@ pub fn run() -> Result<Report, String> {
         }],
     );
     let st = status::collect()?;
-    add("Containers", container_checks(&st.core, &st.apps));
+    let mut containers = container_checks(&st.core, &st.apps);
+    containers.extend(service_checks(&st.apps, &status::containers()?));
+    add("Containers", containers);
     add(
         "Certificates",
         cert_checks(&domain, &cfg.get("ca").unwrap_or_default(), &st.apps),
@@ -335,6 +337,41 @@ fn container_checks(core: &[Entry], apps: &[Entry]) -> Vec<Check> {
     }
     if out.is_empty() {
         out.push(ok(format!("{fine} running")));
+    }
+    out
+}
+
+/// Les services d'une app qui tourne (sa base, son cache, D159): chacun doit tourner, healthy.
+/// Une app arrêtée a ses services arrêtés avec elle: rien à dire.
+fn service_checks(apps: &[Entry], list: &[status::Container]) -> Vec<Check> {
+    let mut out = Vec::new();
+    for e in apps.iter().filter(|e| e.state == "running") {
+        let text =
+            std::fs::read_to_string(crate::engine::compose_path(&e.name)).unwrap_or_default();
+        for (name, _) in crate::sync::compose_images(&text)
+            .into_iter()
+            .filter(|(c, _)| c != &e.name)
+        {
+            let c = list.iter().find(|c| c.name == name);
+            match c.map(|c| (c.state.as_str(), c.health.as_str())) {
+                Some(("running", "healthy" | "")) => {}
+                Some(("running", "starting")) => out.push(warn(
+                    format!("{name}: still starting"),
+                    "run dotbox doctor again in a minute",
+                )),
+                Some(("running", h)) => {
+                    out.push(error(format!("{name}: {h}"), format!("dotbox logs {name}")))
+                }
+                Some((state, _)) => out.push(error(
+                    format!("{name}: {state}, {} needs it", e.name),
+                    format!("dotbox restart {}", e.name),
+                )),
+                None => out.push(error(
+                    format!("{name}: no container, {} needs it", e.name),
+                    format!("dotbox install {}", e.name),
+                )),
+            }
+        }
     }
     out
 }

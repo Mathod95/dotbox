@@ -280,6 +280,16 @@ services:
 ",
         image = m.image
     );
+    if !m.services.is_empty() {
+        // ses services ne sont que sur le réseau privé de l'app (D159)
+        out.push_str("      - private\n    depends_on:\n");
+        for s in &m.services {
+            out.push_str(&format!(
+                "      {}:\n        condition: service_healthy\n",
+                s.name
+            ));
+        }
+    }
     if m.run_as_user {
         // l'image ne connaît pas PUID et PGID: le container tourne avec l'utilisateur (7.11)
         out.push_str(&format!("    user: \"{}:{}\"\n", c.uid, c.gid));
@@ -352,9 +362,13 @@ services:
             port = m.port
         ));
     }
+    out.push_str("    labels:\n");
+    if !m.services.is_empty() {
+        // deux réseaux: Traefik passe par dotbox, le privé ne lui est pas joignable
+        out.push_str("      traefik.docker.network: dotbox\n");
+    }
     out.push_str(&format!(
-        "    labels:
-      traefik.enable: \"true\"
+        "      traefik.enable: \"true\"
       traefik.http.routers.{app}.rule: Host(`{sub}.{domain}`)
       traefik.http.routers.{app}.entrypoints: websecure
       traefik.http.services.{app}.loadbalancer.server.port: \"{port}\"
@@ -394,6 +408,9 @@ services:
             ));
         }
     }
+    for s in &m.services {
+        service(&mut out, m, s, c);
+    }
     out.push_str(
         "
 networks:
@@ -401,7 +418,79 @@ networks:
     external: true
 ",
     );
+    if !m.services.is_empty() {
+        // internal: ni Internet, ni Traefik, ni les autres apps
+        out.push_str("  private:\n    internal: true\n");
+    }
     out
+}
+
+/// Un service à côté de l'app (D159): sur le réseau privé seulement, sans port ni route.
+fn service(out: &mut String, m: &Manifest, s: &crate::catalog::Service, c: &Ctx) {
+    let app = &m.name;
+    out.push_str(&format!(
+        "  {name}:
+    image: {image}
+    container_name: {container}
+    restart: unless-stopped
+    networks:
+      - private
+",
+        name = s.name,
+        image = s.image,
+        container = s.container(app)
+    ));
+    if s.run_as_user {
+        out.push_str(&format!("    user: \"{}:{}\"\n", c.uid, c.gid));
+    }
+    if !s.command.is_empty() {
+        let args: Vec<String> = s.command.iter().map(|a| quote(&fill(a, app, c))).collect();
+        out.push_str(&format!("    command: [{}]\n", args.join(", ")));
+    }
+    if let Some(sz) = &s.shm_size {
+        out.push_str(&format!("    shm_size: {sz}\n"));
+    }
+    if let Some(n) = s.nofile {
+        out.push_str(&format!(
+            "    ulimits:\n      nofile:\n        soft: {n}\n        hard: {n}\n"
+        ));
+    }
+    if !s.env.is_empty() {
+        out.push_str("    environment:\n");
+        for (k, v) in &s.env {
+            out.push_str(&format!("      {k}: {}\n", quote(&fill(v, app, c))));
+        }
+    }
+    if !s.volumes.is_empty() || !s.secrets.is_empty() {
+        out.push_str("    volumes:\n");
+        for v in &s.volumes {
+            let ro = if v.read_only { ":ro" } else { "" };
+            out.push_str(&format!("      - {}:{}{ro}\n", v.host, v.container));
+        }
+        for name in &s.secrets {
+            out.push_str(&format!(
+                "      - {}:/run/secrets/{name}:ro\n",
+                crate::secrets::path(&secret_name(app, name))
+            ));
+        }
+    }
+    out.push_str("    security_opt:\n      - no-new-privileges:true\n");
+    if let crate::catalog::ServiceHealth::Command(args) = &s.health {
+        let args: Vec<String> = args
+            .iter()
+            .map(|a| serde_json::to_string(&fill(a, app, c)).unwrap_or_default())
+            .collect();
+        out.push_str(&format!(
+            "    healthcheck:
+      test: [\"CMD\", {}]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+",
+            args.join(", ")
+        ));
+    }
 }
 
 #[cfg(test)]
@@ -799,6 +888,32 @@ mod tests {
         assert_eq!(ini_value("say \"hi\""), "\"say \\\"hi\\\"\"");
         assert_eq!(ini_value("172.18.0.0/16"), "172.18.0.0/16");
         assert!(merge_ini(None, &[v("Port", "1")]).is_err());
+    }
+
+    /// Une app et ses services (D159): un réseau privé, l'app qui attend leur healthcheck, les
+    /// secrets montés là où ils servent, rien de publié.
+    #[test]
+    fn an_app_and_its_database() {
+        let m = catalog::parse(include_str!("../tests/expected/db-app/manifest.yml")).unwrap();
+        let mut c = ctx(Access::TwoFactor);
+        c.subdomain = "stats".into();
+        let out = compose(&m, &c);
+        if let Ok(p) = std::env::var("DOTBOX_WRITE_EXPECTED") {
+            std::fs::write(p, &out).unwrap();
+        }
+        assert_eq!(out, include_str!("../tests/expected/db-app/compose.yml"));
+        assert!(!out.contains("ports:"));
+        assert_eq!(
+            m.images(),
+            [
+                ("stats".to_string(), "example/stats:1.2.3".to_string()),
+                ("stats-db".to_string(), "postgres:18.1".to_string()),
+                ("stats-cache".to_string(), "redis:8.2.1-alpine".to_string()),
+            ]
+        );
+        assert_eq!(crate::sync::compose_images(&out), m.images());
+        // sans services: le compose d'une app seule ne change pas
+        assert!(!compose(&prowlarr(), &ctx(Access::TwoFactor)).contains("private"));
     }
 
     fn prowlarr() -> Manifest {

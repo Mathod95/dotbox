@@ -10,9 +10,12 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Les apps du catalogue: la ligne image:",
+      "description": "Les apps du catalogue: la ligne image:, et celles de leurs services (une base, un cache, D159)",
       "managerFilePatterns": ["/^catalog/[^/]+\\.ya?ml$/"],
-      "matchStrings": ["(?m)^image:\\s*(?<depName>[^:\\s]+):(?<currentValue>\\S+)\\s*$"],
+      "matchStrings": [
+        "(?m)^image:\\s*(?<depName>[^:\\s]+):(?<currentValue>\\S+)\\s*$",
+        "(?m)^    image:\\s*(?<depName>[^:\\s]+):(?<currentValue>\\S+)\\s*$"
+      ],
       "datasourceTemplate": "docker"
     },
     {
@@ -63,6 +66,14 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["plexinc/pms-docker"],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-[0-9a-f]+$"
+    },
+    {
+      "description": "Les bases de données des apps (D159): jamais de version majeure proposée. Leurs fichiers ne se relisent pas d'une majeure à l'autre (PostgreSQL 18 vers 19 demande pg_upgrade): une majeure se fait à la main, avec l'app.",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["catalog/*.yml"],
+      "matchPackageNames": ["postgres", "timescale/timescaledb-ha", "redis", "mariadb", "valkey/valkey"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     },
     {
       "description": "Tout ce qui touche le catalogue: chore(catalog), jamais fix (pas de nouvelle version de dotbox, D64).",

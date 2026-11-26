@@ -331,10 +331,24 @@ pub fn logs_allowed(app: &str) -> Result<(), String> {
     if !catalog::valid_name(app) {
         return Err(format!("{app:?} is not an app name"));
     }
-    if Config::load()?.app(app).is_none() {
-        return Err(format!("{app} is not installed"));
+    let cfg = Config::load()?;
+    if cfg.app(app).is_some() || is_service_of(&cfg, app) {
+        return Ok(());
     }
-    Ok(())
+    Err(format!("{app} is not installed"))
+}
+
+/// Le container d'un service d'une app installée (jellystat-db, D159): ses logs se lisent aussi,
+/// par dotbox logs jellystat-db.
+fn is_service_of(cfg: &Config, container: &str) -> bool {
+    cfg.app_names().iter().any(|a| {
+        container.starts_with(&format!("{a}-"))
+            && std::fs::read_to_string(engine::compose_path(a)).is_ok_and(|t| {
+                crate::sync::compose_images(&t)
+                    .iter()
+                    .any(|(c, _)| c == container)
+            })
+    })
 }
 
 pub fn logs_args(app: &str, tail: u32, follow: bool) -> Vec<String> {
@@ -368,11 +382,24 @@ pub struct Version {
     pub current: String,
     /// le tag du catalogue
     pub latest: String,
+    /// ses services en retard sur le catalogue (D159): « jellystat-db 18.1 → 18.2 »
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub services: Vec<String>,
 }
 
 impl Version {
     pub fn up_to_date(&self) -> bool {
-        self.current == self.latest
+        self.current == self.latest && self.services.is_empty()
+    }
+
+    /// Ce qui est en retard: « → 1.2 », et ses services (« jellystat-db 18.1 → 18.2 »).
+    fn behind(&self) -> String {
+        let mut parts = Vec::new();
+        if self.current != self.latest {
+            parts.push(format!("→ {}", self.latest));
+        }
+        parts.extend(self.services.iter().cloned());
+        parts.join(", ")
     }
 }
 
@@ -390,18 +417,58 @@ pub fn versions(dir: &Path, cfg: &Config) -> Result<Vec<Version>, String> {
                 .find(|c| c.name == app)
                 .map(|c| status::tag(&c.image))
                 .unwrap_or_default();
+            let services = m
+                .services
+                .iter()
+                .filter_map(|s| {
+                    let name = s.container(&app);
+                    let tag = list
+                        .iter()
+                        .find(|c| c.name == name)
+                        .map(|c| status::tag(&c.image))?;
+                    (tag != s.version()).then(|| format!("{name} {tag} → {}", s.version()))
+                })
+                .collect();
             Some(Version {
                 latest: m.version().to_string(),
                 current,
                 app,
+                services,
             })
         })
         .collect())
 }
 
-/// L'image d'avant la dernière mise à jour, pour --rollback.
+/// Les images d'avant la dernière mise à jour, pour --rollback: une ligne par container
+/// (« jellystat-db postgres:18.1 »). Une ligne sans nom de container est l'image de l'app (le
+/// fichier d'avant les services, D159).
 fn previous_path(app: &str) -> String {
     format!("{}/.dotbox-previous", engine::dir(app))
+}
+
+fn parse_previous(app: &str, text: &str) -> Vec<(String, String)> {
+    text.lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .map(|l| match l.split_once(' ') {
+            Some((c, i)) => (c.to_string(), i.trim().to_string()),
+            None => (app.to_string(), l.to_string()),
+        })
+        .collect()
+}
+
+/// Les containers d'une app qui tournent, et leur image, pour --rollback.
+fn running_images(app: &str, list: &[status::Container]) -> String {
+    let services = std::fs::read_to_string(engine::compose_path(app))
+        .map(|t| crate::sync::compose_images(&t))
+        .unwrap_or_default();
+    let mut names = vec![app.to_string()];
+    names.extend(services.into_iter().map(|(c, _)| c).filter(|c| c != app));
+    names
+        .iter()
+        .filter_map(|n| list.iter().find(|c| &c.name == n))
+        .map(|c| format!("{} {}\n", c.name, c.image))
+        .collect()
 }
 
 pub fn update(
@@ -448,8 +515,9 @@ pub fn update(
         ui::more_steps(targets.len());
         // une app à la fois: la suivante seulement quand la précédente tourne (spec: Update)
         for t in &targets {
-            if let Some(c) = status::containers()?.iter().find(|c| c.name == t.app) {
-                system::write_if_changed(&previous_path(&t.app), &format!("{}\n", c.image), 0o644)?;
+            let kept = running_images(&t.app, &status::containers()?);
+            if !kept.is_empty() {
+                system::write_if_changed(&previous_path(&t.app), &kept, 0o644)?;
             }
             // arrêtée exprès: la nouvelle version est prête, l'app reste arrêtée (D81)
             apps::install_one(&dir, &t.app, &domain, &user, None, !cfg.app_stopped(&t.app))?;
@@ -469,13 +537,18 @@ pub fn update(
 fn roll_back(app: &str, verbose: bool) -> Result<(), String> {
     apps::begin("update", &format!("{app} --rollback"), 1, verbose)?;
     let result = (|| {
-        let image = std::fs::read_to_string(previous_path(app))
-            .map(|s| s.trim().to_string())
+        let text = std::fs::read_to_string(previous_path(app))
             .map_err(|_| format!("no previous image for {app}: dotbox update keeps one"))?;
+        let pins = parse_previous(app, &text);
+        if pins.is_empty() {
+            return Err(format!(
+                "no previous image for {app}: dotbox update keeps one"
+            ));
+        }
         let cfg = Config::load()?;
         let (domain, user) = apps::server(&cfg)?;
         let start = !cfg.app_stopped(app);
-        apps::install_one(&catalog_dir(), app, &domain, &user, Some(&image), start)?;
+        apps::install_one(&catalog_dir(), app, &domain, &user, Some(&pins), start)?;
         // une seule marche en arrière
         let _ = std::fs::remove_file(previous_path(app));
         Ok(())
@@ -491,7 +564,7 @@ pub fn print_versions(report: &[Version]) {
             let state = if v.up_to_date() {
                 "up to date".to_string()
             } else {
-                format!("→ {}", v.latest)
+                v.behind()
             };
             clack::put(&format!("{:<16}{:<w$}{state}", v.app, v.current));
         }
@@ -521,7 +594,7 @@ pub fn print_versions(report: &[Version]) {
                 Mark::Warn,
                 &v.app,
                 width,
-                &format!("{:<22}→ {}", ui::fit(current, 21), v.latest),
+                &format!("{:<22}{}", ui::fit(current, 21), v.behind()),
             );
         }
     }
@@ -557,13 +630,44 @@ mod tests {
             app: "radarr".into(),
             current: "7.0.3.10918-ls328".into(),
             latest: "7.0.4.10950-ls329".into(),
+            services: vec![],
         };
         assert!(!v.up_to_date());
+        assert_eq!(v.behind(), "→ 7.0.4.10950-ls329");
         let w = Version {
             latest: v.current.clone(),
             ..v.clone()
         };
         assert!(w.up_to_date());
+        // la base en retard, l'app à jour (D159)
+        let db = Version {
+            services: vec!["radarr-db 18.1 → 18.2".into()],
+            ..w.clone()
+        };
+        assert!(!db.up_to_date());
+        assert_eq!(db.behind(), "radarr-db 18.1 → 18.2");
+    }
+
+    #[test]
+    fn previous_images() {
+        // le fichier d'avant les services: l'image de l'app seule
+        assert_eq!(
+            parse_previous("radarr", "lscr.io/linuxserver/radarr:7.0.3\n"),
+            [(
+                "radarr".to_string(),
+                "lscr.io/linuxserver/radarr:7.0.3".to_string()
+            )]
+        );
+        assert_eq!(
+            parse_previous(
+                "stats",
+                "stats example/stats:1.2\nstats-db postgres:18.1\n\n"
+            ),
+            [
+                ("stats".to_string(), "example/stats:1.2".to_string()),
+                ("stats-db".to_string(), "postgres:18.1".to_string())
+            ]
+        );
     }
 
     #[test]

@@ -99,6 +99,15 @@ pub fn store(name: &str, value: &str) -> Result<(), String> {
         .map_err(|e| format!("cannot write {p}: {e}"))
 }
 
+/// Un secret d'app monté dans un container (D151, D159): lisible par tous dans le container, qui
+/// peut tourner sous un autre compte que root (PostgreSQL, l'utilisateur). Sur le serveur, le
+/// dossier reste en 0700: seul root y entre.
+pub fn mountable(name: &str) -> Result<(), String> {
+    let p = path(name);
+    fs::set_permissions(&p, fs::Permissions::from_mode(0o444))
+        .map_err(|e| format!("cannot set the permissions of {p}: {e}"))
+}
+
 /// Lit un secret, None s'il n'existe pas.
 pub fn read(name: &str) -> Option<String> {
     fs::read_to_string(path(name))
