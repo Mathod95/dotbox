@@ -863,7 +863,7 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "progress",
+      "status": "done",
       "fr": "Catalogue: qBittorrent et code-server sur l'image officielle de leur projet, comme Traefik et Authelia",
       "en": "Catalog: qBittorrent and code-server on their project's official image, like Traefik and Authelia",
       "doc": "apps",
@@ -873,7 +873,9 @@
         "Q84",
         "J300",
         "8.4",
-        "8.9"
+        "8.9",
+        "J314",
+        "J315"
       ]
     },
     {
@@ -940,25 +942,27 @@
     {
       "stage": "apps",
       "domain": "engine",
-      "status": "progress",
+      "status": "done",
       "fr": "Moteur: les secrets d'une app (`secrets:`), tirés une seule fois et montés en lecture seule, jamais dans `compose.yml`",
       "en": "Engine: an app's secrets (`secrets:`), drawn once and mounted read-only, never in `compose.yml`",
       "journal": [
         "D151",
-        "J304"
+        "J304",
+        "J313"
       ]
     },
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "progress",
+      "status": "done",
       "fr": "Homarr: un tableau de bord pour tes apps, en `two_factor`, sa clé de chiffrement tirée par Dotbox",
       "en": "Homarr: a dashboard for your apps, `two_factor`, its encryption key drawn by Dotbox",
       "doc": "homarr",
       "journal": [
         "D150",
         "D151",
-        "J304"
+        "J304",
+        "J313"
       ]
     },
     {
@@ -1319,14 +1323,15 @@
     {
       "stage": "core",
       "domain": "cli",
-      "status": "progress",
+      "status": "done",
       "fr": "CLI: le raccourci `db`, un lien vers `dotbox` posé par `dotbox init` seulement si `db` est libre, avec la complétion pour les deux noms",
       "en": "CLI: the `db` shortcut, a link to `dotbox` set up by `dotbox init` only if `db` is free, with completion for both names",
       "doc": "cli",
       "journal": [
         "Q90",
         "D143",
-        "J303"
+        "J303",
+        "J316"
       ]
     },
     {

@@ -618,6 +618,20 @@ fn prepare_data(m: &catalog::Manifest, uid: u32, gid: u32, user: &str) -> Result
 
 /// Pose les réglages du manifest dans le fichier de configuration de l'app, sans toucher au
 /// reste. Rend true si le fichier a changé.
+/// Les dossiers qui manquent entre `base` (non compris) et `dir`, du plus bas au plus haut.
+fn missing_below(base: &Path, dir: &Path) -> Vec<std::path::PathBuf> {
+    let mut out = Vec::new();
+    let mut p = dir;
+    while p != base && p.starts_with(base) && !p.exists() {
+        out.push(p.to_path_buf());
+        match p.parent() {
+            Some(q) => p = q,
+            None => break,
+        }
+    }
+    out
+}
+
 fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Result<bool, String> {
     use std::os::unix::fs::PermissionsExt;
     let Some(st) = &m.settings else {
@@ -625,6 +639,12 @@ fn write_settings(m: &catalog::Manifest, ctx: &Ctx, uid: u32, gid: u32) -> Resul
     };
     let path = format!("{}/{}", engine::dir(&m.name), st.file);
     if let Some(parent) = Path::new(&path).parent() {
+        // chaque dossier qui manque sous /opt/<app>/config est à l'utilisateur, pas seulement le
+        // dernier: config/.config/code-server, .config compris (le dossier personnel de l'app)
+        let base = Path::new(&engine::dir(&m.name)).join("config");
+        for d in missing_below(&base, parent).iter().rev() {
+            system::owned_dir(&d.to_string_lossy(), uid, gid)?;
+        }
         if !parent.exists() {
             system::owned_dir(&parent.to_string_lossy(), uid, gid)?;
         }
@@ -753,6 +773,21 @@ fn remove_steps(app: &str, purge: bool, yes: bool) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn folders_missing_below_the_config() {
+        let tmp = std::env::temp_dir().join(format!("dotbox-missing-{}", std::process::id()));
+        let base = tmp.join("config");
+        std::fs::create_dir_all(&base).unwrap();
+        let dir = base.join(".config/code-server");
+        assert_eq!(
+            missing_below(&base, &dir),
+            [dir.clone(), base.join(".config")]
+        );
+        // hors de config: rien
+        assert!(missing_below(&base, &tmp.join("other/x")).is_empty());
+        std::fs::remove_dir_all(&tmp).unwrap();
+    }
+
     use super::*;
 
     #[test]
