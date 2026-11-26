@@ -3602,7 +3602,15 @@ bash -c 'source <(db completion bash); complete -p db dotbox' ; la complétion d
       result: `init: la carte de fin, le core healthy, Dot Box running
 /usr/local/bin/db -> /usr/local/bin/dotbox ; db --version: dotbox 0.0.6 ; db status sans sudo: le tableau du core
 La complétion déclarée pour les deux noms (complete -F _dotbox db et dotbox), « db sta » propose status et start`,
-      undo: "sudo rm /usr/local/bin/db" }
+      undo: "sudo rm /usr/local/bin/db" },
+    { id: "J317", time: "08:55", status: "fait", where: "PC → Saltbox", kind: "lecture",
+      title: "16.11: la clé chargée, mais refusée par le Saltbox",
+      cmd: `SSH_AUTH_SOCK=/mnt/wsl/claude-agent.sock ssh-add -l
+ssh saltbox 'date; sudo -n true; ls /etc/ssh/sshd_config.d/; id dotbox-backup; ...' ; ssh -v saltbox true`,
+      does: "Mathod95: « C'est bon, la clé est chargée, go! ». D'abord la lecture de l'état du Saltbox.",
+      effect: "Rien de changé: la connexion n'a pas eu lieu.",
+      result: "L'agent a une clé (ED25519, « Mathod »), proposée au Saltbox pour l'utilisateur de ~/.ssh/config (Host saltbox): « Permission denied (publickey) ». Ce n'est pas la clé que le Saltbox attend pour ce compte, ou pas le bon compte.",
+      undo: "Rien à annuler." }
   ];
 
   var PLAN = [
@@ -6042,7 +6050,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       refs: "D97, D99, D100" },
     { n: 96,
       t: "Les apps à plusieurs containers: comment les faire dans Dot Box?",
-      p: "Après N24 (ce que fait Saltbox). Ce que Dot Box a déjà: un compose.yml par app dans /opt/<app>, les secrets tirés une fois et montés en lecture seule (secrets:, D151), le healthcheck attendu, des versions fixées, la sauvegarde qui arrête l'app puis archive /opt/<app>.",
+      p: "Après N24 (ce que fait Saltbox). Ce que Dot Box a déjà: un compose.yml par app dans /opt/<app>, les secrets tirés une fois et montés en lecture seule (secrets:, D151), le healthcheck attendu, des versions fixées, la sauvegarde qui arrête l'app puis archive /opt/<app>. Mathod95, le 26 novembre 2026, après N24: « Il me semblait que Saltbox avait un outil pour créer les différentes bases de données! Il doit y avoir un outil sur le net qui peut déployer des bdd Redis, MariaDB, PostgreSQL! Ou alors on utilise ceux des compose, mais je ne me souviens plus c'était quoi le souci des compose avec multi container! ». À reprendre après les essais (« on en parle par la suite »). Ce que dit le Journal: le seul « souci » noté est D74, le moteur ne gérait qu'un container par app; dotbox add refuse plusieurs services pour la même raison (D80).",
       l: ["Un manifest à plusieurs services (services: l'app et sa base), dans le même compose.yml: une base par app, jamais partagée; la base sur un réseau propre à l'app, que les autres apps et Traefik ne voient pas; son mot de passe tiré par secrets:, jamais dans compose.yml; l'app démarrée quand la base est healthy (depends_on: service_healthy); ses données dans /opt/<app>/db, sauvegardées avec l'app, arrêtée en entier pendant l'archive.", "Comme Saltbox: une base par moteur (un postgres, un mariadb) partagée par les apps, sur le réseau dotbox.", "Pas de base: seulement les apps qui tiennent en un container (SQLite)."],
       reco: "Avis de Claude: la première. Une app et sa base vont et viennent ensemble (install, remove, backup, restore, update), un mot de passe tiré au hasard plutôt qu'une valeur écrite dans le code, et une base qu'une autre app ne peut pas joindre. La deuxième rend la sauvegarde d'une app incomplète sans la base des autres. Puis, app par app: Jellystat (postgres), Tracearr (timescaledb et redis), Gitea (postgres plutôt que mariadb, son SSH sur un port publié, D44, D77), Portainer derrière le socket proxy en lecture seule (D68), NetBird et Backstage à lire chez leurs projets. Pas encore tranchée.",
       refs: "N24, D74, D76, D151" }
@@ -6255,7 +6263,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
-    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312],
+    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
