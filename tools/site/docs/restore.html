@@ -5,11 +5,6 @@
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
   <h2 id="fr-app">Restaurer une app</h2>
-  <div class="prop-old" data-prop="114">
-  <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
-  <p>Remplace <code>/opt/radarr</code> par sa dernière sauvegarde et relance l'app. Les autres apps ne bougent pas. À la place de <code>latest</code>, une date ou un chemin d'archive précis.</p>
-  </div>
-  <div class="prop-new" data-prop="114">
   <pre><span class="p">$</span> sudo dotbox restore latest --app radarr
 <span class="ok">  ✓ [1/1] Radarr        from 2026-11-22-0400, healthy, old folder kept      24 s</span>
 
@@ -17,13 +12,10 @@
     /opt/radarr.before-restore-2026-11-22-093338</pre>
   <p>Dot Box montre d'abord les archives choisies et demande une confirmation (<code>-y</code> pour la sauter). Puis il ouvre l'archive à côté, arrête l'app, met son dossier de côté (<code>/opt/radarr.before-restore-&lt;date&gt;</code>, pas effacé), met le nouveau à sa place et relance l'app. Si elle ne repart pas, l'ancien dossier revient à sa place. Les fichiers retrouvent leurs propriétaires et leurs droits. Les autres apps ne bougent pas. Une app arrêtée avec <code>dotbox stop</code> reste arrêtée. À la place de <code>latest</code>, une date (<code>2026-11-21</code> ou <code>2026-11-21-0400</code>) ou le chemin d'une archive.</p>
   <p class="note"><b>En root</b>: une archive peut contenir n'importe quel fichier de <code>/opt</code>, un <code>compose.override.yml</code> qui monte tout le serveur par exemple. <code>restore</code> passe donc par <code>sudo</code>, sans le service de Dot Box, comme <code>exec</code>, <code>edit</code> et <code>add</code>. Une archive dont un fichier sortirait du dossier de son app est refusée.</p>
-  </div>
 
-  <div class="prop-new" data-prop="142">
   <h2 id="fr-remote">Restaurer depuis une destination distante</h2>
   <pre><span class="p">$</span> sudo dotbox restore sftp:dotbox-backup@nas.example.com:/backups --app radarr</pre>
   <p>La plus récente archive de chaque app (ou de celle de <code>--app</code>) est rapportée dans <code>/backups</code>, puis restaurée comme une archive locale. Même chose avec <code>rclone:b2:dotbox-backups</code>. Utile quand le disque du serveur a perdu <code>/backups</code>.</p>
-  </div>
 
   <h2 id="fr-all">Restaurer tout le serveur</h2>
   <pre><span class="p">$</span> sudo dotbox restore latest</pre>
@@ -59,11 +51,6 @@
 
 <article class="prose" data-l="en">
   <h2 id="en-app">Restore an app</h2>
-  <div class="prop-old" data-prop="114">
-  <pre><span class="p">$</span> dotbox restore latest --app radarr</pre>
-  <p>Replaces <code>/opt/radarr</code> with its latest backup and restarts the app. Other apps are not touched. Instead of <code>latest</code>, a date or a specific archive path.</p>
-  </div>
-  <div class="prop-new" data-prop="114">
   <pre><span class="p">$</span> sudo dotbox restore latest --app radarr
 <span class="ok">  ✓ [1/1] Radarr        from 2026-11-22-0400, healthy, old folder kept      24 s</span>
 
@@ -71,13 +58,10 @@
     /opt/radarr.before-restore-2026-11-22-093338</pre>
   <p>Dot Box first shows the archives it picked and asks for a confirmation (<code>-y</code> skips it). Then it opens the archive aside, stops the app, moves its folder aside (<code>/opt/radarr.before-restore-&lt;date&gt;</code>, not deleted), puts the new one in place and restarts the app. If it does not come back, the old folder goes back in place. Files get their owners and permissions back. The other apps do not move. An app stopped with <code>dotbox stop</code> stays stopped. Instead of <code>latest</code>, a date (<code>2026-11-21</code> or <code>2026-11-21-0400</code>) or the path of an archive.</p>
   <p class="note"><b>As root</b>: an archive can hold any file of <code>/opt</code>, a <code>compose.override.yml</code> that mounts the whole server for example. <code>restore</code> therefore goes through <code>sudo</code>, without the Dot Box service, like <code>exec</code>, <code>edit</code> and <code>add</code>. An archive with a file outside its app's folder is refused.</p>
-  </div>
 
-  <div class="prop-new" data-prop="142">
   <h2 id="en-remote">Restore from a remote destination</h2>
   <pre><span class="p">$</span> sudo dotbox restore sftp:dotbox-backup@nas.example.com:/backups --app radarr</pre>
   <p>The latest archive of each app (or of the one given by <code>--app</code>) is brought back into <code>/backups</code>, then restored like a local archive. Same with <code>rclone:b2:dotbox-backups</code>. Useful when the server's disk has lost <code>/backups</code>.</p>
-  </div>
 
   <h2 id="en-all">Restore the whole server</h2>
   <pre><span class="p">$</span> sudo dotbox restore latest</pre>

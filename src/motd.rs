@@ -815,14 +815,11 @@ fn paint(level: Level, text: &str) -> String {
     }
 }
 
-fn symbol(level: Level, ascii: bool) -> String {
-    match (level, ascii) {
-        (Level::Ok, false) => style("◇").green().to_string(),
-        (Level::Warn, false) => style("▲").yellow().to_string(),
-        (Level::Error, false) => style("■").red().to_string(),
-        (Level::Ok, true) => style("+").green().to_string(),
-        (Level::Warn, true) => style("!").yellow().to_string(),
-        (Level::Error, true) => style("!").red().to_string(),
+fn symbol(level: Level) -> String {
+    match level {
+        Level::Ok => style("◇").green().to_string(),
+        Level::Warn => style("▲").yellow().to_string(),
+        Level::Error => style("■").red().to_string(),
     }
 }
 
@@ -842,11 +839,11 @@ fn body(l: &Line) -> String {
 }
 
 /// Une ligne avec son symbole: « ◇  System    … », ou « ▲  2 apps behind: … » pour une alerte.
-fn marked(l: &Line, ascii: bool) -> String {
+fn marked(l: &Line) -> String {
     if l.name.is_empty() {
-        format!("{}  {}", symbol(l.level, ascii), body(l))
+        format!("{}  {}", symbol(l.level), body(l))
     } else {
-        format!("{}  {:<WIDTH$}{}", symbol(l.level, ascii), l.name, body(l))
+        format!("{}  {:<WIDTH$}{}", symbol(l.level), l.name, body(l))
     }
 }
 
@@ -854,7 +851,7 @@ fn marked(l: &Line, ascii: bool) -> String {
 fn bare(l: &Line) -> String {
     let mark = match l.level {
         Level::Ok => String::new(),
-        lv => format!("{} ", symbol(lv, false)),
+        lv => format!("{} ", symbol(lv)),
     };
     if l.name.is_empty() {
         format!("{mark}{}", body(l))
@@ -869,15 +866,6 @@ fn footer(m: &Motd) -> String {
         f.push_str(&format!(" · https://dotbox.{}", m.domain));
     }
     f
-}
-
-/// Rien que de l'ASCII: les séparateurs et les flèches remplacés, le reste en « ? ».
-pub fn ascii_only(text: &str) -> String {
-    text.replace('·', "-")
-        .replace('→', "->")
-        .chars()
-        .map(|c| if c.is_ascii() { c } else { '?' })
-        .collect()
 }
 
 pub fn render(m: &Motd, style_name: &str) -> Vec<String> {
@@ -899,34 +887,25 @@ pub fn render(m: &Motd, style_name: &str) -> Vec<String> {
                 out.push(format!("{left}   {r}").trim_end().to_string());
             }
         }
-        "banner" => {
-            out.extend(BANNER.iter().map(|l| style(*l).green().to_string()));
+        // banner et ascii: les mêmes lignes, façon cliclack; seul le logo change (en points, ou
+        // en ASCII, la police Standard de figlet)
+        "banner" | "ascii" => {
+            let logo: &[&str] = if style_name == "ascii" {
+                &FIGLET
+            } else {
+                &BANNER
+            };
+            out.extend(logo.iter().map(|l| style(*l).green().to_string()));
             out.push(title);
             out.push(String::new());
-            out.extend(m.lines.iter().map(|l| marked(l, false)));
+            out.extend(m.lines.iter().map(marked));
             out.push(String::new());
             out.push(style(footer(m)).dim().to_string());
-        }
-        "ascii" => {
-            out.extend(FIGLET.iter().map(|l| style(*l).green().to_string()));
-            out.push(ascii_only(&title));
-            out.push(String::new());
-            for l in &m.lines {
-                let l = Line {
-                    text: ascii_only(&l.text),
-                    extra: ascii_only(&l.extra),
-                    hint: ascii_only(&l.hint),
-                    ..l.clone()
-                };
-                out.push(marked(&l, true));
-            }
-            out.push(String::new());
-            out.push(style(ascii_only(&footer(m))).dim().to_string());
         }
         _ => {
             out.push(format!("{}  {} {title}", bar("┌"), style("Dot Box").bold()));
             out.push(bar("│"));
-            out.extend(m.lines.iter().map(|l| marked(l, false)));
+            out.extend(m.lines.iter().map(marked));
             out.push(bar("│"));
             out.push(format!("{}  {}", bar("└"), style(footer(m)).dim()));
         }
@@ -1455,13 +1434,10 @@ mod tests {
         let banner = render(&motd, "banner");
         assert_eq!(banner[7], "0.0.6 · example.com");
         assert_eq!(banner[9], "◇  System    Debian 13 · up 3 days · load 0.42");
+        // ascii: le logo en ASCII, puis les mêmes lignes que banner
         let ascii = render(&motd, "ascii");
-        for l in &ascii {
-            assert!(l.is_ascii(), "{l}");
-        }
-        assert_eq!(ascii[5], "0.0.6 - example.com");
-        assert_eq!(ascii[7], "+  System    Debian 13 - up 3 days - load 0.42");
-        assert_eq!(ascii[9], "!  2 apps behind: dotbox update --all");
+        assert_eq!(ascii[..5].join("\n"), FIGLET.join("\n"));
+        assert_eq!(ascii[5..], banner[7..]);
     }
 
     #[test]

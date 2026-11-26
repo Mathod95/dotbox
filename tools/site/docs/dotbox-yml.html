@@ -2,7 +2,6 @@
 <p class="lede">Configuration<i>●</i>every setting of dotbox.yml, in one place.</p>
 
 <!-- CONTENT -->
-<div class="prop-new" data-prop="168">
 <article class="prose">
   <p>Dot Box keeps its settings in a single file, <code>/opt/dotbox/dotbox.yml</code>. <code>dotbox init</code> writes it with your answers, <code>dotbox install</code> adds each app to it. A setting that is not in the file uses its default value. The file has no comments, apart from its first line: Dot Box may rewrite it whole.</p>
 
@@ -91,8 +90,6 @@ motd:
   <h2 id="secrets">Secrets</h2>
   <p>Passwords and keys never go in <code>dotbox.yml</code>. They live in <code>/opt/dotbox/secrets/</code>, readable by root only: the keys of Authelia and CrowdSec, your Authelia password kept for root, the backup key (<code>backup.key</code>), the SSH key of SFTP destinations, and <code>rclone.conf</code>. The whole <code>/opt/dotbox</code> folder is readable by root only: <code>dotbox config get</code> reads the settings without <code>sudo</code>, through the Dot Box service.</p>
 </article>
-</div>
-<div class="prop-new" data-prop="169">
 <article class="prose">
   <h2 id="later">Coming later</h2>
   <p>These settings are planned but not coded yet: <code>dotbox config set</code> refuses them for now.</p>
@@ -105,8 +102,6 @@ motd:
     </tbody>
   </table></div>
 </article>
-</div>
-<div class="prop-new" data-prop="176">
 <article class="prose">
   <h3 id="later-ssh">SSH, coming later</h3>
   <div class="table-scroll"><table>
@@ -117,4 +112,3 @@ motd:
     </tbody>
   </table></div>
 </article>
-</div>

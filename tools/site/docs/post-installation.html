@@ -33,20 +33,6 @@
   </div>
   <h2 id="fr-doctor">Lancer dotbox doctor</h2>
   <p>Avant tout, <code>doctor</code> vérifie le serveur et liste ce qui reste à faire. Chaque point ci-dessous correspond à une de ses lignes.</p>
-  <div class="prop-old" data-prop="94">
-  <pre><span class="p">$</span> dotbox doctor
-<span class="ok">  ok    docker 28.2, network dotbox</span>
-<span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
-<span class="ok">  ok    certificates valid (6 subdomains)</span>
-<span class="ok">  ok    crowdsec running, ssh and traefik watched</span>
-<span class="w">  warn  14 system updates pending (3 security)</span>
-<span class="w">  warn  reboot required</span>
-<span class="w">  warn  ssh accepts passwords</span>
-<span class="w">  warn  ssh allows root login</span>
-<span class="w">  warn  backup only local (/backups)</span>
-<span class="ok">  ok    /data 12% used</span></pre>
-  </div>
-  <div class="prop-new" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
 <span class="c">┌</span>  dotbox doctor
 <span class="c">│</span>
@@ -75,24 +61,14 @@
 <span class="ok">◇</span>  Service        dotbox running, web gate: refuses without Traefik's secret, answers with it
 <span class="c">│</span>
 <span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
-  </div>
 
   <h2 id="fr-updates">Mettre le système à jour</h2>
   <p>Dot Box ne met pas à jour le système et ne redémarre jamais le serveur: c'est toi qui choisis le moment. <code>doctor</code> signale:</p>
-  <div class="prop-old" data-prop="135">
-  <ul>
-    <li><b>les mises à jour en attente</b>, dont celles de sécurité;</li>
-    <li><b>les mises à jour de sécurité automatiques</b> (<code>unattended-upgrades</code>) si elles sont désactivées;</li>
-    <li><b>un redémarrage nécessaire</b>, par exemple après une mise à jour du noyau.</li>
-  </ul>
-  </div>
-  <div class="prop-new" data-prop="135">
   <ul>
     <li><b>Les mises à jour en attente</b>, dont celles de sécurité.</li>
     <li><b>Les mises à jour de sécurité automatiques</b> (<code>unattended-upgrades</code>), si elles sont désactivées.</li>
     <li><b>Un redémarrage nécessaire</b>, par exemple après une mise à jour du noyau.</li>
   </ul>
-  </div>
   <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
 <span class="p">$</span> sudo reboot</pre>
   <p>Après un redémarrage, Docker relance toutes les apps.</p>
@@ -157,20 +133,6 @@
   </div>
   <h2 id="en-doctor">Run dotbox doctor</h2>
   <p>First, <code>doctor</code> checks the server and lists what is left to do. Each point below matches one of its lines.</p>
-  <div class="prop-old" data-prop="94">
-  <pre><span class="p">$</span> dotbox doctor
-<span class="ok">  ok    docker 28.2, network dotbox</span>
-<span class="ok">  ok    *.example.com resolves to 203.0.113.10</span>
-<span class="ok">  ok    certificates valid (6 subdomains)</span>
-<span class="ok">  ok    crowdsec running, ssh and traefik watched</span>
-<span class="w">  warn  14 system updates pending (3 security)</span>
-<span class="w">  warn  reboot required</span>
-<span class="w">  warn  ssh accepts passwords</span>
-<span class="w">  warn  ssh allows root login</span>
-<span class="w">  warn  backup only local (/backups)</span>
-<span class="ok">  ok    /data 12% used</span></pre>
-  </div>
-  <div class="prop-new" data-prop="94">
   <pre><span class="p">$</span> dotbox doctor
 <span class="c">┌</span>  dotbox doctor
 <span class="c">│</span>
@@ -199,24 +161,14 @@
 <span class="ok">◇</span>  Service        dotbox running, web gate: refuses without Traefik's secret, answers with it
 <span class="c">│</span>
 <span class="c">└</span>  <span class="w">3 sections to look at</span></pre>
-  </div>
 
   <h2 id="en-updates">Update the system</h2>
   <p>Dot Box does not update the system and never reboots the server: you choose when. <code>doctor</code> reports:</p>
-  <div class="prop-old" data-prop="135">
-  <ul>
-    <li><b>pending updates</b>, including security ones;</li>
-    <li><b>automatic security updates</b> (<code>unattended-upgrades</code>) if they are turned off;</li>
-    <li><b>a required reboot</b>, for example after a kernel update.</li>
-  </ul>
-  </div>
-  <div class="prop-new" data-prop="135">
   <ul>
     <li><b>Pending updates</b>, including security ones.</li>
     <li><b>Automatic security updates</b> (<code>unattended-upgrades</code>), if they are turned off.</li>
     <li><b>A required reboot</b>, for example after a kernel update.</li>
   </ul>
-  </div>
   <pre><span class="p">$</span> sudo apt update && sudo apt full-upgrade
 <span class="p">$</span> sudo reboot</pre>
   <p>After a reboot, Docker starts every app again.</p>

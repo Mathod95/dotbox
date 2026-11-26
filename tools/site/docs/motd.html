@@ -42,21 +42,9 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 
   <h2 id="styles">Styles</h2>
   <div class="prop-old" data-prop="148"><p>Three styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
-  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>, except <b>ascii</b>, which only uses plain ASCII.</p></div>
+  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>. Only the logo of <b>ascii</b> is drawn in ASCII.</p></div>
 
   <h3 id="compact">compact (default)</h3>
-  <div class="prop-old" data-prop="153">
-  <pre><span class="c">┌</span>  Dot Box 0.0.5 · example.com
-<span class="c">│</span>
-<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
-<span class="ok">◇</span>  Memory    2.1 / 8 GB · /opt 12 % · /data 61 %
-<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
-<span class="ok">◇</span>  CrowdSec  37 IPs banned in 24 h
-<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
-<span class="c">│</span>
-<span class="c">└</span>  dotbox status · dotbox --help</pre>
-  </div>
-  <div class="prop-new" data-prop="153">
   <p>What <code>dotbox motd</code> prints, line by line as coded: a line per state, then the yellow lines with their command.</p>
   <pre><span class="c">┌</span>  Dot Box 0.0.6 · example.com
 <span class="c">│</span>
@@ -70,10 +58,10 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
 <span class="c">│</span>
 <span class="c">└</span>  <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
-  </div>
 
   <h3 id="fastfetch">fastfetch</h3>
   <p>The 7 × 7 dot pictogram on the left, the lines on the right.</p>
+  <div class="prop-old" data-prop="188">
   <pre><span class="ok">● ● ● ● ● ● ●</span>   Dot Box 0.0.5 · example.com
 <span class="ok">●           ●</span>   System    Debian 13 · up 3 days · load 0.42
 <span class="ok">●   ● ● ●   ●</span>   Memory    2.1 / 8 GB · /opt 12 % · /data 61 %
@@ -81,9 +69,23 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="ok">●   ● ● ●   ●</span>   CrowdSec  37 IPs banned in 24 h
 <span class="ok">●           ●</span>   Doctor    ✓ nothing to report, 2 h ago
 <span class="ok">● ● ● ● ● ● ●</span>   <span class="w">▲ 2 apps behind: dotbox update --all</span></pre>
+  </div>
+  <div class="prop-new" data-prop="188">
+  <pre><span class="ok">● ● ● ● ● ● ●</span>   Dot Box 0.0.6 · example.com
+<span class="ok">●           ●</span>   System    Debian 13 · up 3 days · load 0.42
+<span class="ok">●   ● ● ●   ●</span>   Memory    2.1 / 7.8 GiB
+<span class="ok">●   ●   ●   ●</span>   Disks     / 12 % · /data 61 %
+<span class="ok">●   ● ● ●   ●</span>   Apps      14 running · 1 stopped (sonarr)
+<span class="ok">●           ●</span>   Doctor    nothing to report, 2 h ago
+<span class="ok">● ● ● ● ● ● ●</span>   Backup    1 h ago · 15 archives · 120 MB
+                CrowdSec  37 IPs banned in 24 h, 4 min ago
+                <span class="w">▲ 2 apps behind: dotbox update --all</span>
+                <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
+  </div>
 
   <h3 id="banner">banner</h3>
   <p>« DOT BOX » in dot letters, the 5 × 7 font of the site's page titles, above the lines.</p>
+  <div class="prop-old" data-prop="188">
   <pre><span class="ok">●●●●   ●●●  ●●●●●   ●●●●   ●●●  ●   ●
 ●   ● ●   ●   ●     ●   ● ●   ● ●   ●
 ●   ● ●   ●   ●     ●   ● ●   ●  ● ●
@@ -96,20 +98,49 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
 <span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
 <span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span></pre>
+  </div>
+  <div class="prop-new" data-prop="188">
+  <pre><span class="ok">●●●●   ●●●  ●●●●●   ●●●●   ●●●  ●   ●
+●   ● ●   ●   ●     ●   ● ●   ● ●   ●
+●   ● ●   ●   ●     ●   ● ●   ●  ● ●
+●   ● ●   ●   ●     ●●●●  ●   ●   ●
+●   ● ●   ●   ●     ●   ● ●   ●  ● ●
+●   ● ●   ●   ●     ●   ● ●   ● ●   ●
+●●●●   ●●●    ●     ●●●●   ●●●  ●   ●</span>
+0.0.6 · example.com
+
+<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
+<span class="ok">◇</span>  Memory    2.1 / 7.8 GiB
+<span class="ok">◇</span>  Disks     / 12 % · /data 61 %
+<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
+<span class="ok">◇</span>  Doctor    nothing to report, 2 h ago
+<span class="ok">◇</span>  Backup    1 h ago · 15 archives · 120 MB
+<span class="ok">◇</span>  CrowdSec  37 IPs banned in 24 h, 4 min ago
+<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
+
+<span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
+  </div>
 
   <div class="prop-new" data-prop="148">
   <h3 id="ascii">ascii</h3>
-  <p>« dotbox » in the <a href="https://patorjk.com/software/taag/#p=display&amp;f=Standard&amp;t=dotbox">Standard</a> figlet font, and lines with plain ASCII marks. Nothing but ASCII: it shows the same on any terminal, even without Unicode or with a font that lacks the dots of <b>banner</b>.</p>
+  <p>The lines of <b>banner</b>, under « dotbox » in the <a href="https://patorjk.com/software/taag/#p=display&amp;f=Standard&amp;t=dotbox">Standard</a> figlet font. Only the logo changes: for a terminal whose font lacks the dots of <b>banner</b>.</p>
   <pre><span class="ok">     _       _   _
   __| | ___ | |_| |__   _____  __
  / _` |/ _ \| __| '_ \ / _ \ \/ /
 | (_| | (_) | |_| |_) | (_) &gt;  &lt;
  \__,_|\___/ \__|_.__/ \___/_/\_\</span>
-0.0.6 - example.com
+0.0.6 · example.com
 
-<span class="ok">+</span>  System    Debian 13 - up 3 days - load 0.42
-<span class="ok">+</span>  Apps      14 running - 1 stopped (sonarr)
-<span class="w">!</span>  <span class="w">2 apps behind: dotbox update --all</span></pre>
+<span class="ok">◇</span>  System    Debian 13 · up 3 days · load 0.42
+<span class="ok">◇</span>  Memory    2.1 / 7.8 GiB
+<span class="ok">◇</span>  Disks     / 12 % · /data 61 %
+<span class="ok">◇</span>  Apps      14 running · 1 stopped (sonarr)
+<span class="ok">◇</span>  Doctor    nothing to report, 2 h ago
+<span class="ok">◇</span>  Backup    1 h ago · 15 archives · 120 MB
+<span class="ok">◇</span>  CrowdSec  37 IPs banned in 24 h, 4 min ago
+<span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
+
+<span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
   </div>
 
   <h2 id="command">The command</h2>
@@ -129,28 +160,6 @@ motd:
 
   <h2 id="live">Live or cached</h2>
   <p>Some lines cost nothing to compute. Others take seconds, or need the Internet, and would slow down every login.</p>
-<div class="prop-old" data-prop="151">
-  <div class="table-scroll"><table>
-    <thead><tr><th>Line</th><th>Cost</th><th>Where it comes from</th></tr></thead>
-    <tbody>
-      <tr><td>System, uptime, load</td><td>Instant</td><td><code>/proc</code></td></tr>
-      <tr><td>Memory, disks</td><td>Instant</td><td><code>/proc</code>, the file systems</td></tr>
-      <tr><td>Core and apps</td><td>A few tens of milliseconds</td><td>Docker</td></tr>
-      <tr><td>CrowdSec bans</td><td>Hundreds of milliseconds</td><td><code>cscli</code>, in the CrowdSec container</td></tr>
-      <tr><td>Doctor's problems</td><td>Several seconds</td><td><code>dotbox doctor</code> (DNS, certificates, apt), kept in <code>/opt/dotbox/doctor.json</code></td></tr>
-      <tr><td>Apps behind, a new Dot Box</td><td>The Internet</td><td>The catalog and the releases on GitHub</td></tr>
-      <tr><td>Last backup</td><td>Instant</td><td>The backup log (to come, Backup)</td></tr>
-    </tbody>
-  </table></div>
-  <p>The fast lines are computed live at each login: the system, the load, the memory, the disks, the state of the containers. The slow ones are read from files that other jobs write:</p>
-  <ul>
-    <li>Doctor runs every night, from a systemd timer, after the 04:00 backup. The MOTD reads <code>/opt/dotbox/doctor.json</code>.</li>
-    <li>The apps behind come from the last <code>dotbox diff</code> or <code>dotbox update</code>.</li>
-    <li>The CrowdSec bans are cached.</li>
-  </ul>
-  <p>Each cached line says how old it is (« 2 h ago »), so old news never looks fresh. <code>dotbox motd --refresh</code> runs the cached checks again now and rewrites their files.</p>
-  </div>
-  <div class="prop-new" data-prop="151">
   <div class="table-scroll"><table>
     <thead><tr><th>Line</th><th>Cost</th><th>Where it comes from</th></tr></thead>
     <tbody>
@@ -172,10 +181,9 @@ motd:
   </ul>
   <p>Each cached line says how old it is (« 2 h ago »), so old news never looks fresh. <code>dotbox motd --refresh</code> runs the cached checks now. A check that fails keeps its last value and its age.</p>
   <p>At login, the script gives <code>dotbox motd</code> 5 seconds: a Docker that no longer answers never blocks the connection. As root, <code>dotbox motd</code> works without the Dot Box service. Without <code>sudo</code>, it asks the service.</p>
-  </div>
 
 <h2 id="lines">What it shows</h2>
-  <p>The same lines in all three styles, only the drawing changes. Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
+  <p><span class="prop-old" data-prop="148">The same lines in all three styles, only the drawing changes.</span><span class="prop-new" data-prop="148">The same lines in all four styles, only the drawing changes.</span> Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Line</th><th>Content</th><th>Shown</th><th>Yellow when</th></tr></thead>
     <tbody>

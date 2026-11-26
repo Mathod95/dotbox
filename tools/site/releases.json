@@ -35,6 +35,10 @@
           "en": "CLI: `dotbox list` also shows the apps added with `dotbox add`, marked yours"
         },
         {
+          "fr": "CLI: le style `ascii` de `dotbox motd` affiche les mêmes lignes que `banner`, seul le logo est en ASCII",
+          "en": "CLI: the `ascii` style of `dotbox motd` shows the same lines as `banner`, only the logo is in ASCII"
+        },
+        {
           "fr": "CLI: la première ligne de `dotbox.yml` est en anglais et donne l'adresse de sa page dans la doc",
           "en": "CLI: the first line of `dotbox.yml` is in English and gives the address of its page in the docs"
         },
