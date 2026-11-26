@@ -3610,7 +3610,64 @@ ssh saltbox 'date; sudo -n true; ls /etc/ssh/sshd_config.d/; id dotbox-backup; .
       does: "Mathod95: « C'est bon, la clé est chargée, go! ». D'abord la lecture de l'état du Saltbox.",
       effect: "Rien de changé: la connexion n'a pas eu lieu.",
       result: "L'agent a une clé (ED25519, « Mathod »), proposée au Saltbox pour l'utilisateur de ~/.ssh/config (Host saltbox): « Permission denied (publickey) ». Ce n'est pas la clé que le Saltbox attend pour ce compte, ou pas le bon compte.",
-      undo: "Rien à annuler." }
+      undo: "Rien à annuler." },
+    { id: "J318", time: "08:53", status: "fait", where: "PC → Saltbox", kind: "lecture",
+      title: "16.11: la bonne clé chargée, l'état du Saltbox",
+      cmd: `# Mathod95: SSH_AUTH_SOCK=/mnt/wsl/claude-agent.sock ssh-add ~/.ssh/seedbox (la clé que son ~/.ssh/config donne au Saltbox), puis « Go »
+ssh saltbox 'sudo -n true; ls /etc/ssh/sshd_config.d/; id dotbox-backup; ls -ld /var/lib/dotbox-backup; stat / /var /var/lib; df -h /var/lib'`,
+      does: "La clé chargée en J317 n'était pas celle du Saltbox (id_ed25519 au lieu de seedbox).",
+      effect: "Rien de changé.",
+      result: "sudo sans mot de passe ; sshd_config.d: 50-cloud-init.conf seulement ; pas de compte dotbox-backup, pas de /var/lib/dotbox-backup (comme laissé par J276) ; /, /var, /var/lib à root, 755 ; 4,8 To libres.",
+      undo: "Rien à annuler." },
+    { id: "J319", time: "08:53", status: "fait", where: "PC → Saltbox", kind: "ecriture",
+      title: "16.11: le compte dotbox-backup recréé, sa règle SSH, la clé de Dot Box",
+      cmd: `ssh saltbox 'sudo useradd --system --home-dir /var/lib/dotbox-backup --no-create-home --shell /usr/sbin/nologin dotbox-backup ; sudo usermod -p "*" dotbox-backup
+sudo install -d -m 755 -o root -g root /var/lib/dotbox-backup /var/lib/dotbox-backup/.ssh ; sudo install -d -m 700 -o dotbox-backup -g dotbox-backup /var/lib/dotbox-backup/backups
+sudo tee /etc/ssh/sshd_config.d/50-dotbox-backup.conf (Match User dotbox-backup, ChrootDirectory /var/lib/dotbox-backup, ForceCommand internal-sftp -d /backups, AllowTcpForwarding no, AllowAgentForwarding no, X11Forwarding no, PermitTTY no, PasswordAuthentication no)
+sudo sshd -t ; sudo sshd -T -C user=dotbox-backup,... ; sudo sshd -T -C user=root,... ; sudo systemctl reload ssh'
+ssh saltbox 'echo nouvelle connexion'
+echo "restrict <la clé publique de Dot Box>" | sudo tee /var/lib/dotbox-backup/.ssh/authorized_keys ; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub, comparée à celle gardée sur le serveur de test`,
+      does: "Le « go » de Mathod95, le plan de 16.11 (c): comme J257, J258, J262, J264 et J266, directement dans /var/lib.",
+      effect: "Saltbox: le compte dotbox-backup (uid 996, sans mot de passe), /var/lib/dotbox-backup, /etc/ssh/sshd_config.d/50-dotbox-backup.conf, SSH rechargé.",
+      result: `sshd -t: ok ; pour dotbox-backup: permittty no, allowtcpforwarding no, forcecommand internal-sftp -d /backups, chrootdirectory /var/lib/dotbox-backup ; pour root: forcecommand none, chrootdirectory none
+SSH active, une nouvelle connexion: ok
+authorized_keys: restrict ssh-ed25519 ... ; l'empreinte ed25519 du Saltbox identique à celle de /opt/dotbox/secrets/backup_known_hosts`,
+      undo: "Voir J323." },
+    { id: "J320", time: "08:54", status: "fait", where: "PC → Serveur → Saltbox", kind: "ecriture",
+      title: "16.11: --stream de Prowlarr vers le Saltbox",
+      cmd: `sudo dotbox backup --stream --app prowlarr --verbose --to sftp:dotbox-backup@<saltbox>:/backups
+ls /backups | wc -l (avant, après) ; docker ps --filter name=prowlarr ; docker ps -a --filter name=dotbox-rclone
+ssh saltbox 'sudo ls -la /var/lib/dotbox-backup/backups'`,
+      does: "Le premier envoi en flux.",
+      effect: "Prowlarr arrêté puis relancé (30 s avec l'envoi). Saltbox: une archive.",
+      result: `check sftp:dotbox-backup@<saltbox>:/backups, à l'étape Key (avant tout arrêt) ; stop, start ; send .../prowlarr-2026-11-26-0854.tar.zst.age (607 entries, 1 MB) ; ✓ 1 MB, healthy, 30 s
+/backups: 94 fichiers avant et après ; aucun container rclone resté ; Saltbox: prowlarr-2026-11-26-0854.tar.zst.age (1 061 185 octets), aucun .partial`,
+      undo: "Voir J323." },
+    { id: "J321", time: "08:55", status: "fait", where: "PC → Serveur → Saltbox", kind: "ecriture",
+      title: "16.11: une sauvegarde complète en flux vers le Saltbox",
+      cmd: `sudo dotbox backup --stream --to sftp:dotbox-backup@<saltbox>:/backups ; ls /backups | wc -l ; dotbox status
+ssh saltbox 'sudo ls /var/lib/dotbox-backup/backups | wc -l ; ls -a | grep -c partial'`,
+      does: "Tout le serveur: /opt/dotbox puis les 14 apps.",
+      effect: "Chaque app arrêtée le temps de son envoi, puis relancée. Saltbox: 15 archives de plus.",
+      result: `16 étapes ✓, de 08:55 à 09:04: Dotbox 13 kB, Prowlarr 1 MB, Code-server 2 kB, Wg-easy 7 kB (1 min 14 s), Homarr 4 MB, Jellyfin 32 kB, Seerr 22 kB (1 min 14 s), Wizarr 86 kB, Vaultwarden 12 kB (1 min 12 s), Plex 298 kB, Tautulli 16 kB, Autobrr 23 kB, Maintainerr 7 MB, Uptime-kuma 2 kB, Qbittorrent 6 MB, toutes healthy (de 19 s à 1 min 14 s chacune, l'envoi compris)
+« 15 archives, 18 MB, in sftp:dotbox-backup@<saltbox>:/backups, keep 7 » ; /backups: 94 avant et après ; dotbox status: « backup 2026-11-26 08:55, 15 archives, 18 MB » ; Saltbox: 16 archives, aucun .partial`,
+      undo: "Voir J323." },
+    { id: "J322", time: "09:04", status: "fait", where: "PC → Serveur → Saltbox", kind: "ecriture",
+      title: "16.11: Prowlarr restauré depuis son archive en flux",
+      cmd: `sudo dotbox restore sftp:dotbox-backup@<saltbox>:/backups --app prowlarr -y
+docker ps --filter name=prowlarr ; puis rm -rf /opt/prowlarr.before-restore-2026-11-26-090453`,
+      does: "La preuve qu'une archive envoyée en flux se relit.",
+      effect: "Prowlarr remplacé par son archive de 08:55 (l'ancien dossier gardé, puis effacé une fois Prowlarr healthy). /backups: l'archive rapportée.",
+      result: "« fetching 1 archive from sftp:... into /backups » ; ✓ Prowlarr from 2026-11-26-0855, healthy, old folder kept, 25 s ; Prowlarr healthy.",
+      undo: "Rien à annuler." },
+    { id: "J323", time: "09:06", status: "fait", where: "PC → Saltbox", kind: "ecriture",
+      title: "16.11: le compte dotbox-backup retiré du Saltbox",
+      cmd: `ssh saltbox 'sudo rm /etc/ssh/sshd_config.d/50-dotbox-backup.conf ; sudo sshd -t ; sudo systemctl reload ssh ; sudo userdel dotbox-backup ; sudo rm -rf /var/lib/dotbox-backup ; ls /etc/ssh/sshd_config.d/'
+ssh saltbox 'echo nouvelle connexion'`,
+      does: "Le plan de 16.11 (c), comme J276: le Saltbox ne reste pas une destination du serveur de test.",
+      effect: "Saltbox: revenu à son état de J318 (seul 50-cloud-init.conf), les 16 archives de test effacées avec le compte.",
+      result: "sshd -t: ok, SSH active ; compte absent, /var/lib/dotbox-backup absent ; nouvelle connexion: ok.",
+      undo: "Refaire J319." }
   ];
 
   var PLAN = [
@@ -4895,7 +4952,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "16.10", status: "fait", ref: "J240-J253", kind: "ecriture", where: "PC → Serveur", title: "Les tests de 16.1 à 16.4 et 16.6 sur le serveur",
           does: "Proposés par Claude le 22 novembre 2026, après J238 et J239, à lancer avec l'accord de Mathod95. dotbox.yml copié de côté avant (dotbox.yml.before-16), son empreinte notée. (a) Le binaire de J238 dans /usr/local/bin/dotbox (dotbox.previous garde la v0.0.5, pas touché), le service redémarré, dotbox --help, dotbox diff: le timer et son service manquent (deux lignes dotbox). (b) dotbox sync -y: les deux unités écrites, systemctl list-timers montre la prochaine à 04:00, diff ne dit plus rien. (c) dotbox backup --app prowlarr: la clé créée (la première fois), /backups en 700, l'archive en 600, prowlarr arrêté, relancé, healthy. (d) dotbox backup: /opt/dotbox et les 16 apps, une à la fois, chacune relancée, la durée de chacune. dotbox status (la ligne Backup) et dotbox doctor (la section Backup: seulement sur ce serveur, en jaune). (e) Une restauration: un fichier témoin posé dans /opt/prowlarr/config, puis sudo dotbox restore latest --app prowlarr -y: le témoin a disparu, l'ancien dossier est dans /opt/prowlarr.before-restore-<date>, prowlarr healthy. (f) L'heure: dotbox config set backup.schedule « daily HH:MM » trois minutes plus tard, diff, sync -y, puis attendre: le timer lance la sauvegarde tout seul (backup.json et le journal de dotbox-backup.service). (g) keep: dotbox config set backup.keep 2, puis deux dotbox backup --app prowlarr: il en reste deux. Puis dotbox.yml remis tel qu'avant (son empreinte), sync -y: le timer revient à 04:00. Reste sur le serveur: le timer à 04:00, la clé, /backups et ses archives (moins de 100 Mo par sauvegarde). À effacer avec accord (rm -rf, D: demander avant): /opt/prowlarr.before-restore-<date>.",
           effect: "Serveur: /usr/local/bin/dotbox, le service redémarré, /opt/dotbox/secrets/backup.key, /backups, dotbox-backup.timer et .service, chaque app arrêtée quelques secondes, prowlarr restauré." },
-        { id: "16.11", status: "en cours", ref: "J309-J311", kind: "ecriture", where: "PC → Serveur → Saltbox", title: "--stream, sorti de 16.8 (D157)",
+        { id: "16.11", status: "fait", ref: "J309-J323", kind: "ecriture", where: "PC → Serveur → Saltbox", title: "--stream, sorti de 16.8 (D157)",
           does: "Mathod95: « Il faut coder 141 avant de le valider, et tu peux utiliser mon serveur Saltbox pour tester ». (a) Le code (J309): dotbox backup --stream, sans dossier local; chaque destination distante vérifiée avant d'arrêter une app; l'app arrêtée, son archive (tar, zstd, age) écrite dans l'entrée de rclone rcat (docker run -i), une par destination, sous .<archive>.partial; l'app relancée et attendue; l'archive renommée (rclone moveto), puis keep de l'autre côté. Un envoi raté: le .partial effacé, l'app relancée quand même. (b) Sur le serveur de test (J310, J311): sans destination distante, refusé; vers le Saltbox, refusé (le compte retiré en J276). (c) À faire avec l'accord de Mathod95, commande par commande, par sa clé dans le ssh-agent: recréer le compte dotbox-backup sur le Saltbox (J257, J258, J262, J264, J266: le compte, sa règle SSH vérifiée par sshd -t, SSH rechargé, la clé de Dot Box avec restrict), puis dotbox backup --stream --app prowlarr, une sauvegarde complète en flux, un restore depuis le Saltbox, rien de nouveau dans /backups, puis le compte retiré comme en J276.",
           effect: "Serveur de test: le binaire du PC. Saltbox: le compte recréé le temps des essais, puis retiré." },
       ] },
@@ -6263,7 +6320,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "12": [196, 199, 200, 203, 204],
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
-    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317],
+    "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],

@@ -1064,13 +1064,13 @@
     {
       "stage": "backup",
       "domain": "backup",
-      "status": "progress",
+      "status": "done",
       "fr": "CLI: `dotbox backup --stream`, envoyer l'archive sans l'écrire sur le disque",
       "en": "CLI: `dotbox backup --stream`, send the archive without writing it to disk",
       "doc": "backup",
       "journal": [
         "16.11",
-        "J309-J311",
+        "J309-J323",
         "D157"
       ]
     },
