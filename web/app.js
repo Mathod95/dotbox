@@ -77,6 +77,9 @@
     if (!x.state || x.state === "missing") return ["missing", "bad"];
     return [x.state === "exited" ? "stopped" : x.state, ""];
   }
+  // « db » pour jellystat-db
+  function short(app, name) { return name.indexOf(app + "-") === 0 ? name.slice(app.length + 1) : name; }
+
   function stateTag(x) { var s = stateOf(x); return el("span", "st " + s[1], s[0]); }
 
   // ---------- une tâche: POST, puis ses événements en direct (GET /jobs/{id}/events)
@@ -227,6 +230,10 @@
         var link = el("a", "v", a.url.replace(/^https:\/\//, ""));
         link.href = a.url; link.target = "_blank"; link.rel = "noopener noreferrer";
         add(k, el("span", "n", a.name), link, stateTag(a), el("span", "v", a.access + (a.setup_pending ? ", set up first" : "")));
+        // ses services, la base et le cache (D163)
+        (a.services || []).forEach(function (s) {
+          add(k, add(el("span", "svc"), el("span", "", short(a.name, s.name) + " " + (s.version || "")), stateTag(s)));
+        });
         add(apps, k);
       });
       add(m, apps);
@@ -302,6 +309,14 @@
         acts.appendChild(jobBtn("Remove", "danger", function () { removeApp(a.name); }));
         add(r, acts);
         add(rows, r);
+        // ses services dessous: la base, le cache (D163), avec leurs logs
+        (a.services || []).forEach(function (s) {
+          var sr = el("div", "row sub");
+          var sacts = el("span", "acts");
+          sacts.appendChild(btn("Logs", "", function () { openLogs(s.name); }));
+          add(sr, el("span", "n", short(a.name, s.name)), el("span", "", s.version || ""), add(el("span"), stateTag(s)), el("span"), sacts);
+          add(rows, sr);
+        });
       });
       add(m, rows);
       add(m, el("p", "note", "Remove keeps /opt/<app>/config: installing again picks it up. Purge erases it too."));

@@ -47,6 +47,8 @@ h2 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-tr
 .card { display: grid; gap: 8px; align-content: start; padding: 13px 15px; border: 1.5px solid #1d1d1d; border-radius: 12px; background: var(--panel); min-width: 0; }
 .card .n { color: var(--lit); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card .v { color: var(--muted); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .svc { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid #1a1a1a; color: var(--muted); font-size: 11.5px; min-width: 0; }
+.card .svc > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card .acts { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .st { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; color: var(--muted); }
@@ -58,6 +60,9 @@ h2 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-tr
 .rows { display: grid; border: 1.5px solid #1d1d1d; border-radius: 12px; overflow: hidden; background: var(--panel); }
 .row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(110px, 1.2fr) 130px 110px minmax(0, auto); align-items: center; gap: 12px; padding: 11px 15px; border-top: 1px solid #161616; min-width: 0; }
 .row:first-child { border-top: 0; }
+.row.sub { padding-top: 7px; padding-bottom: 7px; border-top-color: #121212; font-size: 12px; }
+.row.sub .n { color: var(--muted); padding-left: 16px; }
+.row.sub .n::before { content: "↳ "; }
 .row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .row .n { color: var(--lit); }
 .row .acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }

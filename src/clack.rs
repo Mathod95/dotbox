@@ -70,6 +70,15 @@ pub fn sub_mark(mark: Mark, text: &str) {
     crate::clack::put(&format!("{}    {}", bar_char("│"), mark.paint(text)));
 }
 
+/// Sous une ligne: un élément qui en dépend (la base d'une app), avec son symbole.
+pub fn sub_item(mark: Mark, name: &str, width: usize, text: &str) {
+    crate::clack::put(&format!(
+        "{}  {} {name:<width$}{text}",
+        bar_char("│"),
+        mark.symbol()
+    ));
+}
+
 pub fn close(text: &str) {
     bar();
     crate::clack::put(&format!("{}  {text}", bar_char("└")));

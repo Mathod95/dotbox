@@ -755,6 +755,7 @@ pub fn collect() -> Result<Motd, String> {
                         url: format!("https://{sub}.{domain}"),
                         access: String::new(),
                         setup_pending: false,
+                        services: Vec::new(),
                     }
                 })
                 .collect();

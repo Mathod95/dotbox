@@ -34,6 +34,9 @@ pub struct Entry {
     /// derrière Authelia tant que son assistant de premier démarrage n'est pas fini (D71)
     #[serde(default)]
     pub setup_pending: bool,
+    /// les containers de ses services, sa base ou son cache (D159, D163), vide pour une app seule
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub services: Vec<Entry>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -142,6 +145,7 @@ fn entry(name: &str, list: &[Container]) -> Entry {
             url: String::new(),
             access: String::new(),
             setup_pending: false,
+            services: Vec::new(),
         },
         None => Entry {
             name: name.into(),
@@ -151,8 +155,27 @@ fn entry(name: &str, list: &[Container]) -> Entry {
             url: String::new(),
             access: String::new(),
             setup_pending: false,
+            services: Vec::new(),
         },
     }
+}
+
+/// Les services d'une app, lus dans son compose.yml: chaque container sauf l'app elle-même.
+pub fn services_of(app: &str, list: &[Container]) -> Vec<Entry> {
+    let text = std::fs::read_to_string(engine::compose_path(app)).unwrap_or_default();
+    crate::sync::compose_images(&text)
+        .into_iter()
+        .filter(|(c, _)| c != app)
+        .map(|(c, _)| entry(&c, list))
+        .collect()
+}
+
+/// Le nom court d'un service sous son app: « db » pour jellystat-db.
+pub fn short_name<'a>(app: &str, service: &'a str) -> &'a str {
+    service
+        .strip_prefix(app)
+        .and_then(|s| s.strip_prefix('-'))
+        .unwrap_or(service)
 }
 
 pub fn collect() -> Result<Status, String> {
@@ -170,6 +193,7 @@ pub fn collect() -> Result<Status, String> {
             e.url = format!("https://{sub}.{domain}");
             e.setup_pending = setup_pending(name, &access);
             e.access = access;
+            e.services = services_of(name, &list);
             e
         })
         .collect();
@@ -292,7 +316,13 @@ fn print_fancy(st: &Status) {
     let width = st
         .apps
         .iter()
-        .map(|a| a.name.len())
+        .flat_map(|a| {
+            std::iter::once(a.name.len()).chain(
+                a.services
+                    .iter()
+                    .map(|s| short_name(&a.name, &s.name).len() + 2),
+            )
+        })
         .max()
         .unwrap_or(0)
         .max(6)
@@ -353,6 +383,20 @@ fn print_fancy(st: &Status) {
             style(e.url.trim_start_matches("https://")).dim()
         );
         clack::item(m, &e.name, width, &line);
+        // ses services dessous, chacun avec son symbole: la base, le cache (D163)
+        for sv in &e.services {
+            let sm = mark(sv);
+            clack::sub_item(
+                sm,
+                short_name(&e.name, &sv.name),
+                width - 2,
+                &format!(
+                    "{:<19}{}",
+                    crate::ui::fit(&sv.version, 18),
+                    sm.paint(&shown_state(sv))
+                ),
+            );
+        }
     }
     clack::bar();
     let (m, text) = backup_line(&st.backup);
@@ -407,6 +451,16 @@ fn print_plain(st: &Status) {
                 access,
                 style(e.url.trim_start_matches("https://")).dim()
             ));
+            for sv in &e.services {
+                let state = shown_state(sv);
+                let pad = " ".repeat(10usize.saturating_sub(state.chars().count()));
+                crate::clack::put(&format!(
+                    "    {:<20}{:<19}{}{pad}",
+                    sv.name,
+                    crate::ui::fit(&sv.version, 18),
+                    styled_state(sv)
+                ));
+            }
         }
     }
     crate::clack::put("");
@@ -485,6 +539,20 @@ mod tests {
         assert_eq!(mark(&e), Mark::Warn);
         e.health = "unhealthy".into();
         assert_eq!(mark(&e), Mark::Error);
+    }
+
+    #[test]
+    fn services_under_their_app() {
+        assert_eq!(short_name("jellystat", "jellystat-db"), "db");
+        assert_eq!(short_name("tracearr", "tracearr-cache"), "cache");
+        assert_eq!(short_name("stats", "other-db"), "other-db");
+        // la réponse d'un service d'avant D163, sans services: lue quand même
+        let e: Entry = serde_json::from_str(
+            r#"{"name":"radarr","version":"6.0","state":"running","health":"healthy"}"#,
+        )
+        .unwrap();
+        assert!(e.services.is_empty());
+        assert!(!serde_json::to_string(&e).unwrap().contains("services"));
     }
 
     #[test]

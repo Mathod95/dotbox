@@ -935,6 +935,7 @@ mod tests {
             url: String::new(),
             access: String::new(),
             setup_pending: false,
+            services: Vec::new(),
         };
         let c = container_checks(
             &[e("traefik", "running", "healthy")],
