@@ -68,6 +68,12 @@
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-[0-9a-f]+$"
     },
     {
+      "description": "TimescaleDB (Tracearr, 18.7): la version de PostgreSQL, puis celle de TimescaleDB (pg18.4-ts2.29.1). Sans les variantes -all, -oss ni les builds -rNNN. Une nouvelle version de TimescaleDB compte comme un correctif.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["timescale/timescaledb-ha"],
+      "versioning": "regex:^pg(?<major>\\d+)\\.(?<minor>\\d+)-ts(?<patch>\\d+)\\.(?<build>\\d+)\\.(?<revision>\\d+)$"
+    },
+    {
       "description": "Les bases de données des apps (D159): jamais de version majeure proposée. Leurs fichiers ne se relisent pas d'une majeure à l'autre (PostgreSQL 18 vers 19 demande pg_upgrade): une majeure se fait à la main, avec l'app.",
       "matchDatasources": ["docker"],
       "matchFileNames": ["catalog/*.yml"],
@@ -86,6 +92,12 @@
       "matchFileNames": ["catalog/**"],
       "matchUpdateTypes": ["patch"],
       "automerge": true
+    },
+    {
+      "description": "TimescaleDB ne fusionne jamais seul: une nouvelle version de l'extension demande ALTER EXTENSION dans la base, à vérifier avec Tracearr.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["timescale/timescaledb-ha"],
+      "automerge": false
     },
     {
       "description": "Les crates Rust: une pull request par semaine, sans fusion automatique (D65).",

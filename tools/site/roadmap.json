@@ -807,14 +807,16 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Tracearr: le suivi des lectures du serveur média (TimescaleDB et Redis à côté)",
       "en": "Tracearr: media server playback tracking (TimescaleDB and Redis alongside)",
       "journal": [
         "8.16",
         "D74",
         "18.7",
-        "D159"
+        "D159",
+        "J337-J340",
+        "N29"
       ]
     },
     {

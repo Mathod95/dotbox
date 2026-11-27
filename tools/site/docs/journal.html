@@ -3779,6 +3779,45 @@ docker ps -a --filter name=jellystat ; docker images | grep -E "jellystat|postgr
       result: `doctor: « error Containers jellystat-db: exited, jellystat needs it → dotbox restart jellystat ».
 status: jellystat healthy (son healthcheck ne regarde pas la base), « jellystat-db 18.1 exited » dessous.
 start: ✓ healthy, 7,1 s, les deux containers healthy.`,
+      undo: "Rien à annuler." },
+    { id: "J337", time: "23:19", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.7: Tracearr installé, avec TimescaleDB et Redis",
+      cmd: `tar czf - catalog | ssh dotbox-test 'tar xzf - -C /tmp/cat-test'   (le catalogue du PC, avec tracearr.yml, pas encore poussé)
+sudo dotbox install --local --catalog /tmp/cat-test/catalog tracearr ; docker ps --filter name=tracearr`,
+      does: "D167: go pour Tracearr. ghcr.io/connorgallopo/tracearr:3.2.1, timescale/timescaledb-ha:pg18.4-ts2.29.1 et redis:8.12.0-alpine, du compose officiel (N29). Le binaire 0.0.7 de J329, sans changement.",
+      effect: "Serveur: /opt/tracearr (compose.yml, backup/, images/, db/, redis/), les containers tracearr, tracearr-db et tracearr-redis, le réseau tracearr_private, quatre secrets (db_password, jwt_secret, cookie_secret, database_url), tracearr dans dotbox.yml, son certificat.",
+      result: "✓ Tracearr 3.2.1, two_factor, 6 min 14 s (les trois images à tirer, TimescaleDB pèse le plus). Les trois containers healthy.",
+      undo: "sudo dotbox remove --local --purge -y tracearr" },
+    { id: "J338", time: "23:26", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "18.7: ce que l'installation de Tracearr a posé",
+      cmd: `docker logs tracearr, tracearr-db, tracearr-redis ; ls -lan /opt/tracearr /opt/tracearr/db ; ls -l /opt/dotbox/secrets | grep tracearr
+docker exec tracearr-db psql -U tracearr -d tracearr -tAc "select extname, extversion from pg_extension"
+docker exec traefik wget -qO- http://tracearr:3000/health ; dotbox status --local ; wget --max-redirect=0 https://tracearr.<domaine>`,
+      does: "Vérifier l'app, sa base et son cache.",
+      effect: "Rien, lecture seule.",
+      result: `Tracearr: « Running database migrations... complete », « TimescaleDB ready: 0 chunks, compression=true, aggregates=3 », « Server transitioned to READY mode ».
+tracearr-db: prête. Une ligne ERROR pendant sa première initialisation (« background worker ... trying to connect to template database, exiting »), un message connu de TimescaleDB à ce moment-là, sans suite. timescaledb_tune a réglé la base au démarrage.
+tracearr-redis: « Redis does not require authentication »: le réseau privé de l'app est le seul à le joindre (internal).
+Dossiers à <user> (1000), db en 0700 (PostgreSQL). Les quatre secrets en 0444. Extensions: timescaledb 2.29.1, timescaledb_toolkit 1.24.0, pg_trgm, plpgsql.
+/health: status ok, db true, redis true, timescale installed. status: « tracearr 3.2.1 healthy », puis « tracearr-db pg18.4-ts2.29.1 healthy » et « tracearr-redis 8.12.0-alpine healthy » dessous.
+Par son adresse: aucune réponse au premier essai (le certificat de staging n'est pas reconnu par wget), 302 vers Authelia avec --no-check-certificate (J339).`,
+      undo: "Rien à annuler." },
+    { id: "J339", time: "23:26", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.7: une sauvegarde puis une restauration de Tracearr",
+      cmd: `wget -S --max-redirect=0 --no-check-certificate https://tracearr.<domaine>
+psql "create table dotbox_test(note text); insert ... 'avant la sauvegarde'" ; sudo dotbox backup --app tracearr
+psql "insert ... 'après la sauvegarde'" ; sudo dotbox restore latest --app tracearr -y ; docker ps ; psql "select note from dotbox_test" ; /health`,
+      does: "Comme J332 et J333 pour Jellystat.",
+      effect: "Serveur: /backups/tracearr-2026-11-27-2326.tar.zst.age, /opt/tracearr remis depuis l'archive, l'ancien dans /opt/tracearr.before-restore-2026-11-27-232740.",
+      result: `Par son adresse: 302 vers Authelia.
+✓ Tracearr 21 Mo, healthy, 1 min 0 s. ✓ restauré from 2026-11-27-2326, healthy, 53 s. Les trois containers healthy, dotbox_test: « avant la sauvegarde » seulement, /health ok.`,
+      undo: "L'ancien dossier reste à effacer (sudo rm -rf /opt/tracearr.before-restore-2026-11-27-232740), avec l'accord de Mathod95." },
+    { id: "J340", time: "23:28", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.7: la table témoin effacée",
+      cmd: `docker exec tracearr-db psql -U tracearr -d tracearr -c "drop table dotbox_test"`,
+      does: "La table de J339, créée pour l'essai, ne reste pas dans la base de Tracearr.",
+      effect: "Serveur: la table dotbox_test retirée de la base tracearr.",
+      result: "DROP TABLE.",
       undo: "Rien à annuler." }
   ];
 
@@ -4536,7 +4575,7 @@ volumes:
         { id: "8.15", kind: "ecriture", where: "PC → Serveur", title: "Jellystat (plus tard, D74)",
           does: "Les statistiques de Jellyfin. two_factor. Après 8.6. Le 26 novembre 2026: à faire dans l'étape 18 (18.6, D159). Le 27 novembre 2026: fait en 18.6 (J329 à J336)." },
         { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (plus tard, D74)",
-          does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11. Le 26 novembre 2026: à faire dans l'étape 18 (18.7, D159)." },
+          does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11. Le 26 novembre 2026: à faire dans l'étape 18 (18.7, D159). Le 27 novembre 2026: fait en 18.7 (J337 à J340)." },
         { id: "8.17", status: "fait", ref: "J187-J188", kind: "ecriture", where: "PC → Serveur", title: "autobrr",
           lede: "Fait le 20 novembre 2026 (D73): image officielle v1.91.0, two_factor, user: (root sans lui), healthcheck sur /api/healthz/liveness. Il garde sa propre connexion, comme qui (8.5.1): autobrr 1.91 sait aussi croire l'utilisateur qu'Authelia lui passe (authTrustedUserHeader), une piste pour une seule connexion. Sa page dans la doc.",
           links: [ { t: "Page", u: "../autobrr/" } ],
@@ -5111,7 +5150,8 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "18.6", status: "fait", ref: "J329-J336", kind: "ecriture", where: "Serveur", title: "Jellystat (8.15)",
           lede: "Fait le 27 novembre 2026 (J329 à J336), sauf sa page dans la doc (18.8) et son assistant (Mathod95, dans son navigateur). catalog/jellystat.yml: cyfershepard/jellystat:1.1.12 et postgres:18.1, les deux avec l'utilisateur de dotbox.yml, FILE__POSTGRES_PASSWORD et FILE__JWT_SECRET, le healthcheck de l'image. Installé (2 min 47 s), sauvegardé puis restauré avec sa base (une ligne témoin revenue), purgé, réinstallé à neuf. doctor et status voient la base arrêtée. L'erreur env.js au démarrage: N28.",
           does: "Son compose officiel: postgres 18.1 et cyfershepard/jellystat (à une version fixée, pas latest), JWT_SECRET et le mot de passe de la base lus par FILE__, healthcheck sur /auth/isConfigured, two_factor. Essayé sur le serveur de test: install, l'assistant, une sauvegarde puis une restauration, remove --purge. Sa page dans la doc." },
-        { id: "18.7", kind: "ecriture", where: "Serveur", title: "Tracearr (8.16)",
+        { id: "18.7", status: "fait", ref: "J337-J340", kind: "ecriture", where: "Serveur", title: "Tracearr (8.16)",
+          lede: "Fait le 27 novembre 2026 (J337 à J340), sauf sa page dans la doc (18.8). catalog/tracearr.yml: ghcr.io/connorgallopo/tracearr:3.2.1, timescale/timescaledb-ha:pg18.4-ts2.29.1 (ses options de démarrage, shm_size 512mb, nofile 65536) et redis:8.12.0-alpine, les trois avec l'utilisateur de dotbox.yml. DATABASE_URL_FILE (un secret composé), JWT_SECRET_FILE, COOKIE_SECRET_FILE, TRUST_PROXY. Installé (6 min 14 s), sauvegardé puis restauré avec sa base. Pas de remove --purge (essayé avec Jellystat, J334). Renovate: la règle de versions de TimescaleDB, jamais fusionnée seule (N29).",
           does: "Son compose officiel: timescale/timescaledb-ha pg18.4-ts2.29.1 (avec ses options de démarrage, shm_size et ulimits) et redis 8-alpine, à des versions fixées. DATABASE_URL_FILE, JWT_SECRET_FILE et COOKIE_SECRET_FILE. two_factor. Essayé comme Jellystat. Sa page dans la doc." },
         { id: "18.8", kind: "ecriture", where: "PC", title: "La doc, la Roadmap, Releases",
           does: "La page Your own apps et la spécification du manifest (services:), les pages Jellystat et Tracearr en propositions, la réponse de GET /status dans la page API (le champ services, D163), les features cochées et les lignes dans next." }
@@ -5685,6 +5725,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 27 novembre 2026, après N27: « Ok valide la Roadmap, go pour 18.6 Jellystat! À la fin du test sur Jellystat précise-moi les autres apps manquantes, on les rajoutera/testera et on fera un push avec tag ».",
       reco: "Choix de Mathod95. (1) La feature des instantanés devient « btrfs ou LVM, quand /opt y est déjà » (N27), appliquée dans la Roadmap. La page Backup parle encore de btrfs ou ZFS (deux phrases, en français et en anglais): à reprendre en proposition avec la revue de la sauvegarde (Q97). (2) 18.6 faite le même jour (J329 à J336). Cargo.toml passe à 0.0.7, la version du prochain tag (min_dotbox des apps à base de données). (3) Les apps qui manquent: Q98. Puis le push et le tag v0.0.7, sur demande de Mathod95.",
       refs: "N27, D162, 18.6, Q97, Q98" },
+    { t: "Tracearr et Gitea avant le tag v0.0.7, les autres apps attendront (Q98)",
+      p: "Mathod95, le 27 novembre 2026, après Q98: « Ajoute Tracearr et Gitea, les autres attendront! Une fois que ces deux-là sont créés tu peux créer le tag 0.0.7! Avant l'ajout redonne-moi l'accès des pages car je ne l'ai plus ».",
+      reco: "Choix de Mathod95. Tracearr (18.7) et Gitea, puis le push et le tag v0.0.7, accordés par Mathod95. Bazarr, FlareSolverr, Lidarr, NetBird, Portainer et Backstage restent pour plus tard. Les pages servies de nouveau en local (le serveur local s'était arrêté avec la session précédente).",
+      refs: "Q98, 18.7, 8.19, D77" },
   ];
 
   var QUESTIONS = [
@@ -6287,7 +6331,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["docker pause au lieu de stop: l'app est figée (ses processus gelés, rien ne bouge sur le disque), archivée, puis relâchée (docker unpause). Pas de redémarrage ni de healthcheck à attendre: la coupure tombe au temps de l'archive, moins d'une seconde pour la plupart. Une requête qui arrive pendant ce temps attend au lieu d'échouer. La copie vaut celle d'une coupure de courant, que SQLite sait reprendre (son journal est copié avec la base).", "Ne rien couper pour les apps qui le permettent, déclaré dans leur manifest (backup: live), et garder l'arrêt pour les autres.", "Copier les bases SQLite par l'API de SQLite pendant que l'app tourne (la copie en ligne), puis le reste du dossier sans arrêt: aucune coupure, mais il faut connaître les bases de chaque app, et SQLite dans le binaire.", "Les instantanés btrfs ou ZFS (16.8): aucune coupure, mais seulement sur ces systèmes de fichiers.", "Garder l'arrêt, à 04:00 il dérange peu."],
       reco: "Avis de Claude: la première par défaut, et les instantanés plus tard quand le disque les permet. Le gel tient le dossier immobile comme l'arrêt, sans le coût du redémarrage. À vérifier sur le serveur de test avant de trancher: la durée du gel app par app, une archive faite pendant le gel puis restaurée (Radarr, Jellyfin), une lecture en cours sur Jellyfin pendant la sauvegarde. La revue complète demandée par Mathod95 (ce qui est archivé, l'ordre, l'arrêt, le chiffrement, les destinations, keep, le timer, doctor, restore) à faire dans une note, avec chaque point à garder ou à changer. Pas encore tranchée.",
       refs: "D97, D99, D157, 16.8, Q96, D160, N25" },
-    { n: 98, t: "Quelles apps ajouter avant le tag v0.0.7?",
+    { n: 98, done: "D167", t: "Quelles apps ajouter avant le tag v0.0.7?",
       p: "Mathod95, le 27 novembre 2026 (D166): « À la fin du test sur Jellystat précise-moi les autres apps manquantes, on les rajoutera/testera et on fera un push avec tag ». Le point de Claude, lu dans la Roadmap (étape Apps) et le tableau des apps repérées de la page Apps (298 apps).",
       l: ["Prévues dans la Roadmap: Tracearr (18.7, prête: TimescaleDB et Redis, le moteur a tout), Gitea (8.19, D77: un port SSH publié pour git push, SQLite ou PostgreSQL), NetBird (8.22, D75: plusieurs containers, un port UDP, des droits réseau), Portainer (8.10, D68: veut le socket Docker, que Dot Box garde derrière un proxy), Backstage (8.20, D76: pas une app à installer telle quelle, un projet à construire soi-même).",
           "Repérées, qui complètent ce qui est déjà là (Radarr, Sonarr, Prowlarr, qBittorrent): Bazarr (les sous-titres), FlareSolverr (pour certains indexeurs de Prowlarr), Lidarr (la musique), Recyclarr (les profils de TRaSH Guides), Unpackerr (les archives des téléchargements), SABnzbd ou NZBGet (Usenet), Audiobookshelf et Navidrome (livres audio, musique)."],
@@ -6459,7 +6503,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Jellystat: ce que fait son image, et l'erreur env.js",
       p: "Lu par Claude le 27 novembre 2026 dans les sources de Jellystat 1.1.12 (Dockerfile, entry.sh, docker-compose.yml, backend/server.js, backend/classes/env.js, src/lib/baseurl.jsx), pour 18.6.",
       reco: "(1) L'image (node 26 sur Debian) tourne en root sans en avoir besoin: notre manifest la lance avec l'utilisateur de dotbox.yml, comme sa base. (2) entry.sh lit chaque variable FILE__<nom> dans son fichier: le mot de passe de la base et JWT_SECRET ne sont jamais dans compose.yml. (3) Jellystat crée lui-même sa base (jfstat) avec le compte postgres, puis ses tables. (4) Au démarrage, il écrit /app/dist/env.js avec ses variables JS_* (JS_BASE_URL...) pour sa page web. Avec un autre utilisateur que root, il ne peut pas (EACCES), l'erreur reste dans ses logs. Sans effet ici: nous ne mettons aucune variable JS_*, et la page lit window.env?.JS_BASE_URL, qui supporte l'absence du fichier (une 404 sur /env.js, rien de cassé). Si un jour une variable JS_* sert, il faudra un volume sur /app/dist/env.js ou root. (5) Son healthcheck (/auth/isconfigured) ne regarde pas la base: Jellystat reste healthy sa base arrêtée (J336), c'est doctor qui le dit. (6) La base: postgres:18.1 du compose officiel, les données dans /var/lib/postgresql (PostgreSQL 18 range ses fichiers dans 18/docker dessous), shm_size 1gb.",
-      refs: "18.6, J331, J336, D159" }
+      refs: "18.6, J331, J336, D159" },
+    { t: "Tracearr: ce que font son image, sa base et son cache",
+      p: "Lu par Claude le 27 novembre 2026 dans les sources de Tracearr 3.2.1 (docker/Dockerfile, docker/entrypoint.sh, docker/examples/docker-compose.pg18.yml, docker/.env.example, apps/server/src/lib/env.ts, utils/crypto.ts), pour 18.7.",
+      reco: "(1) L'image tourne avec son propre utilisateur (1001), son healthcheck sur /health dit aussi si la base, Redis et TimescaleDB répondent. Notre manifest la lance avec l'utilisateur de dotbox.yml. (2) entrypoint.sh lit DATABASE_URL, REDIS_URL, JWT_SECRET, COOKIE_SECRET et ENCRYPTION_KEY dans un fichier (<nom>_FILE). ENCRYPTION_KEY ne sert qu'à relire les jetons d'une très ancienne version: pas besoin. BETTER_AUTH_SECRET est dérivé de JWT_SECRET s'il manque. (3) Le compose officiel recommandé est celui de PostgreSQL 18 (docker-compose.pg18.yml): timescale/timescaledb-ha:pg18.4-ts2.29.1, avec ses options (max_locks_per_transaction 4096, max_connections 150, la télémétrie de TimescaleDB coupée), shm_size 512mb, nofile 65536, et redis 8-alpine en appendonly. Nous gardons les mêmes, Redis à une version fixée (8.12.0-alpine). (4) L'image de TimescaleDB tourne d'habitude avec postgres (1000). Avec un autre utilisateur, elle a marché sur le serveur de test, où l'utilisateur est aussi 1000: un utilisateur à un autre uid reste à essayer. (5) TRUST_PROXY true: un seul proxy devant, Traefik, l'adresse du client vient de X-Forwarded-For. (6) Renovate: le tag pg18.4-ts2.29.1 se lit avec une règle à lui (PostgreSQL en majeure et mineure, TimescaleDB en correctif), sans les variantes -all, -oss ni -rNNN, jamais de majeure (D159), et jamais fusionné seul: une nouvelle version de TimescaleDB peut demander ALTER EXTENSION dans la base. (7) Tracearr a aussi une app mobile: derrière Authelia (two_factor), elle ne pourra pas se connecter. À revoir si Mathod95 veut l'app mobile (le niveau app, comme Jellyfin).",
+      refs: "18.7, J338, D159" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -6518,7 +6566,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
     "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323, 324, 325, 327, 328],
-    "18": [326, 329, 330, 331, 332, 333, 334, 335, 336],
+    "18": [326, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -6533,13 +6581,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166, 167], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95], "18": [96, 98]
   };
-  var NHOME = { "18": [26, 28], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
+  var NHOME = { "18": [26, 28, 29], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

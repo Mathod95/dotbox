@@ -1,0 +1,62 @@
+# Tracearr: le suivi des lectures du serveur média (Jellyfin ou Plex), qui regarde quoi, d'où,
+# combien de flux à la fois, avec son historique dans TimescaleDB et un cache Redis (D159).
+# Format: Journal, étape 7 (7.1), D151 et 18.1. Les {{...}} sont remplis par dotbox à l'installation.
+# L'image officielle du projet (lue dans docker/Dockerfile, docker/entrypoint.sh et
+# docker/examples/docker-compose.pg18.yml, 3.2.1), la base et le cache de ce compose officiel.
+name: tracearr
+description: Playback tracking for Jellyfin and Plex
+min_dotbox: 0.0.7
+image: ghcr.io/connorgallopo/tracearr:3.2.1
+port: 3000
+access: two_factor
+# l'image a son propre healthcheck (/health)
+health: image
+# l'image tourne avec son utilisateur (1001): ici, celui de dotbox.yml
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+  HOST: 0.0.0.0
+  REDIS_URL: "redis://{{app}}-redis:6379"
+  # Traefik devant: l'adresse du client est celle qu'il ajoute à X-Forwarded-For
+  TRUST_PROXY: "true"
+  # entrypoint.sh lit chaque <nom>_FILE dans son fichier: l'adresse de la base (avec son mot
+  # de passe) et les deux clés, tirées une seule fois par dotbox, jamais dans compose.yml (D151)
+  DATABASE_URL_FILE: /run/secrets/database_url
+  JWT_SECRET_FILE: /run/secrets/jwt_secret
+  COOKIE_SECRET_FILE: /run/secrets/cookie_secret
+secrets:
+  - db_password
+  - jwt_secret
+  - cookie_secret
+  - database_url: "postgres://tracearr:{{secret:db_password}}@{{app}}-db:5432/tracearr"
+# ses sauvegardes et le cache des images (affiches, avatars)
+volumes:
+  - backup:/data/backup
+  - images:/data/tracearr/image-cache
+services:
+  # TimescaleDB sur PostgreSQL 18, avec les options de démarrage du compose officiel: les
+  # morceaux de TimescaleDB demandent beaucoup de fichiers ouverts et de verrous
+  db:
+    image: timescale/timescaledb-ha:pg18.4-ts2.29.1
+    user: "{{uid}}:{{gid}}"
+    shm_size: 512mb
+    ulimits:
+      nofile: 65536
+    command: [postgres, -c, timescaledb.license=timescale, -c, timescaledb.max_tuples_decompressed_per_dml_transaction=100000, -c, max_locks_per_transaction=4096, -c, timescaledb.telemetry_level=off, -c, max_connections=150]
+    env:
+      POSTGRES_USER: tracearr
+      POSTGRES_DB: tracearr
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - db:/home/postgres/pgdata/data
+    secrets:
+      - db_password
+    health: [pg_isready, -U, tracearr]
+  # le cache, écrit sur disque (appendonly) pour garder ses files d'attente à un redémarrage
+  redis:
+    image: redis:8.12.0-alpine
+    user: "{{uid}}:{{gid}}"
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis:/data
+    health: [redis-cli, ping]
