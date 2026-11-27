@@ -45,7 +45,8 @@
           "en": "CLI: `dotbox update`, `diff` and `sync` also follow the version of an app's services, `--rollback` puts them all back, `dotbox logs <app>-<service>` shows a service's logs, and `dotbox doctor` reports a stopped service"
         },
         { "fr": "CLI: `dotbox status` montre les services d'une app sous elle (sa base, son cache), avec leur version et leur état", "en": "CLI: `dotbox status` shows an app's services under it (its database, its cache), with their version and state" },
-        { "fr": "Interface web: les services d'une app sur sa carte et sous sa ligne dans Apps, avec leurs logs", "en": "Web UI: an app's services on its card and under its row in Apps, with their logs" }
+        { "fr": "Interface web: les services d'une app sur sa carte et sous sa ligne dans Apps, avec leurs logs", "en": "Web UI: an app's services on its card and under its row in Apps, with their logs" },
+        { "fr": "Jellystat: les statistiques de Jellyfin, avec sa base PostgreSQL à côté", "en": "Jellystat: Jellyfin statistics, with its PostgreSQL database next to it" }
       ],
       "changed": [
         {

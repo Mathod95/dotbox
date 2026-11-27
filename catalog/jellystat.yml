@@ -1,0 +1,44 @@
+# Jellystat: les statistiques de Jellyfin (qui regarde quoi, quand, sur quel appareil), avec
+# son historique dans une base PostgreSQL à côté (D159, étape 18).
+# Format: Journal, étape 7 (7.1), D151 et 18.1. Les {{...}} sont remplis par dotbox à l'installation.
+# L'image officielle du projet (lue dans son Dockerfile, son entry.sh et son docker-compose.yml,
+# 1.1.12), et la base de son compose officiel.
+name: jellystat
+description: Statistics for Jellyfin
+min_dotbox: 0.0.7
+image: cyfershepard/jellystat:1.1.12
+port: 3000
+access: two_factor
+# l'image a son propre healthcheck (/auth/isconfigured)
+health: image
+# l'image tourne en root sans en avoir besoin: ici, l'utilisateur de dotbox.yml
+user: "{{uid}}:{{gid}}"
+env:
+  TZ: "{{tz}}"
+  POSTGRES_USER: postgres
+  POSTGRES_IP: "{{app}}-db"
+  POSTGRES_PORT: "5432"
+  # entry.sh lit chaque variable FILE__<nom> dans son fichier: le mot de passe de la base et
+  # la clé des sessions, tirés une seule fois par dotbox, jamais écrits dans compose.yml (D151)
+  FILE__POSTGRES_PASSWORD: /run/secrets/db_password
+  FILE__JWT_SECRET: /run/secrets/jwt_secret
+secrets:
+  - db_password
+  - jwt_secret
+# les sauvegardes que fait Jellystat lui-même (ses réglages, Backup)
+volumes:
+  - backup:/app/backend/backup-data
+services:
+  # la base de son compose officiel, avec l'utilisateur de dotbox.yml: ses fichiers sont à lui
+  db:
+    image: postgres:18.1
+    user: "{{uid}}:{{gid}}"
+    shm_size: 1gb
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - db:/var/lib/postgresql
+    secrets:
+      - db_password
+    health: [pg_isready, --dbname=postgres, --username=postgres]

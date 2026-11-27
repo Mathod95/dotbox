@@ -3710,6 +3710,75 @@ vgs, lvs, pvs: aucune sortie.`,
       effect: "Rien, lecture seule.",
       result: `vgs et lvs installés (/usr/sbin), sudo -n accepté, vgs: aucune sortie, code 0: lvm2 est là mais aucun groupe de volumes, donc pas de LVM.
 /opt: 42 Go, 42 dossiers, à <user>. /opt et /mnt/local sur /dev/md1p1 (la racine). Ubuntu 24.04.4 LTS.`,
+      undo: "Rien à annuler." },
+    { id: "J329", time: "09:44", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.6: le binaire 0.0.7 et le catalogue du PC sur le serveur de test",
+      cmd: `cargo build --release --target x86_64-unknown-linux-musl ; scp dotbox dotbox-test:/tmp/dotbox.new
+tar czf - catalog | ssh dotbox-test 'tar xzf - -C /tmp/cat-test'   (le catalogue du PC, avec jellystat.yml, pas encore poussé)
+sudo: install -m 755 /tmp/dotbox.new /usr/local/bin/dotbox && systemctl restart dotbox ; dotbox --version`,
+      does: "D166: go pour 18.6. Cargo.toml passe à 0.0.7: le manifest de Jellystat demande min_dotbox 0.0.7 (services:), qu'un binaire 0.0.6 refuse.",
+      effect: "Serveur: le binaire 0.0.7 du PC (la v0.0.6 reste dans dotbox-0.0.6.bak), le service relancé.",
+      result: "dotbox 0.0.7, le service active. / : 13 Go utilisés sur 117.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.6.bak /usr/local/bin/dotbox && sudo systemctl restart dotbox" },
+    { id: "J330", time: "09:45", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.6: Jellystat installé, avec sa base",
+      cmd: `sudo dotbox install --local --catalog /tmp/cat-test/catalog jellystat`,
+      does: "La première app à base de données (D159): cyfershepard/jellystat:1.1.12 et postgres:18.1, de son compose officiel.",
+      effect: "Serveur: /opt/jellystat (compose.yml, backup/, db/), les containers jellystat et jellystat-db, le réseau jellystat_private, /opt/dotbox/secrets/jellystat_db_password et jellystat_jwt_secret, jellystat dans dotbox.yml, son certificat.",
+      result: "✓ Jellystat 1.1.12, two_factor, 2 min 47 s (presque tout pour tirer les deux images).",
+      undo: "sudo dotbox remove --local --purge -y jellystat" },
+    { id: "J331", time: "09:47", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "18.6: ce que l'installation a posé",
+      cmd: `docker ps --filter name=jellystat ; cat /opt/jellystat/compose.yml ; ls -la /opt/jellystat /opt/dotbox/secrets ; ls -lan /opt/jellystat/db
+docker logs jellystat ; docker logs jellystat-db ; docker exec jellystat ls -ln /app/dist ; docker exec jellystat id
+docker exec traefik wget -qO- http://jellystat:3000/env.js, /, /auth/isConfigured
+dotbox status --local ; dotbox status --local --json ; dotbox logs jellystat-db --tail 2 ; wget --max-redirect=0 https://jellystat.<domaine>`,
+      does: "Vérifier chaque point de 18.1 à 18.4 sur une vraie app.",
+      effect: "Rien, lecture seule.",
+      result: `jellystat et jellystat-db healthy. compose.yml: jellystat sur dotbox et private, depends_on db service_healthy, user 1000:1000, FILE__POSTGRES_PASSWORD et FILE__JWT_SECRET vers /run/secrets, les deux secrets montés en lecture seule, jamais leur valeur ; db sur private seulement, user 1000:1000, shm_size 1gb, healthcheck pg_isready.
+Secrets: 0444, root, dans /opt/dotbox/secrets resté 0700. /opt/jellystat/backup et db à <user> (1000), db/18 créé par PostgreSQL 18.1.
+Jellystat: « Database created », « Server listening on :3000 ». Une erreur: « Error writing env.js file: EACCES /app/dist/env.js » (N28: sans effet). isConfigured: {"state":0,"version":"1.1.12"}, la page d'accueil servie.
+status: « jellystat 1.1.12 healthy two_factor » puis « jellystat-db 18.1 healthy » dessous (D163) ; le JSON avec services. logs jellystat-db: les deux dernières lignes. Par son adresse: 302 vers Authelia.`,
+      undo: "Rien à annuler." },
+    { id: "J332", time: "09:49", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.5, 18.6: une sauvegarde de Jellystat et de sa base",
+      cmd: `docker exec jellystat-db psql -U postgres -d jfstat -c "create table dotbox_test(note text); insert into dotbox_test values ('avant la sauvegarde')"
+sudo dotbox backup --app jellystat ; ls -l /backups | grep jellystat`,
+      does: "Une ligne témoin dans la base, puis la sauvegarde de l'app (tout le projet arrêté, archivé, relancé).",
+      effect: "Serveur: la table dotbox_test dans jfstat, /backups/jellystat-2026-11-27-0949.tar.zst.age.",
+      result: "jfstat: 20 tables (celles de Jellystat et la témoin). ✓ Jellystat 12 Mo, healthy, 32 s. L'archive: 11,7 Mo, 0600, root.",
+      undo: "rm /backups/jellystat-2026-11-27-0949.tar.zst.age" },
+    { id: "J333", time: "09:49", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.5, 18.6: la restauration de Jellystat, sa base revenue",
+      cmd: `docker exec jellystat-db psql ... "insert into dotbox_test values ('après la sauvegarde')"
+sudo dotbox restore latest --app jellystat -y ; docker ps ; psql "select note from dotbox_test" ; ls -lan /opt/jellystat /opt/jellystat/db`,
+      does: "Une seconde ligne après la sauvegarde, puis la restauration: seule la première doit rester.",
+      effect: "Serveur: /opt/jellystat remis depuis l'archive, l'ancien dans /opt/jellystat.before-restore-2026-11-27-094957 (gardé par restore).",
+      result: "✓ Jellystat from 2026-11-27-0949, healthy, old folder kept, 29 s. Les deux containers healthy. dotbox_test: « avant la sauvegarde » seulement. Les droits gardés: backup, db et db/18 à 1000.",
+      undo: "Rien à annuler (l'ancien dossier reste à effacer: sudo rm -rf /opt/jellystat.before-restore-2026-11-27-094957, avec l'accord de Mathod95)." },
+    { id: "J334", time: "09:50", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.6: remove --purge de Jellystat",
+      cmd: `sudo dotbox remove --local --purge -y jellystat
+docker ps -a --filter name=jellystat ; docker images | grep -E "jellystat|postgres" ; ls -d /opt/jellystat ; ls -l /opt/dotbox/secrets | grep jellystat ; docker network ls | grep jellystat ; grep -c jellystat dotbox.yml`,
+      does: "Le plan de 18.6: ce qui part et ce qui reste.",
+      effect: "Serveur: les deux containers, les deux images, le réseau jellystat_private, /opt/jellystat (la table témoin avec) et l'entrée de dotbox.yml effacés.",
+      result: "✓ removed, /opt/jellystat deleted, 27 s. Plus aucun container, image ni réseau. Restent les deux secrets (N26, point 6).",
+      undo: "Rien (J335 réinstalle)." },
+    { id: "J335", time: "09:51", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.6: Jellystat réinstallé à neuf",
+      cmd: `sudo dotbox install --local --catalog /tmp/cat-test/catalog jellystat ; docker ps ; docker logs jellystat ; isConfigured ; dotbox doctor --local`,
+      does: "Une installation neuve qui reprend les secrets gardés, pour l'assistant de Mathod95 dans son navigateur.",
+      effect: "Serveur: Jellystat comme en J330, une base vide.",
+      result: "✓ 1.1.12, two_factor, 2 min 45 s (les images tirées de nouveau). Healthy, « Database created » avec l'ancien mot de passe. doctor: rien sur Jellystat.",
+      undo: "sudo dotbox remove --local --purge -y jellystat" },
+    { id: "J336", time: "09:54", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "18.4: la base arrêtée, vue par doctor et status",
+      cmd: `docker stop jellystat-db ; dotbox doctor --local ; dotbox status --local ; dotbox start jellystat ; docker ps`,
+      does: "Le contrôle des services de doctor (service_checks) et l'état sous l'app dans status.",
+      effect: "Serveur: jellystat-db arrêté une minute, puis relancé.",
+      result: `doctor: « error Containers jellystat-db: exited, jellystat needs it → dotbox restart jellystat ».
+status: jellystat healthy (son healthcheck ne regarde pas la base), « jellystat-db 18.1 exited » dessous.
+start: ✓ healthy, 7,1 s, les deux containers healthy.`,
       undo: "Rien à annuler." }
   ];
 
@@ -4465,7 +4534,7 @@ volumes:
           ],
           does: "Les statistiques de Plex. two_factor. Après 8.11." },
         { id: "8.15", kind: "ecriture", where: "PC → Serveur", title: "Jellystat (plus tard, D74)",
-          does: "Les statistiques de Jellyfin. two_factor. Après 8.6. Le 26 novembre 2026: à faire dans l'étape 18 (18.6, D159)." },
+          does: "Les statistiques de Jellyfin. two_factor. Après 8.6. Le 26 novembre 2026: à faire dans l'étape 18 (18.6, D159). Le 27 novembre 2026: fait en 18.6 (J329 à J336)." },
         { id: "8.16", kind: "ecriture", where: "PC → Serveur", title: "Tracearr (plus tard, D74)",
           does: "Le suivi des lectures sur Jellyfin et Plex. two_factor. Après 8.6 ou 8.11. Le 26 novembre 2026: à faire dans l'étape 18 (18.7, D159)." },
         { id: "8.17", status: "fait", ref: "J187-J188", kind: "ecriture", where: "PC → Serveur", title: "autobrr",
@@ -5039,7 +5108,8 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
         { id: "18.5", status: "valide", kind: "ecriture", where: "PC", title: "Sauvegarde et restauration d'une app à base de données",
           lede: "Rien à coder (vérifié dans src/backup.rs et src/restore.rs): compose stop et start agissent sur tout le projet, la base est donc arrêtée avec l'app, ses fichiers archivés avec /opt/<app>, leurs droits gardés à la restauration. À essayer en 18.6 sur le serveur de test: une sauvegarde, puis une restauration qui repart avec ses données.",
           does: "Les données de la base sont dans /opt/<app>/<nom>: archivées avec l'app, tout le projet arrêté ou gelé pendant l'archive (selon Q97, D160). PostgreSQL reprend après une coupure comme SQLite, grâce à son journal (WAL). restore remet le dossier entier puis relance le projet. À essayer: une archive restaurée qui redémarre avec ses données." },
-        { id: "18.6", kind: "ecriture", where: "Serveur", title: "Jellystat (8.15)",
+        { id: "18.6", status: "fait", ref: "J329-J336", kind: "ecriture", where: "Serveur", title: "Jellystat (8.15)",
+          lede: "Fait le 27 novembre 2026 (J329 à J336), sauf sa page dans la doc (18.8) et son assistant (Mathod95, dans son navigateur). catalog/jellystat.yml: cyfershepard/jellystat:1.1.12 et postgres:18.1, les deux avec l'utilisateur de dotbox.yml, FILE__POSTGRES_PASSWORD et FILE__JWT_SECRET, le healthcheck de l'image. Installé (2 min 47 s), sauvegardé puis restauré avec sa base (une ligne témoin revenue), purgé, réinstallé à neuf. doctor et status voient la base arrêtée. L'erreur env.js au démarrage: N28.",
           does: "Son compose officiel: postgres 18.1 et cyfershepard/jellystat (à une version fixée, pas latest), JWT_SECRET et le mot de passe de la base lus par FILE__, healthcheck sur /auth/isConfigured, two_factor. Essayé sur le serveur de test: install, l'assistant, une sauvegarde puis une restauration, remove --purge. Sa page dans la doc." },
         { id: "18.7", kind: "ecriture", where: "Serveur", title: "Tracearr (8.16)",
           does: "Son compose officiel: timescale/timescaledb-ha pg18.4-ts2.29.1 (avec ses options de démarrage, shm_size et ulimits) et redis 8-alpine, à des versions fixées. DATABASE_URL_FILE, JWT_SECRET_FILE et COOKIE_SECRET_FILE. two_factor. Essayé comme Jellystat. Sa page dans la doc." },
@@ -5607,6 +5677,14 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 27 novembre 2026: « Rajoute une icône Discord à droite de celle de GitHub! https://discord.gg/U6WVx2cRqM ».",
       reco: "Dicté par Mathod95, appliqué par Claude le même jour: le logo Discord (lien https://discord.gg/U6WVx2cRqM) à droite du logo GitHub dans la barre du haut de toutes les pages (accueil, Releases, Roadmap, doc). Les pages figées de pages/ ne changent pas.",
       refs: "D153" },
+    { t: "Les logos GitHub et Discord: sans halo, blancs, leur couleur au survol",
+      p: "Mathod95, le 27 novembre 2026: « Pour le logo Discord et GitHub ils n'ont pas besoin du halo de surbrillance! On peut faire en sorte que le logo soit neutre blanc et quand on passe la souris dessus il prend sa vraie couleur! Il faut diminuer l'espacement entre les deux aussi ».",
+      reco: "Dicté par Mathod95, appliqué par Claude le même jour, dans la barre du haut de toutes les pages: plus de fond au survol, les deux logos dans le blanc du site (#f2f0e9), Discord passe à son bleu (#5865f2) au survol, GitHub au blanc pur (son logo n'a pas d'autre couleur: noir sur fond clair, blanc sur fond sombre). Les deux boutons passent de 42 à 32 px de large et se rapprochent (10 px de moins entre eux).",
+      refs: "D164, D153" },
+    { t: "La Roadmap des instantanés validée, go pour 18.6, puis les apps qui manquent et le tag",
+      p: "Mathod95, le 27 novembre 2026, après N27: « Ok valide la Roadmap, go pour 18.6 Jellystat! À la fin du test sur Jellystat précise-moi les autres apps manquantes, on les rajoutera/testera et on fera un push avec tag ».",
+      reco: "Choix de Mathod95. (1) La feature des instantanés devient « btrfs ou LVM, quand /opt y est déjà » (N27), appliquée dans la Roadmap. La page Backup parle encore de btrfs ou ZFS (deux phrases, en français et en anglais): à reprendre en proposition avec la revue de la sauvegarde (Q97). (2) 18.6 faite le même jour (J329 à J336). Cargo.toml passe à 0.0.7, la version du prochain tag (min_dotbox des apps à base de données). (3) Les apps qui manquent: Q98. Puis le push et le tag v0.0.7, sur demande de Mathod95.",
+      refs: "N27, D162, 18.6, Q97, Q98" },
   ];
 
   var QUESTIONS = [
@@ -6208,7 +6286,12 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 26 novembre 2026, après J321: « Concernant les backups, à chaque fois ça coupe les containers? Ou c'est juste la première et les autres peuvent se faire sans rien couper? Ce serait sûrement dérangeant si on coupe tout le temps les containers tous les jours. Il faut qu'on fasse une revue complète de comment fonctionne la backup! ». Ce que fait le code (src/backup.rs, one): à chaque sauvegarde, chaque nuit à 04:00, chaque app qui tourne est arrêtée (compose stop), archivée, relancée (compose start) et attendue healthy (jusqu'à 3 min), puis la suivante. /opt/dotbox n'arrête rien. Pourquoi l'arrêt: Radarr, Sonarr, Prowlarr, Jellyfin, Plex... gardent leurs données dans des bases SQLite, qu'une copie faite pendant une écriture peut rendre illisible. Ce que coûte l'arrêt (J241 à J253, J321): de 16 s à 1 min 14 par app, presque tout dans le redémarrage et l'attente du healthcheck, l'archive elle-même prend moins d'une seconde pour la plupart. Pendant ce temps: un film en cours sur Jellyfin ou Plex coupé, qBittorrent arrêté, Uptime Kuma qui voit une app tomber. Puis Mathod95, après la réponse de Claude: « Je pense qu'il y a une grosse amélioration à faire côté backup, car tout couper tous les soirs c'est trop! Ça va gêner les futurs utilisateurs je pense » (D160). Et sur les instantanés: « btrfs ou ZFS, ceci peut être changé à chaud sur juste le /data? » (N25: la sauvegarde lit /opt, pas /data).",
       l: ["docker pause au lieu de stop: l'app est figée (ses processus gelés, rien ne bouge sur le disque), archivée, puis relâchée (docker unpause). Pas de redémarrage ni de healthcheck à attendre: la coupure tombe au temps de l'archive, moins d'une seconde pour la plupart. Une requête qui arrive pendant ce temps attend au lieu d'échouer. La copie vaut celle d'une coupure de courant, que SQLite sait reprendre (son journal est copié avec la base).", "Ne rien couper pour les apps qui le permettent, déclaré dans leur manifest (backup: live), et garder l'arrêt pour les autres.", "Copier les bases SQLite par l'API de SQLite pendant que l'app tourne (la copie en ligne), puis le reste du dossier sans arrêt: aucune coupure, mais il faut connaître les bases de chaque app, et SQLite dans le binaire.", "Les instantanés btrfs ou ZFS (16.8): aucune coupure, mais seulement sur ces systèmes de fichiers.", "Garder l'arrêt, à 04:00 il dérange peu."],
       reco: "Avis de Claude: la première par défaut, et les instantanés plus tard quand le disque les permet. Le gel tient le dossier immobile comme l'arrêt, sans le coût du redémarrage. À vérifier sur le serveur de test avant de trancher: la durée du gel app par app, une archive faite pendant le gel puis restaurée (Radarr, Jellyfin), une lecture en cours sur Jellyfin pendant la sauvegarde. La revue complète demandée par Mathod95 (ce qui est archivé, l'ordre, l'arrêt, le chiffrement, les destinations, keep, le timer, doctor, restore) à faire dans une note, avec chaque point à garder ou à changer. Pas encore tranchée.",
-      refs: "D97, D99, D157, 16.8, Q96, D160, N25" }
+      refs: "D97, D99, D157, 16.8, Q96, D160, N25" },
+    { n: 98, t: "Quelles apps ajouter avant le tag v0.0.7?",
+      p: "Mathod95, le 27 novembre 2026 (D166): « À la fin du test sur Jellystat précise-moi les autres apps manquantes, on les rajoutera/testera et on fera un push avec tag ». Le point de Claude, lu dans la Roadmap (étape Apps) et le tableau des apps repérées de la page Apps (298 apps).",
+      l: ["Prévues dans la Roadmap: Tracearr (18.7, prête: TimescaleDB et Redis, le moteur a tout), Gitea (8.19, D77: un port SSH publié pour git push, SQLite ou PostgreSQL), NetBird (8.22, D75: plusieurs containers, un port UDP, des droits réseau), Portainer (8.10, D68: veut le socket Docker, que Dot Box garde derrière un proxy), Backstage (8.20, D76: pas une app à installer telle quelle, un projet à construire soi-même).",
+          "Repérées, qui complètent ce qui est déjà là (Radarr, Sonarr, Prowlarr, qBittorrent): Bazarr (les sous-titres), FlareSolverr (pour certains indexeurs de Prowlarr), Lidarr (la musique), Recyclarr (les profils de TRaSH Guides), Unpackerr (les archives des téléchargements), SABnzbd ou NZBGet (Usenet), Audiobookshelf et Navidrome (livres audio, musique)."],
+      reco: "Proposé par Claude: Tracearr d'abord (18.7, il ne demande rien de nouveau), puis Bazarr, FlareSolverr et Lidarr (une image linuxserver chacune, une app seule: vite faites et testées), avant le tag. Gitea et NetBird demandent chacun une étape à eux (un port publié, des droits réseau), Portainer et Backstage restent à trancher (D68, D76). À Mathod95 de choisir la liste." },
   ];
 
 
@@ -6372,7 +6455,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Le bilan des disques: ce qui est faisable pour une sauvegarde sans coupure",
       p: "Demandé par Mathod95 le 26 novembre 2026 (D162): « Vérifie mon Saltbox et dotbox pour récupérer ces informations et me faire un bilan de ce qui serait faisable ou non! ». Lu en lecture seule: le serveur de test (J324), le Saltbox (J327, J328).",
       reco: "(1) Serveur de test: un disque de 119 Go, ext4 pour /boot et pour / (où sont /opt et /data), ni RAID ni LVM (lvm2 pas installé), aucune place hors partition. (2) Saltbox: Ubuntu 24.04, deux disques de 3,6 To. /boot en RAID 1 (md0). / en RAID 0 (md1, mdadm), ext4 de 7,3 To, 2,2 To utilisés. /opt (42 Go) et /mnt/local sur /. Le souvenir de Mathod95 est juste pour le RAID 0, pas pour le LVM: lvm2 est installé, mais aucun groupe de volumes. Aucune place hors partition non plus: le RAID 0 prend les deux disques entiers. (3) Faisable sur les deux, sans rien changer: le gel de Q97 (docker pause le temps de l'archive, quelques secondes, puis unpause), et la copie par la base elle-même, une app qui tourne: l'API de sauvegarde de SQLite (une copie cohérente d'une base ouverte) pour les apps à SQLite, pg_dump pour PostgreSQL (D159). Plus de travail (par type de base), aucune coupure. (4) Pas faisable sans réinstaller: un instantané LVM (pas de LVM), btrfs ou ZFS pour /opt (/opt est sur la racine ext4). Réduire l'ext4 de la racine pour faire de la place ne se fait que démonté, depuis le système de secours de l'hébergeur, sur un RAID 0: trop risqué pour un gain si petit. (5) Faisable mais bricolé: un fichier image formaté en btrfs, monté en boucle (loop) sur /opt. À chaud, sans toucher aux partitions, mais une couche de plus sous les bases et /opt à recopier dedans, app arrêtée: pas un choix par défaut de Dot Box. (6) À part la sauvegarde: avec le RAID 0, un seul disque qui lâche et tout est perdu, /opt et /data. La sauvegarde hors du serveur (rclone, sftp, D97) est la seule protection de /opt, /data n'en a aucune. (7) Conclusion: les instantanés ne servent ni au serveur de test ni au Saltbox. Le chemin par défaut est le gel (ou la copie par la base), à essayer d'abord (Q97). La feature « instantanés btrfs ou ZFS » de la Roadmap deviendrait « btrfs ou LVM, quand /opt y est déjà », ZFS oublié (D162): proposé, à valider par Mathod95.",
-      refs: "D162, Q97, N25, J324, J327, J328, 16.8" }
+      refs: "D162, Q97, N25, J324, J327, J328, 16.8" },
+    { t: "Jellystat: ce que fait son image, et l'erreur env.js",
+      p: "Lu par Claude le 27 novembre 2026 dans les sources de Jellystat 1.1.12 (Dockerfile, entry.sh, docker-compose.yml, backend/server.js, backend/classes/env.js, src/lib/baseurl.jsx), pour 18.6.",
+      reco: "(1) L'image (node 26 sur Debian) tourne en root sans en avoir besoin: notre manifest la lance avec l'utilisateur de dotbox.yml, comme sa base. (2) entry.sh lit chaque variable FILE__<nom> dans son fichier: le mot de passe de la base et JWT_SECRET ne sont jamais dans compose.yml. (3) Jellystat crée lui-même sa base (jfstat) avec le compte postgres, puis ses tables. (4) Au démarrage, il écrit /app/dist/env.js avec ses variables JS_* (JS_BASE_URL...) pour sa page web. Avec un autre utilisateur que root, il ne peut pas (EACCES), l'erreur reste dans ses logs. Sans effet ici: nous ne mettons aucune variable JS_*, et la page lit window.env?.JS_BASE_URL, qui supporte l'absence du fichier (une 404 sur /env.js, rien de cassé). Si un jour une variable JS_* sert, il faudra un volume sur /app/dist/env.js ou root. (5) Son healthcheck (/auth/isconfigured) ne regarde pas la base: Jellystat reste healthy sa base arrêtée (J336), c'est doctor qui le dit. (6) La base: postgres:18.1 du compose officiel, les données dans /var/lib/postgresql (PostgreSQL 18 range ses fichiers dans 18/docker dessous), shm_size 1gb.",
+      refs: "18.6, J331, J336, D159" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -6431,7 +6518,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
     "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323, 324, 325, 327, 328],
-    "18": [326],
+    "18": [326, 329, 330, 331, 332, 333, 334, 335, 336],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -6446,13 +6533,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
-    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95], "18": [96]
+    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95], "18": [96, 98]
   };
-  var NHOME = { "18": [26], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
+  var NHOME = { "18": [26, 28], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

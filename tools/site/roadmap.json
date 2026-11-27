@@ -793,14 +793,15 @@
     {
       "stage": "apps",
       "domain": "catalog",
-      "status": "planned",
+      "status": "done",
       "fr": "Jellystat: les statistiques et l'historique de Jellyfin",
       "en": "Jellystat: Jellyfin statistics and history",
       "journal": [
         "8.15",
         "D74",
         "18.6",
-        "D159"
+        "D159",
+        "J329-J336"
       ]
     },
     {
@@ -1045,11 +1046,14 @@
       "stage": "backup",
       "domain": "backup",
       "status": "planned",
-      "fr": "Moteur: sauvegarde par instantané btrfs ou ZFS, sans arrêter l'app",
-      "en": "Engine: backup through a btrfs or ZFS snapshot, without stopping the app",
+      "fr": "Moteur: sauvegarde par instantané btrfs ou LVM, quand /opt y est déjà, sans arrêter l'app",
+      "en": "Engine: backup through a btrfs or LVM snapshot, when /opt is already on one, without stopping the app",
       "doc": "backup",
       "journal": [
-        "16.8"
+        "16.8",
+        "D162",
+        "N27",
+        "D166"
       ]
     },
     {
