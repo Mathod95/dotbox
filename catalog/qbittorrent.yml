@@ -3,7 +3,7 @@
 name: qbittorrent
 description: BitTorrent client
 min_dotbox: 0.0.4
-image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487
+image: lscr.io/linuxserver/qbittorrent:5.3.1_v2.1.3-ls490
 port: 8080
 access: two_factor
 # sans session, / rend la page de connexion (200): localhost est dans ServerDomains, plus bas
