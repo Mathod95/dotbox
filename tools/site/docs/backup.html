@@ -27,7 +27,7 @@
     <li><b>Puis app par app</b>: Dot Box arrête une app, archive son dossier, la redémarre et attend qu'elle soit <i><b>Running</b></i>, puis passe à la suivante. Chaque app n'est coupée que le temps de sa propre archive: quelques secondes, plus l'attente de son healthcheck, jusqu'à une minute pour certaines. Une app qui ne repart pas arrête la série, et Dot Box le dit. Une app arrêtée avec <code>dotbox stop</code> est archivée telle quelle et reste arrêtée.</li>
     <li><b>Compressée et chiffrée</b> au fil de l'eau: rien n'est écrit en clair sur le disque, l'archive arrive déjà chiffrée.</li>
     <li><b>Envoyée</b> à la fin, en une fois, à chaque destination distante. <code>keep</code> fait le ménage, ici et là-bas.</li>
-    <li><b>Instantané</b>: plus tard, sur btrfs ou ZFS, un instantané remplacera l'arrêt.</li>
+    <li><b>Instantané</b>: plus tard, quand <code>/opt</code> est déjà sur btrfs ou LVM, un instantané remplacera l'arrêt.</li>
   </ol>
   </div>
   <p class="note"><b>La clé de chiffrement</b> est dans <code>/opt/dotbox/secrets/backup.key</code>, lisible par root seulement. <code>dotbox init</code> la crée, ou la première sauvegarde sur un serveur déjà installé. Garde-en une copie hors du serveur, dans un gestionnaire de mots de passe: sans elle, les archives sont illisibles. La carte de fin de <code>init</code> et la première sauvegarde te le rappellent.</p>
@@ -145,7 +145,7 @@
     <li><b>Then app by app</b>: Dot Box stops an app, archives its folder, restarts it and waits for it to be <i><b>Running</b></i>, then moves to the next one. Each app is down only for its own archive: a few seconds, plus the wait for its healthcheck, up to a minute for some. An app that does not come back stops the series, and Dot Box says so. An app stopped with <code>dotbox stop</code> is archived as it is and stays stopped.</li>
     <li><b>Compressed and encrypted</b> on the fly: nothing is written in clear on the disk, the archive lands already encrypted.</li>
     <li><b>Sent</b> at the end, in one go, to each remote destination. <code>keep</code> cleans up, here and there.</li>
-    <li><b>Snapshot</b>: later, on btrfs or ZFS, a snapshot will replace the stop.</li>
+    <li><b>Snapshot</b>: later, when <code>/opt</code> is already on btrfs or LVM, a snapshot will replace the stop.</li>
   </ol>
   </div>
   <p class="note"><b>The encryption key</b> is in <code>/opt/dotbox/secrets/backup.key</code>, readable by root only. <code>dotbox init</code> creates it, or the first backup on a server already installed. Keep a copy off the server, in a password manager: without it, archives cannot be read. The card at the end of <code>init</code> and the first backup remind you.</p>
