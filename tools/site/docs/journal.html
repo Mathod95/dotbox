@@ -4585,7 +4585,7 @@ volumes:
           links: [ { t: "Page", u: "../maintainerr/" } ],
           does: "Le ménage dans la bibliothèque, selon des règles (pas vu depuis un an, demandé par quelqu'un qui est parti...). Il parle à Plex ou Jellyfin, Seerr, Radarr et Sonarr. two_factor. Après un serveur média. Ajouté au Journal le 19 novembre 2026." },
         { id: "8.19", kind: "ecriture", where: "PC → Serveur", title: "Gitea (plus tard, D77)",
-          does: "L'hébergement de dépôts Git. Un port SSH publié pour git push (D44), en plus du web. Niveau à trancher: app (sa propre connexion, pour git en HTTPS) ou two_factor. Ajouté au Journal le 19 novembre 2026." },
+          does: "L'hébergement de dépôts Git. Un port SSH publié pour git push (D44), en plus du web. Niveau à trancher: app (sa propre connexion, pour git en HTTPS) ou two_factor. Ajouté au Journal le 19 novembre 2026. Le 28 novembre 2026: encore plus tard, l'accès et la base à trancher (D168)." },
         { id: "8.20", kind: "ecriture", where: "PC → Serveur", title: "Backstage (plus tard, D74, D76)",
           does: "À préciser avec Mathod95: plusieurs containers et une base de données, que le moteur ne gère pas encore (un seul container par app). Ajouté au Journal le 19 novembre 2026." },
         { id: "8.21", status: "fait", ref: "J189-J190", kind: "ecriture", where: "PC → Serveur", title: "WireGuard, par wg-easy (D75)",
@@ -5729,6 +5729,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 27 novembre 2026, après Q98: « Ajoute Tracearr et Gitea, les autres attendront! Une fois que ces deux-là sont créés tu peux créer le tag 0.0.7! Avant l'ajout redonne-moi l'accès des pages car je ne l'ai plus ».",
       reco: "Choix de Mathod95. Tracearr (18.7) et Gitea, puis le push et le tag v0.0.7, accordés par Mathod95. Bazarr, FlareSolverr, Lidarr, NetBird, Portainer et Backstage restent pour plus tard. Les pages servies de nouveau en local (le serveur local s'était arrêté avec la session précédente).",
       refs: "Q98, 18.7, 8.19, D77" },
+    { t: "Gitea encore plus tard, le tag v0.0.7 sans lui",
+      p: "Claude a demandé à Mathod95, le 28 novembre 2026, avant d'écrire le manifest de Gitea: (1) l'accès: two_factor et SSH (git push et clone par le port 2222 publié, git en HTTPS impossible derrière Authelia), app et SSH (sa propre connexion, CrowdSec devant, git en HTTPS et en SSH, l'assistant derrière Authelia jusqu'à la fin, D71), ou two_factor sans SSH (le site seul); (2) la base: SQLite (la doc officielle de l'image rootless, un seul container) ou PostgreSQL à côté. Réponse de Mathod95: « On oublie Gitea pour le moment, je ne vais pas trop y réfléchir pour l'instant, poursuis », et pour la base: « Pareil, on se le note pour plus tard! ».",
+      reco: "Choix de Mathod95: Gitea attend, les deux questions restent ouvertes dans 8.19. Ce que Claude a lu le même jour, pour la reprise: la dernière version est 28.4.0 (gitea/gitea:28.4.0-rootless, aussi sur docker.gitea.com), l'image rootless tourne avec l'utilisateur 1000, le web sur 3000 et son propre serveur SSH sur 2222, ses données dans /var/lib/gitea et sa config dans /etc/gitea. La doc rootless ne donne que SQLite, une base MySQL ou PostgreSQL se crée à part. Le moteur sait déjà publier un port (ports: 2222/tcp, D44). Recommandé par Claude: two_factor et SSH, SQLite. Le tag v0.0.7 se fait sans Gitea, avec Jellystat et Tracearr (D167).",
+      refs: "D77, 8.19, D44, D167" },
   ];
 
   var QUESTIONS = [
@@ -6335,7 +6339,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 27 novembre 2026 (D166): « À la fin du test sur Jellystat précise-moi les autres apps manquantes, on les rajoutera/testera et on fera un push avec tag ». Le point de Claude, lu dans la Roadmap (étape Apps) et le tableau des apps repérées de la page Apps (298 apps).",
       l: ["Prévues dans la Roadmap: Tracearr (18.7, prête: TimescaleDB et Redis, le moteur a tout), Gitea (8.19, D77: un port SSH publié pour git push, SQLite ou PostgreSQL), NetBird (8.22, D75: plusieurs containers, un port UDP, des droits réseau), Portainer (8.10, D68: veut le socket Docker, que Dot Box garde derrière un proxy), Backstage (8.20, D76: pas une app à installer telle quelle, un projet à construire soi-même).",
           "Repérées, qui complètent ce qui est déjà là (Radarr, Sonarr, Prowlarr, qBittorrent): Bazarr (les sous-titres), FlareSolverr (pour certains indexeurs de Prowlarr), Lidarr (la musique), Recyclarr (les profils de TRaSH Guides), Unpackerr (les archives des téléchargements), SABnzbd ou NZBGet (Usenet), Audiobookshelf et Navidrome (livres audio, musique)."],
-      reco: "Proposé par Claude: Tracearr d'abord (18.7, il ne demande rien de nouveau), puis Bazarr, FlareSolverr et Lidarr (une image linuxserver chacune, une app seule: vite faites et testées), avant le tag. Gitea et NetBird demandent chacun une étape à eux (un port publié, des droits réseau), Portainer et Backstage restent à trancher (D68, D76). À Mathod95 de choisir la liste." },
+      reco: "Proposé par Claude: Tracearr d'abord (18.7, il ne demande rien de nouveau), puis Bazarr, FlareSolverr et Lidarr (une image linuxserver chacune, une app seule: vite faites et testées), avant le tag. Gitea et NetBird demandent chacun une étape à eux (un port publié, des droits réseau), Portainer et Backstage restent à trancher (D68, D76). À Mathod95 de choisir la liste." },,
+    { n: 99, t: "Le domaine racine de Mathod95 dans les pages figées de pages/v1",
+      p: "Vu par Claude le 28 novembre 2026, en cherchant le domaine personnel dans le repo avant le tag v0.0.7: pages/v1/index.html et pages/v1/cli.html (les pages figées de la première version, commit b3b74b8) ont des exemples avec le domaine racine de Mathod95 (dotbox init --domain <domaine racine> ...). Elles sont publiques sur GitHub depuis leur premier push. Une page figée ne se modifie pas, et le domaine reste dans l'historique de Git de toute façon.",
+      l: ["Laisser tel quel: c'est déjà public, et c'est le domaine racine, pas le sous-domaine du serveur de test.",
+          "Remplacer le domaine par example.com dans les deux pages figées (une exception à la règle des pages figées), sans réécrire l'historique.",
+          "Retirer pages/v1 du repo."],
+      reco: "À Mathod95. Rien n'a été changé." }
   ];
 
 
@@ -6581,11 +6591,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166, 167], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151, 168], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166, 167], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
-    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95], "18": [96, 98]
+    "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 99], "18": [96, 98]
   };
   var NHOME = { "18": [26, 28, 29], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
   var placed = {};

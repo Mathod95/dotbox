@@ -50,6 +50,7 @@ jobs:
       - name: Chaque image du catalogue existe dans son registre
         run: |
           images=$( { sed -n 's/^image: *//p' catalog/*.yml
+                      sed -n 's/^    image: *//p' catalog/*.yml
                       sed -n 's/^  [a-z0-9-]*: *\([^ ]*:[^ ]*\)$/\1/p' catalog/core/*.yml; } | sort -u )
           status=0
           for image in $images; do
