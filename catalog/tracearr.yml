@@ -37,7 +37,7 @@ services:
   # TimescaleDB sur PostgreSQL 18, avec les options de démarrage du compose officiel: les
   # morceaux de TimescaleDB demandent beaucoup de fichiers ouverts et de verrous
   db:
-    image: timescale/timescaledb-ha:pg18.4-ts2.29.1
+    image: timescale/timescaledb-ha:pg18.7-ts2.32.1
     user: "{{uid}}:{{gid}}"
     shm_size: 512mb
     ulimits:
