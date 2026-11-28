@@ -65,17 +65,11 @@ volumes:
   <ul>
     <li><b>Address and access.</b> Change the subdomain or the access level in <code>apps:</code> of <code>dotbox.yml</code>, then run <code>dotbox sync</code>, as for any app (<a href="__DOC_ACCESSING_APPS__#en-change"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</li>
   </ul>
-  <div class="prop-old" data-prop="156">
-  <ul>
-    <li><b>A new version.</b> Renovate follows the catalog, not your apps, and <code>dotbox update</code> only knows the catalog's versions. Change <code>image:</code> in <code>/opt/dotbox/apps/&lt;app&gt;.yml</code> (with <code>sudo</code>), then run <code>dotbox install &lt;app&gt;</code> again.</li>
-  </ul>
-  </div>
-  <div class="prop-new" data-prop="156">
   <ul>
     <li><b>A new version.</b> Renovate follows the catalog, not your apps. Change <code>image:</code> in <code>/opt/dotbox/apps/&lt;app&gt;.yml</code> (with <code>sudo</code>), then run <code>dotbox update &lt;app&gt;</code>. As for a catalog app, it waits for the app to run and keeps the previous image for <code>dotbox update &lt;app&gt; --rollback</code>. Until then, <code>dotbox diff</code> and the SSH welcome message show that the app runs another version than its manifest.</li>
     <li><b>In the list.</b> <code>dotbox list</code> shows your apps next to the catalog, marked "yours".</li>
   </ul>
-  </div>
+
   <ul>
     <li><b>Settings the manifest cannot hold.</b> Write them in <code>/opt/&lt;app&gt;/compose.override.yml</code> with <code>sudo dotbox edit &lt;app&gt;</code>. Dot Box checks the file, restarts the app, and puts the old file back if the app does not start.</li>
     <li><b>Backup.</b> Your app is backed up like the others, in its own archive. Its manifest is in <code>/opt/dotbox/apps/</code>, saved with the <code>dotbox</code> archive.</li>

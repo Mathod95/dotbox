@@ -328,7 +328,7 @@ pub fn run(
     }
     if !Path::new(config::PATH).exists() {
         return Err(format!(
-            "no {}: restoring a new server comes with the Journal's 16.7. For now: sudo dotbox init first",
+            "no {}: restoring a new server is coming later. For now: sudo dotbox init, then sudo dotbox restore again",
             config::PATH
         ));
     }

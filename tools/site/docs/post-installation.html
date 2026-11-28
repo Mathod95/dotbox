@@ -4,7 +4,6 @@
 
 <!-- CONTENT -->
 <article class="prose" data-l="fr">
-  <div class="prop-new" data-prop="56">
   <h2 id="fr-authelia">Te connecter à Authelia</h2>
   <p>À faire en premier: tant que ta double authentification n'est pas enregistrée, aucune app derrière Authelia ne s'ouvre. Ton compte existe déjà, au nom de l'utilisateur choisi pendant <code>init</code>, dans le groupe <code>admins</code>.</p>
   <h3 id="fr-authelia-login">1. Te connecter</h3>
@@ -30,7 +29,7 @@
     <li>Passkey: suis la demande de ton navigateur.</li>
   </ul>
   <p>Enregistrer un appareil ne te connecte pas encore: Authelia te demande ensuite un code, ou ta passkey, puis ouvre l'app. Les fois suivantes, c'est le mot de passe puis la double authentification.</p>
-  </div>
+
   <h2 id="fr-doctor">Lancer dotbox doctor</h2>
   <p>Avant tout, <code>doctor</code> vérifie le serveur et liste ce qui reste à faire. Chaque point ci-dessous correspond à une de ses lignes.</p>
   <pre><span class="p">$</span> dotbox doctor
@@ -83,8 +82,7 @@
   <p>CrowdSec, installé avec le core, bloque déjà les adresses qui enchaînent les tentatives de connexion SSH, sans toucher à cette configuration.</p>
 
   <h2 id="fr-backup">Sortir les sauvegardes du serveur</h2>
-  <div class="prop-old" data-prop="134"><p>La sauvegarde quotidienne est active dès <code>init</code>, mais en local: un disque qui lâche l'emporte avec lui. Ajoute une destination distante, voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
-  <div class="prop-new" data-prop="134"><p><code>init</code> programme une sauvegarde chaque jour à 04:00, dans <code>/backups</code>, sur le serveur: un disque qui lâche l'emporte avec lui. Ajoute une destination distante (<code>sftp</code> ou <code>rclone</code>), voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. D'ici là, <code>dotbox doctor</code> te le rappelle.</p></div>
+  <p><code>init</code> programme une sauvegarde chaque jour à 04:00, dans <code>/backups</code>, sur le serveur: un disque qui lâche l'emporte avec lui. Ajoute une destination distante (<code>sftp</code> ou <code>rclone</code>), voir <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. D'ici là, <code>dotbox doctor</code> te le rappelle.</p>
 
   <h2 id="fr-users">Créer les comptes</h2>
   <div class="prop-old" data-prop="57">
@@ -104,7 +102,6 @@
 </article>
 
 <article class="prose" data-l="en">
-  <div class="prop-new" data-prop="56">
   <h2 id="en-authelia">Log in to Authelia</h2>
   <p>Do this first: until your two-factor method is registered, no app behind Authelia opens. Your account already exists, named after the user chosen during <code>init</code>, in the <code>admins</code> group.</p>
   <h3 id="en-authelia-login">1. Log in</h3>
@@ -130,7 +127,7 @@
     <li>Passkey: follow your browser's prompt.</li>
   </ul>
   <p>Registering a device does not log you in yet: Authelia then asks for a code, or your passkey, and opens the app. From then on, it is the password, then the second factor.</p>
-  </div>
+
   <h2 id="en-doctor">Run dotbox doctor</h2>
   <p>First, <code>doctor</code> checks the server and lists what is left to do. Each point below matches one of its lines.</p>
   <pre><span class="p">$</span> dotbox doctor
@@ -202,8 +199,7 @@
   <p>CrowdSec, installed with the core, already blocks addresses that keep trying to log in over SSH, without touching this configuration.</p>
 
   <h2 id="en-backup">Move backups off the server</h2>
-  <div class="prop-old" data-prop="134"><p>The daily backup is on from <code>init</code>, but local: a failing disk takes it with it. Add a remote destination, see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>.</p></div>
-  <div class="prop-new" data-prop="134"><p><code>init</code> schedules a backup every day at 04:00, into <code>/backups</code>, on the server: a failing disk takes it with it. Add a remote destination (<code>sftp</code> or <code>rclone</code>), see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. Until then, <code>dotbox doctor</code> reminds you.</p></div>
+  <p><code>init</code> schedules a backup every day at 04:00, into <code>/backups</code>, on the server: a failing disk takes it with it. Add a remote destination (<code>sftp</code> or <code>rclone</code>), see <a href="__DOC_BACKUP__"__DOC_BACKUP_TARGET__>Backup</a>. Until then, <code>dotbox doctor</code> reminds you.</p>
 
   <h2 id="en-users">Create accounts</h2>
   <div class="prop-old" data-prop="57">

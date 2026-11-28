@@ -38,8 +38,7 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
   </ul>
 
   <h2 id="styles">Styles</h2>
-  <div class="prop-old" data-prop="148"><p>Three styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
-  <div class="prop-new" data-prop="148"><p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p></div>
+  <p>Four styles, with the same lines. <b>compact</b> is the default. The others are picked in <code>dotbox.yml</code>, or tried once with <code>dotbox motd --style &lt;style&gt;</code>. The colors and symbols are the ones of the rest of the CLI, the cliclack frame of <code>dotbox status</code> and <code>dotbox doctor</code>.</p>
 
   <h3 id="compact">compact (default)</h3>
   <p>What <code>dotbox motd</code> prints, line by line as coded: a line per state, then the yellow lines with their command.</p>
@@ -91,7 +90,6 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 
 <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
 
-  <div class="prop-new" data-prop="148">
   <h3 id="ascii">ascii</h3>
   <p>The lines of <b>banner</b>, under « dotbox » in the <a href="https://patorjk.com/software/taag/#p=display&amp;f=Standard&amp;t=dotbox">Standard</a> figlet font. Only the logo changes: for a terminal whose font lacks the dots of <b>banner</b>.</p>
   <pre><span class="ok">     _       _   _
@@ -111,7 +109,7 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
 <span class="w">▲</span>  <span class="w">2 apps behind: dotbox update --all</span>
 
 <span class="c">dotbox status · dotbox --help · https://dotbox.example.com</span></pre>
-  </div>
+
 
   <h2 id="command">The command</h2>
   <div class="table-scroll"><table>
@@ -119,7 +117,7 @@ Last login: Sat Nov 21 05:09:53 2026 from 203.0.113.20</pre>
     <tbody>
       <tr><td><code>dotbox motd</code></td><td>Prints the message, the same as at login.</td></tr>
       <tr><td><code>dotbox motd --refresh</code></td><td>Runs the cached checks again now (doctor, the catalog, CrowdSec) and rewrites their files.</td></tr>
-      <tr><td><code>dotbox motd --style &lt;style&gt;</code></td><td><span class="prop-old" data-prop="148">Shows another style once (<code>compact</code>, <code>fastfetch</code> or <code>banner</code>), without changing <code>dotbox.yml</code>.</span><span class="prop-new" data-prop="148">Shows another style once (<code>compact</code>, <code>fastfetch</code>, <code>banner</code> or <code>ascii</code>), without changing <code>dotbox.yml</code>.</span></td></tr>
+      <tr><td><code>dotbox motd --style &lt;style&gt;</code></td><td>Shows another style once (<code>compact</code>, <code>fastfetch</code>, <code>banner</code> or <code>ascii</code>), without changing <code>dotbox.yml</code>.</td></tr>
     </tbody>
   </table></div>
   <p>It goes in the SERVER group of <code>dotbox --help</code>. The settings, as proposed:</p>
@@ -153,7 +151,7 @@ motd:
   <p>At login, the script gives <code>dotbox motd</code> 5 seconds: a Docker that no longer answers never blocks the connection. As root, <code>dotbox motd</code> works without the Dot Box service. Without <code>sudo</code>, it asks the service.</p>
 
 <h2 id="lines">What it shows</h2>
-  <p><span class="prop-old" data-prop="148">The same lines in all three styles, only the drawing changes.</span><span class="prop-new" data-prop="148">The same lines in all four styles, only the drawing changes.</span> Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
+  <p>The same lines in all four styles, only the drawing changes. Some lines are always there, the state of the server. Others only show up when something needs you, so the message stays short when all is well. A yellow line says what to run.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>Line</th><th>Content</th><th>Shown</th><th>Yellow when</th></tr></thead>
     <tbody>

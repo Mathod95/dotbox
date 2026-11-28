@@ -53,7 +53,6 @@
     <li><b>Une archive en cours</b> s'écrit d'abord sous un nom caché (<code>.radarr-....partial</code>), renommée à la fin: une archive à moitié écrite ne se confond jamais avec une vraie.</li>
   </ul>
 
-  <div class="prop-new" data-prop="139">
   <h2 id="fr-sftp">Une destination SFTP</h2>
   <p>Sur l'autre machine (un NAS, un autre serveur), un compte à Dot Box, enfermé dans son dossier: il ne peut que déposer et reprendre des archives. Par exemple avec OpenSSH, en root:</p>
   <pre><span class="p">#</span> useradd --system --home-dir /var/lib/dotbox-backup --shell /usr/sbin/nologin dotbox-backup
@@ -72,7 +71,7 @@
     <li><b>Dans <code>dotbox.yml</code></b>, le chemin est celui que voit le compte enfermé: <code>- sftp: dotbox-backup@nas.example.com:/backups</code>.</li>
     <li><b>La première sauvegarde</b> crée la clé SSH de Dot Box (<code>/opt/dotbox/secrets/backup_ssh</code>) et affiche la ligne à mettre dans <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>, précédée de <code>restrict</code>. Elle relève aussi l'empreinte de l'autre machine et l'affiche: compare-la avec <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> là-bas. Ensuite, une machine qui n'a plus cette empreinte est refusée, et rien n'est envoyé.</li>
   </ul>
-  </div>
+
 
   <h2 id="fr-settings">Réglages</h2>
   <pre>backup:
@@ -108,17 +107,13 @@
 
   <h2 id="fr-stream">Sauvegarde en flux</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
-  <div class="prop-old" data-prop="141">
-  <p>Si le disque n'a pas la place d'une archive locale, <code>--stream</code> envoie chaque archive directement vers la destination distante, sans copie intermédiaire. Plus lent, et seulement vers rclone ou SFTP.</p>
-  </div>
-  <div class="prop-new" data-prop="141">
   <p>Pour un disque qui n'a pas la place des archives: <code>--stream</code> envoie chaque archive tout droit aux destinations distantes, sans rien écrire sur le disque du serveur. Seulement vers <code>sftp</code> ou <code>rclone</code>: celles de <code>backup.destinations</code>, ou celle de <code>--to</code>.</p>
   <ul>
     <li><b>Plus lent pour les apps</b>: chacune reste arrêtée le temps de l'envoi de son archive, pas seulement de son écriture.</li>
     <li><b>Vérifié d'abord</b>: avant d'arrêter une app, Dot Box s'assure que chaque destination l'accepte.</li>
     <li><b>Jamais à moitié</b>: une archive arrive sous un nom provisoire, puis prend son vrai nom une fois complète. Un envoi coupé ne laisse rien, et l'app repart quand même.</li>
   </ul>
-  </div>
+
 </article>
 
 <article class="prose" data-l="en">
@@ -171,7 +166,6 @@
     <li><b>An archive in progress</b> is first written under a hidden name (<code>.radarr-....partial</code>), renamed at the end: a half-written archive is never mistaken for a real one.</li>
   </ul>
 
-  <div class="prop-new" data-prop="139">
   <h2 id="en-sftp">An SFTP destination</h2>
   <p>On the other machine (a NAS, another server), an account for Dot Box, locked in its folder: it can only drop and fetch archives. For example with OpenSSH, as root:</p>
   <pre><span class="p">#</span> useradd --system --home-dir /var/lib/dotbox-backup --shell /usr/sbin/nologin dotbox-backup
@@ -191,7 +185,7 @@
     <li><b>The first backup</b> creates Dot Box's SSH key (<code>/opt/dotbox/secrets/backup_ssh</code>), records the other machine's fingerprint and shows it: compare it with <code>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</code> over there. From then on, a machine that no longer has that fingerprint is refused, and nothing is sent.</li>
     <li><b>The key</b>: as long as the other machine refuses it, the backup stops and shows the line to add to <code>/var/lib/dotbox-backup/.ssh/authorized_keys</code>. Put <code>restrict</code> in front of it, so the key can do nothing but SFTP.</li>
   </ul>
-  </div>
+
 
   <h2 id="en-settings">Settings</h2>
   <pre>backup:
@@ -227,15 +221,11 @@
 
   <h2 id="en-stream">Streamed backup</h2>
   <pre><span class="p">$</span> dotbox backup --stream</pre>
-  <div class="prop-old" data-prop="141">
-  <p>If the disk has no room for a local archive, <code>--stream</code> sends each archive straight to the remote destination, with no intermediate copy. Slower, and only to rclone or SFTP.</p>
-  </div>
-  <div class="prop-new" data-prop="141">
   <p>For a disk with no room for the archives: <code>--stream</code> sends each archive straight to the remote destinations, without writing anything on the server's disk. Only to <code>sftp</code> or <code>rclone</code>: those of <code>backup.destinations</code>, or the one given by <code>--to</code>.</p>
   <ul>
     <li><b>Slower for the apps</b>: each one stays stopped while its archive is sent, not only while it is written.</li>
     <li><b>Checked first</b>: before stopping any app, Dot Box makes sure each destination accepts it.</li>
     <li><b>Never half done</b>: an archive arrives under a temporary name, then takes its real name once complete. A cut transfer leaves nothing behind, and the app starts again anyway.</li>
   </ul>
-  </div>
+
 </article>

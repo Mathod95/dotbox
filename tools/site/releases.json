@@ -2,6 +2,19 @@
   "_note": "Source de la page Releases de Dot Box. Une entrée par version, de la plus récente à la plus ancienne. « next » = ce qui est réellement livré sur main sans tag, seulement quand il y en a ; ce qui est prévu vit dans roadmap.json. Chaque ligne en français (fr) et en anglais (en), au format « Composant: description », `code` entre accents graves. « tagged »: true seulement quand le tag est poussé (affiche les liens Changements et Télécharger). Règles complètes dans CLAUDE.md.",
   "releases": [
     {
+      "version": "next",
+      "title": {
+        "fr": "Corrections",
+        "en": "Fixes"
+      },
+      "fixed": [
+        {
+          "fr": "CLI: `sudo dotbox restore` sur un serveur sans `dotbox init` dit quoi faire (`sudo dotbox init`, puis `sudo dotbox restore` de nouveau), sans renvoyer au Journal",
+          "en": "CLI: `sudo dotbox restore` on a server without `dotbox init` says what to do (`sudo dotbox init`, then `sudo dotbox restore` again), without pointing to the Journal"
+        }
+      ]
+    },
+    {
       "version": "v0.0.7",
       "date": "2026-11-28",
       "tagged": true,
