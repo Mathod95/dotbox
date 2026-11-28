@@ -44,8 +44,10 @@ DOCS_LAYOUT = DOCS_SRC / "layout.html"
 # la documentation (D127, 23 novembre 2026): des sections, comme Getting Started, chacune titrée
 # dans la barre de gauche, ses pages dans l'ordre. « Travail »: les pages de travail en français,
 # seulement dans le site local (D125). « group »: un groupe repliable dans sa section, ouvert
-# seulement sur une de ses pages (D128). Depuis D172 et D173: la section Catalog (Overview, Your
-# own apps), puis le groupe repliable Apps, une page par app.
+# seulement sur une de ses pages (D128). FOLD_SECTIONS: une section dont le titre lui-même se
+# replie, ouverte seulement sur une de ses pages (D174: Apps, une page par app, après Catalog).
+FOLD_SECTIONS = {"Apps"}
+
 DOCS = [
     {"slug": "basics", "name": "Basics", "dots": "BASICS", "section": "Getting Started"},
     {"slug": "prerequisites", "name": "Prerequisites", "dots": "PREREQUISITES", "section": "Getting Started"},
@@ -57,23 +59,23 @@ DOCS = [
     {"slug": "restore", "name": "Restore & Migration", "dots": "RESTORE", "section": "Backup / Restore"},
     {"slug": "apps", "name": "Overview", "dots": "APPS", "section": "Catalog"},
     {"slug": "your-own-apps", "name": "Your own apps", "dots": "YOUR-APPS", "section": "Catalog"},
-    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "section": "Catalog", "group": "Apps"},
-    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "section": "Catalog", "group": "Apps"},
-    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "section": "Catalog", "group": "Apps"},
-    {"slug": "qui", "name": "qui", "dots": "QUI", "section": "Catalog", "group": "Apps"},
-    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "section": "Catalog", "group": "Apps"},
-    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "section": "Catalog", "group": "Apps"},
-    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "section": "Catalog", "group": "Apps"},
-    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "section": "Catalog", "group": "Apps"},
-    {"slug": "plex", "name": "Plex", "dots": "PLEX", "section": "Catalog", "group": "Apps"},
-    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "section": "Catalog", "group": "Apps"},
-    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "section": "Catalog", "group": "Apps"},
-    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "section": "Catalog", "group": "Apps"},
-    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "section": "Catalog", "group": "Apps"},
-    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Catalog", "group": "Apps"},
-    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Catalog", "group": "Apps"},
-    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Catalog", "group": "Apps"},
-    {"slug": "homarr", "name": "Homarr", "dots": "HOMARR", "section": "Catalog", "group": "Apps"},
+    {"slug": "prowlarr", "name": "Prowlarr", "dots": "PROWLARR", "section": "Apps"},
+    {"slug": "radarr", "name": "Radarr", "dots": "RADARR", "section": "Apps"},
+    {"slug": "qbittorrent", "name": "qBittorrent", "dots": "QBITTORRENT", "section": "Apps"},
+    {"slug": "qui", "name": "qui", "dots": "QUI", "section": "Apps"},
+    {"slug": "sonarr", "name": "Sonarr", "dots": "SONARR", "section": "Apps"},
+    {"slug": "uptime-kuma", "name": "Uptime Kuma", "dots": "UPTIME-KUMA", "section": "Apps"},
+    {"slug": "code-server", "name": "code-server", "dots": "CODE-SERVER", "section": "Apps"},
+    {"slug": "jellyfin", "name": "Jellyfin", "dots": "JELLYFIN", "section": "Apps"},
+    {"slug": "plex", "name": "Plex", "dots": "PLEX", "section": "Apps"},
+    {"slug": "tautulli", "name": "Tautulli", "dots": "TAUTULLI", "section": "Apps"},
+    {"slug": "autobrr", "name": "autobrr", "dots": "AUTOBRR", "section": "Apps"},
+    {"slug": "maintainerr", "name": "Maintainerr", "dots": "MAINTAINERR", "section": "Apps"},
+    {"slug": "wg-easy", "name": "wg-easy", "dots": "WG-EASY", "section": "Apps"},
+    {"slug": "seerr", "name": "Seerr", "dots": "SEERR", "section": "Apps"},
+    {"slug": "wizarr", "name": "Wizarr", "dots": "WIZARR", "section": "Apps"},
+    {"slug": "vaultwarden", "name": "Vaultwarden", "dots": "VAULTWARDEN", "section": "Apps"},
+    {"slug": "homarr", "name": "Homarr", "dots": "HOMARR", "section": "Apps"},
     {"slug": "cli", "name": "CLI", "dots": "CLI", "section": "References"},
     {"slug": "api", "name": "API", "dots": "API", "section": "References"},
     {"slug": "web-ui", "name": "Web UI", "dots": "WEB-UI", "section": "References"},
@@ -181,8 +183,16 @@ def doc(slug, urls, target, title):
         if d["section"] != section:
             if section is not None:
                 nav.append("      </ul>")
+                if section in FOLD_SECTIONS:
+                    nav.append("      </details>")
             section = d["section"]
-            nav.append('      <h2>' + section.replace("&", "&amp;") + '</h2>')
+            title = '<h2>' + section.replace("&", "&amp;") + '</h2>'
+            if section in FOLD_SECTIONS:
+                # une section repliable: son titre ouvre et ferme la liste (D174)
+                is_open = " open" if page_def["section"] == section else ""
+                nav.append('      <details class="sec-fold"' + is_open + '><summary>' + title + '</summary>')
+            else:
+                nav.append('      ' + title)
             nav.append('      <ul class="nav">')
         if d.get("group") and d.get("group") != group:
             # un groupe repliable: ouvert seulement quand la page en cours en fait partie
@@ -199,6 +209,8 @@ def doc(slug, urls, target, title):
     if group:
         nav.append("        </ul></details></li>")
     nav.append("      </ul>")
+    if section in FOLD_SECTIONS:
+        nav.append("      </details>")
     pn = []
     if i > 0:
         p = DOCS[i - 1]

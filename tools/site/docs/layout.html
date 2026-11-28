@@ -80,6 +80,14 @@ code { font-family: var(--mono); font-variant-ligatures: none; font-size: .88em;
 .side::-webkit-scrollbar-track { background: transparent; }
 .side::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
 .side .nav + h2 { margin-top: 12px; }
+/* une section repliable (Apps, D174): son titre ouvre et ferme la liste, ouvert sur une de ses pages */
+.side .nav + .sec-fold, .side .sec-fold + h2 { margin-top: 12px; }
+.side .sec-fold > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; list-style: none; user-select: none; color: var(--label); }
+.side .sec-fold > summary::-webkit-details-marker { display: none; }
+.side .sec-fold > summary::after { content: ""; flex: none; width: 6px; height: 6px; margin-right: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+.side .sec-fold[open] > summary::after { transform: rotate(45deg); }
+.side .sec-fold > summary:hover, .side .sec-fold > summary:hover h2 { color: var(--lit); }
+.side .sec-fold > .nav { margin-top: 12px; }
 .side h2 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--label); }
 .nav { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
 :is(.nav, .nav-sub) > li > a { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-left: -1px; border-left: 2px solid transparent; font-family: var(--mono); font-size: 14px; letter-spacing: .06em; color: var(--lit); text-decoration: none; }
