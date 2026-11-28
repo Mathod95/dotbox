@@ -135,6 +135,13 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
 .inc .badge canvas { width: 28px; height: 28px; }
 .inc h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--lit); }
 .inc p { margin: 0; font-size: 14px; color: var(--label); }
+/* propositions en attente de validation (blue/green), comme dans la doc: le texte d'aujourd'hui en bleu, la variante proposée en vert */
+.prop-old, .prop-new { display: grid; gap: 10px; position: relative; padding: 32px 14px 12px; border: 1px solid var(--design); border-radius: 12px; background: #0a1219; min-width: 0; }
+.prop-new { border-color: var(--accent); background: #07130e; }
+.prop-old::before, .prop-new::before { position: absolute; top: 10px; left: 14px; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+.prop-old::before { content: "#" attr(data-prop) " · Removed once approved"; color: var(--design); }
+.prop-new::before { content: "#" attr(data-prop) " · Added once approved"; color: var(--accent); }
+.prop-new p { color: var(--accent); }
 .inc .soon { margin-left: 10px; padding: 2px 8px; border: 1px solid #4a3a14; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--wip); vertical-align: middle; }
 
 /* les apps dans un cadre: leurs logos, un fond émeraude au survol (D149) */
@@ -494,7 +501,10 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
     ["terminal", "One-command install", "One script sets up the whole server in about 4 minutes: Docker, Traefik, Authelia, CrowdSec and Dotbox."],
     ["globe", "HTTPS everywhere", "Each app on its own subdomain, with a Let's Encrypt certificate obtained and renewed on its own."],
     ["lock", "One login, two factors", "Authelia in front of your apps: a password, then a 6-digit code or a passkey."],
-    ["key", "Access per app", "`two_factor` for the apps that run your server, `one_factor` for a password only (coming later), `app` for media servers and their TV apps, `public` for an invite page."],
+    ["key", "Access per app", "`two_factor` for the apps that run your server, `app` for media servers and their TV apps, `public` for an invite page.", false,
+      { was: true, n: 189, variants: [
+        ["189A", "`two_factor` for the apps that run your server, `one_factor` for a password only (coming later), `app` for media servers and their TV apps, `public` for an invite page."],
+        ["189B", "`two_factor` for the apps that run your server, `one_factor` for a password only, `app` for media servers and their TV apps, `public` for an invite page."]] }],
     ["shield", "Attacks blocked", "CrowdSec reads the SSH and web logs, bans attackers at the firewall and stops web attacks before they reach an app."],
     ["compose", "Plain Docker Compose", "One readable `compose.yml` per app, on its official image at a pinned version. Your changes go in `compose.override.yml`."],
     ["link", "Auto-connect", "Your apps wired together in one command: qBittorrent in Radarr and Sonarr, the indexers of Prowlarr, the root folders.", true],
@@ -518,7 +528,15 @@ p code, li code { padding: .1em .45em; border: 1px solid var(--line2); border-ra
       var h = el("h3", "", f[1]);
       if (f[3]) h.appendChild(el("span", "soon", "Coming soon"));
       c.appendChild(h);
-      var p = el("p"); p.innerHTML = inline(f[2]); c.appendChild(p);
+      var p = el("p"); p.innerHTML = inline(f[2]);
+      if (f[4]) {
+        // une proposition (blue/green): le texte d'aujourd'hui en bleu, chaque variante en vert
+        var o = el("div", "prop-old"); o.setAttribute("data-prop", String(f[4].n)); o.appendChild(p); c.appendChild(o);
+        f[4].variants.forEach(function (v) {
+          var nb = el("div", "prop-new"); nb.setAttribute("data-prop", v[0]);
+          var q = el("p"); q.innerHTML = inline(v[1]); nb.appendChild(q); c.appendChild(nb);
+        });
+      } else c.appendChild(p);
       g.appendChild(c);
     });
   }
