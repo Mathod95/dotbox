@@ -7,7 +7,7 @@
 name: qbittorrent
 description: BitTorrent client
 min_dotbox: 0.0.4
-image: qbittorrentofficial/qbittorrent-nox:5.3.0-2
+image: qbittorrentofficial/qbittorrent-nox:5.3.1-1
 port: 8080
 access: two_factor
 # sans session, / rend la page de connexion (200): localhost est dans ServerDomains, plus bas
