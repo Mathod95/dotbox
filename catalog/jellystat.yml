@@ -31,7 +31,7 @@ volumes:
 services:
   # la base de son compose officiel, avec l'utilisateur de dotbox.yml: ses fichiers sont à lui
   db:
-    image: postgres:18.1
+    image: postgres:18.7
     user: "{{uid}}:{{gid}}"
     shm_size: 1gb
     env:
