@@ -1259,8 +1259,8 @@
       "stage": "updates",
       "domain": "catalog",
       "status": "done",
-      "fr": "Manifest: version minimale de Dot Box par manifest ; sinon Dot Box demande un `dotbox upgrade`",
-      "en": "Manifest: minimum Dot Box version per manifest; otherwise Dot Box asks for a `dotbox upgrade`",
+      "fr": "Manifest: version minimale de Dot Box par manifest, sinon Dot Box demande un `dotbox upgrade`",
+      "en": "Manifest: minimum Dot Box version per manifest, otherwise Dot Box asks for a `dotbox upgrade`",
       "doc": "update",
       "journal": [
         "7.6",
