@@ -3828,7 +3828,16 @@ curl releases/latest/download/dotbox-linux-amd64 et .sha256 ; sha256sum -c ; dot
       does: "D167 et D168: le tag v0.0.7, avec Jellystat et Tracearr, sans Gitea. 112 commits locaux poussés.",
       effect: "GitHub: main à 283ebab, le tag v0.0.7, la release v0.0.7 (dotbox-linux-amd64, son .sha256, install.sh), le site publié. Le catalogue de main a maintenant Homarr, Jellystat, Tracearr, code-server et qBittorrent sur leurs images officielles: dotbox sync peut de nouveau tourner sur le serveur de test (J315).",
       result: "179 tests passent. Release et Site: success. La dernière release téléchargée: « dotbox-linux-amd64: OK », dotbox 0.0.7. La page Releases répond (200).",
-      undo: "Un tag poussé ne se retire pas sans casser les téléchargements: une v0.0.8 corrige." }
+      undo: "Un tag poussé ne se retire pas sans casser les téléchargements: une v0.0.8 corrige." },
+    { id: "J342", time: "04:50", status: "fait", where: "PC → GitHub", kind: "ecriture",
+      title: "Le push de main, sans tag (D175)",
+      cmd: `build_site.py (public et --private) ; cargo test --locked ; git fetch origin (rien de nouveau)
+git push origin main ; gh run watch (Site) ; curl la page d'accueil, icons/tracearr.svg, pages/v1/index.html sur main ; gh pr list`,
+      does: "D175: main seul, sans v0.0.8.",
+      effect: "GitHub: main à 9900c19 (7 commits: #187 dans le code, les propositions validées, pages/v1 retiré, la barre de gauche, Jellystat et Tracearr sur la page d'accueil), le site publié.",
+      result: `179 tests passent. Site: success. La page d'accueil en ligne montre Tracearr, son logo répond (200), pages/v1/index.html n'est plus sur main (404).
+Cinq pull requests de Renovate ouvertes, la CI passée, en attente de Mathod95 (des mineures, qui ne fusionnent pas seules): #16 postgres 18.7 (Jellystat), #15 qbittorrent-nox 5.3.1-1, #14 qui v1.37.0, #12 prowlarr 3.1.0.5799-ls170, #11 traefik v3.8.0.`,
+      undo: "git revert des commits, puis un push." }
   ];
 
   var PLAN = [
@@ -6630,7 +6639,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "13": [205, 206, 207, 208, 209, 210, 211, 212, 219, 316],
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
     "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323, 324, 325, 327, 328],
-    "18": [326, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341],
+    "18": [326, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
