@@ -8,18 +8,25 @@ services:
     restart: unless-stopped
     networks:
       - dotbox
+      - private
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
       AUTHELIA_SESSION_SECRET_FILE: /secrets/session_secret
       AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/storage_encryption_key
       AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE: /secrets/jwt_secret
+      AUTHELIA_SESSION_REDIS_PASSWORD_FILE: /secrets/redis_password
     volumes:
       - /opt/authelia/config:/config
       - /opt/dotbox/secrets/authelia_session_secret:/secrets/session_secret:ro
       - /opt/dotbox/secrets/authelia_storage_encryption_key:/secrets/storage_encryption_key:ro
       - /opt/dotbox/secrets/authelia_jwt_secret:/secrets/jwt_secret:ro
+      - /opt/dotbox/secrets/authelia_redis_password:/secrets/redis_password:ro
     security_opt:
       - no-new-privileges:true
     labels:
+      traefik.docker.network: dotbox
       traefik.enable: "true"
       traefik.http.routers.authelia.rule: Host(`auth.example.com`)
       traefik.http.routers.authelia.entrypoints: websecure
@@ -31,7 +38,28 @@ services:
       traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true"
       traefik.http.middlewares.authelia.forwardauth.maxResponseBodySize: "8192"
       traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: Remote-User,Remote-Groups,Remote-Email,Remote-Name
+  # ses sessions (D178), sur un réseau qu'il ne partage qu'avec Authelia, sans accès à Internet
+  redis:
+    image: <redis>
+    container_name: authelia-redis
+    restart: unless-stopped
+    networks:
+      - private
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - /opt/authelia/redis:/data
+      - /opt/dotbox/secrets/authelia_redis_conf:/usr/local/etc/redis/redis.conf:ro
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$(sed -n 's/^requirepass //p' /usr/local/etc/redis/redis.conf)\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   dotbox:
     external: true
+  private:
+    internal: true

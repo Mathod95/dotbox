@@ -240,15 +240,11 @@ fn check(
         }
         Key::Access(app) => {
             let (_, access) = app_of(cfg, app)?;
+            // one_factor: sa règle dans Authelia, posée par dotbox sync (D178)
             match Access::parse(value) {
                 None => Err(format!(
-                    "unknown access {value:?}: two_factor, app or public"
+                    "unknown access {value:?}: two_factor, one_factor, app or public"
                 )),
-                // Authelia n'a pas encore de règle par app: ce serait two_factor (Q60)
-                Some(Access::OneFactor) => Err(
-                    "one_factor: not yet, Authelia has no rule per app so it would ask for two factors (Q60)"
-                        .into(),
-                ),
                 Some(_) => Ok(access),
             }
         }
@@ -497,10 +493,10 @@ mod tests {
                 .contains("not installed")
         );
         assert_eq!(ok("apps.radarr.access", "app"), Ok("two_factor".into()));
-        assert!(
-            ok("apps.radarr.access", "one_factor")
-                .unwrap_err()
-                .contains("Q60")
+        // one_factor accepté: sync pose sa règle dans Authelia (D178)
+        assert_eq!(
+            ok("apps.radarr.access", "one_factor"),
+            Ok("two_factor".into())
         );
         assert!(ok("apps.radarr.access", "open").is_err());
     }

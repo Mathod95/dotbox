@@ -3837,7 +3837,66 @@ git push origin main ; gh run watch (Site) ; curl la page d'accueil, icons/trace
       effect: "GitHub: main à 9900c19 (7 commits: #187 dans le code, les propositions validées, pages/v1 retiré, la barre de gauche, Jellystat et Tracearr sur la page d'accueil), le site publié.",
       result: `179 tests passent. Site: success. La page d'accueil en ligne montre Tracearr, son logo répond (200), pages/v1/index.html n'est plus sur main (404).
 Cinq pull requests de Renovate ouvertes, la CI passée, en attente de Mathod95 (des mineures, qui ne fusionnent pas seules): #16 postgres 18.7 (Jellystat), #15 qbittorrent-nox 5.3.1-1, #14 qui v1.37.0, #12 prowlarr 3.1.0.5799-ls170, #11 traefik v3.8.0.`,
-      undo: "git revert des commits, puis un push." }
+      undo: "git revert des commits, puis un push." },
+    { id: "J343", time: "09:22", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "19.5: le binaire, puis dotbox init avec le Redis d'Authelia",
+      cmd: `cargo build --release --target x86_64-unknown-linux-musl ; scp dotbox ; tar czf - catalog (avec catalog/core/authelia.yml et son image redis)
+sudo: cp /usr/local/bin/dotbox /usr/local/bin/dotbox-0.0.7-pc.bak ; install -m 755 /tmp/dotbox.new /usr/local/bin/dotbox ; systemctl restart dotbox
+sudo dotbox init --catalog /tmp/cat-test/catalog`,
+      does: "D178: go. init est relançable, il ne refait que ce qui manque: ici le Redis d'Authelia, ses secrets et sa configuration.",
+      effect: "Serveur: le binaire du PC (le précédent dans dotbox-0.0.7-pc.bak), /opt/dotbox/secrets/authelia_redis_password (0600) et authelia_redis_conf (0444), /opt/authelia/compose.yml et configuration.yml réécrits, le container authelia-redis, le réseau authelia_private, Authelia recréé.",
+      result: "init: 24,8 s, la carte de fin avec Authelia 4.39.28 healthy.",
+      undo: "sudo install -m 755 /usr/local/bin/dotbox-0.0.7-pc.bak /usr/local/bin/dotbox, puis sudo dotbox init (le Redis reste, sans servir: docker compose -f /opt/authelia/compose.yml up -d --remove-orphans après)." },
+    { id: "J344", time: "09:22", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "19.5: Authelia et son Redis",
+      cmd: `docker ps --filter name=authelia ; ls -l /opt/dotbox/secrets | grep redis ; ls -ld /opt/authelia/redis ; docker logs authelia, authelia-redis
+docker exec authelia-redis redis-cli ping ; docker network inspect authelia_private ; grep redis configuration.yml`,
+      does: "Vérifier ce que J343 a posé.",
+      effect: "Rien, lecture seule.",
+      result: `authelia et authelia-redis healthy. Les deux secrets: le mot de passe 0600, le fichier de réglages 0444 (lu par l'utilisateur redis). /opt/authelia/redis à redis (999), appendonlydir créé.
+Redis: « Ready to accept connections », sans mot de passe: « NOAUTH Authentication required ». authelia_private: internal true, seulement authelia-redis et authelia. Aucune erreur dans les logs d'Authelia.`,
+      undo: "Rien à annuler." },
+    { id: "J345", time: "09:23", status: "fait", where: "PC → Serveur", kind: "lecture",
+      title: "19.5: une connexion à Authelia pour l'essai, refusée depuis le PC, réussie sur le serveur",
+      cmd: `PC: session_test.py login (POST https://auth.<domaine>/api/firstfactor avec le mot de passe de ~/.config/dotbox-test/authelia-pass)
+Serveur, en root: session_test.sh login (le mot de passe de /opt/dotbox/secrets/authelia_password_<user>, dans un fichier 0600 de /root, effacé aussitôt), state, app prowlarr`,
+      does: "Une session au premier facteur (mot de passe seul), pour voir si elle survit à un redémarrage d'Authelia, puis ce qu'elle ouvre.",
+      effect: "Un essai raté dans le log d'Authelia (« Unsuccessful 1FA authentication attempt »), sans blocage (3 ratés en 2 minutes bloquent). Une session ouverte, son cookie dans /root/dotbox-session-test.",
+      result: `Depuis le PC: firstfactor 401 KO. Le mot de passe rangé sur le PC n'est plus le bon depuis la réinstallation du serveur: ~/.config/dotbox-test/authelia-pass est à mettre à jour (sudo dotbox authelia password).
+Sur le serveur: firstfactor 200 OK, authentication_level 1, Prowlarr (two_factor): 302 vers Authelia, qui demande le code.`,
+      undo: "Rien à annuler (J349 efface le cookie)." },
+    { id: "J346", time: "09:24", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "19.5: Authelia redémarré, la session gardée",
+      cmd: `docker restart authelia ; attendu healthy ; session_test.sh state ; session_test.sh app prowlarr`,
+      does: "Le cœur de D178: un redémarrage d'Authelia ne déconnecte personne.",
+      effect: "Serveur: Authelia redémarré.",
+      result: "healthy. La même session: authentication_level 1 (une première lecture, juste après le redémarrage, n'a rien rendu, puis 1 à la suivante). Prowlarr: 302, toujours en two_factor.",
+      undo: "Rien à annuler." },
+    { id: "J347", time: "09:24", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "19.5: Prowlarr en one_factor par dotbox install --access",
+      cmd: `sudo dotbox install --local --catalog /tmp/cat-test/catalog prowlarr --access one_factor --verbose
+grep one_factor configuration.yml ; grep -A3 prowlarr: dotbox.yml ; session_test.sh state ; session_test.sh app prowlarr`,
+      does: "La règle par app (D178): le niveau écrit dans dotbox.yml avant le compose, puis la règle dans Authelia, qui redémarre seulement parce qu'elle change.",
+      effect: "Serveur: dotbox.yml (prowlarr: access one_factor), /opt/prowlarr/compose.yml, configuration.yml (une règle pour prowlarr.<domaine>), Authelia redémarré.",
+      result: `✓ Prowlarr 3.0.2.5780-ls169, one_factor, 1,2 s. La règle « - domain: 'prowlarr.<domaine>' ... policy: 'one_factor' » entre traefik et *.<domaine>.
+La même session (mot de passe seul): authentication_level 1, et Prowlarr répond 200, sans le code.`,
+      undo: "J348." },
+    { id: "J348", time: "09:25", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "19.5: Prowlarr remis en two_factor, par le service",
+      cmd: `ssh dotbox-test 'dotbox install prowlarr --access two_factor'   (sans sudo: la CLI passe par le service, POST /api/v1/apps avec access)
+grep -c one_factor configuration.yml ; docker inspect authelia StartedAt ; session_test.sh state ; session_test.sh app prowlarr`,
+      does: "Le chemin d'un utilisateur ordinaire: la CLI, l'API du service, la tâche dotbox install --access.",
+      effect: "Serveur: dotbox.yml (two_factor), la règle retirée de configuration.yml, Authelia redémarré (08:25:25 UTC).",
+      result: "✓ Prowlarr, two_factor, 1,2 s. Plus aucune ligne one_factor. La session: toujours authentication_level 1, Prowlarr: 302 de nouveau.",
+      undo: "Rien à annuler." },
+    { id: "J349", time: "09:25", status: "fait", where: "PC → Serveur", kind: "ecriture",
+      title: "19.5: status, doctor, un second init sans effet, le ménage de l'essai",
+      cmd: `dotbox status --local ; dotbox doctor --local ; sudo dotbox init --catalog /tmp/cat-test/catalog (StartedAt d'Authelia avant et après)
+session_test.sh clean ; rm /tmp/session_test.sh`,
+      does: "Vérifier que rien d'autre ne change, et ne rien laisser de l'essai.",
+      effect: "Serveur: /root/dotbox-session-test (le cookie) et /tmp/session_test.sh effacés.",
+      result: `status: authelia-redis 8.12.0-alpine healthy dans le core. doctor: Containers 22 running, rien de nouveau (les assistants de Jellyfin, Seerr, Wizarr et Plex, une mise à jour du système). Second init: code 0, Authelia pas redémarré.`,
+      undo: "Rien à annuler." }
   ];
 
   var PLAN = [
@@ -5174,6 +5233,24 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
           does: "Son compose officiel: timescale/timescaledb-ha pg18.4-ts2.29.1 (avec ses options de démarrage, shm_size et ulimits) et redis 8-alpine, à des versions fixées. DATABASE_URL_FILE, JWT_SECRET_FILE et COOKIE_SECRET_FILE. two_factor. Essayé comme Jellystat. Sa page dans la doc." },
         { id: "18.8", kind: "ecriture", where: "PC", title: "La doc, la Roadmap, Releases",
           does: "La page Your own apps et la spécification du manifest (services:), les pages Jellystat et Tracearr en propositions, la réponse de GET /status dans la page API (le champ services, D163), les features cochées et les lignes dans next." }
+      ] },
+    { phase: "19", group: "encours", title: "one_factor et les sessions d'Authelia dans Redis",
+      intro: "Ajoutée le 28 novembre 2026 (D178, Q103 et Q60 tranchées): une règle Authelia par app en one_factor, Authelia redémarré seulement quand ces règles changent, ses sessions dans un Redis à lui pour que ce redémarrage ne déconnecte personne, et dotbox install --access.",
+      steps: [
+        { id: "19.1", status: "fait", ref: "J343", kind: "ecriture", where: "PC", title: "Le Redis d'Authelia",
+          does: "src/authelia.rs: un second service redis (authelia-redis) dans /opt/authelia/compose.yml, sur un réseau privé (internal) qu'il ne partage qu'avec Authelia, appendonly, son mot de passe dans deux secrets (celui qu'Authelia lit, AUTHELIA_SESSION_REDIS_PASSWORD_FILE, et le fichier de réglages de Redis, requirepass, monté en lecture seule), un healthcheck qui s'authentifie, Authelia démarré quand Redis est healthy, traefik.docker.network: dotbox. session.redis dans configuration.yml. L'image dans catalog/core/authelia.yml (redis:8.12.0-alpine)." },
+        { id: "19.2", status: "fait", ref: "J347", kind: "ecriture", where: "PC", title: "Une règle par app en one_factor",
+          does: "authelia::configuration(domain, one_factor): une règle par adresse d'app en one_factor (lue dans dotbox.yml, triée), entre celle de traefik et celle de *.<domaine>. refresh_rules: le fichier réécrit, Authelia redémarré seulement s'il change. Appelé à la fin de dotbox install et après dotbox remove. sync: le fichier voulu suit dotbox.yml, déjà redémarré s'il change." },
+        { id: "19.3", status: "fait", ref: "J347, J348", kind: "ecriture", where: "PC", title: "dotbox install --access, config set one_factor",
+          does: "--access two_factor|one_factor|app|public: le niveau écrit dans dotbox.yml avant le compose de l'app. Par le service: POST /api/v1/apps accepte access. config set apps.<app>.access one_factor n'est plus refusé (Q60)." },
+        { id: "19.4", status: "fait", kind: "ecriture", where: "PC", title: "status, Renovate, un catalogue rangé trop vieux",
+          does: "authelia-redis dans le core de dotbox status (et de dotbox logs). Renovate: jamais de majeure pour le Redis du core. sync sur un serveur dont le catalogue rangé n'a pas encore l'image redis: un message qui dit de relire le catalogue (dotbox diff)." },
+        { id: "19.5", status: "fait", ref: "J343-J349", kind: "ecriture", where: "Serveur", title: "Les essais sur le serveur de test",
+          does: "init avec Redis, une session au premier facteur gardée après un redémarrage d'Authelia, Prowlarr en one_factor puis en two_factor (par --local et par le service), status, doctor, un second init sans effet." },
+        { id: "19.6", kind: "ecriture", where: "Serveur", title: "config set et sync, après le push",
+          does: "dotbox diff (le catalogue relu sur GitHub, avec l'image redis), dotbox config set apps.<app>.access one_factor, dotbox sync: la règle posée, puis retirée." },
+        { id: "19.7", status: "fait", kind: "ecriture", where: "PC", title: "La doc, la Roadmap, Releases",
+          does: "Propositions #190 et #191 (Accessing Apps), #192 (Security), #193 (Paths), #194 (CLI, install --access) et #130 refaite (config set accepte one_factor), #195 (API), #196 (dotbox.yml). Trois features dans la Roadmap, trois lignes dans next." }
       ] }
   ];
 
@@ -5788,6 +5865,10 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Mathod95, le 28 novembre 2026, après D176: « Premièrement, je n'ai pas vu le blue/green! Parce que si j'avais vu le coming later, je ne l'aurais pas validé! » Puis: « Tu passes la page d'accueil en blue/green! ».",
       reco: "Erreur de Claude: Mathod95 avait demandé d'ajouter one_factor, « (coming later) » était un ajout de Claude, à montrer en blue/green et pas à appliquer (règle des propositions). Corrigé le même jour: le texte d'avant D176 revient, en bleu, et deux variantes en vert. #189A: « one_factor for a password only (coming later) ». #189B: « one_factor for a password only », vraie seulement une fois one_factor codé (Q60, Q103). La page d'accueil sait maintenant montrer des propositions (champ 5 d'une ligne de INCLUDED, les styles prop-old et prop-new copiés de layout.html). Dernier numéro attribué: 189.",
       refs: "D176, Q60, Q103" },
+    { t: "Go pour one_factor et le Redis d'Authelia, puis le tag et un serveur refait",
+      p: "Mathod95, le 28 novembre 2026, après Q103: « Ok parfait, ajoute à la Roadmap! Modifie la doc avec ces nouvelles informations! Code-le! Une fois fait, on pousse un tag et je refais le serveur de test au propre! Pour m'assurer de tout le parcours solo ».",
+      reco: "Choix de Mathod95, qui tranche Q103 et Q60: une règle Authelia par app en one_factor, Authelia redémarré seulement quand ces règles changent, ses sessions dans un Redis à lui (dans le compose d'Authelia, jamais partagé), et dotbox install --access. Codé et essayé par Claude le même jour: l'étape 19 (J343 à J349). La doc en propositions #190 à #196 et #130 refaite. Ensuite: 19.6 après le push de main, le tag v0.0.8, puis Mathod95 refait le serveur de test par install.sh.",
+      refs: "Q103, Q60, 19.1-19.7" },
   ];
 
   var QUESTIONS = [
@@ -6135,7 +6216,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       p: "Vu par Claude le 21 novembre 2026, en codant l'étape 15: Config::render (src/config.rs) écrit « # Dot Box: configuration du serveur (spec: Getting Started). » en première ligne de dotbox.yml. D92 dit que le fichier ne porte pas de commentaires.",
       l: ["Retirer la ligne: le fichier ne contient que des clés, comme D92 le dit.", "La garder: une seule ligne, qui dit d'où vient le fichier et où lire les explications. Préciser D92."],
       reco: "Proposé par Claude: la retirer, avec dotbox config (15.5), qui réécrit le fichier. Pas encore tranchée." },
-    { n: 60,
+    { n: 60, done: "D178",
       t: "Le niveau one_factor: refusé par config set tant qu'Authelia n'a pas de règle par app?",
       p: "Vu par Claude le 21 novembre 2026, en préparant 15.5. Le code connaît one_factor (src/catalog.rs) et pose le middleware d'Authelia devant l'app (src/engine.rs). Mais la configuration d'Authelia n'a qu'une règle, *.<domaine> en two_factor (src/authelia.rs): une app en one_factor demande en fait les deux facteurs. Les décisions produit prévoient une règle à elle pour chaque app one_factor, pas encore codée. Aucune app du catalogue n'est en one_factor aujourd'hui.",
       l: ["config set refuse one_factor, avec le motif, tant que la règle par app n'existe pas.", "Coder la règle par app dans 15.5: Authelia redémarre quand une app passe en one_factor ou en sort.", "L'accepter tel quel: l'app reste en fait en two_factor, sans le dire."],
@@ -6417,7 +6498,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
       l: ["Catalog: Overview (installer, retirer, d'où viennent les images, les apps du catalogue) et Your own apps (le format du manifest, dotbox add). Apps: une page par app, à plat, sans groupe repliable. Les adresses ne changent pas (/getting-started/<page>/).",
           "Garder comme aujourd'hui."],
       reco: "Avis de Claude: oui. Une section Apps d'une vingtaine de pages se lit mieux à plat qu'enfouie dans un groupe replié, et Catalog dit ce que font Overview et Your own apps: comment marchent les apps, pas une app en particulier. Une réserve: Your own apps parle des apps locales, pas du catalogue, mais c'est le même format de manifest, il y a sa place. Le changement tient dans DOCS (les champs section et group) et le lien de l'accueil vers Overview. À faire seulement avec l'accord de Mathod95." },
-    { n: 103, t: "one_factor sans redémarrer Authelia, et dotbox install --access",
+    { n: 103, done: "D178", t: "one_factor sans redémarrer Authelia, et dotbox install --access",
       p: "Mathod95, le 28 novembre 2026, après l'explication de Claude sur one_factor (une seule règle *.<domaine> en two_factor, posée par init, Authelia ne lit ses règles qu'au démarrage, et un redémarrage déconnecte tout le monde tant que les sessions sont en mémoire): « Si on décide dès le début quelle app est en two_factor et en one_factor, il n'y a pas besoin de tout redémarrer, si? » et « dotbox install <app> pourrait avoir un flag pour définir la méthode d'authentification entre two_factor et one_factor, par exemple, non? ».",
       l: ["Les règles écrites d'avance: la règle *.<domaine> en two_factor couvre déjà toutes les apps en two_factor, sans rien écrire. Seule une app en one_factor demande une règle à elle (son sous-domaine, avant *.<domaine>). Authelia ne redémarre donc qu'au moment où une app entre en one_factor ou en sort: à son installation avec one_factor, ou quand son niveau ou son sous-domaine change. Jamais pour une app en two_factor, app ou public. Comme one_factor est rare, ces redémarrages aussi.",
           "Les sessions d'Authelia dans Redis (ce que sa doc recommande hors des tests): un redémarrage ne déconnecte plus personne, il dure quelques secondes. Un container de plus dans le core.",
@@ -6594,7 +6675,11 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     { t: "Tracearr: ce que font son image, sa base et son cache",
       p: "Lu par Claude le 27 novembre 2026 dans les sources de Tracearr 3.2.1 (docker/Dockerfile, docker/entrypoint.sh, docker/examples/docker-compose.pg18.yml, docker/.env.example, apps/server/src/lib/env.ts, utils/crypto.ts), pour 18.7.",
       reco: "(1) L'image tourne avec son propre utilisateur (1001), son healthcheck sur /health dit aussi si la base, Redis et TimescaleDB répondent. Notre manifest la lance avec l'utilisateur de dotbox.yml. (2) entrypoint.sh lit DATABASE_URL, REDIS_URL, JWT_SECRET, COOKIE_SECRET et ENCRYPTION_KEY dans un fichier (<nom>_FILE). ENCRYPTION_KEY ne sert qu'à relire les jetons d'une très ancienne version: pas besoin. BETTER_AUTH_SECRET est dérivé de JWT_SECRET s'il manque. (3) Le compose officiel recommandé est celui de PostgreSQL 18 (docker-compose.pg18.yml): timescale/timescaledb-ha:pg18.4-ts2.29.1, avec ses options (max_locks_per_transaction 4096, max_connections 150, la télémétrie de TimescaleDB coupée), shm_size 512mb, nofile 65536, et redis 8-alpine en appendonly. Nous gardons les mêmes, Redis à une version fixée (8.12.0-alpine). (4) L'image de TimescaleDB tourne d'habitude avec postgres (1000). Avec un autre utilisateur, elle a marché sur le serveur de test, où l'utilisateur est aussi 1000: un utilisateur à un autre uid reste à essayer. (5) TRUST_PROXY true: un seul proxy devant, Traefik, l'adresse du client vient de X-Forwarded-For. (6) Renovate: le tag pg18.4-ts2.29.1 se lit avec une règle à lui (PostgreSQL en majeure et mineure, TimescaleDB en correctif), sans les variantes -all, -oss ni -rNNN, jamais de majeure (D159), et jamais fusionné seul: une nouvelle version de TimescaleDB peut demander ALTER EXTENSION dans la base. (7) Tracearr a aussi une app mobile: derrière Authelia (two_factor), elle ne pourra pas se connecter. À revoir si Mathod95 veut l'app mobile (le niveau app, comme Jellyfin).",
-      refs: "18.7, J338, D159" }
+      refs: "18.7, J338, D159" },
+    { t: "Les choix du code de l'étape 19 (one_factor, le Redis d'Authelia)",
+      p: "Ce que Claude a choisi en codant, le 28 novembre 2026.",
+      reco: "(1) Le mot de passe de Redis: Redis ne le lit pas dans une variable *_FILE, il le lit dans son fichier de réglages (requirepass). Dot Box écrit donc deux secrets, tirés ensemble: authelia_redis_password (0600, lu par Authelia, root) et authelia_redis_conf (0444, « requirepass ... » et « appendonly yes », monté en lecture seule, lu par l'utilisateur redis du container). Jamais dans compose.yml ni dans la ligne de commande. (2) Le healthcheck de Redis s'authentifie (redis-cli -a avec le mot de passe lu dans ce fichier, puis PONG attendu): sans mot de passe, redis-cli rend NOAUTH, que le healthcheck prendrait pour une réponse. (3) Redis tourne avec l'utilisateur de son image (redis, 999): son entrypoint donne /opt/authelia/redis à redis, puis descend de root. (4) Authelia sur deux réseaux: le label traefik.docker.network: dotbox dit à Traefik lequel prendre. (5) Seules les apps en one_factor ont une règle: *.<domaine> couvre toutes celles en two_factor, app et public ne passent pas par Authelia. La règle garde subject: group:admins, comme les autres. (6) L'app en one_factor démarre avant sa règle (install_one, puis refresh_rules à la fin): pendant ces secondes, elle demande les deux facteurs, jamais moins. (7) sync redémarrait déjà Authelia quand sa configuration change (« la configuration n'est lue qu'au démarrage », src/sync.rs): la règle par app passe par là. (8) min_dotbox de catalog/core/authelia.yml reste 0.0.3: un dotbox plus ancien ignore l'image redis et garde Authelia sans Redis. Un dotbox 0.0.8 sur un serveur dont le catalogue rangé n'a pas l'image redis refuse sync avec un message: relire le catalogue par dotbox diff. (9) Le mot de passe d'Authelia rangé sur le PC (~/.config/dotbox-test/authelia-pass) n'est plus le bon depuis la réinstallation (J345): à remettre à jour, ou à ne plus utiliser, celui du serveur suffit pour les essais.",
+      refs: "D178, 19.1-19.5, J345" }
   ];
 
   var LABELS = { fait: "fait", echec: "échec", propose: "proposé", valide: "validé", refuse: "refusé", remplace: "remplacé", backlog: "backlog" };
@@ -6654,6 +6739,7 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
     "14": [213, 214, 215, 216, 217, 218, 298, 303],
     "15": [220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237], "16": [238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 309, 310, 311, 312, 317, 318, 319, 320, 321, 322, 323, 324, 325, 327, 328],
     "18": [326, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342],
+    "19": [343, 344, 345, 346, 347, 348, 349],
     "1": [6, 7, 8, 9, 10, 11, 12, 14, 15],
     "2": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30, 31, 67, 69, 70],
     "3": [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43],
@@ -6668,13 +6754,13 @@ sudo docker exec crowdsec cscli decisions delete --ip 198.51.100.7`,
   var DHOME = {
     "0": [2, 7, 11, 14, 28, 40, 46, 47, 48, 49, 50, 51, 52, 53, 54, 85, 87, 88, 92, 95, 96, 98, 103, 110], "1": [3, 8, 9], "2": [1, 4, 5, 6, 10], "3": [13],
     "4": [15, 16, 17, 18, 19, 20, 29, 118, 119], "5": [21, 22, 23, 24, 25, 27, 31, 35, 36, 111, 113], "6": [26, 30, 32, 33, 34, 37, 38, 39],
-    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151, 168], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166, 167], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165, 169, 170, 171, 172, 173, 174, 175, 176, 177]
+    "7": [41, 42, 64, 65], "8": [43, 44, 55, 56, 66, 67, 68, 71, 72, 73, 74, 75, 76, 77, 101, 104, 108, 120, 121, 129, 130, 131, 132, 151, 168], "9": [45], "10": [57, 58, 59, 60, 61, 62, 63, 69, 70], "11": [79, 100, 102, 105, 106, 109, 112, 150], "12": [78], "13": [80], "14": [84, 122], "15": [81, 93, 94], "16": [82, 83, 97, 99, 138, 157, 160, 162], "18": [159, 161, 163, 166, 167], "19": [178], "17": [86, 89, 90, 107, 114, 115, 116, 117], "sans": [12, 91, 123, 124, 125, 126, 127, 128, 133, 134, 135, 136, 137, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 158, 164, 165, 169, 170, 171, 172, 173, 174, 175, 176, 177]
   };
   var QHOME = {
     "0": [2, 5, 10, 12, 21, 52, 58, 62, 82], "1": [8, 49], "2": [1], "3": [41], "4": [6, 7, 13, 14, 20, 76, 77], "5": [15, 16, 17, 18, 19, 24, 25, 26, 50, 71, 72],
     "6": [22, 23, 27], "7": [4, 28, 34, 73, 75], "8": [29, 35, 36, 38, 39, 40, 78, 79, 80, 84, 85], "9": [30, 100], "10": [3, 11, 31, 32, 33, 37], "11": [44, 66, 67, 68, 69, 70], "13": [42, 57], "15": [45, 56, 59, 60, 61], "16": [46, 47, 63, 64, 65, 97, 101], "17": [48, 53, 54, 55, 74], "sans": [9, 43, 51, 81, 83, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 99, 102, 103], "18": [96, 98]
   };
-  var NHOME = { "18": [26, 28, 29], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
+  var NHOME = { "19": [30], "18": [26, 28, 29], "0": [5, 19, 22], "3": [4], "4": [6, 7, 21], "5": [8, 9], "7": [10], "8": [11, 12, 23, 24], "10": [1, 2, 3], "11": [13], "16": [14, 15, 16, 17, 18, 25, 27], "17": [20] };
   var placed = {};
   function jOf(key) {
     var nums = HOME[key] || [];

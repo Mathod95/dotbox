@@ -74,9 +74,9 @@
       "versioning": "regex:^pg(?<major>\\d+)\\.(?<minor>\\d+)-ts(?<patch>\\d+)\\.(?<build>\\d+)\\.(?<revision>\\d+)$"
     },
     {
-      "description": "Les bases de données des apps (D159): jamais de version majeure proposée. Leurs fichiers ne se relisent pas d'une majeure à l'autre (PostgreSQL 18 vers 19 demande pg_upgrade): une majeure se fait à la main, avec l'app.",
+      "description": "Les bases de données des apps (D159) et le Redis d'Authelia (D178): jamais de version majeure proposée. Leurs fichiers ne se relisent pas d'une majeure à l'autre (PostgreSQL 18 vers 19 demande pg_upgrade): une majeure se fait à la main, avec l'app.",
       "matchDatasources": ["docker"],
-      "matchFileNames": ["catalog/*.yml"],
+      "matchFileNames": ["catalog/*.yml", "catalog/core/*.yml"],
       "matchPackageNames": ["postgres", "timescale/timescaledb-ha", "redis", "mariadb", "valkey/valkey"],
       "matchUpdateTypes": ["major"],
       "enabled": false

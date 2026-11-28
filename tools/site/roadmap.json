@@ -449,7 +449,7 @@
     {
       "stage": "apps",
       "domain": "access",
-      "status": "progress",
+      "status": "done",
       "fr": "Moteur: quatre niveaux d'accès par app, `two_factor`, `one_factor`, `app` et `public`",
       "en": "Engine: four access levels per app, `two_factor`, `one_factor`, `app` and `public`",
       "doc": "accessing-apps",
@@ -458,7 +458,50 @@
         "5.3",
         "J59",
         "7.3",
-        "Q71"
+        "Q71",
+        "19.2",
+        "D178"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "access",
+      "status": "done",
+      "fr": "Moteur: une règle Authelia par app en `one_factor`, Authelia redémarré seulement quand ces règles changent",
+      "en": "Engine: one Authelia rule per `one_factor` app, Authelia restarted only when these rules change",
+      "doc": "accessing-apps",
+      "journal": [
+        "19.2",
+        "J347-J348",
+        "D178",
+        "Q103"
+      ]
+    },
+    {
+      "stage": "apps",
+      "domain": "cli",
+      "status": "done",
+      "fr": "CLI: `dotbox install --access`, le niveau d'accès choisi à l'installation",
+      "en": "CLI: `dotbox install --access`, the access level picked at install",
+      "doc": "cli",
+      "journal": [
+        "19.3",
+        "J347-J348",
+        "D178"
+      ]
+    },
+    {
+      "stage": "core",
+      "domain": "access",
+      "status": "done",
+      "fr": "Core: les sessions d'Authelia dans un Redis à lui, un redémarrage d'Authelia ne déconnecte personne",
+      "en": "Core: Authelia's sessions in its own Redis, a restart of Authelia signs nobody out",
+      "doc": "security",
+      "journal": [
+        "19.1",
+        "J343-J346",
+        "D178",
+        "N30"
       ]
     },
     {

@@ -4,3 +4,5 @@ name: authelia
 min_dotbox: 0.0.3
 images:
   authelia: authelia/authelia:4.39.28
+  # ses sessions (D178): un redémarrage d'Authelia ne déconnecte personne
+  redis: redis:8.12.0-alpine

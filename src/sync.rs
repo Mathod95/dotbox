@@ -139,12 +139,19 @@ pub fn core_parts(
     dir: &Path,
     domain: &str,
     ca: &str,
+    one_factor: &[String],
     list: &[Container],
 ) -> Result<Vec<CorePart>, String> {
     let image = |container: &str, core: &str, key: &str| -> Result<String, String> {
         match running_image(list, container) {
             Some(i) => Ok(i),
-            None => Ok(catalog::load_core(dir, core)?.image(key)?.to_string()),
+            // un catalogue rangé plus vieux que ce dotbox (le Redis d'Authelia, D178): le relire
+            None => Ok(catalog::load_core(dir, core)?
+                .image(key)
+                .map_err(|e| {
+                    format!("{e}: the catalog is older than this Dot Box, run dotbox diff to read it again, then dotbox sync")
+                })?
+                .to_string()),
         }
     };
     let proxy = image("socket-proxy", "traefik", "socket-proxy")?;
@@ -167,11 +174,18 @@ pub fn core_parts(
             files: vec![
                 (
                     authelia::COMPOSE,
-                    authelia::compose(domain, &image("authelia", "authelia", "authelia")?),
+                    authelia::compose(
+                        domain,
+                        &image("authelia", "authelia", "authelia")?,
+                        &image("authelia-redis", "authelia", "redis")?,
+                    ),
                 ),
-                (authelia::CONFIG, authelia::configuration(domain)),
+                (
+                    authelia::CONFIG,
+                    authelia::configuration(domain, one_factor),
+                ),
             ],
-            containers: vec!["authelia"],
+            containers: vec!["authelia", "authelia-redis"],
         },
         CorePart {
             name: "crowdsec",
@@ -244,7 +258,8 @@ pub fn plan() -> Result<Vec<Gap>, String> {
         .get("ca")
         .unwrap_or_else(|| config::DEFAULT_CA.to_string());
     let list = status::containers()?;
-    let mut gaps = core_gaps(&core_parts(&dir, &domain, &ca, &list)?, &list);
+    let one_factor = authelia::one_factor_hosts(&cfg, &domain);
+    let mut gaps = core_gaps(&core_parts(&dir, &domain, &ca, &one_factor, &list)?, &list);
     for app in cfg.app_names() {
         gaps.extend(app_gaps(&dir, &cfg, &app, &domain, &user, &list));
     }
@@ -609,7 +624,8 @@ fn apply(targets: &[String]) -> Result<(), String> {
         traefik::write_web_route(&domain)?;
     }
     // le core d'abord: les apps passent par Traefik et Authelia
-    for part in core_parts(&dir, &domain, &ca, &list)? {
+    let one_factor = authelia::one_factor_hosts(&cfg, &domain);
+    for part in core_parts(&dir, &domain, &ca, &one_factor, &list)? {
         if targets.iter().any(|t| t == part.name) {
             apply_core(&part)?;
         }
@@ -632,6 +648,10 @@ fn apply(targets: &[String]) -> Result<(), String> {
 
 fn apply_core(p: &CorePart) -> Result<(), String> {
     ui::step(&apps::title(p.name), "from dotbox.yml");
+    // le Redis d'Authelia (D178): ses secrets avant son compose, sinon Docker monterait un dossier
+    if p.name == "authelia" {
+        authelia::ensure_redis_secrets()?;
+    }
     let mut compose_changed = false;
     let mut config_changed = false;
     for (path, text) in &p.files {

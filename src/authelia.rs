@@ -4,6 +4,7 @@
 //! (D22), mot de passe et code à 6 chiffres (D23), codes de vérification dans un fichier (D21).
 //! Relancé, il ne refait que ce qui manque: secrets et compte ne sont jamais recréés.
 
+use crate::config::Config;
 use crate::out::say;
 use crate::{docker, secrets, system};
 use std::time::{Duration, Instant};
@@ -32,15 +33,46 @@ const SECRETS: &[(&str, &str, &str)] = &[
         "/secrets/jwt_secret",
         "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE",
     ),
+    (
+        REDIS_PASSWORD,
+        "/secrets/redis_password",
+        "AUTHELIA_SESSION_REDIS_PASSWORD_FILE",
+    ),
 ];
 
-pub fn compose(domain: &str, image: &str) -> String {
+/// Les sessions d'Authelia dans un Redis à lui (D178): son mot de passe, lu par Authelia, et le
+/// fichier de réglages de Redis qui le contient (requirepass), lisible par l'utilisateur redis.
+const REDIS_PASSWORD: &str = "authelia_redis_password";
+const REDIS_CONF: &str = "authelia_redis_conf";
+const REDIS_CONF_TARGET: &str = "/usr/local/etc/redis/redis.conf";
+
+/// Le mot de passe de Redis et ses réglages, écrits une fois, réécrits seulement s'ils changent.
+pub fn ensure_redis_secrets() -> Result<(), String> {
+    if secrets::ensure(REDIS_PASSWORD)? {
+        say(
+            "create",
+            &format!("secret {}", secrets::path(REDIS_PASSWORD)),
+        );
+    }
+    let pw = secrets::read(REDIS_PASSWORD)
+        .ok_or_else(|| format!("cannot read {}", secrets::path(REDIS_PASSWORD)))?;
+    // appendonly: les sessions écrites sur le disque, gardées aussi au redémarrage du serveur
+    let conf = format!("requirepass {pw}\nappendonly yes\n");
+    if secrets::read(REDIS_CONF).as_deref() != Some(conf.trim_end()) {
+        secrets::store(REDIS_CONF, &conf)?;
+        say("write", &secrets::path(REDIS_CONF));
+    }
+    secrets::mountable(REDIS_CONF)
+}
+
+pub fn compose(domain: &str, image: &str, redis: &str) -> String {
     let mut env = String::new();
     let mut vols = String::from("      - /opt/authelia/config:/config\n");
     for (name, target, var) in SECRETS {
         env.push_str(&format!("      {var}: {target}\n"));
         vols.push_str(&format!("      - {}:{target}:ro\n", secrets::path(name)));
     }
+    let conf = secrets::path(REDIS_CONF);
     format!(
         r#"# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
 # Vos changements vont dans compose.override.yml, à côté.
@@ -52,11 +84,16 @@ services:
     restart: unless-stopped
     networks:
       - dotbox
+      - private
+    depends_on:
+      redis:
+        condition: service_healthy
     environment:
 {env}    volumes:
 {vols}    security_opt:
       - no-new-privileges:true
     labels:
+      traefik.docker.network: dotbox
       traefik.enable: "true"
       traefik.http.routers.authelia.rule: Host(`auth.{domain}`)
       traefik.http.routers.authelia.entrypoints: websecure
@@ -68,15 +105,87 @@ services:
       traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true"
       traefik.http.middlewares.authelia.forwardauth.maxResponseBodySize: "8192"
       traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: Remote-User,Remote-Groups,Remote-Email,Remote-Name
+  # ses sessions (D178), sur un réseau qu'il ne partage qu'avec Authelia, sans accès à Internet
+  redis:
+    image: {redis}
+    container_name: authelia-redis
+    restart: unless-stopped
+    networks:
+      - private
+    command: ["redis-server", "{REDIS_CONF_TARGET}"]
+    volumes:
+      - /opt/authelia/redis:/data
+      - {conf}:{REDIS_CONF_TARGET}:ro
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$(sed -n 's/^requirepass //p' {REDIS_CONF_TARGET})\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   dotbox:
     external: true
+  private:
+    internal: true
 "#
     )
 }
 
-pub fn configuration(domain: &str) -> String {
+/// Les adresses des apps en one_factor (D178), d'après dotbox.yml: chacune a sa règle, avant
+/// celle de toutes les apps (*.<domaine>, two_factor). Triées: le fichier ne change que si la
+/// liste change.
+pub fn one_factor_hosts(cfg: &Config, domain: &str) -> Vec<String> {
+    let mut hosts: Vec<String> = cfg
+        .app_names()
+        .iter()
+        .filter_map(|app| {
+            let (sub, access) = cfg.app(app)?;
+            (access == "one_factor").then(|| {
+                let sub = if sub.is_empty() { app.clone() } else { sub };
+                format!("{sub}.{domain}")
+            })
+        })
+        .collect();
+    hosts.sort();
+    hosts.dedup();
+    hosts
+}
+
+/// Les règles des apps en one_factor, après install, remove ou un changement de dotbox.yml:
+/// Authelia ne lit sa configuration qu'au démarrage, il redémarre seulement si elle change.
+/// Ses sessions sont dans Redis: personne n'est déconnecté. Rend true s'il a redémarré.
+pub fn refresh_rules(cfg: &Config, domain: &str) -> Result<bool, String> {
+    if !std::path::Path::new(CONFIG).exists() {
+        return Ok(false);
+    }
+    let text = configuration(domain, &one_factor_hosts(cfg, domain));
+    if !system::write_if_changed(CONFIG, &text, 0o644)? {
+        return Ok(false);
+    }
+    say("write", &format!("{CONFIG} (the one_factor rules)"));
+    system::run("docker", &["restart", "authelia"])?;
+    say("restart", "authelia (new rules, sessions kept in Redis)");
+    wait_healthy(Duration::from_secs(90))?;
+    say("check", "authelia healthy");
+    Ok(true)
+}
+
+pub fn configuration(domain: &str, one_factor: &[String]) -> String {
+    let mut rules = String::new();
+    for host in one_factor {
+        rules.push_str(&format!(
+            "    - domain: '{host}'\n      subject: 'group:admins'\n      policy: 'one_factor'\n"
+        ));
+    }
+    if !rules.is_empty() {
+        rules.insert_str(
+            0,
+            "    # Les apps en one_factor (D178): mot de passe seulement, avant la règle de toutes\n",
+        );
+    }
     format!(
         r#"# Généré par dotbox init: ne pas modifier, il est réécrit à chaque init.
 # Les secrets sont lus dans /opt/dotbox/secrets (variables *_FILE du compose.yml).
@@ -108,7 +217,7 @@ access_control:
     - domain: 'traefik.{domain}'
       subject: 'group:admins'
       policy: 'two_factor'
-    # Toute app derrière authelia@docker: groupe admins, deux facteurs (Journal, 7.3)
+{rules}    # Toute app derrière authelia@docker: groupe admins, deux facteurs (Journal, 7.3)
     - domain: '*.{domain}'
       subject: 'group:admins'
       policy: 'two_factor'
@@ -117,6 +226,10 @@ session:
   cookies:
     - domain: '{domain}'
       authelia_url: 'https://auth.{domain}'
+  # les sessions dans Redis (D178): un redémarrage d'Authelia ne déconnecte personne
+  redis:
+    host: 'authelia-redis'
+    port: 6379
 
 # Essais de mot de passe en rafale: 3 ratés en 2 minutes, bloqué 5 minutes
 regulation:
@@ -250,14 +363,17 @@ pub fn setup(
     user: &str,
     chosen: Option<&str>,
     core: &crate::catalog::Core,
+    one_factor: &[String],
 ) -> Result<Option<String>, String> {
     let image = core.image("authelia")?;
+    let redis = core.image("redis")?;
     let email = format!("{user}@{domain}");
     for (name, _, _) in SECRETS {
         if secrets::ensure(name)? {
             say("create", &format!("secret {}", secrets::path(name)));
         }
     }
+    ensure_redis_secrets()?;
 
     // le compte: créé une seule fois, jamais réécrit (seule l'adresse peut être ajoutée)
     let mut password = None;
@@ -293,11 +409,12 @@ pub fn setup(
         }
     }
 
-    let compose_changed = system::write_if_changed(COMPOSE, &compose(domain, image), 0o644)?;
+    let compose_changed = system::write_if_changed(COMPOSE, &compose(domain, image, redis), 0o644)?;
     if compose_changed {
         say("write", COMPOSE);
     }
-    let config_changed = system::write_if_changed(CONFIG, &configuration(domain), 0o644)?;
+    let config_changed =
+        system::write_if_changed(CONFIG, &configuration(domain, one_factor), 0o644)?;
     if config_changed {
         say("write", CONFIG);
     }
@@ -358,12 +475,15 @@ mod tests {
         )
         .unwrap();
         let image = core.image("authelia").unwrap();
+        let redis = core.image("redis").unwrap();
         assert_eq!(
-            compose("example.com", image),
-            include_str!("../tests/expected/authelia/compose.yml").replace("<authelia>", image)
+            compose("example.com", image, redis),
+            include_str!("../tests/expected/authelia/compose.yml")
+                .replace("<authelia>", image)
+                .replace("<redis>", redis)
         );
         assert_eq!(
-            configuration("example.com"),
+            configuration("example.com", &[]),
             include_str!("../tests/expected/authelia/configuration.yml")
         );
     }
@@ -371,8 +491,13 @@ mod tests {
     #[test]
     fn generated_yaml_is_valid() {
         for text in [
-            compose("example.com", "authelia/authelia:4.39.28"),
-            configuration("example.com"),
+            compose(
+                "example.com",
+                "authelia/authelia:4.39.28",
+                "redis:8.12.0-alpine",
+            ),
+            configuration("example.com", &[]),
+            configuration("example.com", &["films.example.com".into()]),
             users_database(
                 "admin",
                 "$argon2id$v=19$m=65536,t=3,p=4$abc$def",
@@ -447,8 +572,57 @@ mod tests {
     }
 
     #[test]
+    fn one_factor_rules_before_the_rule_of_all_apps() {
+        let text = configuration(
+            "example.com",
+            &["films.example.com".into(), "series.example.com".into()],
+        );
+        let rule = |host: &str| text.find(&format!("- domain: '{host}'")).unwrap();
+        assert!(rule("traefik.example.com") < rule("films.example.com"));
+        assert!(rule("films.example.com") < rule("series.example.com"));
+        assert!(rule("series.example.com") < rule("*.example.com"));
+        assert!(text.contains(
+            "- domain: 'films.example.com'\n      subject: 'group:admins'\n      policy: 'one_factor'\n"
+        ));
+        // sans app en one_factor: le fichier d'avant, plus Redis
+        assert!(!configuration("example.com", &[]).contains("one_factor"));
+        // dotbox.yml: le sous-domaine choisi, sinon le nom de l'app
+        let cfg = Config::parse(
+            "domain: example.com\napps:\n  radarr:\n    subdomain: films\n    access: one_factor\n  sonarr:\n    subdomain: ''\n    access: one_factor\n  prowlarr:\n    subdomain: prowlarr\n    access: two_factor\n",
+        )
+        .unwrap();
+        assert_eq!(
+            one_factor_hosts(&cfg, "example.com"),
+            ["films.example.com", "sonarr.example.com"]
+        );
+    }
+
+    #[test]
+    fn sessions_in_their_own_redis() {
+        let c = compose(
+            "example.com",
+            "authelia/authelia:4.39.28",
+            "redis:8.12.0-alpine",
+        );
+        // Traefik joint Authelia par dotbox, Redis n'est que sur le réseau privé
+        assert!(c.contains("traefik.docker.network: dotbox"));
+        assert!(c.contains("container_name: authelia-redis"));
+        assert!(c.contains("  private:\n    internal: true\n"));
+        assert!(c.contains("condition: service_healthy"));
+        // le mot de passe n'est jamais dans le fichier: un secret monté
+        assert!(c.contains(
+            "/opt/dotbox/secrets/authelia_redis_conf:/usr/local/etc/redis/redis.conf:ro"
+        ));
+        assert!(configuration("example.com", &[]).contains("host: 'authelia-redis'"));
+    }
+
+    #[test]
     fn secrets_are_files_never_values() {
-        let c = compose("example.com", "authelia/authelia:4.39.28");
+        let c = compose(
+            "example.com",
+            "authelia/authelia:4.39.28",
+            "redis:8.12.0-alpine",
+        );
         for (name, target, var) in SECRETS {
             assert!(c.contains(&format!("{var}: {target}")));
             assert!(c.contains(&format!("/opt/dotbox/secrets/{name}:{target}:ro")));

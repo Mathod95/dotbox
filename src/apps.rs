@@ -21,6 +21,10 @@ pub struct InstallArgs {
     #[arg(long, value_name = "DIR")]
     pub catalog: Option<PathBuf>,
 
+    /// The access level instead of the manifest's: two_factor, one_factor, app or public
+    #[arg(long, value_name = "LEVEL")]
+    pub access: Option<String>,
+
     /// Show every sub-step as it happens (they are always in the log)
     #[arg(long)]
     pub verbose: bool,
@@ -186,6 +190,12 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
             );
         }
         let (domain, user) = server(&Config::load()?)?;
+        let level = match &args.access {
+            None => None,
+            Some(a) => Some(catalog::Access::parse(a).ok_or_else(|| {
+                format!("unknown access {a:?}: two_factor, one_factor, app or public")
+            })?),
+        };
         if !authelia::apps_rule_present(&domain) {
             return Err(
                 "the Authelia rule for the apps is missing: run sudo dotbox init, then try again"
@@ -202,8 +212,21 @@ pub fn install(args: &InstallArgs) -> Result<(), String> {
                     &format!("{} ({app}: no longer stopped)", config::PATH),
                 );
             }
+            // --access (D178): le niveau écrit dans dotbox.yml avant le compose.yml de l'app
+            if let Some(level) = level {
+                let sub = cfg.app(app).map(|(s, _)| s).unwrap_or_default();
+                cfg.set_app(app, &sub, level.as_str());
+                if system::write_if_changed(config::PATH, &cfg.render()?, 0o644)? {
+                    say(
+                        "write",
+                        &format!("{} ({app}: access {})", config::PATH, level.as_str()),
+                    );
+                }
+            }
             ready.push(install_one(dir, app, &domain, &user, None, true)?);
         }
+        // une app en one_factor a sa règle dans Authelia: il ne redémarre que si elles changent
+        authelia::refresh_rules(&Config::load()?, &domain)?;
         Ok(())
     })();
     finish(result)?;
@@ -812,6 +835,10 @@ fn remove_steps(app: &str, purge: bool, yes: bool) -> Result<(), String> {
     if cfg.remove_app(app) {
         system::write_if_changed(config::PATH, &cfg.render()?, 0o644)?;
         say("write", &format!("{} (apps: without {app})", config::PATH));
+        // sa règle one_factor, s'il en avait une, quitte Authelia (D178)
+        if let Some(domain) = cfg.get("domain") {
+            authelia::refresh_rules(&cfg, &domain)?;
+        }
     }
     if purge {
         if Path::new(&dir).exists() {

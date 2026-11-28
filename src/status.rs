@@ -14,6 +14,7 @@ pub const CORE: &[&str] = &[
     "traefik",
     "socket-proxy",
     "authelia",
+    "authelia-redis",
     "crowdsec",
     "crowdsec-socket-proxy",
 ];

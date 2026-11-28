@@ -60,7 +60,7 @@ motd:
     <thead><tr><th>Key</th><th>Default</th><th>What it is</th><th>Change it</th></tr></thead>
     <tbody>
       <tr><td><code>apps.&lt;app&gt;.subdomain</code></td><td>the app's name</td><td>The address of the app: <code>radarr</code> gives <code>radarr.example.com</code>. Lowercase letters, digits and <code>-</code>, never a name Dot Box keeps for itself (<code>auth</code>, <code>dotbox</code>...).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
-      <tr><td><code>apps.&lt;app&gt;.access</code></td><td>set by the app's manifest</td><td>Who gets in: <code>two_factor</code>, <code>app</code> or <code>public</code> (see <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
+      <tr><td><code>apps.&lt;app&gt;.access</code></td><td>set by the app's manifest</td><td><span class="prop-old" data-prop="196">Who gets in: <code>two_factor</code>, <code>app</code> or <code>public</code></span><span class="prop-new" data-prop="196">Who gets in: <code>two_factor</code>, <code>one_factor</code>, <code>app</code> or <code>public</code></span> (see <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>).</td><td><code>config set</code>, then <code>sync</code>.</td></tr>
       <tr><td><code>apps.&lt;app&gt;.stopped</code></td><td>absent</td><td><code>true</code> when you stopped the app with <code>dotbox stop</code>: <code>sync</code> and a reboot leave it stopped.</td><td><code>dotbox stop</code> and <code>dotbox start</code>.</td></tr>
     </tbody>
   </table></div>

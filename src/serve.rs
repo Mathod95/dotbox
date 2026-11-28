@@ -647,6 +647,9 @@ async fn logs(Path(app): Path<String>, Query(q): Query<LogsQuery>) -> Response {
 #[derive(Deserialize)]
 struct InstallBody {
     apps: Vec<String>,
+    /// le niveau d'accès à la place de celui du manifest (D178)
+    #[serde(default)]
+    access: Option<String>,
 }
 
 async fn install(State(jobs): State<Shared>, Json(body): Json<InstallBody>) -> Response {
@@ -655,11 +658,19 @@ async fn install(State(jobs): State<Shared>, Json(body): Json<InstallBody>) -> R
     }
     let mut args = vec!["install".to_string()];
     args.extend(body.apps.iter().cloned());
-    start_job(
-        &jobs,
-        format!("dotbox install {}", body.apps.join(" ")),
-        args,
-    )
+    let mut what = format!("dotbox install {}", body.apps.join(" "));
+    if let Some(a) = &body.access {
+        if crate::catalog::Access::parse(a).is_none() {
+            return problem(
+                StatusCode::BAD_REQUEST,
+                "access: two_factor, one_factor, app or public",
+            );
+        }
+        args.push("--access".into());
+        args.push(a.clone());
+        what.push_str(&format!(" --access {a}"));
+    }
+    start_job(&jobs, what, args)
 }
 
 #[derive(Deserialize)]

@@ -135,6 +135,11 @@
     <li>Closed when in doubt: if Authelia does not answer, Traefik refuses the apps it protects instead of opening them.</li>
     <li>Your password is stored hashed (argon2id), and its secrets are in <code>/opt/dotbox/secrets</code>, readable by root only.</li>
   </ul>
+  <div class="prop-new" data-prop="192">
+  <ul>
+    <li>Sessions are kept in Authelia's own Redis: a restart of Authelia signs nobody out. Redis has a password, and sits on a network it shares with Authelia only, without Internet access.</li>
+  </ul>
+  </div>
   <p>Access levels, app by app, are described in <a href="__DOC_ACCESSING_APPS__"__DOC_ACCESSING_APPS_TARGET__>Accessing Apps</a>.</p>
 
   <h2 id="en-apps">Apps</h2>

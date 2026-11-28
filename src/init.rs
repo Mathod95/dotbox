@@ -258,7 +258,13 @@ fn steps(args: &Args) -> Result<(), String> {
 
     // 6. Authelia (portail auth.<domaine>, un compte au nom de l'utilisateur)
     ui::step("Authelia", "login page, password and 6-digit code");
-    let password = authelia::setup(&domain, &name, chosen.as_deref(), &authelia_core)?;
+    let password = authelia::setup(
+        &domain,
+        &name,
+        chosen.as_deref(),
+        &authelia_core,
+        &authelia::one_factor_hosts(&cfg, &domain),
+    )?;
     let authelia_image = authelia_core.image("authelia")?;
     ui::done(&format!("{}, account {name}", tag(authelia_image)));
 

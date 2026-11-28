@@ -7,6 +7,20 @@
         "fr": "Corrections",
         "en": "Fixes"
       },
+      "new": [
+        {
+          "fr": "Moteur: le niveau `one_factor`, mot de passe sans code: une règle Authelia par app, Authelia redémarré seulement quand ces règles changent",
+          "en": "Engine: the `one_factor` level, a password without a code: one Authelia rule per app, Authelia restarted only when these rules change"
+        },
+        {
+          "fr": "CLI: `dotbox install <app> --access <niveau>` choisit le niveau d'accès à l'installation, et `dotbox config set apps.<app>.access one_factor` est accepté",
+          "en": "CLI: `dotbox install <app> --access <level>` picks the access level at install, and `dotbox config set apps.<app>.access one_factor` is accepted"
+        },
+        {
+          "fr": "Core: les sessions d'Authelia dans un Redis à lui (`authelia-redis`), un redémarrage d'Authelia ne déconnecte personne",
+          "en": "Core: Authelia's sessions in its own Redis (`authelia-redis`), a restart of Authelia signs nobody out"
+        }
+      ],
       "fixed": [
         {
           "fr": "CLI: `sudo dotbox restore` sur un serveur sans `dotbox init` dit quoi faire (`sudo dotbox init`, puis `sudo dotbox restore` de nouveau), sans renvoyer au Journal",

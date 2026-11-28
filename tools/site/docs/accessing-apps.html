@@ -76,15 +76,26 @@ apps:
   </table></div>
 
   <h2 id="en-why">The four access levels</h2>
+  <div class="prop-old" data-prop="190">
   <ul>
     <li><b>two_factor</b>: Authelia with a password, then a 6-digit code or a passkey, for anything that controls the server (Dot Box, Traefik, Portainer, code-server).</li>
     <li><b>one_factor</b>: Authelia with a password, for apps without a proper login (Radarr, Sonarr, qBittorrent...).</li>
     <li><b>app</b>: the app keeps its own login. That is the case for Jellyfin, Plex and Vaultwarden, because their TV and mobile apps cannot go through the Authelia portal.</li>
     <li><b>public</b>: no login, only for pages meant to be seen by anyone (status page, invites).</li>
   </ul>
+  </div>
+  <div class="prop-new" data-prop="190">
+  <ul>
+    <li><b>two_factor</b>: Authelia with a password, then a 6-digit code or a passkey, for anything that controls the server (Dot Box, Traefik, Portainer, code-server).</li>
+    <li><b>one_factor</b>: Authelia with a password only, no code. For an app you share with people who find the 6-digit code a burden. Each <code>one_factor</code> app gets its own rule in Authelia. Authelia restarts for a few seconds when an app enters or leaves this level. Signed-in people stay signed in: their sessions are kept in Authelia's Redis.</li>
+    <li><b>app</b>: the app keeps its own login. That is the case for Jellyfin, Plex and Vaultwarden, because their TV and mobile apps cannot go through the Authelia portal.</li>
+    <li><b>public</b>: no login, only for pages meant to be seen by anyone (status page, invites).</li>
+  </ul>
+  </div>
   <p>Each manifest declares its default level. You can change it per app.</p>
 
   <h2 id="en-change">Change a subdomain or an access level</h2>
+  <div class="prop-old" data-prop="191">
   <pre><span class="c"># /opt/dotbox/dotbox.yml</span>
 apps:
   radarr:
@@ -92,6 +103,16 @@ apps:
     access: two_factor</pre>
   <pre><span class="p">$</span> dotbox sync</pre>
   <p><code>sync</code> regenerates the Traefik labels and the Authelia rules. The old address stops answering.</p>
+  </div>
+  <div class="prop-new" data-prop="191">
+  <p>At install, <code>--access</code> picks the level instead of the manifest's:</p>
+  <pre><span class="p">$</span> dotbox install radarr --access one_factor</pre>
+  <p>Later, <code>dotbox config set</code> writes <code>dotbox.yml</code>, <code>dotbox sync</code> applies it:</p>
+  <pre><span class="p">$</span> dotbox config set apps.radarr.subdomain films
+<span class="p">$</span> dotbox config set apps.radarr.access one_factor
+<span class="p">$</span> dotbox sync</pre>
+  <p><code>sync</code> regenerates the Traefik labels and the Authelia rules. The old address stops answering.</p>
+  </div>
 
   <h2 id="en-trouble">If an address does not respond</h2>
   <ul>

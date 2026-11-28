@@ -202,7 +202,10 @@ pub fn install(args: &apps::InstallArgs) -> Result<(), String> {
     if args.catalog.is_some() {
         return Err("--catalog works with --local only (as root)".into());
     }
-    let body = json!({ "apps": args.apps });
+    let body = match &args.access {
+        Some(a) => json!({ "apps": args.apps, "access": a }),
+        None => json!({ "apps": args.apps }),
+    };
     let result =
         runtime()?.block_on(job(Method::POST, "/api/v1/apps", Some(body), args.verbose))?;
     if let Some(v) = result {
